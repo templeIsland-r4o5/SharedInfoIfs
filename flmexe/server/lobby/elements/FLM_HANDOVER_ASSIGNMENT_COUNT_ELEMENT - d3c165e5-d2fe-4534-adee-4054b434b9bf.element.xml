@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <DescriptiveText>Displays the count of assignments stopped due to shift change (handover assignments) and allows the user to navigate to a detailed list of handover assignments.</DescriptiveText>
+    <LastModified>2/5/25, 8:54:10 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>6</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>        Handover</Title>
+    <Footer>Assignments</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HANDOVER_ASSIGNMENT_COUNT_ELEMENT</Name>
+    <ID>d3c165e5-d2fe-4534-adee-4054b434b9bf</ID>
+    <WebUrl>page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$ and ( ExecutionInstanceStatus eq 'Assigned' or ExecutionInstanceStatus eq null) and LatestJobStopReason eq HandoverReason</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>a4d970eb-b04c-4346-b44b-8a994cfad053</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

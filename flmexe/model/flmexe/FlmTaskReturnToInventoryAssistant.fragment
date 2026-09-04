@@ -1,0 +1,294 @@
+-----------------------------------------------------------------------------------
+--
+--  Fragment:     FlmTaskReturnToInventoryAssistant
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251103  SADDLK  AVMXSOL-14021, Return Parts to Inventory assistant Enhancements
+-----------------------------------------------------------------------------
+
+fragment FlmTaskReturnToInventoryAssistant;
+component FLMEXE;
+layer Core;
+description "Fragment for FlmTaskReturnToInventory.";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment JtTaskReturnToInventoryAssistant;
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+--------------------------------- COMMANDS ----------------------------------
+
+command FlmReturnMaterialCommand for JtTaskPlannedReturnVirtual {
+   label = "Return";
+   mode = SelectedRecords;
+   enabled = [ReturnQnty > 0];
+
+   variable StdCostExist Text;
+
+   execute {
+      call ValidateReturnedPart(PartNo, SerialNo);
+      call StandardCostExist(TaskSeq, TaskReturnLineSeq, PartNo, SerialNo, LotBatchNo, ConditionCode) into StdCostExist;
+      if [StdCostExist = "FALSE"] {
+         if[PartOwnership != "CustomerOwned" and PartOwnership != "SupplierRented" and PartOwnership != "CompanyRentalAsset"] {
+            assistant DefineCostStructureAssistant(Site, PartNo, ConfigurationId, LotBatchNo, SerialNo, ConditionCode, "WORK ORDER RECEIPT", null) into(CostDetailId) {
+               when CANCEL {
+                  exit CANCEL;
+               }
+            }
+         }
+      }
+
+      call CreateReturnMaterial(TaskSeq, TaskReturnLineSeq, Site, PartNo, SerialNo, LotBatchNo, ReturnQnty, OperationalStatus, ConditionCode, PartOwnership, Owner, LocationNo, CostDetailId, WdrNo, CatchQty, Objkey, FALSE) {
+         when SUCCESS {
+            set OperationalStatus = null;
+            info("Return to Inventory successful!");
+         }
+         when FAIL {
+            error("${error.Message}");
+         }
+      }
+   }
+}
+
+----------------------------- VISUAL COMPONENTS -----------------------------
+
+
+---------------------------- GENERATED FROM APF -----------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant CompReturnAssistant using ReturnToInventoryVirtualSet {
+   label = "Return to Inventory";
+   savemode = OnLostFocus;
+   input(Selection, Rmb);
+   init command {
+      variable ResourceDetails {
+         type = Structure(ReturnToInventoryStruct);
+      }
+      variable Rmb Text;
+      execute {
+         set InventoryList = Selection;
+         call GetInventory(InventoryList) into ResourceDetails;
+         copy ResourceDetails into this;
+         set RmbType = Rmb;
+      }
+   }
+
+   singlestep {
+      group FlmReturnTaskDetailsGroup;
+      list FlmPlannedReturnsList(PlannedReturnsArray) {
+         visible = [RmbType != "RMB_RETURN_MATERIAL" and MultiUpdate];
+      }
+   }
+   command Cancel {
+      execute {
+         exit CANCEL;
+      }
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+--------------------------------- SELECTORS ---------------------------------
+
+---------------------------------- GROUPS -----------------------------------
+group FlmReturnTaskDetailsGroup for ReturnToInventoryVirtual {
+   label = "Task Details";
+   field Aircraft {
+      editable = [false];
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      editable = [false];
+      size = Medium;
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Task ID";
+   }
+   field AvExeTaskRef.Description {
+      label = "Task Description";
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list FlmPlannedReturnsList for JtTaskPlannedReturnVirtual {
+   label = "Planned Returns";
+   defaultfilter = [RemainingQtyToReturn > 0];
+
+   editmode = SingleCellEdit;
+   multiselect = [true];
+
+   field TaskReturnLineSeq;
+   field PartNo {
+      size = Small;
+   }
+   field Description {
+      size = Small;
+   }
+
+   field ReturnQnty {
+      size = Small;
+   }
+
+   lov SiteRef with ReferenceSiteSelector {
+      size = Small;
+      search = Contract, Description;
+
+   }
+   field QtyToReturn {
+      size = Small;
+   }
+   field RemainingQtyToReturn {
+      size = Small;
+   }
+   field QtyReturned {
+      size = Small;
+   }
+   lov SerialNoRef with PartSerialCatalogSelector using PlannedReturnSerialNoLovFunction(PartNo) {
+      label = "Serial No";
+      freeinput = [true];
+      search = PartNo, SerialNo;
+   }
+   field LotBatchNo {
+      size = Small;
+   }
+   field OperationalStatus;
+   // Ifs.Fnd.ApplicationForms.cLookupColumn 'tblPlannedReturns_colOperationalCondition' is skipped from being processed. Please check and do the needful.
+	lov LocationNoRef with ReferenceInventoryLocation5Selector {
+      size = Small;
+      editable = [true];
+   }
+   field LocationNoRef.Warehouse {
+      size = Small;
+   }
+   field LocationNoRef.BayNo {
+      size = Small;
+   }
+   field LocationNoRef.RowNo {
+      size = Small;
+   }
+   field LocationNoRef.TierNo {
+      size = Small;
+   }
+   field LocationNoRef.BinNo {
+      size = Small;
+   }
+   field WdrNo {
+      size = Small;
+   }
+   field PartOwnership {
+      size = Small;
+   }
+   // Column 'PartOwnershipDb' (tblPlannedReturns_colOwnershipDB) is in EE designed having the attribute 'Visible = false', for why it is excluded from being added to the .client file.
+   field Owner {
+      size = Small;
+   }
+   // Ifs.Fnd.ApplicationForms.cColumn 'tblPlannedReturns_cColOwnerName' is skipped from being processed. Please check and do the needful.
+   lov ConditionCodeRef with ReferenceConditionCodeSelector {
+      size = Small;
+      editable = [true];
+      required = [CheckConditionCode = "Allow Condition Code"];
+   }
+   field ConditionCodeRef.Description {
+      size = Small;
+      label = "Condition Code Description";
+   }
+   field Uom {
+      size = Small;
+   }
+   // Ifs.Fnd.ApplicationForms.cColumn 'tblPlannedReturns_colRetCatchQty' is skipped from being processed. Please check and do the needful.
+   field CatchUom {
+      size = Small;
+   }
+   // Column 'TaskSeq' (tblPlannedReturns_cColTaskSeq) is in EE designed having the attribute 'Visible = false', for why it is excluded from being added to the .client file.
+   field ConfigurationId {
+      size = Small;
+   }
+   field RepairPart {
+      size = Small;
+   }
+   field InventryValue {
+      size = Small;
+   }
+   // fieldranking LineNo, PartNo, Description, ContractRef, QtyToReturn, RemainingQtyToReturn, QtyReturned, SerialNoRef, LocationNoRef, PartOwnership;
+   field CatchQty;
+
+   command FlmReturnMaterialCommand {
+      mode = SelectedRecords;
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+@Override
+entityset ReturnToInventoryVirtualSet for ReturnToInventoryVirtual;
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+-------------------------------- STRUCTURES ---------------------------------
+
+--------------------------------- VIRTUALS ----------------------------------
+@Override
+virtual ReturnToInventoryVirtual {
+   attribute Selection Text;
+   attribute TaskSeq Number {
+      label = "Task No";
+   }
+   attribute ActualObjectSite Text {
+      fetch = "Jt_Object_Conn_Utility_API.Get_Actual_Object_Site(task_seq)";
+      label = "Actual Object Site";
+      maxlength = 5;
+      editable = [false];
+      format = uppercase;
+   }
+   attribute ActualObjectId Text {
+      fetch = "Jt_Object_Conn_Utility_API.Get_Actual_Object_Id(task_seq)";
+      label = "Actual Object ID";
+      maxlength = 200;
+      editable = [false];
+      format = uppercase;
+   }
+   attribute ActualObjectDescription Text {
+      fetch = "Jt_Object_Conn_Utility_API.Get_Actual_Object_Descr(task_seq)";
+      label = "Actual Object Description";
+      maxlength = 200;
+      editable = [false];
+   }
+
+   attribute DfTaskDes Text {
+      fetch = "Work_Task_API.Get_Description(task_seq)";
+      label = "Task Description";
+      maxlength = 500;
+      editable = [false];
+   }
+   attribute TaskReturnLineSeq Number {
+      editable = [false];
+   }
+   attribute InventoryList Text;
+   attribute RmbType Text;
+   attribute TaskActualConnectionType Text;
+   attribute IsBundleTask Text {
+      fetch = "Jt_Task_Dependency_API.Is_Bundle_Task_Pub(TASK_SEQ)";
+   }
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Exe_Task_API.Get_Aircraft(Av_Exe_Task_API.Get_Aircraft_Id(task_seq))";
+   }
+   reference JtTaskRef(TaskSeq) to ReturnToInventoryVirtual(TaskSeq);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   array PlannedReturnsArray(Objkey) to JtTaskPlannedReturnVirtual(ParentObjkey);
+}

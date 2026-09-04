@@ -1,0 +1,27 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <DescriptiveText>Kanban View of all the tasks that are ongoing during the current shift of the logged-in supervisor. </DescriptiveText>
+    <LastModified>2/18/25, 4:48:03 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>4</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>MY SHIFT BOARD</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_SUPERVISOR_SHIFT_BOARD</Name>
+    <ID>9c1aa177-7a65-4340-a30f-faa27dccc1c2</ID>
+    <WebUrl>page/FlmHmSupervisorMyShiftBoard/HangarMaintenanceSupervisorShiftBoard?$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$</WebUrl>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>MY SHIFT BOARD</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

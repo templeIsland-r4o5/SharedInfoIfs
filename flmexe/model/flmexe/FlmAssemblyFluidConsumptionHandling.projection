@@ -1,0 +1,102 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  230904  psualk  AD-10510, introduce UTC badge infront of timestamps
+--  220103  vifelk  AD-4114, Added PersonName attribute to the AvHistFldServiceDet.
+--  211206  vifelk  AD-4132, Created.
+-----------------------------------------------------------------------------
+
+projection FlmAssemblyFluidConsumptionHandling;
+component FLMEXE;
+layer Core;
+description "This includes the definition of Fluid Record Consumption";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvHistFldServiceDetSet for AvHistFldServiceDet;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvHistFluidService {
+   timestamptzref = "server";
+   attribute RegCode Text {
+      fetch = "Aircraft_API.Get_Reg_Code(Av_Hist_Fluid_Service_API.Get_Aircraft_Id_For_Inventory(inventory_id))";
+   }
+}
+
+@Override
+entity AvHistFldServiceDet {
+   crud = Read;
+   timestamptzref = "server";
+   attribute AssemblyTypeCode Text {
+      label = "Assembly";
+   }
+   attribute UptakeAmount Number {
+      label = "Qty";
+   }
+   attribute  Rate Number {
+      label = "Consumption";
+   }
+   attribute ConsumptionUnits Text {
+      fetch = "DECODE(rate, null, null, Av_Fluid_Definition_API.Get_Consumption_Units(assembly_type_code, fluid_definition_id))";
+   }
+   attribute Status Text {
+      fetch = "Av_Hist_Fld_Service_Det_API.Get_Consumption_Status(fluid_service_id,fld_service_det_id,oil_status_code)";
+   }
+   attribute PartNoOem Text {
+      fetch = "Av_Inventory_API.Get_Part_No_Oem(inventory_id)";
+   }
+   attribute InventorySerialNoOem Text {
+      fetch = "Av_Inventory_API.Get_Inventory_Serial_No_Oem(inventory_id)";
+   }
+   attribute PersonName Text {
+      label = "Reviewed By";
+      fetch = "Fnd_User_API.Get_Description(reviewed_by)";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+
+   reference AvHistFluidServiceRef(FluidServiceId) to AvHistFluidService(FluidServiceId);
+   reference AvFluidDefinitionRef(AssemblyTypeCode, FluidDefinitionId) to AvFluidDefinition(AssemblyTypeCode, FluidDefinitionId);
+   reference AvConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+action ReviewFluidRecord {
+   initialcheck none;
+   ludependencies = AvHistFldServiceDet;
+   parameter FluidServiceId Number;
+   parameter FldServiceDetId Number;
+   parameter ReviewComment Text;
+}
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+structure ReviewStructure {
+   timestamptzref = "server";
+
+   attribute FluidServiceId Number;
+   attribute FldServiceDetId Number;
+   attribute ReviewComment Text;
+   attribute ReviewedBy Text;
+   attribute ReviewedDate Timestamp;
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

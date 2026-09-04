@@ -1,0 +1,49 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of turns with resource conflicts</DescriptiveText>
+    <LastModified>18/04/2024, 08:03:07</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_TURNS_WITH_RESOURCE_CONFLICTS_PROJECTION</Name>
+    <ID>57cb752a-3d8c-4f96-ade1-4820e4abc052</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>LockedBool</Column>
+            <Name>Locked Bool</Name>
+            <DataType>Boolean</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Condition</Column>
+            <Name>Condition</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>DepartureTime</Column>
+            <Name>Departure Time</Name>
+            <DataType>Date</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>ResourceAssignmentStatus</Column>
+            <Name>Resource Assignment Status</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>FlmTurnResourceSet</EntitySet>
+    <EntityType>FlmTurnResource</EntityType>
+    <Filter>ResourceAssignmentStatus eq 3 
+and (LockedBool eq false or LockedBool eq null) 
+and (Condition ne 'SCRAP' and Condition ne 'ARCHIVE') 
+and DepartureTime ne null</Filter>
+</ProjectionDataSource>

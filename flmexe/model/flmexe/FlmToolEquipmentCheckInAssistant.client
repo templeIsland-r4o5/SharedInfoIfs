@@ -1,0 +1,82 @@
+client FlmToolEquipmentCheckInAssistant;
+component FLMEXE;
+layer Core;
+projection FlmToolEquipmentCheckInAssistantHandling;
+description "Check In Tools and Equipment in Flm";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolEquipmentCheckInAssistantBase;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolsAndEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 40 {
+      label = "Tool Status - Checked In";
+      assistant ToolEquipmentCheckInAssistant;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+
+assistant ToolEquipmentCheckInAssistant using ToolEquipmentCheckInAssistantHeaderSet {
+   label = "Tool Status - Checked In";
+   savemode = OnLostFocus;
+
+   steps {
+      step {
+         group ToolEquipmentCheckInHeaderGroup;
+         list ToolEquipmentCheckInList(ToolEquipmentCheckInListArray);
+      }
+
+      final step {
+
+      }
+      cancelled step {
+
+      }
+   }
+   finish command {
+      label = "Check In";
+      enabled = [CheckedInBy != null];
+      execute {
+         call CheckInToolEquipment(Objkey);
+      }
+   }
+
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

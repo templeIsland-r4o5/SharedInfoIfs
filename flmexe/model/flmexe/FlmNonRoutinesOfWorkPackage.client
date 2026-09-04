@@ -1,0 +1,93 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250110  majslk  AD-16262, Added FlmNonRoutinesForWorkPackage client
+-----------------------------------------------------------------------------
+client FlmNonRoutinesOfWorkPackage;
+component FLMEXE;
+layer Core;
+projection FlmNonRoutinesOfWorkPackageHandling;
+description "Non Routines of Work Package client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment NonRoutines;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+page NonRoutinesOfWorkPackage using AvFaultSet {
+   label = "Non Routines of Work Package";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   initcontext PageInitContext;
+
+   list NonRoutinesListOfWp {
+      details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      searchcontext NonRoutinesCreatedByMeSearchContext {
+         defaults = GetDefaultValue();
+      }
+      filter = [IsCreatedByMe = true or IsCreatedByMe = searchcontext.NonRoutinesCreatedByMeSearchContext.IsCreatedByMe];
+   }
+}
+
+initcontext PageInitContext {
+   parameter Source Text;
+   parameter PageSource Text;
+   init command {
+      execute {
+         set Source = "${PageSource}";
+      }
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list NonRoutinesListOfWp clone NonRoutinesList {
+   badge Sensitivities {
+      columnvisible = [true];
+   }
+}
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

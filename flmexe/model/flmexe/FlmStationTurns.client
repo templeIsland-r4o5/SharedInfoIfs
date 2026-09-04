@@ -1,0 +1,223 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  240124  RAFALK  AD-11819,Changed the visibility of Work Assignment button in WorkAssignmentCmd
+--  230908  DUWJLK  AD-10542,Added  multiline true Feature to Work Package, Arrival Time and Departure Time Fields in the StationTurnsCard .
+--  230710  majslk  AD-9585, Modified code to support time zone changes
+--  220629  srchlk  AD-7648, Added ExternalId to TurnsList and StationTurnCard
+--  220125  sbanlk  AD-6542, Changed the navigations in WorkAssignmentCmd.
+--  211111  bhbalk  AD-3952, Created.
+-----------------------------------------------------------------------------
+client FlmStationTurns;
+component FLMEXE;
+layer Core;
+projection FlmStationTurnsHandling;
+description "This client is used to develop Station Turns Page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+entry StationTurnsCardNavEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2130 {
+   label = "Station Turns";
+   page StationTurnsPage;
+}
+
+page StationTurnsPage using StationTurnQuerySet {
+   label = "Station Turns";
+   list TurnsList {
+      details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command WorkAssignmentCmd for StationTurnQuery {
+   label = "Work Assignment";
+   visible = [FlightTurnStatus in("Arrived", "Inbound", "InMaintenance")];
+   execute {
+      call CheckTaskWorkAssigned(WorkPackageId) into AssignCount;
+      if[AssignCount = 0] {
+         navigate "/page/FlmSupervisorAircraftTurnsDetails/TurnWorkAssignmentsPage?$filter=FlightId eq $[FlightId]";
+      }
+      else {
+         navigate "/page/FlmTaskWorkAssignment/WorkTaskAssignmentPage?$filter=AircraftWpId eq $[WorkPackageId]";
+      }
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list TurnsList for StationTurnQuery {
+   orderby = ShedArrivalDateTime asc;
+   card StationTurnsCard;
+   initialview = CardView;
+   field AvAirportRef.IataCode;
+   field AircraftRef.RegCode {
+      label = "Aircraft Registration Code";
+   }
+   field AvAssemblyRef.AssemblyTypeName;
+   badge FlightTurnStatus {
+      label = "Flight Turn Status";
+      style = TextOnly;
+      size = Medium;
+      emphasis Complementary7 = [FlightTurnStatus = "Arrived"];
+      emphasis Complementary2 = [FlightTurnStatus = "Inbound"];
+      emphasis Danger = [FlightTurnStatus = "InMaintenance"];
+      emphasis True = [FlightTurnStatus = "Released"];
+      emphasis Neutral = [FlightTurnStatus = "Departed"];
+   }
+   field GroundTime {
+      label = "Time on Ground";
+      size = Small;
+   }
+   field NoOfOpenedFaults {
+      label = "Open Faults";
+      size = Small;
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Planned Work Package";
+      size = Medium;
+   }
+   field TotalHours {
+      label = "Total Hours";
+      size = Small;
+   }
+   field NoOfAssignedTasks {
+      label = "Work Tasks";
+      size = Small;
+   }
+   field LegNo {
+      label = "Arrival Flight";
+      size = Small;
+   }
+   field ArrivalGate {
+      label = "Arrival Gate";
+      size = Small;
+   }
+   field ActualArrivalDateTime {
+      label = "Arrival Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field AvFlightDepartureRef.LegNo {
+      label = "Departure Flight";
+      size = Small;
+   }
+   field AvFlightDepartureRef.DepartureGate {
+      label = "Departure Gate";
+      size = Small;
+   }
+   field ActualOutboundDeptDateTime {
+      label = "Departure Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field AvAircraftWorkPackageRef.ExternalId {
+      label = "External ID";
+      size = Medium;
+   }
+   command WorkAssignmentCmd;
+}
+
+card StationTurnsCard for StationTurnQuery {
+   label = "${AvAirportRef.IataCode} - ${AircraftRef.RegCode} - (${AvAssemblyRef.AssemblyTypeName})";
+   imagefield {
+      imagedata AircraftImage;
+      size = Large;
+      visible = [IsAircraftImageEmpty = 0];
+   }
+   badge FlightTurnStatus {
+      label = "";
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary7 = [FlightTurnStatus = "Arrived"];
+      emphasis Complementary2 = [FlightTurnStatus = "Inbound"];
+      emphasis Danger = [FlightTurnStatus = "InMaintenance"];
+      emphasis True = [FlightTurnStatus = "Released"];
+      emphasis Neutral = [FlightTurnStatus = "Departed"];
+   }
+   field GroundTime {
+      label = "Time on Ground";
+      size = Small;
+   }
+   field AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package";
+      size = Small;
+      multiline = true;
+   }
+   field TotalHours {
+      label = "Total Hours";
+      size = Small;
+   }
+   field NoOfAssignedTasks {
+      label = "Work Tasks";
+      size = Small;
+   }
+   field NoOfOpenedFaults {
+      label = "Open Faults";
+      size = Small;
+   }
+   field LegNo {
+      label = "Inbound Flight";
+      size = Small;
+   }
+   field AvFlightDepartureRef.LegNo {
+      label = "Outbound Flight";
+      size = Small;
+   }
+   field ActualArrivalDateTime {
+      label = "Arrival Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Small;
+      multiline = true;
+   }
+   field ActualOutboundDeptDateTime {
+      label = "Departure Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Small;
+      multiline = true;
+   }
+   field AvAircraftWorkPackageRef.ExternalId {
+      label = "External ID";
+      size = Medium;
+      visible = [false];
+   }
+}
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

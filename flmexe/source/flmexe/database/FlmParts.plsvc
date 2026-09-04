@@ -1,0 +1,2025 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmParts
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251124  OSNALK  AD-15406, Change GetAssyPosition function by adding AssmblConfigSlotPosId, added a elseif statement to plsql query.
+--  241016  wedilk  AD-14536, Change to use av_exe_task/jt_task_tab after changing AvExeTask with based on JtTask
+--  240610  PSUALK  AD-12718, Install Removal toggel in Part Requirment optimize code.
+--  240603  MAILLK  AD-12720,Added Removal_Reason_Code to the add part attr_
+--  240301  PSUALK  AD-12718, Install Removal toggel in Part Requirment 
+--  240301  majslk  AD-12350, Modified code to support Manadatory Config slot of MX publish parts
+--  240104  majslk  AD-10938, Implemented Get_Config_Slot_Status___ method
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  220726  DILDLK  AD-8056, Added Add_Task_Parts___
+--  220718  DILDLK  AD-8097, Added Add_Fault_Parts___ 
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Add_Parts_Virtual_Rec )
+IS
+   rec_dup_                  Add_Parts_Virtual_Rec;
+   add_part_requirement_defaults_   Add_Part_Defaults_Structure_Rec;
+   assembly_position_count_  NUMBER;
+   is_repairable_            VARCHAR2(10);
+   is_repairable_bool_       BOOLEAN;
+   info_                     VARCHAR2(32000);
+   proj_name_                VARCHAR2(200);
+   
+   CURSOR get_task_part_info IS
+      SELECT installed_part_no_id, part_group_id, assmbly_config_slot_pos_id, config_slot_position_id, installed_serial_no, installed_quantity, scheduling_action
+      FROM av_exe_task_part
+      WHERE task_part_id = rec_.installed_task_part_id;
+   
+   CURSOR get_part_info(part_number_id_ IN NUMBER,part_group_id_ IN NUMBER) IS
+      SELECT objkey, inventory_class_code, part_assembly_type_code, config_slot_code, is_repairable
+      FROM Part_List
+      WHERE part_number_id = part_number_id_ AND part_group_id = part_group_id_;
+   
+   CURSOR get_required_date_from_mmrl IS
+      SELECT date_required
+      FROM Maint_Material_Req_Line_Av_Uiv
+      WHERE maint_material_order_no = rec_.Maint_Material_Order_No AND line_item_no = rec_.Line_Item_No;
+   
+   CURSOR get_position_count(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT count(config_slot_position_id) 
+      FROM av_sub_assy_inventory_tab 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+   CURSOR get_remove_task_part_info IS
+      SELECT task_part_id, removal_reason_code
+      FROM av_exe_task_part
+      WHERE install_task_part_id = rec_.installed_task_part_id AND removed_user IS NULL;
+      
+   CURSOR get_task_info IS
+      SELECT task.aircraft_wp_id, task.aircraft_id, ac.alt_id, ac.assembly_type_code
+      FROM av_exe_task task
+      INNER JOIN aircraft ac
+      ON task.aircraft_id = ac.aircraft_id
+      WHERE task.task_seq = rec_.task_seq;
+      
+   CURSOR get_ipc_part_info(part_number_ IN VARCHAR2) IS
+      SELECT objkey, part_number_id, part_group_id, inventory_class_code, part_assembly_type_code, config_slot_code, config_slot_pos_id, is_repairable
+      FROM Part_List
+      WHERE part_number = part_number_
+      FETCH FIRST ROW ONLY;
+   
+BEGIN
+   rec_dup_ := rec_;
+   SELECT '${PROJECTION}' INTO proj_name_ FROM dual;
+   rec_dup_.projection_name := proj_name_;
+   
+   IF rec_dup_.operation_type = 'EDIT' THEN
+      OPEN get_task_part_info;
+      FETCH get_task_part_info INTO rec_dup_.part,rec_dup_.part_group_id,rec_dup_.assmbl_config_slot_pos_id,rec_dup_.config_slot_position_id,rec_dup_.installed_serial_no,rec_dup_.required_quantity,rec_dup_.scheduling_action;
+      CLOSE get_task_part_info;
+      
+      OPEN get_part_info(rec_dup_.part, rec_dup_.part_group_id);
+      FETCH get_part_info INTO rec_dup_.part_no_unq_id, rec_dup_.inventory_class_code, rec_dup_.assembly_type, rec_dup_.config_slot_code,is_repairable_;
+      CLOSE get_part_info;
+      
+      rec_dup_.part_assembly_type_code := rec_dup_.assembly_type;
+      
+      OPEN get_required_date_from_mmrl;
+      FETCH get_required_date_from_mmrl INTO rec_dup_.required_date;
+      CLOSE get_required_date_from_mmrl;
+      
+      rec_dup_.default_required_date := rec_dup_.required_date;
+      
+      OPEN  get_position_count(rec_dup_.assembly_type, rec_dup_.aircraft_id);
+      FETCH get_position_count INTO assembly_position_count_;
+      CLOSE get_position_count;
+      
+      IF assembly_position_count_ > 1 THEN
+         rec_dup_.assmbl_editable := TRUE;
+      ELSE 
+         rec_dup_.assmbl_editable := FALSE;
+      END IF;
+      
+      IF rec_dup_.inventory_class_code ='TRK' AND rec_dup_.assembly_type_code != rec_dup_.assembly_type THEN
+         rec_dup_.assmbl_visibility := TRUE;
+      ELSE
+         rec_dup_.assmbl_visibility := FALSE;
+      END IF;
+      
+      rec_dup_.include_installation := TRUE;
+      
+      OPEN get_remove_task_part_info;
+      FETCH get_remove_task_part_info INTO rec_dup_.removed_task_part_id,rec_dup_.removal_reason_code;
+      CLOSE get_remove_task_part_info;
+      
+      IF rec_dup_.removed_task_part_id IS NOT NULL THEN
+         rec_dup_.include_removal := TRUE;
+         IF rec_dup_.removal_reason_code IS NOT NULL THEN
+            rec_dup_.is_removal_reason_filled := TRUE;
+         END IF;
+      ELSE 
+         rec_dup_.include_removal := FALSE;
+      END IF;
+      rec_dup_.installation_exists := FALSE;
+      rec_dup_.removal_exists := FALSE;
+      rec_dup_.removal_visible := TRUE;
+      rec_dup_.is_modified := FALSE;
+      
+      rec_dup_.orgnl_part := rec_dup_.part;
+      rec_dup_.orgnl_part_group_id := rec_dup_.part_group_id;
+      rec_dup_.orgnl_required_quantity := rec_dup_.required_quantity;
+      rec_dup_.orgnl_config_slot_position_id := rec_dup_.config_slot_position_id;
+      rec_dup_.orgnl_assmbl_config_slot_pos_id := rec_dup_.assmbl_config_slot_pos_id; 
+      rec_dup_.orgnl_removal_reason_code := rec_dup_.removal_reason_code;
+      
+   END IF;
+
+   IF rec_dup_.operation_type = 'IPCPartSearch' THEN
+      OPEN get_task_info;
+      FETCH get_task_info INTO rec_dup_.wp_id, rec_dup_.aircraft_id, rec_dup_.aircraft_alt_id, rec_dup_.assembly_type_code;
+      CLOSE get_task_info; 
+      rec_dup_.required_quantity := 1;
+      OPEN get_ipc_part_info(rec_dup_.ipc_part_number);
+      FETCH get_ipc_part_info INTO rec_dup_.part_no_unq_id,rec_dup_.part,rec_dup_.part_group_id, rec_dup_.inventory_class_code, rec_dup_.assembly_type, rec_dup_.config_slot_code,rec_dup_.config_slot_position_id,is_repairable_;
+      IF get_ipc_part_info%FOUND THEN
+         CLOSE get_ipc_part_info;
+         rec_dup_.part_assembly_type_code := rec_dup_.assembly_type;
+         
+         OPEN  get_position_count(rec_dup_.assembly_type, rec_dup_.aircraft_id);
+         FETCH get_position_count INTO assembly_position_count_;
+         CLOSE get_position_count;
+         
+         IF assembly_position_count_ > 1 THEN
+            rec_dup_.assmbl_editable := TRUE;
+         ELSE 
+            rec_dup_.assmbl_editable := FALSE;
+         END IF;
+         
+         IF rec_dup_.inventory_class_code ='TRK' AND rec_dup_.assembly_type_code != rec_dup_.assembly_type THEN
+            rec_dup_.assmbl_visibility := TRUE;
+         ELSE
+            rec_dup_.assmbl_visibility := FALSE;
+         END IF;
+         
+         is_repairable_bool_ := (is_repairable_ ='TRUE');
+         add_part_requirement_defaults_ := Fetch_Add_Part_Defaults___(
+            source_id_  => rec_dup_.task_seq,
+            inventory_class_code_   => rec_dup_.inventory_class_code,
+            assembly_position_id_ => NULL,
+            config_slot_position_id_   => rec_dup_.config_slot_position_id,
+            is_repairable_ => is_repairable_bool_,
+            is_sub_assy_ => rec_dup_.assmbl_visibility,
+            source_of_add_part_ => 'Task',
+            assembly_type_ => rec_dup_.assembly_type,
+            aircraft_id_   => rec_dup_.aircraft_id,
+            info$_ => info_
+            );
+         
+         rec_dup_.include_installation := add_part_requirement_defaults_.Include_Installation;
+         rec_dup_.include_removal      := add_part_requirement_defaults_.Include_Removal;
+         rec_dup_.installation_exists  := add_part_requirement_defaults_.installation_exists;
+         rec_dup_.removal_exists       := add_part_requirement_defaults_.removal_exists;
+         rec_dup_.installation_visible := add_part_requirement_defaults_.installation_visible;
+         rec_dup_.removal_visible      := add_part_requirement_defaults_.removal_visible;
+         rec_dup_.required_date        := Get_Scheduling_Req_Date___ (rec_dup_.wp_id);
+         rec_dup_.default_required_date:= rec_dup_.required_date;
+      ELSE
+         CLOSE get_ipc_part_info;
+      END IF;
+      
+   END IF;
+   super(rec_dup_); 
+END CRUD_Create___;
+
+PROCEDURE Add_Fault_Parts___ (
+   fault_id_                  IN NUMBER,
+   part_number_id_            IN NUMBER,
+   required_quantity_         IN NUMBER,
+   part_group_id_             IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   is_include_installation_   IN BOOLEAN,
+   is_include_removal_        IN BOOLEAN, 
+   removal_reason_code_       IN VARCHAR2, 
+   installed_serial_no_       IN VARCHAR2,
+   removal_serial_no_         IN VARCHAR2, 
+   removal_part_number_id_    IN NUMBER,
+   removal_part_group_id_     IN NUMBER,
+   is_removal_reason_filled_  IN BOOLEAN,
+   sensitivities_             IN VARCHAR2 )
+IS
+   info_                     VARCHAR2(200);
+   objid_                    VARCHAR2(200);
+   objversion_               VARCHAR2(200);
+   attr_                     VARCHAR2(32000);
+   task_seq_                 NUMBER;
+   aircraft_wp_id_           NUMBER;
+   fault_part_id_var_        VARCHAR2(32000);
+   fault_part_id_            NUMBER;
+   fault_remove_part_id_var_ VARCHAR2(32000);
+   fault_remove_part_id_     NUMBER;
+   inventory_class_code_     VARCHAR2(50);
+   is_repairable_            VARCHAR2(20);
+   task_part_id_             NUMBER;
+   class_code_               VARCHAR2(20);
+
+   CURSOR get_repairable_bool (part_number_id_ IN NUMBER) IS 
+      SELECT av_part_number.inventory_class_code, av_part_number.is_repairable
+      FROM av_part_number
+      WHERE av_part_number.part_number_id = part_number_id_;
+    
+   CURSOR get_task_data IS
+      SELECT aircraft_wp_id, task_seq
+      FROM av_exe_task
+      WHERE task_seq = Av_Exe_Task_API.Get_Task_Seq(fault_id_);
+
+BEGIN
+   OPEN get_task_data;
+   FETCH get_task_data INTO aircraft_wp_id_,task_seq_;
+   CLOSE get_task_data;
+   
+   OPEN get_repairable_bool(part_number_id_);
+   FETCH get_repairable_bool INTO inventory_class_code_,is_repairable_;
+   CLOSE get_repairable_bool;
+
+   Client_SYS.Clear_Attr(attr_);
+   IF (task_seq_ IS NOT NULL) THEN
+      class_code_ := Av_Exe_Task_API.Get_Class_Code(task_seq_);
+      IF (is_include_removal_)THEN
+         Client_SYS.Add_To_Attr('FAULT_ID',                   fault_id_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         IF(removal_part_group_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           removal_part_group_id_,     attr_);
+         ELSE
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           part_group_id_,             attr_);
+         END IF;
+         IF(removal_part_number_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      removal_part_number_id_,    attr_);
+         ELSE 
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      part_number_id_,            attr_);
+         END IF;
+         Client_SYS.Add_To_Attr('REMOVED_QUANTITY',           required_quantity_,         attr_);
+         IF is_removal_reason_filled_ THEN
+            Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE',     removal_reason_code_,       attr_);
+         END IF;
+         IF(removal_serial_no_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO',       removal_serial_no_,         attr_);
+         END IF;
+         Av_Fault_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');
+         
+         fault_remove_part_id_var_ := Client_SYS.Get_Item_Value('FAULT_PART_ID', attr_);
+         fault_remove_part_id_     := Client_SYS.Attr_Value_To_Number(fault_remove_part_id_var_);
+         
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_PART_ID',              fault_remove_part_id_,      attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',                   task_seq_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         IF(removal_part_group_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           removal_part_group_id_,     attr_);
+         ELSE
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           part_group_id_,             attr_);
+         END IF;
+         IF(removal_part_number_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      removal_part_number_id_,    attr_);
+         ELSE 
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      part_number_id_,            attr_);
+         END IF;
+         Client_SYS.Add_To_Attr('REMOVED_QUANTITY',           required_quantity_,         attr_);
+         IF is_removal_reason_filled_ THEN
+            Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE',     removal_reason_code_,       attr_);
+         END IF;
+         IF(removal_serial_no_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO',       removal_serial_no_,         attr_);
+         END IF;
+         Av_Exe_Task_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+         task_part_id_ := Client_SYS.Get_Item_Value('TASK_PART_ID', attr_);
+         
+         IF (class_code_ = Av_Exe_Task_API.TASK_CLASS_CORR AND sensitivities_ IS NOT NULL) THEN 
+            Av_Exe_Task_Sens_API.Save_Effective_Sensitivities(task_seq_, sensitivities_);
+            Av_Exe_Task_Part_Sens_API.Save_Effective_Sensitivities(task_seq_,task_part_id_,sensitivities_);
+         END IF;   
+      END IF;  
+         
+      IF(is_include_installation_) THEN 
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_ID',                   fault_id_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID',              part_group_id_,             attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',       part_number_id_,            attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',         required_quantity_,         attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_SERIAL_NO',        installed_serial_no_,       attr_);
+         Av_Fault_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');     
+
+         fault_part_id_var_ := Client_SYS.Get_Item_Value('FAULT_PART_ID', attr_);
+         fault_part_id_     := Client_SYS.Attr_Value_To_Number(fault_part_id_var_);        
+
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_PART_ID',              fault_part_id_,             attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',                   task_seq_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID',              part_group_id_,             attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',       part_number_id_,            attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',         required_quantity_,         attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_SERIAL_NO',        installed_serial_no_,       attr_);
+         Av_Exe_Task_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+         task_part_id_ := Client_SYS.Get_Item_Value('TASK_PART_ID', attr_);
+         
+         IF (class_code_ = Av_Exe_Task_API.TASK_CLASS_CORR AND sensitivities_ IS NOT NULL) THEN 
+            Av_Exe_Task_Sens_API.Save_Effective_Sensitivities(task_seq_, sensitivities_);
+            Av_Exe_Task_Part_Sens_API.Save_Effective_Sensitivities(task_seq_,task_part_id_,sensitivities_);
+         END IF;   
+      END IF; 
+   ELSE          
+      Client_SYS.Clear_Attr(attr_); 
+      IF (is_include_removal_)THEN
+         Client_SYS.Add_To_Attr('FAULT_ID',                   fault_id_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         IF(removal_part_group_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           removal_part_group_id_,     attr_);
+         ELSE
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',           part_group_id_,             attr_);
+         END IF;
+         IF(removal_part_number_id_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      removal_part_number_id_,    attr_);
+         ELSE 
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      part_number_id_,            attr_);
+         END IF;
+         Client_SYS.Add_To_Attr('REMOVED_QUANTITY',           required_quantity_,         attr_);
+         IF is_removal_reason_filled_ THEN
+            Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE',     removal_reason_code_,       attr_);
+         END IF;
+         IF(removal_serial_no_ IS NOT NULL) THEN
+            Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO',       removal_serial_no_,         attr_);
+         END IF;
+         Av_Fault_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');
+      END IF;
+      
+      IF(is_include_installation_) THEN   
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_ID',                   fault_id_,                  attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID',              part_group_id_,             attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',       part_number_id_,            attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',         required_quantity_,         attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_SERIAL_NO',        installed_serial_no_,       attr_);
+         Av_Fault_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');    
+      END IF;
+   END IF;
+END Add_Fault_Parts___;
+
+PROCEDURE Add_Task_Parts___ (
+   task_seq_                  IN NUMBER,
+   part_number_id_            IN NUMBER,
+   required_quantity_         IN NUMBER,
+   part_group_id_             IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   is_include_installation_   IN BOOLEAN,
+   is_include_removal_        IN BOOLEAN, 
+   removal_reason_code_       IN VARCHAR2, 
+   installed_serial_no_       IN VARCHAR2,
+   removal_serial_no_         IN VARCHAR2, 
+   removal_part_number_id_    IN NUMBER,
+   removal_part_group_id_     IN NUMBER,
+   is_removal_reason_filled_  IN BOOLEAN,
+   scheduling_action_         IN VARCHAR2,
+   required_date_             IN DATE,
+   part_number_               IN VARCHAR2,
+   parent_key_                IN VARCHAR2,
+   sensitivities_             IN VARCHAR2,
+   note_                      IN VARCHAR2)
+IS
+   aircraft_wp_id_           NUMBER;
+   fault_id_                 NUMBER;
+   inventory_class_code_     VARCHAR2(50);
+   is_repairable_            VARCHAR2(20);
+   final_quantity_           NUMBER;
+   current_user_             VARCHAR2(40);
+   maint_material_order_no_  NUMBER;
+   install_task_part_id_     NUMBER;
+    
+   CURSOR get_fault_data IS
+      SELECT aircraft_wp_id, fault_id
+      FROM av_exe_task
+      WHERE task_seq = task_seq_;
+      
+      CURSOR get_repairable_bool (part_number_id_ IN NUMBER) IS 
+      SELECT av_part_number.inventory_class_code, av_part_number.is_repairable
+      FROM av_part_number
+      WHERE av_part_number.part_number_id = part_number_id_;
+   
+BEGIN
+   OPEN get_fault_data;
+   FETCH get_fault_data INTO aircraft_wp_id_,fault_id_;
+   CLOSE get_fault_data;
+   
+   OPEN get_repairable_bool(part_number_id_);
+   FETCH get_repairable_bool INTO inventory_class_code_,is_repairable_;
+   CLOSE get_repairable_bool;
+         
+   current_user_ := Fnd_Session_API.Get_Fnd_User();
+   
+   IF(is_include_installation_) THEN 
+      IF (scheduling_action_ = 'REQ') THEN
+         Av_Exe_Task_Part_Util_API.Av_Material_Req_Creation(maint_material_order_no_,task_seq_);
+      END IF;
+      IF (inventory_class_code_ = 'SER') THEN
+         final_quantity_ := 1;   
+         FOR i IN 1 .. required_quantity_ LOOP
+            Install_Parts__(fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, part_group_id_, part_number_id_, final_quantity_, installed_serial_no_, scheduling_action_, required_date_, part_number_, current_user_, maint_material_order_no_,install_task_part_id_, parent_key_, sensitivities_,note_); 
+            IF (is_include_removal_) THEN
+               Remove_Parts__ (fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, removal_part_group_id_, part_group_id_, removal_part_number_id_, part_number_id_, final_quantity_, removal_reason_code_, removal_serial_no_, is_removal_reason_filled_,install_task_part_id_,sensitivities_,current_user_); 
+            END IF;
+         END LOOP;
+      ELSE
+         Install_Parts__(fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, part_group_id_, part_number_id_, required_quantity_, installed_serial_no_, scheduling_action_, required_date_, part_number_, current_user_, maint_material_order_no_,install_task_part_id_, parent_key_, sensitivities_,note_);
+         IF (is_include_removal_) THEN
+               Remove_Parts__ (fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, removal_part_group_id_, part_group_id_, removal_part_number_id_, part_number_id_, required_quantity_, removal_reason_code_, removal_serial_no_, is_removal_reason_filled_,install_task_part_id_,sensitivities_,current_user_); 
+         END IF;
+      END IF;
+   END IF;
+   
+   IF (is_include_removal_ AND NOT is_include_installation_)THEN
+      IF (inventory_class_code_ = 'SER') THEN
+         final_quantity_ := 1;   
+         FOR i IN 1 .. required_quantity_ LOOP
+            Remove_Parts__ (fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, removal_part_group_id_, part_group_id_, removal_part_number_id_, part_number_id_, final_quantity_, removal_reason_code_, removal_serial_no_, is_removal_reason_filled_,install_task_part_id_,sensitivities_,current_user_); 
+         END LOOP;
+      ELSE
+         Remove_Parts__ (fault_id_, task_seq_, assmbl_config_slot_pos_id_, config_slot_position_id_, removal_part_group_id_, part_group_id_, removal_part_number_id_, part_number_id_, required_quantity_, removal_reason_code_, removal_serial_no_, is_removal_reason_filled_, NULL, sensitivities_,current_user_); 
+      END IF;  
+   END IF;
+END Add_Task_Parts___;
+
+@IgnoreUnitTest PLSQLInSQL
+PROCEDURE Create_Fault_Parts__ (
+   fault_part_id_             OUT VARCHAR2,
+   fault_id_                  IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   removal_part_group_id_     IN NUMBER    DEFAULT NULL,
+   installed_part_group_id_   IN NUMBER    DEFAULT NULL,
+   part_group_id_             IN NUMBER    DEFAULT NULL,
+   removal_part_number_id_    IN NUMBER    DEFAULT NULL,
+   installed_part_number_id_  IN NUMBER    DEFAULT NULL,
+   part_number_id_            IN NUMBER    DEFAULT NULL,
+   removed_quantity_          IN NUMBER    DEFAULT NULL,
+   installed_quantity_        IN NUMBER    DEFAULT NULL,
+   removal_reason_code_       IN VARCHAR2  DEFAULT NULL,
+   removal_serial_no_         IN VARCHAR2  DEFAULT NULL,
+   is_removal_reason_filled_  IN BOOLEAN   DEFAULT NULL,
+   installed_serial_no_       IN VARCHAR2  DEFAULT NULL)
+IS
+   info_                      VARCHAR2(200);
+   objid_                     VARCHAR2(200);
+   objversion_                VARCHAR2(200);
+   attr_                      VARCHAR2(32000);
+BEGIN
+   Client_SYS.Clear_Attr(attr_);
+   Client_SYS.Add_To_Attr('FAULT_ID',                   fault_id_,                  attr_);
+   Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+   Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',    config_slot_position_id_,   attr_);
+   IF(removal_part_group_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('PART_GROUP_ID',           removal_part_group_id_,     attr_);
+   ELSIF(installed_part_group_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('PART_GROUP_ID',              installed_part_group_id_,                 attr_);
+   ELSE
+      Client_SYS.Add_To_Attr('PART_GROUP_ID',           part_group_id_,             attr_);
+   END IF;
+   IF(removal_part_number_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      removal_part_number_id_,    attr_);
+   ELSIF(installed_part_number_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',       installed_part_number_id_,                attr_);
+   ELSE 
+      Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',      part_number_id_,            attr_);
+   END IF;
+   IF(removed_quantity_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_QUANTITY',           removed_quantity_,         attr_);
+   END IF;
+   IF(installed_quantity_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',         installed_quantity_,             attr_);
+   END IF;
+   IF is_removal_reason_filled_ THEN
+      Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE',     removal_reason_code_,       attr_);
+   END IF;
+   IF(removal_serial_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO',       removal_serial_no_,         attr_);
+   END IF;
+   IF(installed_serial_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_SERIAL_NO',        installed_serial_no_,           attr_);
+   END IF;
+   
+   Av_Fault_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   
+   fault_part_id_ := Client_SYS.Get_Item_Value('FAULT_PART_ID', attr_);
+END Create_Fault_Parts__;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Create_Task_Parts__ (
+   fault_part_id_             IN NUMBER    DEFAULT NULL,
+   task_seq_                  IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   removal_part_group_id_     IN NUMBER    DEFAULT NULL,
+   installed_part_group_id_   IN NUMBER    DEFAULT NULL,
+   part_group_id_             IN NUMBER    DEFAULT NULL,
+   removal_part_number_id_    IN NUMBER    DEFAULT NULL,
+   installed_part_number_id_  IN NUMBER    DEFAULT NULL,
+   part_number_id_            IN NUMBER    DEFAULT NULL,
+   removed_quantity_          IN NUMBER    DEFAULT NULL,
+   installed_quantity_        IN NUMBER    DEFAULT NULL,
+   removal_reason_code_       IN VARCHAR2  DEFAULT NULL,
+   removal_serial_no_         IN VARCHAR2  DEFAULT NULL,
+   is_removal_reason_filled_  IN BOOLEAN   DEFAULT NULL,
+   installed_serial_no_       IN VARCHAR2  DEFAULT NULL,
+   scheduling_action_         IN VARCHAR2  DEFAULT NULL,
+   maint_material_order_no_   IN NUMBER    DEFAULT NULL,
+   required_date_             IN DATE      DEFAULT NULL,
+   part_number_               IN VARCHAR2  DEFAULT NULL,
+   current_user_              IN VARCHAR2  DEFAULT NULL,
+   install_task_part_id_      IN NUMBER    DEFAULT NULL,
+   task_part_id_              OUT NUMBER,
+   parent_key_                IN VARCHAR2  DEFAULT NULL,
+   sensitivities_             IN VARCHAR2 ,
+   note_                      IN VARCHAR2  DEFAULT NULL
+   )
+IS
+   info_                      VARCHAR2(200);
+   objid_                     VARCHAR2(200);
+   objversion_                VARCHAR2(200);
+   attr_                      VARCHAR2(32000);
+   order_no_                  NUMBER;
+   line_no_                   NUMBER;
+   out_task_part_id_var_      VARCHAR2(20) := NULL;
+   class_code_                VARCHAR2(20);
+BEGIN
+   Client_SYS.Clear_Attr(attr_);
+   IF(fault_part_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('FAULT_PART_ID', fault_part_id_, attr_);
+   END IF;
+   Client_SYS.Add_To_Attr('TASK_SEQ', task_seq_, attr_);
+   Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+   Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', config_slot_position_id_, attr_);
+   IF(removal_part_group_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('PART_GROUP_ID', removal_part_group_id_, attr_);
+   ELSIF(installed_part_group_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('PART_GROUP_ID', installed_part_group_id_, attr_);
+   ELSE
+      Client_SYS.Add_To_Attr('PART_GROUP_ID', part_group_id_, attr_);
+   END IF;
+   IF(removal_part_number_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID', removal_part_number_id_, attr_);
+   ELSIF(installed_part_number_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID', installed_part_number_id_,                attr_);
+   ELSE 
+      Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID', part_number_id_, attr_);
+   END IF;
+   IF(removed_quantity_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_QUANTITY', removed_quantity_, attr_);
+   END IF;
+   IF(installed_quantity_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_QUANTITY', installed_quantity_, attr_);
+   END IF;
+   IF is_removal_reason_filled_ THEN
+      Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE', removal_reason_code_, attr_);
+   END IF;
+   IF(removal_serial_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO', removal_serial_no_, attr_);
+   END IF;
+   IF(installed_serial_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALLED_SERIAL_NO', installed_serial_no_, attr_);
+   END IF;
+   IF(scheduling_action_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('SCHEDULING_ACTION', scheduling_action_, attr_);
+   END IF;
+   IF(maint_material_order_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('MAINT_MATERIAL_ORDER_NO', maint_material_order_no_, attr_);
+   END IF;
+   IF (scheduling_action_ = 'REQ') THEN
+      order_no_ := maint_material_order_no_;
+      Av_Exe_Task_Part_Util_API.Av_Material_Req_Line_Creation(maint_material_order_no_ => order_no_,
+                                                              line_no_                 => line_no_,
+                                                              task_seq_                => task_seq_,
+                                                              part_number_             => part_number_,
+                                                              mat_quantity_            => installed_quantity_,
+                                                              date_required_           => required_date_,
+                                                              note_                    => note_);
+      IF (parent_key_ IS NOT null) THEN
+         Create_Interchange_Parts(task_seq_, order_no_, line_no_, parent_key_);
+      END IF;
+   END IF;            
+   IF(line_no_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('LINE_ITEM_NO', line_no_, attr_);
+   END IF;
+   IF(install_task_part_id_ IS NOT NULL) THEN
+      Client_SYS.Add_To_Attr('INSTALL_TASK_PART_ID', install_task_part_id_, attr_);
+   END IF;
+   Av_Exe_Task_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   
+   out_task_part_id_var_ := Client_SYS.Get_Item_Value('TASK_PART_ID', attr_);
+   task_part_id_ := Client_SYS.Attr_Value_To_Number(out_task_part_id_var_);
+   class_code_ := Av_Exe_Task_API.Get_Class_Code(task_seq_);
+   
+   IF(task_seq_ IS NOT NULL AND class_code_ = Av_Exe_Task_API.TASK_CLASS_CORR AND sensitivities_ IS NOT NULL) THEN 
+      Av_Exe_Task_Sens_API.Save_Effective_Sensitivities(task_seq_, sensitivities_);
+      Av_Exe_Task_Part_Sens_API.Save_Effective_Sensitivities(task_seq_,task_part_id_,sensitivities_);
+   END IF;      
+END Create_Task_Parts__;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Remove_Parts__ (
+   fault_id_                  IN NUMBER,
+   task_seq_                  IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   removal_part_group_id_     IN NUMBER,
+   part_group_id_             IN NUMBER,
+   removal_part_number_id_    IN NUMBER,
+   part_number_id_            IN NUMBER,
+   required_quantity_         IN NUMBER,
+   removal_reason_code_       IN VARCHAR2,
+   removal_serial_no_         IN VARCHAR2,
+   is_removal_reason_filled_  IN BOOLEAN,
+   install_task_part_id_      IN NUMBER,
+   sensitivities_             IN VARCHAR2,
+   current_user_              IN VARCHAR2)
+IS
+   fault_remove_part_id_var_  VARCHAR2(32000);
+   fault_remove_part_id_      NUMBER;
+   removal_task_part_id_      NUMBER;
+BEGIN
+   IF (fault_id_ IS NOT NULL) THEN
+      Create_Fault_Parts__(
+         fault_part_id_             => fault_remove_part_id_var_,
+         fault_id_                  => fault_id_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         removal_part_group_id_     => removal_part_group_id_,
+         part_group_id_             => part_group_id_,
+         removal_part_number_id_    => removal_part_number_id_,
+         part_number_id_            => part_number_id_,
+         removed_quantity_          => required_quantity_,
+         removal_reason_code_       => removal_reason_code_,
+         removal_serial_no_         => removal_serial_no_,
+         is_removal_reason_filled_  => is_removal_reason_filled_
+      );
+      fault_remove_part_id_     := Client_SYS.Attr_Value_To_Number(fault_remove_part_id_var_);
+      
+      Create_Task_Parts__(
+         fault_part_id_             => fault_remove_part_id_,
+         task_seq_                  => task_seq_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         removal_part_group_id_     => removal_part_group_id_,
+         part_group_id_             => part_group_id_,
+         removal_part_number_id_    => removal_part_number_id_,
+         part_number_id_            => part_number_id_,
+         removed_quantity_          => required_quantity_,
+         removal_reason_code_       => removal_reason_code_,
+         removal_serial_no_         => removal_serial_no_,
+         is_removal_reason_filled_  => is_removal_reason_filled_,
+         install_task_part_id_      => install_task_part_id_,
+         task_part_id_              => removal_task_part_id_,
+         sensitivities_             => sensitivities_,
+         current_user_              => current_user_
+      );
+
+   ELSE
+      Create_Task_Parts__(
+         task_seq_                  => task_seq_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         removal_part_group_id_     => removal_part_group_id_,
+         part_group_id_             => part_group_id_,
+         removal_part_number_id_    => removal_part_number_id_,
+         part_number_id_            => part_number_id_,
+         removed_quantity_          => required_quantity_,
+         removal_reason_code_       => removal_reason_code_,
+         removal_serial_no_         => removal_serial_no_,
+         is_removal_reason_filled_  => is_removal_reason_filled_,
+         install_task_part_id_      => install_task_part_id_,
+         task_part_id_              => removal_task_part_id_,
+         sensitivities_             => sensitivities_,
+         current_user_              => current_user_
+      );
+   END IF;
+END Remove_Parts__;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Install_Parts__ (
+   fault_id_                  IN NUMBER,
+   task_seq_                  IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_   IN NUMBER,
+   part_group_id_             IN NUMBER,
+   part_number_id_            IN NUMBER,
+   required_quantity_         IN NUMBER,
+   installed_serial_no_       IN VARCHAR2,
+   scheduling_action_         IN VARCHAR2,
+   required_date_             IN DATE,
+   part_number_               IN VARCHAR2,
+   current_user_              IN VARCHAR2,
+   maint_material_order_no_   IN NUMBER,
+   install_task_part_id_      OUT NUMBER,
+   parent_key_                IN VARCHAR2,
+   sensitivities_             IN VARCHAR2,
+   note_                      IN VARCHAR2)
+IS
+   fault_part_id_var_         VARCHAR2(32000);
+   fault_part_id_             NUMBER;
+BEGIN   
+   IF (fault_id_ IS NOT NULL) THEN
+      Create_Fault_Parts__(
+         fault_part_id_             => fault_part_id_var_,
+         fault_id_                  => fault_id_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         installed_part_group_id_   => part_group_id_,
+         installed_part_number_id_  => part_number_id_,
+         installed_quantity_        => required_quantity_,
+         installed_serial_no_       => installed_serial_no_
+      );
+      
+      fault_part_id_     := Client_SYS.Attr_Value_To_Number(fault_part_id_var_);        
+      
+      Create_Task_Parts__(
+         fault_part_id_             => fault_part_id_,
+         task_seq_                  => task_seq_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         installed_part_group_id_   => part_group_id_,
+         installed_part_number_id_  => part_number_id_,
+         installed_quantity_        => required_quantity_,
+         installed_serial_no_       => installed_serial_no_,
+         scheduling_action_         => scheduling_action_,
+         maint_material_order_no_   => maint_material_order_no_,
+         required_date_             => required_date_,
+         part_number_               => part_number_,
+         current_user_              => current_user_,
+         task_part_id_              => install_task_part_id_,
+         parent_key_                => parent_key_,
+         sensitivities_             => sensitivities_,
+         note_                      => note_
+      );
+   ELSE
+      Create_Task_Parts__(
+         task_seq_                  => task_seq_,
+         assmbl_config_slot_pos_id_ => assmbl_config_slot_pos_id_,
+         config_slot_position_id_   => config_slot_position_id_,
+         installed_part_group_id_   => part_group_id_,
+         installed_part_number_id_  => part_number_id_,
+         installed_quantity_        => required_quantity_,
+         installed_serial_no_       => installed_serial_no_,
+         scheduling_action_         => scheduling_action_,
+         maint_material_order_no_   => maint_material_order_no_,
+         required_date_             => required_date_,
+         part_number_               => part_number_,
+         current_user_              => current_user_,
+         task_part_id_              => install_task_part_id_,
+         parent_key_                => parent_key_,
+         sensitivities_             => sensitivities_,
+         note_                      => note_
+      );
+   END IF;
+END Install_Parts__;
+
+FUNCTION Get_Part_Group_Info___ (
+   part_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2, 
+   aircraft_id_ IN NUMBER, 
+   inventory_class_code_ IN VARCHAR2) RETURN Part_Group_Info_Structure_Rec
+IS
+   part_group_info_rec_      Part_Group_Info_Structure_Rec;
+   aircraft_assembly_        aircraft_tab.assembly_type_code%TYPE;
+   part_group_count_         NUMBER;
+   part_group_id_            NUMBER;
+   assembly_position_count_  NUMBER;
+   config_slot_pos_count_    NUMBER;
+   
+   CURSOR get_part_group_count IS 
+      SELECT  count(pgp.part_group_id) 
+      FROM av_part_group_part_tab pgp
+      INNER JOIN av_part_group_tab pg
+      ON pgp.part_group_id = pg.part_group_id
+      WHERE pgp.part_no_id = part_
+      AND(pg.assembly_type_code = assembly_type_code_
+      OR  pg.is_common_hardware = 'TRUE');
+    
+   CURSOR get_part_group_info IS
+      SELECT pg.part_group_id, pg.assembly_type_code, pg.config_slot_code 
+      FROM av_part_group_part_tab pgp
+      INNER JOIN av_part_group_tab pg
+      ON pgp.part_group_id = pg.part_group_id
+      WHERE pgp.part_no_id = part_
+      AND (pg.assembly_type_code = assembly_type_code_
+      OR  pg.is_common_hardware = 'TRUE');
+    
+   CURSOR get_config_slot_position_id(assembly_type_code_ VARCHAR2, config_slot_code_ VARCHAR2) IS
+      SELECT config_slot_position_id
+      FROM av_config_slot_position_tab
+      WHERE assembly_type_code = assembly_type_code_
+      AND config_slot_code = config_slot_code_;
+   
+   CURSOR get_aircraft_assembly(aircraft_id_ NUMBER) IS
+      SELECT assembly_type_code
+      FROM aircraft_tab
+      WHERE aircraft_id = aircraft_id_;
+      
+   CURSOR get_config_position_count(assembly_type_code_ VARCHAR2, config_slot_code_ VARCHAR2) IS 
+      SELECT count(config_slot_position_code)
+      FROM av_config_slot_position_tab
+      WHERE assembly_type_code = assembly_type_code_
+      AND config_slot_code = config_slot_code_;
+   
+   CURSOR get_position_count(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT count(config_slot_position_id) 
+      FROM av_sub_assy_inventory_tab 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+    
+    CURSOR get_assembly_position_id(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT config_slot_position_id 
+      FROM av_sub_assy_inventory_tab 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+BEGIN
+   OPEN  get_part_group_count;
+   FETCH get_part_group_count INTO part_group_count_;
+   CLOSE get_part_group_count;
+
+   IF part_group_count_ = 1 THEN 
+      OPEN  get_part_group_info;
+      FETCH get_part_group_info INTO part_group_id_, part_group_info_rec_.assembly_type_code, part_group_info_rec_.config_slot_code;
+      CLOSE get_part_group_info;
+   
+      part_group_info_rec_.part_group_id := part_group_id_;
+      part_group_info_rec_.config_slot_status := Av_Config_Slot_API.is_mandatory_config_slot(part_group_id_);
+      
+      IF part_group_info_rec_.config_slot_code IS NOT NULL THEN
+         OPEN  get_config_position_count(assembly_type_code_, part_group_info_rec_.config_slot_code);
+         FETCH get_config_position_count INTO config_slot_pos_count_;
+         CLOSE get_config_position_count;
+         
+         IF config_slot_pos_count_ = 1 THEN 
+            OPEN  get_config_slot_position_id(assembly_type_code_, part_group_info_rec_.config_slot_code);
+            FETCH get_config_slot_position_id INTO part_group_info_rec_.config_slot_position_id;
+            CLOSE get_config_slot_position_id;
+         END IF;
+      END IF;
+      
+      OPEN  get_aircraft_assembly(aircraft_id_);
+      FETCH get_aircraft_assembly INTO aircraft_assembly_;
+      CLOSE get_aircraft_assembly;
+
+      IF inventory_class_code_='TRK' AND aircraft_assembly_ != assembly_type_code_ THEN
+         part_group_info_rec_.assmbl_visibility := TRUE;
+      ELSE
+         part_group_info_rec_.assmbl_visibility := FALSE;
+      END IF;
+   
+      OPEN  get_position_count(assembly_type_code_, aircraft_id_);
+      FETCH get_position_count INTO assembly_position_count_;
+      CLOSE get_position_count;
+
+      IF assembly_position_count_ > 1 THEN
+         part_group_info_rec_.assmbl_editable := TRUE;
+      ELSE 
+         part_group_info_rec_.assmbl_editable := FALSE;
+      END IF;
+       
+      IF assembly_position_count_ = 1 THEN     
+         OPEN  get_assembly_position_id(assembly_type_code_, aircraft_id_);
+         FETCH get_assembly_position_id INTO part_group_info_rec_.assembly_position_id;
+         CLOSE get_assembly_position_id;
+      ELSE 
+         part_group_info_rec_.assembly_position_id := NULL;
+      END IF;
+   
+      RETURN part_group_info_rec_;
+   ELSE
+      RETURN NULL;
+   END IF;
+END Get_Part_Group_Info___;
+
+FUNCTION Get_Assembly_Type___ (
+   part_group_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   CURSOR get_assembly_type IS
+   SELECT assembly_type_code
+   FROM av_part_group_tab
+   WHERE part_group_id = part_group_id_;
+   
+   assembly_type_code_ VARCHAR2(10);
+BEGIN
+	OPEN get_assembly_type;
+   FETCH get_assembly_type INTO assembly_type_code_;
+   CLOSE get_assembly_type;
+   
+   RETURN assembly_type_code_;
+END Get_Assembly_Type___;
+
+
+FUNCTION Get_Assy_Position___ (
+   aircraft_id_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2,
+   assmbl_config_slot_pos_id_ IN NUMBER) RETURN NUMBER
+IS
+   CURSOR get_position IS
+   SELECT count(*)
+   FROM Av_Sub_Assy_Inventory 
+   WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+   position_count_ NUMBER;
+   position_  NUMBER;
+BEGIN
+	OPEN  get_position;
+   FETCH get_position INTO position_count_;
+   CLOSE get_position;
+   
+   IF position_count_ = 1  THEN
+      SELECT config_slot_position_id 
+      INTO position_
+      FROM Av_Sub_Assy_Inventory 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+ 
+   ELSIF assmbl_config_slot_pos_id_ IS NOT NULL THEN
+      position_ := assmbl_config_slot_pos_id_;
+   ELSE 
+      position_ := NULL;
+   END IF;
+   
+   RETURN position_;
+END Get_Assy_Position___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Config_Slot_Status___ (
+   part_group_id_ IN NUMBER) RETURN VARCHAR2
+IS
+BEGIN
+	RETURN Av_Config_Slot_API.Is_Mandatory_Config_Slot(part_group_id_);
+END Get_Config_Slot_Status___;
+
+
+FUNCTION Fetch_Add_Part_Defaults___ (
+   source_id_               IN  NUMBER,
+   inventory_class_code_    IN  VARCHAR2,
+   assembly_position_id_    IN  NUMBER,
+   config_slot_position_id_ IN  NUMBER,
+   is_repairable_           IN  BOOLEAN,
+   is_sub_assy_             IN  BOOLEAN,
+   source_of_add_part_      IN  VARCHAR2,
+   assembly_type_           IN  VARCHAR2,
+   aircraft_id_             IN  NUMBER,
+   info$_                     OUT VARCHAR2) RETURN Add_Part_Defaults_Structure_Rec
+IS
+   add_part_requirement_defaults_   Add_Part_Defaults_Structure_Rec;
+   
+   track_installation_count_  NUMBER;
+   track_removal_count_       NUMBER;
+   aircraft_assembly_type_    VARCHAR2(100);
+   config_slot_code_          VARCHAR2(50);
+   config_slot_position_code_ VARCHAR2(200);
+   reg_code_                  VARCHAR2(10);
+   ifs_user_                  VARCHAR2(100);
+      
+   CURSOR get_track_installation_for_task IS
+   SELECT count(*)
+   FROM Av_Exe_Task_Part
+   WHERE task_seq = source_id_ AND (assmbly_config_slot_pos_id IS NULL OR assmbly_config_slot_pos_id = assembly_position_id_) AND config_slot_position_id = config_slot_position_id_ AND installed_part_no_id IS NOT NULL;
+   
+   CURSOR get_track_removal_for_task IS
+   SELECT count(*)
+   FROM Av_Exe_Task_Part
+   WHERE task_seq = source_id_ AND (assmbly_config_slot_pos_id IS NULL OR assmbly_config_slot_pos_id = assembly_position_id_) AND config_slot_position_id = config_slot_position_id_ AND removed_part_no_id IS NOT NULL;   
+   
+   CURSOR get_track_installation_for_fault IS
+   SELECT count(*)
+   FROM Av_Fault_Part
+   WHERE fault_id = source_id_ AND (assmbly_config_slot_pos_id IS NULL OR assmbly_config_slot_pos_id = assembly_position_id_) AND config_slot_position_id = config_slot_position_id_ AND installed_part_no_id IS NOT NULL;
+   
+   CURSOR get_track_removal_for_fault IS
+   SELECT count(*)
+   FROM Av_Fault_Part
+   WHERE fault_id = source_id_ AND (assmbly_config_slot_pos_id IS NULL OR assmbly_config_slot_pos_id = assembly_position_id_) AND config_slot_position_id = config_slot_position_id_ AND removed_part_no_id IS NOT NULL;   
+   
+   CURSOR get_aircraft_Assembly_type IS
+   SELECT Assembly_Type_Code 
+   FROM Aircraft_tab 
+   WHERE Aircraft_Id=aircraft_id_;
+   
+BEGIN
+   add_part_requirement_defaults_.installation_exists  := FALSE;
+   add_part_requirement_defaults_.removal_exists       := FALSE;
+   add_part_requirement_defaults_.installation_visible := TRUE;
+   add_part_requirement_defaults_.removal_visible      := TRUE;
+   add_part_requirement_defaults_.Include_Installation := TRUE;
+   add_part_requirement_defaults_.Include_Removal      := TRUE;
+   
+   IF (inventory_class_code_ IN ('SER', 'KIT') OR(inventory_class_code_ = 'BATCH' AND is_repairable_)) THEN    
+      add_part_requirement_defaults_.installation_exists := FALSE;
+      add_part_requirement_defaults_.removal_exists      := FALSE;
+   END IF;
+   IF (inventory_class_code_ = 'KIT' OR (inventory_class_code_ = 'BATCH' AND NOT is_repairable_)) THEN
+      add_part_requirement_defaults_.installation_exists  := FALSE;
+      add_part_requirement_defaults_.Include_Removal      := FALSE;
+   END IF;
+   IF inventory_class_code_='ASSY' THEN
+      OPEN get_aircraft_Assembly_type;
+      FETCH get_aircraft_Assembly_type INTO aircraft_assembly_type_;
+      CLOSE get_aircraft_Assembly_type;
+      IF(aircraft_assembly_type_!=assembly_type_) THEN
+         add_part_requirement_defaults_.installation_visible := TRUE;
+         add_part_requirement_defaults_.removal_visible      := TRUE;
+      END IF;
+   END IF;
+   IF (inventory_class_code_ IN ('TRK', 'ASSY') AND config_slot_position_id_ IS NOT NULL ) THEN 
+      IF (source_of_add_part_ =  'Task') THEN 
+         OPEN  get_track_installation_for_task;
+         FETCH get_track_installation_for_task INTO track_installation_count_;
+         CLOSE get_track_installation_for_task;
+         
+         OPEN  get_track_removal_for_task;
+         FETCH get_track_removal_for_task INTO track_removal_count_;
+         CLOSE get_track_removal_for_task;
+      ELSE
+         OPEN  get_track_installation_for_fault;
+         FETCH get_track_installation_for_fault INTO track_installation_count_;
+         CLOSE get_track_installation_for_fault;
+         
+         OPEN  get_track_removal_for_fault;
+         FETCH get_track_removal_for_fault INTO track_removal_count_;
+         CLOSE get_track_removal_for_fault;
+      END IF;
+      IF track_installation_count_ > 0 THEN
+         add_part_requirement_defaults_.installation_exists  := TRUE;
+      END IF;  
+      IF track_removal_count_ > 0 THEN
+         add_part_requirement_defaults_.removal_exists := TRUE;
+      END IF;
+   END IF;
+   IF(inventory_class_code_ IN ('TRK') AND    is_sub_assy_  AND  (config_slot_position_id_ IS  NULL OR assembly_position_id_ IS NULL )) THEN
+      add_part_requirement_defaults_.installation_visible := FALSE;
+      add_part_requirement_defaults_.removal_visible      := FALSE;
+   ELSE
+      IF(inventory_class_code_ IN ('TRK', 'ASSY') AND NOT is_sub_assy_ AND config_slot_position_id_ IS NULL) THEN 
+         add_part_requirement_defaults_.installation_visible := FALSE;
+         add_part_requirement_defaults_.removal_visible      := FALSE;
+      END IF;
+   END IF;
+   Client_SYS.Clear_Info();
+   IF(add_part_requirement_defaults_.installation_exists AND add_part_requirement_defaults_.removal_exists) THEN
+      IF(source_of_add_part_ = 'Fault') THEN
+         Client_SYS.Add_Info(lu_name_,'EXISTSINSTALLREMOVEFAULT:Installation and removal part requirements already exist in the fault');
+      ELSE        
+         Client_SYS.Add_Info(lu_name_,'EXISTSINSTALLREMOVETASK:Installation and removal part requirements already exist in the task');
+      END IF;
+      add_part_requirement_defaults_.Include_Installation := FALSE;
+      add_part_requirement_defaults_.Include_Removal      := FALSE;
+   END IF;
+   IF(add_part_requirement_defaults_.installation_exists AND NOT add_part_requirement_defaults_.removal_exists) THEN
+      IF(source_of_add_part_ = 'Fault') THEN
+         Client_SYS.Add_Info(lu_name_,'EXISTSINSTALLFAULT:Installation part requirement already exists in the fault');
+      ELSE 
+         Client_SYS.Add_Info(lu_name_,'EXISTSINSTALLTASK:Installation part requirement already exists in the task');
+      END IF;
+      add_part_requirement_defaults_.Include_Installation := FALSE;
+      add_part_requirement_defaults_.Include_Removal      := TRUE;
+   END IF;
+   IF((NOT add_part_requirement_defaults_.installation_exists) AND add_part_requirement_defaults_.removal_exists AND(NOT(inventory_class_code_ = 'BATCH' AND NOT is_repairable_)))  THEN
+      IF (source_of_add_part_ = 'Fault') THEN
+         Client_SYS.Add_Info(lu_name_,'EXISTSREMOVEFAULT:Removal part requirement already exists in the fault');
+      ELSE                  
+         Client_SYS.Add_Info(lu_name_,'EXISTSREMOVETASK:Removal part requirement already exists in the task');
+      END IF;
+      add_part_requirement_defaults_.Include_Installation := TRUE;
+      add_part_requirement_defaults_.Include_Removal      := FALSE;
+   END IF;
+   config_slot_code_ := Av_Config_Slot_Position_API.Get_Config_Slot_Code(config_slot_position_id_);
+   config_slot_position_code_ := Av_Config_Slot_Position_API.Get_Config_Slot_Position_Code(config_slot_position_id_);
+   reg_code_ := Aircraft_API.Get_Reg_Code(aircraft_id_);
+   ifs_user_ := Fnd_Session_API.Get_Fnd_User();
+   add_part_requirement_defaults_.config_slot_code := config_slot_code_;
+   add_part_requirement_defaults_.config_slot_position_code := config_slot_position_code_;
+   add_part_requirement_defaults_.reg_code := reg_code_;
+   add_part_requirement_defaults_.ifs_user := ifs_user_;
+   info$_ := Client_SYS.Get_All_Info;
+   RETURN add_part_requirement_defaults_;
+END Fetch_Add_Part_Defaults___;
+
+
+FUNCTION Get_Part_Number_Info___ (
+   part_number_alt_id_ IN VARCHAR2,
+   aircraft_id_ IN NUMBER,
+   assembly_type_ IN VARCHAR2) RETURN Av_Part_Info_Structure_Rec
+IS
+   part_info_rec_    Av_Part_Info_Structure_Rec;
+   part_group_id_    av_part_group_tab.part_group_id%TYPE;
+   is_repairable_    av_part_number_tab.is_repairable%TYPE;
+   sub_assy_count_   NUMBER;
+   
+   CURSOR get_part_info(part_number_alt_id_ VARCHAR2) IS
+      SELECT 
+         p.part_number_id, p.inventory_class_code, p.is_repairable, pg.part_group_id, pg.assembly_type_code 
+      FROM   
+         av_part_number_tab p 
+      INNER JOIN av_part_group_part_tab pgp 
+      ON pgp.part_no_id = p.part_number_id 
+      INNER JOIN av_part_group_tab pg
+      ON pg.part_group_id = pgp.part_group_id
+      WHERE  p.alt_id = part_number_alt_id_
+      AND ((p.inventory_class_code != 'ASSY') OR (p.inventory_class_code = 'ASSY' AND pg.assembly_type_code = assembly_type_))
+      AND pgp.rowid IN (SELECT MAX(ipgp.rowid)
+                        FROM   av_part_group_part_tab ipgp
+                        INNER  JOIN av_part_group_tab ipg  
+                        ON     ipgp.part_group_id = ipg.part_group_id
+                        GROUP  BY ipgp.part_no_id, ipg.assembly_type_code);
+      
+   CURSOR get_part_objkey(part_number_id_ NUMBER, part_group_id_ NUMBER) IS
+      SELECT objkey 
+      FROM part_list
+      WHERE part_number_id = part_number_id_
+      AND part_group_id = part_group_id_;
+      
+   CURSOR get_sub_inventory_count(aircraft_id_ NUMBER, assembly_type_ VARCHAR2) IS
+      SELECT count(*) 
+      FROM   av_sub_assy_inventory_tab
+      WHERE  aircraft_id = aircraft_id_
+      AND    assembly_type_code = assembly_type_;
+      
+BEGIN
+	OPEN  get_part_info(part_number_alt_id_);
+   FETCH get_part_info INTO part_info_rec_.part_number_id, part_info_rec_.inventory_class_code, is_repairable_, part_group_id_, part_info_rec_.part_assembly_type_code;
+   CLOSE get_part_info;
+   
+   IF is_repairable_ = 'TRUE' THEN 
+      part_info_rec_.is_repairable := TRUE;
+   ELSE 
+      part_info_rec_.is_repairable := FALSE;
+   END IF;
+      
+   OPEN  get_part_objkey(part_info_rec_.part_number_id, part_group_id_);
+   FETCH get_part_objkey INTO part_info_rec_.vrt_objkey;
+   CLOSE get_part_objkey;
+      
+   OPEN  get_sub_inventory_count(aircraft_id_, assembly_type_);
+   FETCH get_sub_inventory_count INTO sub_assy_count_;
+   CLOSE get_sub_inventory_count;
+   
+   IF sub_assy_count_ >= 1 THEN
+      part_info_rec_.is_sub_assy := TRUE;
+   ELSE
+      part_info_rec_.is_sub_assy := FALSE;
+   END IF;
+   
+   RETURN part_info_rec_;
+END Get_Part_Number_Info___;
+
+FUNCTION Get_Config_Slot_Info___ (
+   config_slot_code_ IN VARCHAR2,
+   assembly_type_code_ IN VARCHAR2,
+   aircraft_id_ IN NUMBER,
+   inventory_class_code_ IN VARCHAR2) RETURN Config_Slot_Info_Structure_Rec
+IS
+   config_slot_info_rec_    Config_Slot_Info_Structure_Rec;
+   conf_slot_pos_count_     NUMBER;
+   aircraft_assembly_type_  VARCHAR2(8);
+   assembly_position_count_ NUMBER;
+   
+   CURSOR get_config_position_count(assembly_type_code_ VARCHAR2, config_slot_code_ VARCHAR2) IS 
+      SELECT count(config_slot_position_code)
+      FROM   av_config_slot_position_tab
+      WHERE  assembly_type_code = assembly_type_code_
+      AND    config_slot_code = config_slot_code_;
+   
+   CURSOR get_config_slot_position_id(assembly_type_code_ VARCHAR2, config_slot_code_ VARCHAR2) IS
+      SELECT config_slot_position_id
+      FROM   av_config_slot_position_tab
+      WHERE  assembly_type_code = assembly_type_code_
+      AND    config_slot_code = config_slot_code_;
+   
+   CURSOR get_aircraft_assembly(aircraft_id_ NUMBER) IS
+      SELECT assembly_type_code
+      FROM   aircraft_tab
+      WHERE  aircraft_id = aircraft_id_;  
+      
+   CURSOR get_position_count(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT count(*)
+      FROM av_sub_assy_inventory 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+   CURSOR get_assembly_position_id(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT config_slot_position_id 
+      FROM   av_sub_assy_inventory 
+      WHERE  assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+
+BEGIN
+   OPEN  get_config_position_count(assembly_type_code_, config_slot_code_);
+   FETCH get_config_position_count INTO conf_slot_pos_count_;
+   CLOSE get_config_position_count;
+   
+   IF conf_slot_pos_count_ = 1 THEN
+      OPEN  get_config_slot_position_id(assembly_type_code_, config_slot_code_);
+      FETCH get_config_slot_position_id INTO config_slot_info_rec_.config_slot_position_id;
+      CLOSE get_config_slot_position_id;
+   END IF;
+   
+   OPEN  get_aircraft_assembly(aircraft_id_);
+   FETCH get_aircraft_assembly INTO aircraft_assembly_type_;
+   CLOSE get_aircraft_assembly;
+
+   IF inventory_class_code_='TRK' AND aircraft_assembly_type_ != assembly_type_code_ THEN
+      config_slot_info_rec_.assmbl_visibility := TRUE;
+   ELSE
+      config_slot_info_rec_.assmbl_visibility := FALSE;
+   END IF;
+   
+   OPEN  get_position_count(assembly_type_code_, aircraft_id_);
+   FETCH get_position_count INTO assembly_position_count_;
+   CLOSE get_position_count;
+   
+   IF assembly_position_count_ > 1 THEN
+      config_slot_info_rec_.assmbl_editable := TRUE;
+   ELSE
+      config_slot_info_rec_.assmbl_editable := FALSE;
+   END IF;
+   
+   IF assembly_position_count_ = 1  THEN
+      OPEN  get_assembly_position_id(assembly_type_code_, aircraft_id_);
+      FETCH get_assembly_position_id INTO config_slot_info_rec_.assmbl_config_slot_pos_id;
+      CLOSE get_assembly_position_id;
+   END IF;
+   
+   RETURN config_slot_info_rec_;
+END Get_Config_Slot_Info___;
+
+
+FUNCTION Get_Removal_Part_Info___ (
+   removal_part_number_alt_id_ IN VARCHAR2,
+   removal_part_group_alt_id_ IN VARCHAR2) RETURN Removal_Part_Info_Struct_Rec
+IS
+   removal_part_info_struct_rec_ Removal_Part_Info_Struct_Rec;
+   part_id_ NUMBER;
+   part_group_id_ NUMBER;
+   
+   CURSOR get_part_group_id(removal_part_group_alt_id_ VARCHAR2) IS
+      SELECT part_group_id
+      FROM   av_part_group_tab
+      WHERE  alt_id = removal_part_group_alt_id_;
+      
+   CURSOR get_part_id(removal_part_number_alt_id_ VARCHAR2) IS
+      SELECT part_number_id
+      FROM   av_part_number_tab
+      WHERE  alt_id = removal_part_number_alt_id_;
+BEGIN
+   IF removal_part_number_alt_id_ IS NOT NULL THEN 
+      OPEN get_part_id(removal_part_number_alt_id_);
+      FETCH get_part_id INTO part_id_;
+      CLOSE get_part_id;
+   END IF;
+
+   IF removal_part_group_alt_id_ IS NOT NULL THEN 
+      OPEN get_part_group_id(removal_part_group_alt_id_);
+      FETCH get_part_group_id INTO part_group_id_;
+      CLOSE get_part_group_id;
+   END IF;
+   
+   IF part_id_ IS NOT NULL THEN
+      removal_part_info_struct_rec_.removal_part_no_id := part_id_;
+   END IF;
+   
+   IF part_group_id_ IS NOT NULL THEN
+      removal_part_info_struct_rec_.removal_part_group_id := part_group_id_;
+   END IF;  
+  RETURN removal_part_info_struct_rec_;
+   
+END Get_Removal_Part_Info___;
+
+
+FUNCTION Get_Assembly_Info___ (
+   assembly_type_code_   IN VARCHAR2,
+   aircraft_id_          IN NUMBER,
+   inventory_class_code_ IN VARCHAR2,
+   part_group_id_        IN NUMBER) RETURN Part_Group_Info_Structure_Rec
+IS
+   part_group_info_rec_      Part_Group_Info_Structure_Rec;
+   aircraft_assembly_        aircraft_tab.assembly_type_code%TYPE;
+   assembly_position_count_  NUMBER;
+   
+   CURSOR get_aircraft_assembly(aircraft_id_ NUMBER) IS
+      SELECT assembly_type_code
+      FROM   aircraft_tab
+      WHERE  aircraft_id = aircraft_id_; 
+      
+   CURSOR get_asmbl_position_count(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT count(config_slot_position_id) 
+      FROM av_sub_assy_inventory_tab 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+      
+   CURSOR get_assembly_position_id(assembly_type_code_ VARCHAR2, aircraft_id_ NUMBER) IS
+      SELECT config_slot_position_id 
+      FROM av_sub_assy_inventory_tab 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+      
+   CURSOR get_part_group_alt_id(part_group_id_ IN NUMBER) IS
+      SELECT alt_id
+      FROM av_part_group_tab 
+      WHERE part_group_id = part_group_id_;
+
+BEGIN
+	OPEN  get_aircraft_assembly(aircraft_id_);
+   FETCH get_aircraft_assembly INTO aircraft_assembly_;
+   CLOSE get_aircraft_assembly;
+   
+   IF inventory_class_code_='TRK' AND aircraft_assembly_ != assembly_type_code_ THEN
+      part_group_info_rec_.assmbl_visibility := TRUE;
+   ELSE
+      part_group_info_rec_.assmbl_visibility := FALSE;
+   END IF;
+   
+   OPEN  get_asmbl_position_count(assembly_type_code_, aircraft_id_);
+   FETCH get_asmbl_position_count INTO assembly_position_count_;
+   CLOSE get_asmbl_position_count;
+   
+   IF assembly_position_count_ > 1 THEN
+      part_group_info_rec_.assmbl_editable := TRUE;
+   ELSE 
+      part_group_info_rec_.assmbl_editable := FALSE;
+   END IF;
+   
+   IF assembly_position_count_ = 1 THEN     
+      OPEN  get_assembly_position_id(assembly_type_code_, aircraft_id_);
+      FETCH get_assembly_position_id INTO part_group_info_rec_.assembly_position_id;
+      CLOSE get_assembly_position_id;
+   ELSE 
+      part_group_info_rec_.assembly_position_id := NULL;
+   END IF;
+   
+   OPEN  get_part_group_alt_id(part_group_id_);
+   FETCH get_part_group_alt_id INTO part_group_info_rec_.part_group_alt_id;
+   CLOSE get_part_group_alt_id;
+   
+   RETURN part_group_info_rec_;
+END Get_Assembly_Info___;
+
+@IgnoreUnitTest PipelinedFunction
+FUNCTION Get_Scheduling_Req_Date___ (
+   aircraft_wp_id_ IN NUMBER) RETURN DATE
+IS
+BEGIN 
+   RETURN Av_Exe_Task_Part_Util_API.Get_Scheduling_Req_Date(aircraft_wp_id_);
+END Get_Scheduling_Req_Date___;
+
+@IgnoreUnitTest PipelinedFunction
+FUNCTION Validate_Required_Date___ (
+   aircraft_wp_id_ IN NUMBER,
+   required_date_ IN DATE,
+   current_date_ IN DATE) RETURN Validate_Message_Info_Structure_Rec
+IS
+   result_     Av_Exe_Task_Part_Util_API.Validate_Message_Rec := Av_Exe_Task_Part_Util_API.Validate_Message_Rec();
+   ui_result_  Validate_Message_Info_Structure_Rec := Validate_Message_Info_Structure_Rec();
+BEGIN
+   result_ := Av_Exe_Task_Part_Util_API.Validate_Scheduling_Req_Date(aircraft_wp_id_, required_date_, current_date_);
+   ui_result_.message_type := result_.message_type;
+   ui_result_.message      := result_.message;
+   RETURN ui_result_;
+END Validate_Required_Date___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Is_Modified___ (
+   key_ IN Add_Parts_Virtual_Key) RETURN BOOLEAN
+IS
+   add_part_vrt_rec_ Add_Parts_Virtual_Rec;
+BEGIN
+   add_part_vrt_rec_ := Get_Record___(key_);
+
+   RETURN (add_part_vrt_rec_.part                 != add_part_vrt_rec_.orgnl_part OR
+      add_part_vrt_rec_.part_group_id             != add_part_vrt_rec_.orgnl_part_group_id OR
+      add_part_vrt_rec_.required_quantity         != add_part_vrt_rec_.orgnl_required_quantity OR
+      add_part_vrt_rec_.required_date             != add_part_vrt_rec_.default_required_date OR
+      add_part_vrt_rec_.config_slot_position_id   != add_part_vrt_rec_.orgnl_config_slot_position_id OR
+      add_part_vrt_rec_.scheduling_action         != 'REQ' OR
+      add_part_vrt_rec_.assmbl_config_slot_pos_id != add_part_vrt_rec_.orgnl_assmbl_config_slot_pos_id OR
+      add_part_vrt_rec_.removal_reason_code       != add_part_vrt_rec_.orgnl_removal_reason_code OR
+      add_part_vrt_rec_.include_installation      != TRUE OR
+      add_part_vrt_rec_.include_removal           != (add_part_vrt_rec_.removed_task_part_id IS NOT NULL)
+      );
+END Is_Modified___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Modify_Part___ (
+   key_               IN Add_Parts_Virtual_Key,
+   part_number_       IN VARCHAR2,
+   removal_serial_no_ IN VARCHAR2,
+   sensitivities_     IN VARCHAR2)
+IS
+   info_                  VARCHAR2(200);
+   inst_objid_            VARCHAR2(200);
+   inst_objversion_       VARCHAR2(200);
+   rem_objid_             VARCHAR2(200);
+   rem_objversion_        VARCHAR2(200);
+   fault_inst_objid_      VARCHAR2(200);
+   fault_inst_objversion_ VARCHAR2(200);
+   fault_rem_objid_       VARCHAR2(200);
+   fault_rem_objversion_  VARCHAR2(200);
+   attr_                  VARCHAR2(32000);
+   fault_attr_            VARCHAR2(32000);
+   add_part_vrt_rec_      Add_Parts_Virtual_Rec;
+   reserved_qty_          NUMBER;
+   sched_action_req_      CONSTANT VARCHAR2(10) := 'REQ';
+   action_do_             CONSTANT VARCHAR2(10) := 'DO';
+   task_seq_              NUMBER;
+   task_part_id_          NUMBER;
+   out_task_part_id_var_  VARCHAR2(20) := NULL;
+   class_code_            VARCHAR2(20);
+   quantity_one_          NUMBER := 1;
+   current_user_          VARCHAR2(40);
+   out_inst_task_part_id_ NUMBER;
+   inst_fault_part_id_    NUMBER;
+   rmvd_fault_part_id_    NUMBER;
+   fault_id_              NUMBER;
+   fault_part_id_         NUMBER;
+   out_fault_part_id_var_ VARCHAR2(20) := NULL;
+   
+   -- Flags to track attribute changes
+   part_changed_             BOOLEAN;
+   part_group_changed_       BOOLEAN;
+   qty_changed_              BOOLEAN;
+   config_slot_changed_      BOOLEAN;
+   assmbl_slot_changed_      BOOLEAN;
+   sched_action_not_req_     BOOLEAN;
+   required_date_changed_    BOOLEAN;
+   removal_reason_changed_   BOOLEAN;
+   note_changed_             BOOLEAN;
+   
+   CURSOR get_part_rec_details(task_part_id_ IN NUMBER) IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')
+      FROM av_exe_task_part_tab
+      WHERE task_part_id = task_part_id_;
+   
+   CURSOR get_mmrl_info(maint_material_order_no_ IN NUMBER, line_item_no_ IN NUMBER) IS
+      SELECT qty_assigned
+      FROM Maint_Material_Req_Line_Av_Uiv
+      WHERE maint_material_order_no = maint_material_order_no_
+        AND line_item_no = line_item_no_;
+        
+    CURSOR get_fault_part_rec_details(fault_part_id_ IN NUMBER) IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')
+      FROM av_fault_part_tab
+      WHERE fault_part_id = fault_part_id_;
+BEGIN
+   add_part_vrt_rec_ := Get_Record___(key_);
+   
+   task_seq_               := add_part_vrt_rec_.task_seq;
+   
+   part_changed_           := add_part_vrt_rec_.part != add_part_vrt_rec_.orgnl_part;
+   part_group_changed_     := add_part_vrt_rec_.part_group_id != add_part_vrt_rec_.orgnl_part_group_id;
+   qty_changed_            := add_part_vrt_rec_.required_quantity != add_part_vrt_rec_.orgnl_required_quantity;
+   config_slot_changed_    := add_part_vrt_rec_.config_slot_position_id != add_part_vrt_rec_.orgnl_config_slot_position_id;
+   assmbl_slot_changed_    := add_part_vrt_rec_.assmbl_config_slot_pos_id != add_part_vrt_rec_.orgnl_assmbl_config_slot_pos_id;
+   sched_action_not_req_   := NVL(add_part_vrt_rec_.scheduling_action,'EmptySchedAction') != sched_action_req_;
+   required_date_changed_  := add_part_vrt_rec_.required_date != add_part_vrt_rec_.default_required_date;
+   removal_reason_changed_ := NVL(add_part_vrt_rec_.removal_reason_code, 'EmptyRemovalReason') != NVL(add_part_vrt_rec_.orgnl_removal_reason_code, 'EmptyRemovalReason');
+   note_changed_           := NVL(add_part_vrt_rec_.note, 'EmptyNote') != NVL(add_part_vrt_rec_.orgnl_note, 'EmptyNote');
+   
+   inst_fault_part_id_ := Av_Exe_Task_Part_API.Get_Fault_Part_Id(add_part_vrt_rec_.installed_task_part_id);
+   rmvd_fault_part_id_ := Av_Exe_Task_Part_API.Get_Fault_Part_Id(add_part_vrt_rec_.removed_task_part_id);
+   
+   IF NOT add_part_vrt_rec_.include_installation THEN
+      Av_Exe_Task_Part_API.Remove(add_part_vrt_rec_.installed_task_part_id);     
+      -- remove fault part installation line
+      IF inst_fault_part_id_ IS NOT NULL THEN
+         Av_Fault_Part_API.Remove(inst_fault_part_id_);
+      END IF;
+   ELSE
+      -- Modify install record    
+      Client_SYS.Clear_Attr(attr_);
+      IF part_changed_ THEN
+         Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID', add_part_vrt_rec_.part, attr_);
+      END IF;
+      IF part_group_changed_ THEN
+         Client_SYS.Add_To_Attr('PART_GROUP_ID', add_part_vrt_rec_.part_group_id, attr_); 
+      END IF;
+      IF config_slot_changed_ THEN
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', add_part_vrt_rec_.config_slot_position_id, attr_);
+      END IF;
+      IF assmbl_slot_changed_ THEN
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', add_part_vrt_rec_.assmbl_config_slot_pos_id, attr_);
+      END IF;
+      IF sched_action_not_req_ THEN
+         Client_SYS.Add_To_Attr('SCHEDULING_ACTION', add_part_vrt_rec_.scheduling_action, attr_);
+         Client_SYS.Add_To_Attr('MAINT_MATERIAL_ORDER_NO', '', attr_);
+         Client_SYS.Add_To_Attr('LINE_ITEM_NO', '', attr_);
+         Client_SYS.Add_To_Attr('NOTE', '', attr_);
+      END IF;
+      IF qty_changed_ THEN
+         IF (add_part_vrt_rec_.inventory_class_code = 'SER' AND add_part_vrt_rec_.required_quantity > 1) THEN
+            current_user_ := Fnd_Session_API.Get_Fnd_User();
+            FOR i IN 1 .. (add_part_vrt_rec_.required_quantity - 1) LOOP
+               Install_Parts__(add_part_vrt_rec_.fault_id, add_part_vrt_rec_.task_seq, add_part_vrt_rec_.assmbl_config_slot_pos_id, add_part_vrt_rec_.config_slot_position_id, add_part_vrt_rec_.part_group_id, add_part_vrt_rec_.part , quantity_one_, add_part_vrt_rec_.installed_serial_no, add_part_vrt_rec_.scheduling_action, add_part_vrt_rec_.required_date, part_number_, current_user_, add_part_vrt_rec_.maint_material_order_no, out_inst_task_part_id_, add_part_vrt_rec_.objkey, add_part_vrt_rec_.D_B_Formatted_P_G_Sensitivity,add_part_vrt_rec_.note); 
+               IF (add_part_vrt_rec_.include_removal) THEN
+                  Remove_Parts__ (add_part_vrt_rec_.fault_id, add_part_vrt_rec_.task_seq, add_part_vrt_rec_.assmbl_config_slot_pos_id, add_part_vrt_rec_.config_slot_position_id, add_part_vrt_rec_.part_group_id, add_part_vrt_rec_.part_group_id, add_part_vrt_rec_.part, add_part_vrt_rec_.part, quantity_one_, add_part_vrt_rec_.removal_reason_code, add_part_vrt_rec_.removal_serial_no, add_part_vrt_rec_.is_removal_reason_filled,out_inst_task_part_id_,add_part_vrt_rec_.D_B_Formatted_P_G_Sensitivity,current_user_); 
+               END IF;
+            END LOOP;
+         ELSE
+            Client_SYS.Add_To_Attr('INSTALLED_QUANTITY', add_part_vrt_rec_.required_quantity, attr_);
+         END IF; 
+      END IF;
+      
+   IF (attr_ IS NOT NULL) THEN
+      --Modify Fault Parts      
+      IF inst_fault_part_id_ IS NOT NULL THEN
+         fault_attr_ := attr_;
+         OPEN  get_fault_part_rec_details(inst_fault_part_id_);
+         FETCH get_fault_part_rec_details INTO fault_inst_objid_, fault_inst_objversion_;
+         CLOSE get_fault_part_rec_details;
+         Av_Fault_Part_API.Modify(inst_fault_part_id_, fault_attr_);
+      END IF;
+      
+      OPEN get_part_rec_details(add_part_vrt_rec_.installed_task_part_id);
+      FETCH get_part_rec_details INTO inst_objid_, inst_objversion_;
+      CLOSE get_part_rec_details;
+      Av_Exe_Task_Part_API.Modify__(info_, inst_objid_, inst_objversion_, attr_, action_do_);
+   END IF;
+END IF;
+
+-- Modify removal record
+IF add_part_vrt_rec_.removed_task_part_id IS NOT NULL THEN
+   IF add_part_vrt_rec_.include_removal THEN
+      Client_SYS.Clear_Attr(attr_);
+      OPEN get_part_rec_details(add_part_vrt_rec_.removed_task_part_id);
+      FETCH get_part_rec_details INTO rem_objid_, rem_objversion_;
+      CLOSE get_part_rec_details;
+      
+      IF part_changed_ THEN
+         Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID', add_part_vrt_rec_.part, attr_);
+      END IF;
+      IF part_group_changed_ THEN
+         Client_SYS.Add_To_Attr('PART_GROUP_ID', add_part_vrt_rec_.part_group_id, attr_);            
+      END IF;
+      IF qty_changed_ THEN
+         IF (add_part_vrt_rec_.inventory_class_code = 'BATCH' AND add_part_vrt_rec_.required_quantity > 1) THEN
+            Client_SYS.Add_To_Attr('REMOVED_QUANTITY', add_part_vrt_rec_.required_quantity, attr_);
+         END IF;
+      END IF;
+      IF config_slot_changed_ THEN
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', add_part_vrt_rec_.config_slot_position_id, attr_);
+      END IF;
+      IF assmbl_slot_changed_ THEN
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', add_part_vrt_rec_.assmbl_config_slot_pos_id, attr_);
+      END IF;
+      IF removal_reason_changed_ THEN
+         Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE', add_part_vrt_rec_.removal_reason_code, attr_);
+      END IF;
+      IF removal_serial_no_ IS NOT NULL THEN
+         Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO', removal_serial_no_, attr_);
+      END IF;
+      IF (attr_ IS NOT NULL) THEN
+          --Modify Fault Parts
+         IF rmvd_fault_part_id_ IS NOT NULL THEN
+            fault_attr_ := attr_;
+            Av_Fault_Part_API.Modify(rmvd_fault_part_id_, fault_attr_);
+         END IF;
+         Av_Exe_Task_Part_API.Modify__(info_, rem_objid_, rem_objversion_, attr_, action_do_);
+      END IF;
+   ELSE
+      Av_Exe_Task_Part_API.Remove(add_part_vrt_rec_.removed_task_part_id);
+      -- remove fault part removal line
+      IF rmvd_fault_part_id_ IS NOT NULL THEN
+         OPEN  get_fault_part_rec_details(rmvd_fault_part_id_);
+         FETCH get_fault_part_rec_details INTO  fault_rem_objid_, fault_rem_objversion_;
+         CLOSE get_fault_part_rec_details;
+         
+         Av_Fault_Part_API.Remove(rmvd_fault_part_id_);
+      END IF;
+   END IF;
+ELSIF add_part_vrt_rec_.include_removal THEN
+   fault_id_  := AV_EXE_TASK_API.Get_Fault_Id (task_seq_);
+   
+   Client_SYS.Clear_Attr(attr_); 
+   Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID', add_part_vrt_rec_.part, attr_);
+   Client_SYS.Add_To_Attr('PART_GROUP_ID', add_part_vrt_rec_.part_group_id, attr_);
+   IF (add_part_vrt_rec_.inventory_class_code = 'BATCH' AND add_part_vrt_rec_.required_quantity > 1) THEN
+      Client_SYS.Add_To_Attr('REMOVED_QUANTITY', add_part_vrt_rec_.required_quantity, attr_);
+   ELSE
+      Client_SYS.Add_To_Attr('REMOVED_QUANTITY', quantity_one_, attr_);
+   END IF;
+   Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', add_part_vrt_rec_.config_slot_position_id, attr_);
+   Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', add_part_vrt_rec_.assmbl_config_slot_pos_id, attr_);
+   Client_SYS.Add_To_Attr('REMOVAL_REASON_CODE', add_part_vrt_rec_.removal_reason_code, attr_);
+   IF removal_serial_no_ IS NOT NULL THEN
+      Client_SYS.Add_To_Attr('REMOVED_SERIAL_NO', removal_serial_no_, attr_);
+   END IF;
+   IF fault_id_ IS NOT NULL THEN
+      Client_SYS.Add_To_Attr('FAULT_ID', fault_id_, attr_);
+      fault_attr_ := attr_;
+      Av_Fault_Part_API.New__(info_, fault_rem_objid_, fault_rem_objversion_, fault_attr_ ,action_do_);
+      out_fault_part_id_var_ := Client_SYS.Get_Item_Value('FAULT_PART_ID', fault_attr_);
+      fault_part_id_ := Client_SYS.Attr_Value_To_Number(out_fault_part_id_var_);
+      Client_SYS.Add_To_Attr('FAULT_PART_ID', fault_part_id_, attr_);
+   END IF; 
+   
+   Client_SYS.Add_To_Attr('TASK_SEQ', task_seq_, attr_);
+   Client_SYS.Add_To_Attr('INSTALL_TASK_PART_ID', add_part_vrt_rec_.installed_task_part_id, attr_);
+   Av_Exe_Task_Part_API.New__(info_, rem_objid_, rem_objversion_, attr_,action_do_);
+  
+   out_task_part_id_var_ := Client_SYS.Get_Item_Value('TASK_PART_ID', attr_);
+   task_part_id_ := Client_SYS.Attr_Value_To_Number(out_task_part_id_var_);
+   
+   IF task_seq_ IS NOT NULL THEN 
+      class_code_ := Av_Exe_Task_API.Get_Class_Code(task_seq_);
+      IF (class_code_ = Av_Exe_Task_API.TASK_CLASS_CORR AND sensitivities_ IS NOT NULL) THEN 
+         Av_Exe_Task_Part_Sens_API.Save_Effective_Sensitivities(task_seq_,task_part_id_,sensitivities_);
+      END IF;   
+   END IF;
+END IF;
+
+-- Modify MMRL
+OPEN get_mmrl_info(add_part_vrt_rec_.Maint_Material_Order_No, add_part_vrt_rec_.Line_Item_No);
+FETCH get_mmrl_info INTO reserved_qty_;
+CLOSE get_mmrl_info;
+
+IF reserved_qty_ > 0 THEN
+   IF sched_action_not_req_ OR part_changed_ OR (qty_changed_ AND add_part_vrt_rec_.required_quantity < reserved_qty_) THEN
+      Maint_Material_Req_Line_API.Unreserve_Lines(
+         add_part_vrt_rec_.Maint_Material_Order_No,
+         add_part_vrt_rec_.Line_Item_No
+         );
+   END IF;
+END IF;
+
+Client_SYS.Clear_Attr(attr_);
+IF NOT sched_action_not_req_ THEN
+   IF part_changed_ THEN
+      Client_SYS.Add_To_Attr('PART_NO', part_number_, attr_);
+   END IF;
+   IF qty_changed_ THEN
+      IF (add_part_vrt_rec_.inventory_class_code = 'BATCH' AND add_part_vrt_rec_.required_quantity > 1) THEN
+         Client_SYS.Add_To_Attr('PLAN_QTY', add_part_vrt_rec_.required_quantity, attr_);
+      END IF;
+   END IF;
+   IF required_date_changed_ THEN
+      Client_SYS.Add_To_Attr('DATE_REQUIRED', add_part_vrt_rec_.required_date, attr_);
+   END IF;
+   IF note_changed_ THEN
+      Client_SYS.Add_To_Attr('NOTE', add_part_vrt_rec_.note, attr_);
+   END IF;
+   IF (attr_ IS NOT NULL) THEN
+      Maint_Material_Req_Line_API.Update_Material_Line(add_part_vrt_rec_.Maint_Material_Order_No, add_part_vrt_rec_.Line_Item_No, attr_);
+   END IF;
+ELSE
+   Maint_Material_Req_Line_API.Delete_Material_Line(add_part_vrt_rec_.Maint_Material_Order_No, add_part_vrt_rec_.Line_Item_No, 'TRUE');
+END IF;
+END Modify_Part___;
+
+@IgnoreUnitTest PipelinedFunction
+FUNCTION Get_Removal_Reasons_For_Part___ (
+   is_sos_ IN BOOLEAN ) RETURN Objid_Arr
+IS
+   is_sos_var_    VARCHAR2(10);
+   collection_    Objid_Arr   := Objid_Arr();
+   CURSOR get_removal_reasons (sos_var_ VARCHAR2) IS
+      SELECT rowid
+      FROM   av_removal_reason_tab
+      WHERE  (sos_var_ = 'TRUE' OR UPPER(removal_reason_code) <> 'SOS');
+BEGIN
+   is_sos_var_ := CASE WHEN is_sos_ THEN 'TRUE' ELSE 'FALSE' END;
+   
+   OPEN get_removal_reasons(is_sos_var_);
+   FETCH get_removal_reasons BULK COLLECT INTO collection_;
+   CLOSE get_removal_reasons;
+   RETURN collection_;
+END Get_Removal_Reasons_For_Part___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Clear_Interchangeable_Parts___ (
+   parent_key_ IN VARCHAR2)
+IS
+BEGIN
+	DELETE FROM ${PROJECTION}_ALTERNATE_PART_VIRTUAL_VRT WHERE parent_objkey = parent_key_;
+END Clear_Interchangeable_Parts___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Create_Interchange_Parts (
+   task_seq_   IN NUMBER,
+   order_no_   IN NUMBER,
+   line_no_    IN NUMBER,
+   parent_key_ IN VARCHAR2)
+IS
+   standard_part_      VARCHAR2(100);
+   contract_           VARCHAR2(50);
+   
+   CURSOR Get_Interchange_Parts IS
+      SELECT * FROM ${PROJECTION}_ALTERNATE_PART_VIRTUAL_VRT 
+      WHERE parent_objkey = parent_key_;
+   
+BEGIN
+   contract_ := Work_Task_API.Get_Site(task_seq_);
+   FOR Interchange_Part_rec IN Get_Interchange_Parts LOOP 
+      IF (Interchange_Part_rec.is_selected_part = 'Yes' OR Interchange_Part_rec.is_selected_part = 'YES') THEN
+         standard_part_ := Fnd_Boolean_API.DB_TRUE;
+      ELSE
+         standard_part_ := Fnd_Boolean_API.DB_FALSE;
+      END IF;
+      Source_Interchange_Part_API.New(source_ref1_     => task_seq_,
+                                      source_ref2_     => order_no_,
+                                      source_ref3_     => line_no_,
+                                      source_ref4_     => '*',
+                                      source_ref_type_ => Order_Type_API.DB_WORK_TASK,
+                                      part_no_         => Interchange_Part_rec.part_number,
+                                      contract_        => contract_,
+                                      standard_part_   => standard_part_,
+                                      note_text_       => Interchange_Part_rec.conditions);
+   END LOOP;
+END Create_Interchange_Parts;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Task_Alt_Id___ (
+   task_seq_ IN NUMBER) RETURN VARCHAR2
+IS
+BEGIN
+	RETURN Av_Exe_Task_API.Get_Av_External_Id(task_seq_);
+END Get_Task_Alt_Id___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Aircraft_Id___ RETURN Objid_Arr
+IS
+   result_ Objid_Arr;
+   
+   CURSOR get_aircraft_ids IS
+      SELECT DISTINCT a.rowid
+      FROM  aircraft_tab a
+      WHERE EXISTS (
+          SELECT 1
+          FROM av_aircraft_work_package_tab wp
+          WHERE a.aircraft_id = wp.aircraft_id
+          AND wp.rowstate IN ('InWork', 'Active', 'Committed'));
+ 
+BEGIN
+   OPEN get_aircraft_ids;
+   FETCH get_aircraft_ids BULK COLLECT INTO result_;
+   CLOSE get_aircraft_ids;
+   RETURN result_;
+END Get_Aircraft_Id___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Cancel_Parts___ (
+   task_part_id_ IN NUMBER)
+IS 
+   mtrl_order_no_ NUMBER;
+   task_seq_      NUMBER;
+   line_item_no_  NUMBER;
+   qty_issued_    NUMBER;
+   qty_assigned_  NUMBER;
+   
+   CURSOR Get_mmrl_info_by_tsk_prt_id IS 
+     SELECT maint_material_order_no,line_item_no,task_seq 
+     FROM av_exe_task_part_tab 
+     WHERE task_part_id = task_part_id_;
+     
+  CURSOR Get_mmrl_qty_info IS 
+     SELECT Qty_Assigned,Qty
+     FROM Maint_Material_Req_Line_tab 
+     WHERE maint_material_order_no = mtrl_order_no_
+      AND line_item_no= line_item_no_;
+     
+BEGIN
+   
+  OPEN  Get_mmrl_info_by_tsk_prt_id;
+  FETCH Get_mmrl_info_by_tsk_prt_id INTO mtrl_order_no_,line_item_no_,task_seq_;
+  CLOSE Get_mmrl_info_by_tsk_prt_id;
+  
+  OPEN  Get_mmrl_qty_info;
+  FETCH Get_mmrl_qty_info INTO qty_assigned_,qty_issued_;
+  CLOSE Get_mmrl_qty_info;
+  
+  Av_Exe_Task_Part_API.Update_Cancelled_By(task_part_id_); 
+  Av_Exe_Task_Part_API.Update_Task_Part_Ser_Bat_No(task_part_id_, task_seq_, mtrl_order_no_, line_item_no_, qty_issued_, qty_assigned_);
+END Cancel_Parts___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Select_Interchangeable_Part___ (
+   part_number_ IN VARCHAR2,
+   manufacturer_code_ IN VARCHAR2,
+   conf_slot_code_ IN VARCHAR2,
+   conf_slot_pos_code_ IN VARCHAR2,
+   part_group_code_ IN VARCHAR2,
+   inventory_class_code_ IN VARCHAR2,
+   parent_key_ IN VARCHAR2)
+IS
+
+   CURSOR get_part_list_key IS
+      SELECT objkey, part_name
+      FROM Part_List
+      WHERE manufacturer = manufacturer_code_ AND 
+            part_number = part_number_ AND
+            part_group_code = part_group_code_ AND
+            inventory_class_code = inventory_class_code_
+            FETCH FIRST ROW ONLY;
+            
+   add_parts_key_                    Add_Parts_Virtual_Key;
+   add_parts_new_rec_                Add_Parts_Virtual_Rec;
+   add_parts_old_rec_                Add_Parts_Virtual_Rec;
+   part_list_key_                    VARCHAR2(100);
+   part_name_                        VARCHAR2(1000);
+   
+BEGIN
+   OPEN get_part_list_key;
+   FETCH get_part_list_key INTO part_list_key_, part_name_;
+   CLOSE get_part_list_key;
+   
+   IF part_list_key_ IS NOT NULL THEN
+      add_parts_key_.Objkey := parent_key_;
+      add_parts_old_rec_    := Get_Record___(add_parts_key_);
+      add_parts_new_rec_    := add_parts_old_rec_;
+
+      add_parts_new_rec_.part_no_unq_id := part_list_key_;
+      CRUD_Update___(add_parts_old_rec_, add_parts_new_rec_);
+   ELSE
+      Error_SYS.Record_General(lu_name_, 'PRTNOTINMEX: Selected Part is not persisted in the MEX');
+   END IF;
+END Select_Interchangeable_Part___;
+
+@IgnoreUnitTest PipelinedFunction
+FUNCTION Get_Parent_Part_Info___ (
+   parent_objkey_ IN VARCHAR2) RETURN Parent_Part_Info_Rec
+IS
+   parent_part_info_rec_ Parent_Part_Info_Rec;
+   task_seq_             NUMBER;
+   aircraft_id_          NUMBER;
+   task_alt_id_          VARCHAR2(100);
+   aircraft_reg_code_    VARCHAR2(100);
+   projection_name_      VARCHAR2(100);
+   ifs_user_             VARCHAR2(100);
+   
+   CURSOR Get_Parent_Part_Data IS
+      SELECT task_seq, aircraft_id, projection_name  
+      FROM ${PROJECTION}_ADD_PARTS_VIRTUAL_VRT 
+      WHERE objkey = parent_objkey_;
+BEGIN
+	OPEN  Get_Parent_Part_Data;
+   FETCH Get_Parent_Part_Data INTO task_seq_, aircraft_id_, projection_name_;
+   CLOSE Get_Parent_Part_Data;
+   
+   task_alt_id_       := Get_Task_Alt_Id___(task_seq_);
+   aircraft_reg_code_ := Aircraft_API.Get_Reg_Code(aircraft_id_);
+   ifs_user_          := Fnd_Session_API.Get_Fnd_User();
+   
+   parent_part_info_rec_.task_seq          := task_seq_;
+   parent_part_info_rec_.task_alt_id       := task_alt_id_;
+   parent_part_info_rec_.aircraft_reg_code := aircraft_reg_code_;
+   parent_part_info_rec_.projection_name   := projection_name_;
+   parent_part_info_rec_.ifs_user          := ifs_user_;
+   
+   RETURN parent_part_info_rec_;
+  
+END Get_Parent_Part_Info___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Aircraft_Assembly_Info___ (
+   aircraft_id_ IN NUMBER) RETURN Aircraft_Assembly_Info_Rec
+IS
+   aircraft_assembly_info_rec_ Aircraft_Assembly_Info_Rec;
+   config_slot_code_           Av_Config_Slot_tab.config_slot_code%TYPE;
+   config_slot_position_code_  Av_Config_Slot_Position_tab.config_slot_position_code%TYPE;
+   aircraft_type_code_         Av_Config_Slot_tab.aircraft_type_code%TYPE;
+   assembly_type_code_         Av_Config_Slot_tab.assembly_type_code%TYPE;
+   
+   CURSOR Get_Config_Slot IS 
+      SELECT config_slot_code
+      FROM Av_Config_Slot_tab
+      WHERE aircraft_type_code = aircraft_type_code_ AND 
+            assembly_type_code = assembly_type_code_ AND 
+            class_code = 'ROOT';
+   
+   CURSOR Get_Assembly_Info IS 
+      SELECT Config_slot_position_code
+      FROM Av_Config_Slot_Position_tab 
+      WHERE config_slot_code = config_slot_code_ AND 
+            aircraft_type_code = aircraft_type_code_ AND 
+            assembly_type_code = assembly_type_code_
+      FETCH FIRST ROW ONLY;
+      
+BEGIN
+   aircraft_type_code_ := Aircraft_API.Get_Aircraft_Type_Code(aircraft_id_);
+   assembly_type_code_ := Aircraft_API.Get_Assembly_Type_Code(aircraft_id_);
+   
+   OPEN Get_Config_Slot;
+   FETCH Get_Config_Slot INTO config_slot_code_;
+   CLOSE Get_Config_Slot;
+   
+   OPEN Get_Assembly_Info;
+   FETCH Get_Assembly_Info INTO config_slot_position_code_;
+   CLOSE Get_Assembly_Info;   
+   
+   aircraft_assembly_info_rec_.Ac_Config_Slot_Code := config_slot_code_;
+   aircraft_assembly_info_rec_.Ac_Config_Slot_Pos_Code := config_slot_position_code_;
+   RETURN aircraft_assembly_info_rec_;
+END Get_Aircraft_Assembly_Info___;
+
+FUNCTION Get_Aircraft_Info___ (
+   aircraft_id_ IN NUMBER) RETURN Parts_Info_Assistant_Structure_Rec
+IS
+   aircraft_info_rec_ Parts_Info_Assistant_Structure_Rec;
+   CURSOR get_aircraft_info IS
+      SELECT assembly_type_code, alt_id, applicability_code
+      FROM aircraft_tab
+      WHERE aircraft_id = aircraft_id_;
+BEGIN
+   OPEN get_aircraft_info;
+   FETCH get_aircraft_info INTO aircraft_info_rec_.assembly_type_code, aircraft_info_rec_.aircraft_alt_id, aircraft_info_rec_.aircraft_app_code;
+   CLOSE get_aircraft_info;
+   RETURN aircraft_info_rec_;
+END Get_Aircraft_Info___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Finish___ (
+   task_seq_ IN NUMBER,
+   maint_material_order_no_ IN NUMBER,
+   line_item_no_ IN NUMBER,
+   qty_unissued_ IN NUMBER,
+   task_part_id_ IN NUMBER,
+	info$_ OUT VARCHAR2)
+IS
+   count_                  NUMBER := 0;  
+   wo_no_                  NUMBER;
+   quantity_issued_        NUMBER := 0;
+   
+   
+   CURSOR get_inv_transaction_info(task_seq_ IN NUMBER , maint_material_order_no_ IN NUMBER ,line_item_no_ IN NUMBER ) IS     
+   SELECT *
+   FROM INVENTORY_TRANSACTION_HIST it
+   WHERE it.source_ref1 = task_seq_
+       AND it.source_ref2 = maint_material_order_no_
+       AND it.source_ref3 = line_item_no_
+       AND it.transaction_code = 'WTISS'
+       AND NOT EXISTS (
+                       SELECT 1
+                       FROM INVENTORY_TRANSACTION_HIST un
+                       WHERE un.original_transaction_id = it.transaction_id
+                       );
+BEGIN
+	
+   FOR sel_rec_ IN get_inv_transaction_info(task_seq_,maint_material_order_no_,line_item_no_) LOOP
+      quantity_issued_ := NVL(sel_rec_.quantity,0) - NVL(sel_rec_.qty_reversed,0) ;
+      
+      IF qty_unissued_ > 0  THEN
+         count_ := count_ + 1;
+         IF qty_unissued_ <= quantity_issued_ THEN
+            wo_no_ := Work_Task_Util_API.Get_Wo_No(task_seq_);
+            Maint_Material_Req_Line_API.Unissue(task_seq_                => task_seq_,
+                                                qty_reversed_            => sel_rec_.qty_reversed,
+                                                qty_unissue_             => qty_unissued_,
+                                                wo_no_                   => wo_no_,
+                                                line_item_no_            => line_item_no_,
+                                                quantity_                => sel_rec_.quantity,
+                                                transaction_id_          => sel_rec_.transaction_id,
+                                                source_                  => sel_rec_.source_ref_type_db,
+                                                destination_location_    => sel_rec_.location_no,
+                                                catch_qty_               => sel_rec_.catch_quantity);
+            
+            quantity_issued_ := quantity_issued_ - qty_unissued_;
+         ELSE
+            Error_SYS.Record_General(lu_name_, 'AVLQTYLESTOUNIS: Available quantity to unissue is :P1.',qty_unissued_);
+            info$_ := Client_SYS.Get_All_Info();
+         END IF;  
+      END IF;  
+      
+   END LOOP;
+   Cancel_Parts___(task_part_id_);
+   IF count_ = 0 THEN
+      Error_SYS.Record_General(lu_name_, 'QTYUNISHAVVALUE: Quantity to Unissue must have a value');
+      info$_ := Client_SYS.Get_All_Info();
+   END IF;
+END Finish___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Assembly_Config_Slot_Info___ (
+   assmbl_config_slot_pos_id_ IN NUMBER) RETURN Assembly_Config_Slot_Structure_Rec
+IS
+   assembly_config_slot_structure_rec_ Assembly_Config_Slot_Structure_Rec;
+   config_slot_code_          VARCHAR2(50);
+   config_slot_position_code_ VARCHAR2(200);
+   
+   CURSOR assmbl_config_slot_pos_info IS 
+      SELECT config_slot_code, config_slot_position_code
+      FROM av_config_slot_position_tab
+      WHERE config_slot_position_id = assmbl_config_slot_pos_id_;
+BEGIN
+   OPEN assmbl_config_slot_pos_info;
+   FETCH assmbl_config_slot_pos_info INTO config_slot_code_, config_slot_position_code_;
+   CLOSE assmbl_config_slot_pos_info;
+   
+   assembly_config_slot_structure_rec_.assembly_config_slot_code := config_slot_code_;
+   assembly_config_slot_structure_rec_.assembly_config_slot_pos_code := config_slot_position_code_;
+   RETURN assembly_config_slot_structure_rec_;
+END Get_Assembly_Config_Slot_Info___;

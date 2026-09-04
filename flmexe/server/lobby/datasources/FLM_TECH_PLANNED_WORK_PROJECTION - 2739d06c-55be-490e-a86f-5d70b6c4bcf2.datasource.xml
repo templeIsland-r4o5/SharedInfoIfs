@@ -1,0 +1,23 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/26/24, 4:14:20 PM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_TECH_PLANNED_WORK_PROJECTION</Name>
+    <ID>2739d06c-55be-490e-a86f-5d70b6c4bcf2</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmTechnicianLobbyHandling</Projection>
+    <EntitySet>AvFlightSet</EntitySet>
+    <EntityType>AvFlight</EntityType>
+    <Filter>WorkPackageId ne null and FlightTurnStatus ne IfsApp.FlmTechnicianLobbyHandling.AircraftTurnStatus'Departed'</Filter>
+</ProjectionDataSource>

@@ -1,0 +1,28 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Navigate to Handover Details and Reporting page</DescriptiveText>
+    <LastModified>4/29/25, 12:59:44 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>9</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>HANDOVER DETAILS AND REPORTING</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>Hmcl_Handover_Details_and_Reporting</Name>
+    <ID>69f99ca6-4d23-46b8-992f-7df34f9358a3</ID>
+    <WebUrl>assistant/FlmHmCrewLeadTasks/HandOverDetails?$action=SetDefaultValues{DefSource:'HMCLOBBY',DefAircraftCode:'$AircraftCode$',DefWorkPackage:'$WorkPackageBarcode$',DefWorkPackageId:'$WorkPackageId$'}</WebUrl>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>Handover Details and Reporting</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontStyle>Normal</FontStyle>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

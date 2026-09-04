@@ -1,0 +1,63 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     AvCreatePickList
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250908  BADHLK  Pick List Creation from Aviation Maintenance Material Requisition
+-----------------------------------------------------------------------------
+
+fragment AvCreatePickList;
+component FLMEXE;
+layer Core;
+description "Created this Aviation Pick List fragment to ensure the existing Create Pick List fragment remains unchanged.";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+include fragment CreatePickList;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+--------------------------------- COMMANDS ----------------------------------
+
+command CreateAvPickListCommand for MaintMaterialRequisition {
+   label = "New Pick List";
+   enabled = [HasMatNoPicklist and Objstate = "Released"];
+   variable PickListStructVar {
+      type = Structure(PickListStruct);
+   }
+   execute {
+      call GetPickListValues(WoNo, MaintMaterialOrderNo) into PickListStructVar;
+      dialog CreatePickListDialog(PickListStructVar) {
+         when OK {
+            exit OK;
+         }
+         when CANCEL {
+            exit CANCEL;
+         }
+      }
+   }
+}
+
+command ViewAvPickListCommand for MaintMaterialRequisition {
+   label = "View Pick List";
+   enabled = [HasPickListMat and Objstate = "Released"];
+   variable PickListSourceRefVar Text;
+   variable Source Text;
+   execute {
+      set Source = "MaintenanceMaterialOrder";
+      call GetAvPickListSourceRef(MaintMaterialOrderNo) into PickListSourceRefVar;
+      navigate "${PickListSourceRefVar}";
+   }
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+function GetAvPickListSourceRef Text {
+   parameter SourceId Number;
+}

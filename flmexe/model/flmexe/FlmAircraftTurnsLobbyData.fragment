@@ -1,0 +1,68 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  -----------------------------------------------------------------------------------
+--  240417  WAISLK  AD-12567, Created and added AvFlight projection entity.
+--  240509  WAISLK  AD-12570, Modified FlightTurnStatus attribute.
+-------------------------------------------------------------------------------------------------------
+
+fragment FlmAircraftTurnsLobbyData;
+component FLMEXE;
+layer Core;
+description "Use this to get aircraft turn data for lobbies";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity AvFlight {
+   from = "My_Aircraft_Turns_Status_View";
+   timestamptzref = "server";
+   exclude attributes = TurnStateBeforeStartWp, PrevWorkPackageId, PrevArrAirportId, SyncUntilCmplt,
+   Description, MxUniqueKey, OnDateTime, OffDateTime, DepartureGate, ActualDepartureDateTime,
+   ShedDepartureDateTime, IsHistoric, MasterFlightNo, DepartureAirportId, BindSignatureId;
+
+   attribute FlightId Number;
+   attribute ArrivalAirportId Number;
+   attribute AircraftId Number;
+   attribute ActualArrivalDateTime Timestamp;
+   attribute ShedArrivalDateTime Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalGate Text;
+   attribute FlightTurnStatus Enumeration(AircraftTurnStatus) {
+      fetch = "Aircraft_Turn_Status_API.Identifier_To_Db_Value(flight_turn_status)";
+   }
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   attribute WorkPackageId Number;
+   attribute ActualEndDateTime Timestamp;
+   attribute DeptFlightId Text;
+   attribute NoOfOpenedFaults Number;
+   attribute GroundTime Text;
+   attribute AssemblyTypeCode Text;
+   attribute ArrivalTimestamp Timestamp;
+   attribute LockedBool Boolean("TRUE", "FALSE");
+   attribute FlightAltId Text;
+   attribute NoOfAssignedTasks Number;
+   attribute Condition Text;
+   attribute TotalHours Number;
+   attribute OpenFaultCountForFlight Number;
+}
+
+@Override
+entity MaintMaterialReqLine {
+   from = "maint_material_req_line_av_uiv";
+   where = "(Av_Exe_Task_API.Get_State(task_seq) IN ('In Work', 'Active')
+   AND (Av_Exe_Task_Util_API.Get_Task_Assign_To_Me_Status(TASK_SEQ) = 'Yes'
+   OR created_by = Fnd_Session_API.Get_Fnd_User()))";
+   crud = Read;
+
+   attribute OrderLineNo Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Maint_Material_Order_No), ' - '),TO_CHAR(Line_Item_No))";
+
+   }
+}

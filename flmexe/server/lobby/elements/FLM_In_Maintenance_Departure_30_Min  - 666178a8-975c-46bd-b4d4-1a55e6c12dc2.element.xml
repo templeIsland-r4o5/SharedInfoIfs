@@ -1,0 +1,35 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display count of aircraft in maintenance to depart within 30 minutes</DescriptiveText>
+    <LastModified>22/05/2024, 15:41:59</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>IN-MAINTENANCE AIRCRAFT</Title>
+    <Footer>scheduled to leave in the next 30 minutes</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_In_Maintenance_Departure_30_Min </Name>
+    <ID>666178a8-975c-46bd-b4d4-1a55e6c12dc2</ID>
+    <WebUrl>page/FlmStationTurns/StationTurnsPage?$filter=FlightTurnStatus eq IfsApp.FlmStationTurnsHandling.AircraftTurnStatus'InMaintenance' and SchDeparture30Mins eq 1</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <PassFilterToWebPage>true</PassFilterToWebPage>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>34b8f840-1c37-4699-9b50-5f9adbd99404</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

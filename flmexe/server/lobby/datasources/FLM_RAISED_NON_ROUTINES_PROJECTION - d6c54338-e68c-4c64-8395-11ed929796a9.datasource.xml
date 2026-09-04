@@ -1,0 +1,35 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>2/18/25, 4:05:58 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_RAISED_NON_ROUTINES_PROJECTION</Name>
+    <ID>d6c54338-e68c-4c64-8395-11ed929796a9</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorWPLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>RaisedNonRoutinesCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

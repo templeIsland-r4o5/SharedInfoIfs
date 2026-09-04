@@ -1,0 +1,86 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ------------------------------------------------------------------
+--  241121  DUWJLK  AD-14803, Made neccessaray changes to replace CompetencyId from resourceSeq.
+--  211108  rjoslk  AD-3950, Created.
+--------------------------------------------------------------------------------------
+
+projection FlmTurnLabourResourceHandling;
+component FLMEXE;
+layer Core;
+description "Details for Handling Turn Labour Resources";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset TurnLabourResourceSet for AvTurnLabourResource;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvTurnLabourResource {
+   reference AssemblyTypeRef(AssemblyTypeCode) to AircraftTypeQuery(AssemblyTypeCode);
+   reference WorkTypeRef(WorkTypeCode) to AvWorkType(WorkTypeCode);
+   reference ResourceTypeLovRef(ResourceSeq) to ResourceTypeLov(ResourceSeq);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query AircraftTypeQuery {
+   lu = AvAssembly;
+   from = "Av_Assembly";
+   where = "assembly_type_class_code = 'ACFT'";
+   keys = AssemblyTypeCode;
+   attribute AssemblyTypeCode Text;
+   attribute AssemblyTypeName Text;
+   attribute AssemblyTypeClassCode Text;
+}
+
+query ResourceTypeLov {
+   from = "resource_lov";
+   ludependencies = Resource;
+   lu = none;
+   keys = ResourceSeq;
+   where = "resource_type = 'Person Group'";
+
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_ID";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   attribute ResourceType Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_TYPE";
+      label = "ResourceType";
+   }
+
+   reference ResourceTypeLovRef(ResourceSeq) to ResourceTypeLov(ResourceSeq);
+}
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

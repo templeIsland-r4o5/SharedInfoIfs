@@ -1,0 +1,36 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>2/18/25, 3:59:16 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HANGAR_WP_SUPERVISOR_TASK_PROGRESS</Name>
+    <ID>e29e1e03-79ae-4bc5-aef6-cbc9dc5a752a</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackage</Column>
+            <Name>Work Package</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskStatus</Column>
+            <Name>Task Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Count</Column>
+            <Name>Count</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <EntitySet>HmWpTaskProgressByStatusQuerySet</EntitySet>
+    <EntityType>HmWpTaskProgressByStatusQuery</EntityType>
+    <Filter>WorkPackage eq $WorkPackage$</Filter>
+</ProjectionDataSource>

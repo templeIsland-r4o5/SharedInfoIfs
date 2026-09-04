@@ -1,0 +1,137 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmSupervisorAircraftTurnsDetailsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241121  DUWJLK  AD-15253, Made neccessaray changes to replace CompetencyId from resourceSeq.
+--  240104  PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201  PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  220125  sbanlk  AD-6542, Modified Get_Time_Difference___,Get_Default_Turn_Assign_Time_Range___ functions.
+--  211216  vifelk  AD-4114, Modified Assign_User_To_Skill___  function.
+--  211104  vifelk  AD-4114, Added Get_Turn_Assignment_Time_Range___ function.
+--  211104  vifelk  AD-4114, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Time_Range___ (
+   flight_no_ IN NUMBER) RETURN Time_Range_Structure_Rec
+IS
+   rec_   Time_Range_Structure_Rec;
+BEGIN
+   rec_.start_date:=trunc(Av_Flight_API.Get_Arrival_Time(flight_no_));
+   rec_.end_date:=trunc(Av_Flight_API.Get_Gantchart_End_Time(flight_no_)+1);
+	RETURN rec_;
+END Get_Time_Range___;
+
+FUNCTION Assign_User_To_Skill___ (
+   key_              IN Resource_Gantt_Assign_Key,
+   flight_id_        IN NUMBER,
+   resource_seq_     IN NUMBER,
+   start_time_       IN DATE,
+   end_time_         IN DATE,
+   assigned_user_    IN VARCHAR2) RETURN VARCHAR2
+IS   
+   attr_                      VARCHAR2(32000); 
+   turn_labour_assign_seq_    av_turn_labour_assignment_tab.turn_labour_assignment_id%TYPE;
+   flight_start_ DATE;
+   flight_end_ DATE;
+BEGIN
+	turn_labour_assign_seq_ :=key_.turn_labour_assignment_id;
+   flight_start_ := Av_Flight_API.Get_Arrival_Time(flight_id_);
+   flight_end_ := Av_Flight_API.Get_Gantchart_End_Time(flight_id_);
+   Client_SYS.Add_To_Attr('ASSIGNED_USER',assigned_user_, attr_);
+   Client_SYS.Add_To_Attr('START_TIME',start_time_, attr_);
+   Client_SYS.Add_To_Attr('END_TIME',end_time_, attr_);
+   IF start_time_< flight_start_ OR end_time_ > flight_end_ THEN
+      Error_SYS.Record_General(lu_name_, 'ASSIGNMENTOUTSIDE: Assignment is outside the schedule time.');
+   ELSE 
+      Av_Turn_Labour_Assignment_API.Modify(flight_id_,resource_seq_,turn_labour_assign_seq_,attr_);
+   END IF;
+   RETURN Pers_API.Get_Internal_Display_Name(assigned_user_);
+END Assign_User_To_Skill___;
+--
+FUNCTION Get_Resource_Availability___ (
+   turn_labour_assign_seq_ IN NUMBER,
+   assigned_user_          IN VARCHAR2,
+   site_                   IN VARCHAR2,
+   start_time_             IN DATE,
+   end_time_               IN DATE,
+   company_                IN VARCHAR2) RETURN NUMBER
+IS
+   available_hours_  NUMBER;
+BEGIN
+	available_hours_ := Av_Turn_Labour_Assignment_API.Get_Resource_Availability(turn_labour_assign_seq_,assigned_user_,site_,start_time_,end_time_,company_);
+   RETURN available_hours_;
+END Get_Resource_Availability___;
+
+FUNCTION Get_Turn_Assignment_Time_Range___ (
+   flight_id_ IN NUMBER,
+   duration_ IN NUMBER) RETURN Time_Range_Structure_Rec
+IS
+   rec_           Time_Range_Structure_Rec;
+BEGIN
+   rec_.start_date := Av_Flight_API.Get_Arrival_Time(flight_id_);
+   rec_.end_date   := rec_.start_date + (1/24*duration_);
+   rec_.duration_hhmm :=  Adcom_Util_API.Get_Text_Time(duration_);
+	RETURN rec_;
+END Get_Turn_Assignment_Time_Range___;
+
+FUNCTION Get_Default_Turn_Assign_Time_Range___ (
+   flight_id_ IN NUMBER) RETURN Default_Time_Range_Structure_Rec
+IS
+   rec_ Default_Time_Range_Structure_Rec;
+   duration_rec_ Duration_Structure_Rec;
+BEGIN
+	rec_.start_date := Av_Flight_API.Get_Arrival_Time(flight_id_);
+   rec_.end_date   := Av_Flight_API.Get_Gantchart_End_Time(flight_id_);
+   duration_rec_   := Get_Time_Difference___(rec_.start_date,rec_.end_date);
+   rec_.duration   := duration_rec_.duration;
+   rec_.duration_hhmm :=  duration_rec_.duration_hhmm;
+	RETURN rec_;
+END Get_Default_Turn_Assign_Time_Range___;
+
+
+FUNCTION Get_Time_Difference___ (
+   start_stamp_ IN DATE,
+   end_stamp_ IN DATE) RETURN Duration_Structure_Rec
+IS
+   time_diff_      NUMBER;
+   day_diff_      NUMBER;
+   hour_diff_     NUMBER;
+   mins_diff_     NUMBER;
+   rec_ Duration_Structure_Rec;
+BEGIN
+   day_diff_       := (EXTRACT(DAY FROM TO_TIMESTAMP(to_char(end_stamp_,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS'))-EXTRACT(DAY FROM TO_TIMESTAMP(to_char(start_stamp_ ,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS')))*24*60;
+   hour_diff_      := (EXTRACT(HOUR FROM TO_TIMESTAMP(to_char(end_stamp_,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS'))-EXTRACT(HOUR FROM TO_TIMESTAMP(to_char(start_stamp_ ,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS')))*60;
+   mins_diff_      := EXTRACT(MINUTE FROM TO_TIMESTAMP(to_char(end_stamp_,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS'))-EXTRACT(MINUTE FROM TO_TIMESTAMP(to_char(start_stamp_ ,'DD-MON-YYYY HH24:MI:SS'),'DD-MON-YYYY HH24:MI:SS'));
+   time_diff_      := day_diff_+ hour_diff_ + mins_diff_;
+   time_diff_   := ROUND ((time_diff_ / 60),2);
+   rec_.duration := time_diff_;
+   rec_.duration_hhmm := Adcom_Util_API.Get_Text_Time(rec_.duration );
+	RETURN rec_;
+END Get_Time_Difference___;
+
+
+FUNCTION Get_Turn_Assignment_Time_Range___ (
+   flight_id_ IN NUMBER,
+   duration_hhmm_ IN VARCHAR2) RETURN Time_Range_Structure_Rec
+IS
+  rec_           Time_Range_Structure_Rec;
+BEGIN
+   rec_.duration := TO_NUMBER(NVL(SUBSTR(duration_hhmm_,1, INSTR(duration_hhmm_, ':')-1),0))+ TO_NUMBER(NVL(SUBSTR(duration_hhmm_, INSTR(duration_hhmm_, ':')+1 ,LENGTH(duration_hhmm_)),0))/60;
+   rec_.start_date := Av_Flight_API.Get_Arrival_Time(flight_id_);
+   rec_.end_date   := rec_.start_date + (1/24*rec_.duration);
+	RETURN rec_;
+END Get_Turn_Assignment_Time_Range___;
+
+FUNCTION Validate_Duration___ (
+   duration_hhmm_ IN VARCHAR2) RETURN BOOLEAN
+IS
+BEGIN
+   RETURN Flmexe_Util_API.Validate_Duration(duration_hhmm_);
+END Validate_Duration___;

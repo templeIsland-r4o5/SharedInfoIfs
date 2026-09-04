@@ -1,0 +1,132 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmTaskWorkAssignmentHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250218  DUWJLK  AD-15667, Introduced IsMxLabourDemand and modified Delete_Skill___ procedure.
+--  241124  SSIVLK  AD-14802, Created Delete_Skill action and Get_Skill_Count function
+--  240104  PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201  PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  220125  SBANLK  AD-6542, Modified Get_Time_Difference___ function.
+--  211216  SBANLK  AD-3953, Modified Assign_User_To_Competency___ to return person name .
+--  211119  SBANLK  AD-3953, Added function Get_Task_Assignment_Time_Range___ .
+--  211105  SBANLK  AD-3953, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Person_Competency_Level___ (
+   competency_id_ IN VARCHAR2,
+   assigned_user_ IN VARCHAR2) RETURN NUMBER
+IS
+  skill_level_ NUMBER;
+BEGIN
+  skill_level_:= Pers_Competency_Profile_API.Get_Person_Level(assigned_user_,competency_id_);
+  RETURN skill_level_;  
+END Get_Person_Competency_Level___;
+
+FUNCTION Get_Time_Range___ (
+   task_seq_ IN NUMBER) RETURN Time_Range_Structure_Rec
+IS
+   dates_ Time_Range_Structure_Rec; 
+BEGIN
+   dates_.start_date:= trunc(Av_Exe_Task_API.Get_Arrival_Time(task_seq_));   
+   dates_.end_date  := trunc(Av_Exe_Task_API.Get_Departure_Time(task_seq_)+1);
+   RETURN dates_;
+END Get_Time_Range___;
+
+FUNCTION Get_Task_Assignment_Time_Range___ (
+   task_seq_ IN NUMBER,
+   duration_ IN NUMBER) RETURN Time_Range_Structure_Rec
+IS
+   dates_ Time_Range_Structure_Rec;
+BEGIN
+	dates_.start_date:= Av_Exe_Task_API.Get_Arrival_Time(task_seq_);
+   dates_.end_date:= (dates_.start_date + (1/24*duration_));
+   RETURN dates_;
+END Get_Task_Assignment_Time_Range___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Delete_Skill___ (
+   task_seq_              IN NUMBER,
+   task_resource_seq_     IN NUMBER)
+IS
+   execution_instance_seq_     NUMBER;
+   skill_count_                NUMBER;
+   is_mx_labour_demand_        BOOLEAN;
+   group_id_                   VARCHAR2(100);
+   labour_remark_              VARCHAR2(10);
+   resource_activity_seq_      NUMBER;
+   
+   CURSOR get_labour_assignment_det (group_id_ VARCHAR2, labour_remark_ VARCHAR2) IS
+      SELECT tsd.task_seq, tsd.task_assignment_seq, tsd.role_status, tsd.execution_instance_seq
+      FROM   av_exe_task_assignment_dm tsd
+      WHERE  tsd.group_id = group_id_
+      AND    ((labour_remark_ = 'Executor') OR
+              (labour_remark_ = 'Certifier' AND tsd.role IN ('Certifier', 'Inspector')) OR
+              (labour_remark_ = 'Inspector' AND tsd.role = 'Inspector'));
+        
+BEGIN
+  skill_count_ := Get_Skill_Count___ (task_seq_);
+  is_mx_labour_demand_ := Is_Mx_Labour_Demand___(task_seq_,task_resource_seq_);
+  
+   IF (skill_count_ = 1) THEN
+      Error_SYS.Record_General(lu_name_, 'ERRDELETION: Last demand line cannot be deleted.');      
+   ELSIF (is_mx_labour_demand_) THEN
+      Error_SYS.Record_General(lu_name_, 'ERRDELETION: Skill requirements published from CAMO cannot be removed.'); 
+   ELSE
+      group_id_ := Av_Exe_Task_Assignment_API.Get_Group_Id(task_seq_,task_resource_seq_);   
+      labour_remark_:= Jt_Task_Resource_API.Get_Remark(task_seq_,task_resource_seq_); 
+     
+      FOR labour_assignment_det_rec_ IN get_labour_assignment_det(group_id_,labour_remark_)LOOP
+         IF labour_assignment_det_rec_.role_status IN ('Work Started','Completed') THEN
+              Error_SYS.Record_General(lu_name_, 'ERRDELETION: Cannot remove. Work on other roles for this skill has already started or finished.'); 
+         ELSE 
+            IF(Jt_Execution_Instance_API.Exists(labour_assignment_det_rec_.task_seq, labour_assignment_det_rec_.execution_instance_seq)) THEN 
+               resource_activity_seq_ := Jt_Execution_Instance_API.Get_Resource_Activity_Seq(labour_assignment_det_rec_.task_seq,labour_assignment_det_rec_.execution_instance_seq);
+               Jt_Execution_Instance_API.Remove_Demand_Allocations(resource_activity_seq_);
+            END IF;
+            Jt_Task_Resource_API.Remove_Resource_Line(labour_assignment_det_rec_.task_seq, labour_assignment_det_rec_.task_assignment_seq);
+         END IF;
+      END LOOP;
+   END IF;
+END Delete_Skill___;
+
+FUNCTION Get_Skill_Count___ (
+   task_seq_ IN NUMBER) RETURN NUMBER
+IS
+   skill_count_      NUMBER;
+   
+   CURSOR get_skill_count IS
+    SELECT   COUNT (*)
+    FROM     jt_task_resource 
+    WHERE    task_seq= task_seq_;
+BEGIN
+   OPEN  get_skill_count;
+   FETCH get_skill_count INTO skill_count_;
+   CLOSE get_skill_count;
+   RETURN skill_count_;
+END Get_Skill_Count___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Is_Mx_Labour_Demand___ (
+   task_seq_              IN NUMBER,
+   task_resource_seq_     IN NUMBER) RETURN BOOLEAN 
+IS
+   mx_alt_id_    VARCHAR2(500);
+   key_ref_      VARCHAR2(500);
+ 
+BEGIN
+  key_ref_ := Client_SYS.Get_Key_Reference(jt_task_resource_api.lu_name_,'TASK_RESOURCE_SEQ', TO_CHAR(task_resource_seq_), 'TASK_SEQ', TO_CHAR(task_seq_));
+  mx_alt_id_ := Av_External_Metadata_API.Get_Mx_Alt_Id (jt_task_resource_api.lu_name_,key_ref_);
+   
+  IF mx_alt_id_ IS NOT NULL  THEN
+     RETURN TRUE;
+  ELSE
+     RETURN FALSE;
+  END IF;
+END Is_Mx_Labour_Demand___;

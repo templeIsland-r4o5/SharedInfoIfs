@@ -1,0 +1,50 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250218  RAFALK  AD-14571, Added SupervisorCrewTaskSummaryQuerySet and HmWpTaskProgressByStatusQuerySet, added GetCurrentShiftTaskCount function.
+--  250210  SABOLK  AD-14575, Included FlmHangarMaintenanceLobby fragment to reuse HmAircraftsAtUserAirportQuery and modified HmAircraftsAtUserAirportQuerySet.
+--  241202  BACHLK  AD-14733, Added implementation from Aircraft at Supervisor Airport Hangar lobby page.
+-----------------------------------------------------------------------------
+
+projection FlmHmSupervisorAirportLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Use this API to get data for Aircraft at Supervisor Airport Hangar";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmHangarMaintenanceLobby;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset HmAircraftsAtUserAirportQuerySet for HmAircraftsAtUserAirportQuery;
+entityset SupervisorCrewTaskSummaryQuerySet for SupervisorCrewTaskSummaryQuery;
+entityset HmWpTaskProgressByStatusQuerySet for HmWpTaskProgressByStatusQuery;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetCurrentShiftTaskCount Number {
+   parameter WorkPackageId Number;
+   parameter Shift Text;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

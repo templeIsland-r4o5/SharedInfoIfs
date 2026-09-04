@@ -1,0 +1,44 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-- 241202  BACHLK   AD-14733, Added implementation for Hangar Supervisor Lobby page.
+-----------------------------------------------------------------------------
+
+projection FlmHmSupervisorWPLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Use this API to get data for Hangar Supervisor Lobby";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmHangarMaintenanceLobby;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset MyPartRequestSet for MaintMaterialReqLine;
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function RaisedNonRoutinesCount Number {
+   parameter WorkPackageId Number;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

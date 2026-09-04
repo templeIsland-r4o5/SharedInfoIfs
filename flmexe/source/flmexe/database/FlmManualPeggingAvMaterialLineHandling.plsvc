@@ -1,0 +1,53 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmManualPeggingAvMaterialLineHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15380, Update MMRL before pegging. Two separate API calls to avoid validation error.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@Override
+@DynamicComponentDependency PURCH
+PROCEDURE CRUD_Update___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT Purchase_Order_Line_Part_Key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   order_no_             VARCHAR2(20);
+   line_no_              VARCHAR2(10);
+   release_no_           VARCHAR2(10);
+   maint_mat_order_no_   NUMBER;
+   line_item_no_         NUMBER;
+   update_attr_          VARCHAR2(32000);
+BEGIN
+   order_no_            := Client_SYS.Get_Item_Value('ORDER_NO_TEMP', attr_);
+   line_no_             := Client_SYS.Get_Item_Value('LINE_NO_TEMP', attr_);
+   release_no_          := Client_SYS.Get_Item_Value('RELEASE_NO_TEMP', attr_);
+   maint_mat_order_no_  := Client_SYS.Get_Item_Value_To_Number('MAINT_MAT_ORDER_NO_TEMP', attr_, lu_name_);
+   line_item_no_        := Client_SYS.Get_Item_Value_To_Number('MAINT_LINE_ITEM_NO_TEMP', attr_, lu_name_);
+   
+   -- Call 1: Update supply code to PURCHASE_ORDER
+   -- Separated to avoid POEXISTSFORWT validation error
+   Client_SYS.Clear_Attr(update_attr_);
+   Client_SYS.Add_To_Attr('SUPPLY_CODE_DB', Maint_Mat_Req_Sup_API.DB_PURCHASE_ORDER, update_attr_);
+   Maint_Material_Req_Line_API.Update_Material_Line(maint_mat_order_no_, line_item_no_, update_attr_);
+   
+   -- Call 2: Update PO references and source type
+   Client_SYS.Clear_Attr(update_attr_);
+   Client_SYS.Add_To_Attr('SUPPLY_SOURCE_REF1', order_no_, update_attr_);
+   Client_SYS.Add_To_Attr('SUPPLY_SOURCE_REF2', line_no_, update_attr_);
+   Client_SYS.Add_To_Attr('SUPPLY_SOURCE_REF3', release_no_, update_attr_);
+   Client_SYS.Add_To_Attr('SUPPLY_SOURCE_REF_TYPE_DB', Supply_Source_Ref_Type_API.DB_PURCHASE_ORDER, update_attr_);
+   Maint_Material_Req_Line_API.Update_Material_Line(maint_mat_order_no_, line_item_no_, update_attr_);
+   
+   super(etag_, key_, attr_, info_, action_);
+   
+END CRUD_Update___;

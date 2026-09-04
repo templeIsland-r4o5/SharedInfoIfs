@@ -1,0 +1,27 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of station turns</DescriptiveText>
+    <LastModified>30/05/2024, 16:11:46</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_STATION_TURNS_PROJECTION</Name>
+    <ID>efd3c1ed-2e12-4068-807a-d543c3fed43c</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>AvFlightSet</EntitySet>
+    <EntityType>AvFlight</EntityType>
+    <Filter>LockedBool eq false or LockedBool eq null and 
+(Condition ne 'SCRAP' and Condition ne 'ARCHIVE')</Filter>
+</ProjectionDataSource>

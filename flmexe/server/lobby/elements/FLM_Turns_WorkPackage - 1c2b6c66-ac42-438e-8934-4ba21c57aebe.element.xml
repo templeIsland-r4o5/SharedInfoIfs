@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:31:32 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Planned Work</Title>
+    <Footer>Aircraft</Footer>
+    <Background>#FFF7AC00</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_WorkPackage</Name>
+    <ID>1c2b6c66-ac42-438e-8934-4ba21c57aebe</ID>
+    <WebUrl>page/FlmMyAircraftTurns/MyAircraftTurnsCardPage;$filter=WorkPackageId ne null and FlightTurnStatus ne 'Departed'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>2739d06c-55be-490e-a86f-5d70b6c4bcf2</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

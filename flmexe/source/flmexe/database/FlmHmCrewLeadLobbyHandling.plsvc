@@ -1,0 +1,84 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmCrewLeadLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250129  VAALLK   AD-16488-Added Get_Handover_Tasks_Count___ method
+--  250118  KAPALK   AD-15487-Created functions for the counters 
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Get_Assigned_To_Me_Task_Count_By_Shift___ (
+   work_package_id_ IN NUMBER,
+   shift_ IN VARCHAR2
+) RETURN NUMBER
+IS
+   assign_to_me_count_ NUMBER := 0;
+   current_user_ VARCHAR2(30) := Fnd_Session_API.Get_Fnd_User();
+   
+   CURSOR get_assign_to_me_count IS
+   SELECT COUNT(DISTINCT t.task_seq)
+   FROM jt_task_resource_demand_av_uiv t
+   INNER JOIN av_exe_task wt
+   ON t.task_seq = wt.task_seq
+   WHERE t.assigned_resource_id = current_user_ 
+   AND t.work_package_id = work_package_id_
+   AND Flmexe_Util_API.Get_Shift_By_Sched_Start(wt.planned_start,NULL) = shift_
+   AND wt.objstate IN ('RELEASED','WORKSTARTED');
+   
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      OPEN get_assign_to_me_count;
+      FETCH get_assign_to_me_count INTO assign_to_me_count_;
+      CLOSE get_assign_to_me_count;
+   END IF;
+   
+   RETURN assign_to_me_count_;
+END Get_Assigned_To_Me_Task_Count_By_Shift___;
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Get_Unassigned_Task_Count_By_Shift___ (
+ work_package_id_ IN NUMBER,
+ shift_ IN VARCHAR2
+) RETURN NUMBER
+IS
+   unassign_count_ NUMBER := 0;
+   
+   CURSOR get_unassign_to_me_count IS
+   SELECT COUNT(DISTINCT t.task_seq)
+   FROM jt_task_resource_demand_av_uiv t
+   INNER JOIN av_exe_task wt
+   ON t.task_seq = wt.task_seq
+   WHERE t.assigned_resource_id IS NULL 
+   AND t.work_package_id = work_package_id_
+   AND Flmexe_Util_API.Get_Shift_By_Sched_Start(wt.planned_start,NULL) = shift_
+   AND wt.objstate IN ('RELEASED','WORKSTARTED');
+   
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      OPEN get_unassign_to_me_count;
+      FETCH get_unassign_to_me_count INTO unassign_count_;
+      CLOSE get_unassign_to_me_count;
+   END IF;
+   
+   RETURN unassign_count_;
+END Get_Unassigned_Task_Count_By_Shift___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Non_Routines_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   non_routine_count_ NUMBER := 0;
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      non_routine_count_ := Av_Aircraft_Work_Package_API.Get_Non_Routine_Count_By_Wp_Id(work_package_id_);
+   END IF;
+   
+   RETURN non_routine_count_;
+END Non_Routines_Count___;

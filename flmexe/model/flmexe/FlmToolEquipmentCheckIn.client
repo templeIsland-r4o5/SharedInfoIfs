@@ -1,0 +1,67 @@
+client FlmToolEquipmentCheckIn;
+component FLMEXE;
+layer Core;
+projection FlmToolEquipmentCheckInHandling;
+description "Checked Out Tools and Equipment in Flm";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolEquipmentCheckInBase;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolsAndEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 35 {
+      label = "Tool Status - Checked Out";
+      page List;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page List using ToolListToCheckInSet {
+   label = "Tool Status - Checked Out";
+   list ToolEquipmentCheckInList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+@Override
+list ToolEquipmentCheckInList for ToolListToCheckIn {
+   field Notes {
+      multiline = true;
+   }
+   fieldorder {
+      anchor CheckedOutToRef;
+      followedby Notes;
+      followedby CheckedOutDate;
+   }
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

@@ -1,0 +1,92 @@
+projection FlmMyPartRequestHandling;
+component FLMEXE;
+layer Core;
+description "My Part Request Page Handling";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment UserAllowedSiteLovSelector;
+include fragment AircraftLovSelector;
+include fragment FlmParts;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset MaintMaterialReqLineSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity MaintMaterialReqLine {
+   from = "maint_material_req_line_av_uiv";
+   where = "(Av_Exe_Task_API.Get_State(TASK_SEQ) IN ('In Work', 'Active')
+            AND (Av_Exe_Task_Util_API.Get_Task_Assign_To_Me_Status(TASK_SEQ) = 'Yes'
+            OR created_by = Fnd_Session_API.Get_Fnd_User()))";
+
+   keys = LineItemNo, MaintMaterialOrderNo;
+   ludependencies = MaintMaterialRequisition, AvExeTaskPart;
+   exclude attributes = ObjectState;
+   attribute AircraftId Number;
+   attribute AircraftWorkPackageId Number;
+   attribute TaskSeq Number;
+
+   attribute OrderLineNo Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Maint_Material_Order_No), '-'),TO_CHAR(Line_Item_No))";
+
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Plan_Qty), ' '),INVENTORY_PART_API.Get_Unit_Meas(spare_contract,Part_No))";
+   }
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(Aircraft_Id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(Aircraft_Id)))";
+      lovcolumn = [true];
+   }
+   attribute OrderState Text {
+      fetch = "Maint_Material_Requisition_API.Get_State(maint_material_order_no)";
+   }
+   attribute PartDescription Text {
+      fetch = "CONCAT(CONCAT(part_no, ' - '), (Inventory_Part_API.Get_Description(spare_contract, part_no)))";
+   }
+
+   attribute PromisedReceiptDate Timestamp {
+      label = "ETA";
+      fetch = "Maint_Mat_Req_Line_Util_API.Get_Promised_Receipt_Date(maint_material_order_no,line_item_no)";
+      editable = [false];
+   }
+   attribute OrderObjstate Text {
+      fetch = "Maint_Material_Requisition_API.Get_Objstate(maint_material_order_no)";
+   }
+
+   attribute AvInstalledTaskPartId Number {
+      fetch = "Av_Exe_Task_Part_API.Get_Tsk_Part_Id_By_Mmrl_Keys(task_seq, maint_material_order_no, line_item_no)";
+   }
+
+   attribute OrderStatus Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Order_Status(maint_material_order_no, line_item_no)";
+   }
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftLovRef(Aircraft) to AircraftLov(Aircraft);
+   reference AcftRef(AircraftId) to Aircraft(AircraftId);
+
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

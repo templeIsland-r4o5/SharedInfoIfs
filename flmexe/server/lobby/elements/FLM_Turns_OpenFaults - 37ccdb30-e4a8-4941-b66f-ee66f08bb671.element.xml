@@ -1,0 +1,32 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:27:13 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Open Faults</Title>
+    <Footer>Aircraft</Footer>
+    <Background>#FFF7AC00</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_OpenFaults</Name>
+    <ID>37ccdb30-e4a8-4941-b66f-ee66f08bb671</ID>
+    <WebUrl>page/FlmMyAircraftTurns/MyAircraftTurnsCardPage;$filter=OpenFaultCountForFlight ne 0 and FlightTurnStatus ne 'Departed'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>f9e98f8c-c4b5-44de-80c1-97de3c091587</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

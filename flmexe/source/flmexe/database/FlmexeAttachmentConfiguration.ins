@@ -1,0 +1,123 @@
+-----------------------------------------------------------------------------
+--  Module : FLMEXE
+--
+--  Purpose: Manage Object Connections for FLMEXE
+--
+--  File   : FlmexeAttachmentConfiguration.ins
+--
+--  IFS Developer Studio Template Version 2.6
+--
+--  Date     Sign    History
+--  ------   ------  --------------------------------------------------
+--  230615   SatGlk  ADZ-173, Added exception handling to document class creation 
+--  221031   SatGlk  AD-8926, Added dependency check with flm in MM ATTACHMENTS to avoid race condition when FLM is installed
+--  221017   SatGlk  AD-8926, Renamed doc class FLM DOC to MM DOC
+--  220722   rodilk  AD-7766, Added MediaLibrary to AvExeTaskMeasurement
+--  220110   rosdlk  AD-5326, Added Document class as 'FLM DOC'
+--  220107   rosdlk  AD-5326, Added DocReferenceObject to AvExeTask
+--  220107   rosdlk  AD-5326, Added LU transformation to copy attachments to AvExeTask
+--  211222   AmPalk  AD-5004, Created for add DocReferenceObject to AvFault.
+--  ------   ------  --------------------------------------------------
+-----------------------------------------------------------------------------
+
+PROMPT Enable Services DocReferenceObject on AvFault
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, PRE_25R2_PATCH_REGISTERED)
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'FlmexeAttachmentConfiguration', '1', 'INS') THEN
+   IF NOT (Object_Connection_SYS.Is_Connection_Aware('AvFault', 'DocReferenceObject')) THEN
+      Object_Connection_SYS.Enable_Service('AvFault', 'DocReferenceObject');
+   END IF;
+   
+   Code_Registration_SYS.Register('FLMEXE', 'FlmexeAttachmentConfiguration', '1', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 1 of FlmexeAttachmentConfiguration was not executed because it has already been applied in a previous upgrade.');
+ END IF;
+END;
+
+PROMPT Enable Services DocReferenceObject on AvExeTask
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, PRE_25R2_PATCH_REGISTERED)
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'FlmexeAttachmentConfiguration', '2', 'INS') THEN
+   IF NOT (Object_Connection_SYS.Is_Connection_Aware('AvExeTask', 'DocReferenceObject')) THEN
+      Object_Connection_SYS.Enable_Service('AvExeTask', 'DocReferenceObject');
+   END IF;
+   
+   Code_Registration_SYS.Register('FLMEXE', 'FlmexeAttachmentConfiguration', '2', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 2 of FlmexeAttachmentConfiguration was not executed because it has already been applied in a previous upgrade.');
+ END IF;
+END;
+
+PROMPT CREATE DEFAULT DOCUMENT CLASS FOR MM ATTACHMENTS
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, PRE_25R2_PATCH_REGISTERED)
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'FlmexeAttachmentConfiguration', '3', 'INS') THEN
+   $IF Component_Flm_SYS.INSTALLED $THEN
+      NULL;
+   $ELSE
+      BEGIN
+         IF NOT(Doc_Class_Api.Exists('MM DOC')) THEN
+            Doc_Class_API.New('MM DOC', 'Attachments related to faults');
+         END IF;
+         
+         EXCEPTION
+            WHEN OTHERS THEN
+               NULL;
+      END;
+   $END
+   
+   Code_Registration_SYS.Register('FLMEXE', 'FlmexeAttachmentConfiguration', '3', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 3 of FlmexeAttachmentConfiguration was not executed because it has already been applied in a previous upgrade.');
+ END IF;   
+END;
+/
+
+PROMPT Adding LU Transformations FROM AFault To AvExeTask
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, PRE_25R2_PATCH_REGISTERED)
+DECLARE
+   target_lu_name_        VARCHAR2(30)   := 'AvExeTask';
+   source_lu_name_        VARCHAR2(30)   := 'AvFault';
+   service_name_          VARCHAR2(100)  := 'DocReferenceObject';
+   editable_              VARCHAR2(20)   := 'SOURCE'; 
+   transformation_method_ VARCHAR2(1000) := 'FAULT_ID';
+   register_              BOOLEAN        := TRUE;
+BEGIN 
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'FlmexeAttachmentConfiguration', '4', 'INS') THEN
+   IF Obj_Connect_Lu_Transform_API.Exists(target_lu_name_,source_lu_name_,service_name_) THEN
+      IF Obj_Connect_Lu_Transform_API.Get_Editable_Db(target_lu_name_,source_lu_name_,service_name_) = editable_ THEN
+         IF Obj_Connect_Lu_Transform_API.Get_Transformation_Method(target_lu_name_,source_lu_name_,service_name_) = transformation_method_ THEN
+            register_ := FALSE;
+         END IF;
+      END IF;
+   END IF;
+   
+   -- Only register if not already registered. Prevents to enable it if it is disabled.
+   IF register_ THEN
+      Obj_Connect_Lu_Transform_API.Register(target_lu_name_ ,source_lu_name_ , service_name_ , editable_, transformation_method_);
+   END IF;
+   
+   Code_Registration_SYS.Register('FLMEXE', 'FlmexeAttachmentConfiguration', '4', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 4 of FlmexeAttachmentConfiguration was not executed because it has already been applied in a previous upgrade.');
+ END IF;   
+END;
+/
+
+PROMPT Enable Services MediaLibrary on AvExeTaskMeasurement
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, PRE_25R2_PATCH_REGISTERED)
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'FlmexeAttachmentConfiguration', '5', 'INS') THEN
+   IF NOT (Object_Connection_SYS.Is_Connection_Aware('AvExeTaskMeasurement', 'MediaLibrary')) THEN
+      Object_Connection_SYS.Enable_Service('AvExeTaskMeasurement', 'MediaLibrary');
+   END IF;
+   
+   Code_Registration_SYS.Register('FLMEXE', 'FlmexeAttachmentConfiguration', '5', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 5 of FlmexeAttachmentConfiguration was not executed because it has already been applied in a previous upgrade.');
+ END IF;
+END;
+/
+
+COMMIT;
+/

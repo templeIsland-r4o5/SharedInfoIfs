@@ -1,0 +1,87 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Details of the crew to which the user is assigned.</DescriptiveText>
+    <LastModified>4/2/25, 11:44:21 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>8</ColumnSpan>
+    <Title>CREW ASSIGNMENT SUMMARY </Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_CREW_TASK_LIST_ELEMENT</Name>
+    <ID>476a696b-4a89-4164-b06e-555a1d57a460</ID>
+    <WebUrl>page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=Crew eq $[CrewCode] and Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$</WebUrl>
+    <ColorStyle>Default</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>b67e03e9-41fe-47ae-b098-6ddd8075d7f2</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Crew</Column>
+                <Name>Crew</Name>
+                <DisplayName>Crew</DisplayName>
+                <Width>25</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Crew</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>PendingTasks</Column>
+                <Name>Pending Tasks</Name>
+                <DisplayName>Pending</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>PendingTasks</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>AssignedTasks</Column>
+                <Name>Assigned Tasks</Name>
+                <DisplayName>Assigned </DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>AssignedTasks</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>InWorkTasks</Column>
+                <Name>In Work Tasks</Name>
+                <DisplayName>Work Started</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>InWorkTasks</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>CompletedTasks</Column>
+                <Name>Completed Tasks</Name>
+                <DisplayName>Completed </DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>CompletedTasks</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>CrewCode</Column>
+                <Name>Crew Code</Name>
+                <DisplayName>Crew Code</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>CrewCode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+    </ColumnMapping>
+</List>

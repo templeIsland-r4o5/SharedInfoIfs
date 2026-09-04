@@ -1,0 +1,354 @@
+-------------------------------------------------------------------------------
+--
+--  Fragment:     FlmTaskAssignments
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250203  NIRTLK  AD-14853, Added Check_Active_Assgmt_For_Skill_Role___.
+--  250121  DUWJLK  AD-16211, Modified Validate_Format_Duration_Hours___  unit test.
+--  241122  NIRTLK  AD-14819, Created. Added unit test for Get_Schedule_Time_Range___,Validate_Schedule_Dates___,Validate_Schedule_Range___.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+UNITTEST "Get_Schedule_Time_Range___ should return the end date when the scheduled assignment hours are between the arrival and departure dates" FOR
+   FUNCTION Get_Schedule_Time_Range___ (
+      task_seq_       IN     NUMBER,
+      duration_hours_ IN     NUMBER)    RETURN Schedule_Range_Structure_Rec;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Arrival_Time (
+      task_seq_ IN     NUMBER )  RETURN  DATE
+   IS
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         RETURN TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Arrival_Time;
+
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Departure_Time (
+      task_seq_ IN     NUMBER )  RETURN  DATE
+   IS
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         RETURN TO_DATE('2003/05/05 10:06:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Departure_Time;
+
+IS
+   --Insert your test variables here
+   scenario_   NUMBER;
+   return_     Schedule_Range_Structure_Rec;
+   expected_   Schedule_Range_Structure_Rec;
+BEGIN
+   FOR
+      |scenario_| expected_.start_date                                    | expected_.end_date                                      | task_seq_ | duration_hours_ |
+      |    1    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:01:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.0167          |
+      |    2    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:02:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.0333          |
+      |    3    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:03:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.05            |
+      |    4    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:04:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.0667          |
+      |    5    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:05:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.0833          |
+      |    6    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:06:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 2.1             |
+      |    7    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 09:15:00', 'yyyy/mm/dd hh24:mi:ss') | 1000      | 1.25            |
+      |    8    | NULL                                                    | NULL                                                    | 1000      | 100             |
+
+   LOOP
+      IF (scenario_ < 8) THEN
+         --Insert your test code here
+         return_ := Get_Schedule_Time_Range___(task_seq_, duration_hours_);
+         --Insert your assertions here
+         ASSERT return_.start_date = expected_.start_date MESSAGE 'Expected '||expected_.start_date||' but returned '||return_.start_date;
+         ASSERT return_.end_date   = expected_.end_date MESSAGE 'Expected '||expected_.end_date||' but returned '||return_.end_date;
+      ELSIF (scenario_ = 8) THEN
+         ASSERT FAIL '%INVALIDASSIGNMENT%' EXECUTE return_ := Get_Schedule_Time_Range___(task_seq_, duration_hours_);
+      END IF;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Validate_Schedule_Dates___ should ... when ..." FOR
+   FUNCTION Validate_Schedule_Dates___ (
+      task_seq_   IN     NUMBER,
+      start_date_ IN     DATE,
+      end_date_   IN     DATE,
+      field_      IN     VARCHAR2)   RETURN Schedule_Hours_Structure_Rec;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Task_Schedule_Interval (
+      task_seq_ IN     NUMBER )  RETURN  IFSAPP.Av_Exe_Task_API.TASK_SCHEDULE_TIME_INTERVAL_REC
+   IS
+      sched_interval_ Av_Exe_Task_API.Task_Schedule_Time_Interval_Rec;
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         sched_interval_.schedule_start := TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss');
+         sched_interval_.schedule_end   := TO_DATE('2003/05/05 10:06:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSIF task_seq_ = 1001 THEN
+         sched_interval_.schedule_start := TO_DATE('2003/05/29 23:00:00', 'yyyy/mm/dd hh24:mi:ss');
+         sched_interval_.schedule_end   := TO_DATE('2003/06/15 23:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      END IF;
+
+      RETURN sched_interval_;
+   END Get_Task_Schedule_Interval;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Get_Text_Time (
+      time_duration_ IN     NUMBER )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      IF time_duration_    = 0.1667 THEN
+         RETURN '00:10';
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Text_Time;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Get_Time_Difference_In_Hours (
+      start_date_ IN     DATE,
+      end_date_   IN     DATE)RETURN NUMBER
+   IS
+   BEGIN
+      IF start_date_ = TO_DATE('2003/05/05 08:20:00', 'yyyy/mm/dd hh24:mi:ss') AND
+         end_date_ = TO_DATE('2003/05/05 08:30:00', 'yyyy/mm/dd hh24:mi:ss') THEN
+         RETURN 0.1667;
+      ELSIF start_date_ = TO_DATE('2003/05/29 23:00:00', 'yyyy/mm/dd hh24:mi:ss') AND
+         end_date_ = TO_DATE('2003/06/15 23:00:00', 'yyyy/mm/dd hh24:mi:ss') THEN
+         RETURN 40008;
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Time_Difference_In_Hours;
+
+IS
+   --Insert your test variables here
+   scenario_   NUMBER;
+   return_     Schedule_Hours_Structure_Rec;
+   expected_   Schedule_Hours_Structure_Rec;
+BEGIN
+   FOR
+      |scenario_| expected_.pre_schedule_hours | expected_.schedule_hours | task_seq_ | start_date_                                             | end_date_                                               | field_     |
+      |    1    |   '00:10'                    |  0.1667                  |    1000   | TO_DATE('2003/05/05 08:20:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 08:30:00', 'yyyy/mm/dd hh24:mi:ss') | 'Executor' |
+      |    2    |   NULL                       |  NULL                    |    1000   | TO_DATE('2003/05/05 08:20:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 08:10:00', 'yyyy/mm/dd hh24:mi:ss') | 'Executor' |
+      |    3    |   NULL                       |  NULL                    |    1000   | TO_DATE('2003/05/04 08:20:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 08:19:00', 'yyyy/mm/dd hh24:mi:ss') | 'Executor' |
+      |    4    |   NULL                       |  NULL                    |    1000   | TO_DATE('2003/05/05 08:20:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:57:00', 'yyyy/mm/dd hh24:mi:ss') | 'Executor' |
+      |    5    |   NULL                       |  NULL                    |    1001   | TO_DATE('2003/05/29 23:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/06/15 23:00:00', 'yyyy/mm/dd hh24:mi:ss') | 'Executor' |
+
+   LOOP
+      IF (scenario_ = 1) THEN
+         --Insert your test code here
+         return_ := Validate_Schedule_Dates___(task_seq_, start_date_, end_date_, field_);
+         --Insert your assertions here
+         ASSERT return_.pre_schedule_hours = expected_.pre_schedule_hours MESSAGE 'Expected '||expected_.pre_schedule_hours||' but returned '||return_.pre_schedule_hours;
+         ASSERT return_.schedule_hours     = expected_.schedule_hours MESSAGE 'Expected '||expected_.schedule_hours||' but returned '||return_.schedule_hours;
+      ELSIF (scenario_ = 2) THEN
+         ASSERT FAIL '%ERRINVALIDDATES%' EXECUTE return_ := Validate_Schedule_Dates___(task_seq_, start_date_, end_date_, field_);
+      ELSIF (scenario_ = 3) THEN
+         ASSERT FAIL '%INVALIDASSIGNMENT%' EXECUTE return_ := Validate_Schedule_Dates___(task_seq_, start_date_, end_date_, field_);
+      ELSIF (scenario_ = 4) THEN
+         ASSERT FAIL '%INVALIDASSIGNMENT%' EXECUTE return_ := Validate_Schedule_Dates___(task_seq_, start_date_, end_date_, field_);
+      ELSIF (scenario_ = 5) THEN
+         ASSERT FAIL '%INVALIDSCHEDHOURS%' EXECUTE return_ := Validate_Schedule_Dates___(task_seq_, start_date_, end_date_, field_);
+      END IF;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Validate_Format_Duration_Hours___ should return the numeric hours value when duration is passed in hh:mm" FOR
+   FUNCTION Validate_Format_Duration_Hours___ (
+      task_seq_      IN     NUMBER,
+      duration_hhmm_ IN     VARCHAR2,
+      field_         IN     VARCHAR2)   RETURN NUMBER;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Adcom_Util_API
+   FUNCTION Validate_Format_Hours (
+      duration_hhmm_ IN     VARCHAR2 )  RETURN  NUMBER
+   IS
+   BEGIN
+      IF duration_hhmm_ = '33333' THEN
+         RETURN NULL;
+      ELSIF duration_hhmm_ = '02:00' THEN
+         RETURN 2;
+      ELSIF duration_hhmm_ = '10:00' THEN
+         RETURN 10;
+      END IF;
+   END Validate_Format_Hours;
+
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Arrival_Time (
+      task_seq_ IN     NUMBER )  RETURN  DATE
+   IS
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         RETURN TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Arrival_Time;
+
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Departure_Time (
+      task_seq_ IN     NUMBER )  RETURN  DATE
+   IS
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         RETURN TO_DATE('2003/05/05 10:06:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSE
+         RETURN NULL;
+      END IF;
+   END Get_Departure_Time;
+
+IS
+   --Insert your test variables here
+   scenario_  NUMBER;
+   return_    NUMBER;
+   expected_  NUMBER;
+BEGIN
+   FOR
+      |scenario_| expected_ | task_seq_ | duration_hhmm_ | field_       |
+      |1        | 2         | 1000      | '02:00'        | 'Executor'   |
+      |2        | NULL      | 1000      | '00:00'        | 'Executor'   |
+      |3        | NULL      | 1000      | '33333'        | 'Executor'   |
+      |4        | NULL      | 1000      | '10:00'        | 'Executor'   |
+   LOOP
+      IF scenario_ = 1  THEN
+         --Insert your test code here
+         return_ := Validate_Format_Duration_Hours___(task_seq_, duration_hhmm_, field_);
+         --Insert your assertions here
+         ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+      ELSIF scenario_ = 2   THEN
+         --Insert your test code here
+         return_ := Validate_Format_Duration_Hours___(task_seq_, duration_hhmm_, field_);
+         --Insert your assertions here
+         ASSERT expected_ IS NULL MESSAGE 'Expected NULL but returned not NULL';
+      ELSIF scenario_ = 3   THEN
+         ASSERT FAIL '%INVALIDSCHEDHOURS%' EXECUTE return_ := Validate_Format_Duration_Hours___(task_seq_, duration_hhmm_, field_);
+      ELSE
+         ASSERT FAIL '%INVALIDASSIGNMENT%' EXECUTE return_ := Validate_Format_Duration_Hours___(task_seq_, duration_hhmm_, field_);
+      END IF;
+   END LOOP;
+END UNITTEST;
+
+
+UNITTEST "Get_Schedule_Date_And_Interval___ should return start date,end date and time duration when task sequence and duration are passed" FOR
+   FUNCTION Get_Schedule_Date_And_Interval___ (
+      task_seq_      IN     NUMBER,
+      duration_hhmm_ IN     VARCHAR2,
+      field_         IN     VARCHAR2   )    RETURN Schedule_Interval_Structure_Rec;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Adcom_Util_API
+   FUNCTION Validate_Format_Hours (
+      duration_hhmm_ IN     VARCHAR2 )  RETURN  NUMBER
+   IS
+   BEGIN
+      IF duration_hhmm_ = '33333' THEN
+         RETURN NULL;
+      ELSIF duration_hhmm_ = '02:00' THEN
+         RETURN 2;
+      ELSIF duration_hhmm_ = '03:00' THEN
+         RETURN 3;
+      END IF;
+   END Validate_Format_Hours;
+
+   @MockPackage Av_Exe_Task_API
+   FUNCTION Get_Task_Schedule_Interval (
+      task_seq_ IN     NUMBER )  RETURN  IFSAPP.Av_Exe_Task_API.TASK_SCHEDULE_TIME_INTERVAL_REC
+   IS
+      sched_interval_ Av_Exe_Task_API.Task_Schedule_Time_Interval_Rec;
+   BEGIN
+      IF task_seq_ = 1000 THEN
+         sched_interval_.schedule_start := TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss');
+         sched_interval_.schedule_end   := TO_DATE('2003/05/05 10:06:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSIF task_seq_ = 1001 THEN
+         sched_interval_.schedule_start := TO_DATE('2003/05/29 23:00:00', 'yyyy/mm/dd hh24:mi:ss');
+         sched_interval_.schedule_end   := TO_DATE('2003/06/15 23:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      END IF;
+
+      RETURN sched_interval_;
+   END Get_Task_Schedule_Interval;
+
+IS
+   --Insert your test variables here
+   scenario_   NUMBER;
+   return_   Schedule_Interval_Structure_Rec;
+   expected_ Schedule_Interval_Structure_Rec;
+BEGIN
+   FOR
+      |scenario_| expected_.start_date                                    | expected_.end_date                                      |expected_.pre_schedule_hours| task_seq_ | duration_hhmm_ |field_       |
+      |    1    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 10:00:00', 'yyyy/mm/dd hh24:mi:ss') |   '02:00'                  | 1000      | '02:00'        |'Executor'   |
+      |    2    | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') | TO_DATE('2003/05/05 08:00:00', 'yyyy/mm/dd hh24:mi:ss') |   '00:00'                  | 1000      | '33333'        |'Executor'   |
+      |    3    | NULL                                                    | NULL                                                    |   '03:00'                  | 1000      | '03:00'        |'Executor'   |
+   LOOP
+      IF scenario_ = 1 OR scenario_ = 2 THEN
+         --Insert your test code here
+         return_ := Get_Schedule_Date_And_Interval___(task_seq_, duration_hhmm_,field_);
+         --Insert your assertions here
+         ASSERT return_.start_date           = expected_.start_date MESSAGE 'Expected '||expected_.start_date||' but returned '||return_.start_date;
+         ASSERT return_.end_date             = expected_.end_date MESSAGE 'Expected '||expected_.end_date||' but returned '||return_.end_date;
+         ASSERT return_.pre_schedule_hours   = expected_.pre_schedule_hours MESSAGE 'Expected '||expected_.pre_schedule_hours||' but returned '||return_.pre_schedule_hours;
+      ELSE
+         ASSERT FAIL '%INVALIDASSIGNMENT%' EXECUTE return_ := Get_Schedule_Date_And_Interval___(task_seq_, duration_hhmm_,field_);
+      END IF;
+
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Validate_Schedule_Range___ should return FALSE when the passed atart date, end date and duration are invalid" FOR
+   FUNCTION Validate_Schedule_Range___ (
+      task_seq_       IN     NUMBER,
+      start_date_     IN     DATE,
+      end_date_       IN     DATE,
+      schedule_hours_ IN     NUMBER,
+      field_          IN     VARCHAR2)    RETURN BOOLEAN;
+USING
+   --Insert your mock directives and mock return variables here
+   @Mock
+   FUNCTION Validate_Schedule_Dates___ (
+      task_seq_   IN     NUMBER,
+      start_date_ IN     DATE,
+      end_date_   IN     DATE,
+      field_      IN     VARCHAR2)   RETURN Schedule_Hours_Structure_Rec
+   IS
+      val_schedule_hours_    Schedule_Hours_Structure_Rec;
+   BEGIN
+      val_schedule_hours_.pre_schedule_hours   :=  '02:10';
+      val_schedule_hours_.schedule_hours       :=   2.1667;
+      IF task_seq_   = 1000 AND
+         start_date_ = TO_DATE('2019/11/18 03:25:00', 'yyyy/mm/dd hh24:mi:ss') AND
+         end_date_   = TO_DATE('2019/11/18 05:35:00', 'yyyy/mm/dd hh24:mi:ss') AND
+         field_      = 'Executor' THEN
+         RETURN val_schedule_hours_;
+      END IF;
+   END Validate_Schedule_Dates___;
+
+IS
+   --Insert your test variables here
+   scenario_  NUMBER;
+   return_    BOOLEAN;
+   expected_  BOOLEAN;
+BEGIN
+   FOR
+      |scenario_| expected_ | task_seq_ | start_date_                                              | end_date_                                                | schedule_hours_ | field_         |
+      |    1    | TRUE      | 1000      | TO_DATE('2019/11/18 03:25:00', 'yyyy/mm/dd hh24:mi:ss')  | TO_DATE('2019/11/18 05:35:00', 'yyyy/mm/dd hh24:mi:ss')  | 2.1667          | 'Executor'     |
+      |    2    | NULL      | 1000      | TO_DATE('2019/11/18 03:25:00', 'yyyy/mm/dd hh24:mi:ss')  | TO_DATE('2019/11/18 05:35:00', 'yyyy/mm/dd hh24:mi:ss')  | 5               | 'Executor'     |
+      LOOP
+      IF (scenario_ = 1) THEN
+      --Insert your test code here
+      return_ := Validate_Schedule_Range___(task_seq_, start_date_, end_date_, schedule_hours_, field_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   ELSIF (scenario_ = 2) THEN
+      ASSERT FAIL '%EXCEEDINTERVAL%' EXECUTE return_ := Validate_Schedule_Range___(task_seq_, start_date_, end_date_, schedule_hours_, field_);
+   END IF;
+END LOOP;
+END UNITTEST;

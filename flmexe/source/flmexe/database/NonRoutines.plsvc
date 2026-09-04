@@ -1,0 +1,22 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     NonRoutines
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250110  majslk  AD-16262, Added Get_Default_Value___ method
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Default_Value___ RETURN Search_Context_Structure_Rec
+IS
+   rec_ Search_Context_Structure_Rec;
+BEGIN
+	rec_.is_created_by_me := FALSE;
+   RETURN rec_;
+END Get_Default_Value___;

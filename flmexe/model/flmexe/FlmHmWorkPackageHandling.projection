@@ -1,0 +1,469 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250828  RAFALK  AD-20010, Added DeleteWpSignOffSkill action
+--  250825  RAFALK  AD-20009, Added GetWpSignOffSkills function and WpSignOffSkillLovRef to AvWpSignOffReq
+--  250816  RAFALK  AD-20008, Override AvWpSignOffReq
+--  250702  SRLALK  AD-19955 Add NR Approval Status on Workscope, Faults and Unassigned Faults tabs
+--  250704  SSIVLK  AD-18640,Added JtTaskReturnArray
+--  250704  SSIVLK  AD-18637,Added MaintMaterialReqArray
+--  250617  SARAUS  AD-18209-Hangar Maintenance Work Package :Add Critical Items
+--  250618  SSIVLK  AD-19144, Added HmRemovedPartsQuery
+--  250611  SSIVLK  AD-19143, Added HmInstalledPartsQuery
+--  250602  DNMALK  AMDEV-22449, Commented Use of HmContractNo since Attribute not in Core.
+--  250521  WIHALK  AD-18258, Connect contract line to hangar task changes.
+--  250502  VAALLK  AD-18257, Connect customer and contract to work package changes.
+--  250213  ROERLK  AD-17035, Added Faults and Deferred faults
+--  250127  ROERLK  AD-14572, Created
+-----------------------------------------------------------------------------
+projection FlmHmWorkPackageHandling;
+component FLMEXE;
+layer Core;
+description "This Projection is used to develop Hangar Maintenance Work Package";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmTaskAssignments;
+include fragment LaborSummary;
+include fragment AircraftLovSelector;
+include fragment CustomerInfoCustcategoryPubSelector;
+include fragment FlmPanelTasks;
+include fragment AvTurnMaterial;
+include fragment AvTurnReturn;
+@DynamicComponentDependency ADCON
+include fragment ConnectContractInfo;
+include fragment FlmHmPreviewRelease;
+include fragment AvCriticalItem;
+include fragment FlmTaskToolList;
+include fragment AdcomCommonUtilities;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvAircraftHMWorkPackageSet for AvAircraftWorkPackage;
+@DynamicComponentDependency ADCON
+entityset ContractLinesVirtualSet for ContractLinesVirtual;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvAircraftWorkPackage {
+   where = "Is_Heavy_Maintenance = 1
+            AND (Av_Maintenance_Location_API.Get_Airport_Id(location_code)) IN (
+               SELECT   au.airport_id
+               FROM     av_airport_for_user au
+               WHERE    (au.identity = Fnd_Session_API.Get_Fnd_User()))";
+   ludependencies = AvAircraftWorkPackage;
+   attribute DurationInHours Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Location_Code)";
+   }
+   attribute WorkType Text {
+      fetch = "Flmexe_Util_API.Get_Work_Type_Text(Is_Heavy_Maintenance)";
+   }
+   attribute SchedRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Sched_Routine_Hours(aircraft_work_package_id)";
+   }
+   attribute ActualRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Actual_Routine_Hours(aircraft_work_package_id)";
+   }
+   attribute SchedNonRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Sched_Non_Routine_Hours(aircraft_work_package_id)";
+   }
+   attribute ActualNonRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Actual_NR_Hours(aircraft_work_package_id)";
+   }
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(Aircraft_Id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(Aircraft_Id)))";
+      lovcolumn = [true];
+   }
+   attribute IsHangarCrewLead Boolean("TRUE", "FALSE") {
+      fetch = "Flmexe_Util_API.Is_Hangar_Crew_Lead()";
+   }
+   attribute IsHangarSupervisor Boolean("TRUE", "FALSE") {
+      fetch = "Flmexe_Util_API.Is_Hangar_Supervisor()";
+   }
+
+   attribute CompletedTaskCount Number {
+      fetch = "Av_Exe_Task_API.Get_Completed_Tasks_Count(aircraft_work_package_id)";
+   }
+   attribute TotalTaskCount Number {
+      fetch = "Av_Exe_Task_API.Get_Open_Tasks_Count(aircraft_work_package_id)";
+   }
+   attribute CriticalItemCount Number {
+      fetch = "Av_Critical_Item_API.Get_WP_Critical_Item_Count(aircraft_work_package_id)";
+   }
+   attribute AOSDayCount Number {
+      fetch = "Av_Aircraft_Work_Package_API.Get_AOS_Days(aircraft_work_package_id)";
+   }
+   attribute OngoingTaskCount Number {
+      fetch = "Av_Exe_Task_API.Get_Ongoing_Task_Count_By_Wp(aircraft_work_package_id)";
+   }
+   attribute OngoingTasksExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Has_Ongoing_Tasks_By_Wp(aircraft_work_package_id)";
+   }
+   computed SensitiveTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null]);
+   }
+   computed SensitiveFaultCount Integer {
+      compute = count(AvFault, [Sensitivities != null]);
+   }
+   computed SensitiveMPCOpenTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null and ClassCode = "MPC" and SubclassCode = "MPCOPEN"]);
+   }
+   computed SensitiveMPCCloseTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null and ClassCode = "MPC" and SubclassCode = "MPCCLOSE"]);
+   }
+   computed SensitiveUnassignedFaultCount Integer {
+      compute = count(AvDeferredFault, [Sensitivities != null and FaultState = "Deferred"]);
+   }
+   reference CustomerNoRef(CustomerNo) to CustomerInfoCustcategoryPub(CustomerId) {
+      label = "Customer";
+      copy Name to CustomerName;
+   }
+   reference AircraftRef(Aircraft) to AircraftLov(Aircraft);
+   array AvExeTaskArray(AircraftWorkPackageId) to AvExeTask(AircraftWpId);
+   array LaborSummaryTotalsArray(AircraftWorkPackageId) to LaborSummaryTotalsQuery(WorkPackageId);
+   array LaborSummaryBreakdownArray(AircraftWorkPackageId) to LaborSummaryBreakdownQuery(WorkPackageId);
+   array DeferredFaultArray(AircraftWorkPackageId) to AvDeferredFault(PrevAircraftWpId);
+   array FaultArray(AircraftWorkPackageId) to AvFault(AircraftWorkPackageId);
+   array PartInstallationViewArray(AircraftWorkPackageId) to HmInstalledPartsQuery(AircraftWorkPackageId);
+   array PartRemovalViewArray(AircraftWorkPackageId) to HmRemovedPartsQuery(AircraftWorkPackageId);
+   array CriticalItemArray(AircraftWorkPackageId) to AvCriticalItem(AircraftWpId);
+   array MaintMaterialReqArray(AircraftWorkPackageId) to MaintMaterialReqLine(AircraftWpId);
+   array JtTaskReturnArray(AircraftWorkPackageId) to JtTaskReturn(AircraftWpId);
+   array HmToolDemandQueryArray(AircraftWorkPackageId) to ToolDemandQuery(WorkPackageId);
+   array AvWpSignOffReqArray(AircraftWorkPackageId) to AvWpSignOffReq(AircraftWpId);
+}
+
+@Override
+entity AvExeTask {
+   ludependencies = AvExeTask;
+   attribute TaskDuration Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute ClassCode Text;
+   attribute SubclassCode Text;
+   attribute Barcode Text;
+
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(fault_id)";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   attribute MaterialAvailabilityStatus Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Mat_Availability_Status(task_seq)";
+   }
+   attribute PriorityId Enumeration(PriorityStatuses);
+
+   reference AircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   array MaintTasksForOpenTaskArray(TaskSeq) to MaintTasksForPanelsQuery(OpenTaskSeq);
+   array CloseTaskForOpenTaskArray(TaskSeq) to CloseTaskForOpenPanelsQuery(OpenTaskSeq);
+   array MaintTasksForCloseTaskArray(TaskSeq) to MaintTasksForPanelsQuery(CloseTaskSeq);
+   array OpenTaskForCloseTaskArray(TaskSeq) to OpenTaskForClosePanelsQuery(CloseTaskSeq);
+
+   ludependencies = AvAircraftWorkPackage;
+}
+
+@Override
+entity AvFault {
+   ludependencies = AvFault;
+   attribute AircraftWorkPackageId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute PrevAircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Prev_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute FoundSource Text {
+      fetch = "Av_Fault_API.Get_Found_Source(fault_id)";
+   }
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Flmexe_Util_API.Get_Fault_Maint_Location_T_Z(fault_id)";
+   }
+   attribute Priority Text {
+      fetch = "Av_Exe_Task_API.Get_Priority_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute SchedEndDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id)))";
+   }
+   attribute ActualStartDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id)))";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute DeferralAction Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute IsCmsWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Cms_Warnings_Exist(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute HasPreviousMaintenance Boolean("TRUE", "FALSE") {
+      fetch = "Av_Fault_API.Has_Previous_Maintenace(fault_id,external_id,Objstate)";
+   }
+   attribute FaultState Text {
+      fetch = "Objstate";
+   }
+   attribute HmContractId Text {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Id(task_seq)";
+   }
+   attribute HmContractLineNo Number {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Line_No(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(fault_id)";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+   reference AvAircraftWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+}
+
+@Override
+entity AvDeferredFault using extended AvFault {
+}
+
+@Override
+entity AvCriticalItem {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvCriticalItemTypeRef(CriticalItemTypeCode) to AvCriticalItemType(CriticalItemTypeCode);
+   reference AvCriticalItemSeverityRef(SeverityCode) to AvCriticalItemSeverity(SeverityCode);
+}
+@Override
+@DynamicComponentDependency ADCON
+entity HmNonRoutineApproval {
+   crud = Read;
+   attribute ApprovalStatus Enumeration(HmNonRoutineApprovalState) {
+      fetch = "objstate";
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+query HmInstalledPartsQuery {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   from = "TASK_PART_INST_RMV_UIV";
+   keys = AircraftWorkPackageId, TaskSeq, TaskPartId {
+      where = "AIRCRAFT_WP_ID = :AircraftWorkPackageId";
+   }
+   where = "installed_quantity IS NOT NULL";
+   lu = AvExeTaskPart;
+   ludependencies = AvExeTask, WorkTask;
+
+   attribute TaskSeq Number;
+   attribute TaskName Text;
+   attribute AircraftWorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute TaskPartId Number;
+
+   attribute Barcode Text;
+   attribute AssmblyConfigSlotPosId Number;
+   attribute InstalledPartNoId Number;
+   attribute CreatedBy Text;
+   attribute CancelledBy Text;
+   attribute ConfigSlotPositionId Number;
+   attribute InstalledQuantity Number;
+   attribute InstalledDate Timestamp;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute InstalledUser Text;
+   attribute PartName Text;
+   attribute PartNumber Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute PartGroupCode Text;
+   attribute AssemblyTypeCode Text;
+   attribute IsMandatory Text;
+   attribute SchedulingAction Enumeration(SchedulingActionType);
+
+   attribute InstallStates Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Install_States(task_part_id)";
+   }
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_API.Is_Part_Warnings_Exist(task_part_id)";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Installed_Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(Task_Seq),Av_Part_Number_API.Get_Part_Number(installed_part_no_id)))";
+   }
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Part_Number_API.Get_Is_Repairable_Db(installed_part_no_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   array TaskPartInstallationWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+query HmRemovedPartsQuery {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   from = "TASK_PART_INST_RMV_UIV";
+   keys = AircraftWorkPackageId, TaskSeq, TaskPartId {
+      where = "AIRCRAFT_WP_ID = :AircraftWorkPackageId";
+   }
+   where = "Removed_quantity IS NOT NULL";
+   lu = AvExeTaskPart;
+   ludependencies = AvExeTask, WorkTask;
+
+   attribute TaskSeq Number;
+   attribute TaskName Text;
+   attribute TaskPartId Number;
+   attribute AircraftWorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+
+   attribute Barcode Text;
+   attribute AssmblyConfigSlotPosId Number;
+   attribute CreatedBy Text;
+   attribute TaskReturnLineSeq Number;
+   attribute ConfigSlotPositionId Number;
+   attribute RemovedSerialNo Text;
+   attribute RemovedBatchNo  Text;
+   attribute RemovedQuantity Text;
+   attribute RemovedDate Timestamp;
+   attribute RemovalReasonCode Text;
+   attribute RemPartNumber Text;
+   attribute PartGroupCode Text;
+   attribute IsMandatory Text;
+   attribute AssemblyTypeCode Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute RemPartName Text;
+   attribute RemovedUser Text;
+   attribute CancelledBy Text;
+
+   attribute RemovalReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removal_reason_code)";
+   }
+   attribute RemovalStates Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Removal_States(Task_Part_Id)";
+   }
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_API.Is_Part_Warnings_Exist(task_part_id)";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Removed_Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(Task_Seq),Av_Part_Number_API.Get_Part_Number(removed_part_no_id)))";
+   }
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Part_Number_API.Get_Is_Repairable_Db(removed_part_no_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference JtTaskReturnRef(TaskReturnLineSeq) to JtTaskReturn(TaskReturnLineSeq);
+   reference PartSerialCatalogRef(RemPartNumber, RemovedSerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   array TaskPartRemovalWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+@Override
+query ToolDemandQuery {
+   keys = WorkPackageId, TaskSeq, TaskResourceSeq {
+      where = "work_package_id = :AircraftWorkPackageId";
+   }
+
+   attribute TaskSeq Text;
+   attribute TaskResourceSeq Number;
+   attribute WorkPackageId Number;
+}
+---------------------------------- ACTIONS ----------------------------------
+action StartHangarWorkPackage {
+   initialcheck none;
+   parameter AircraftWorkPackageId Number;
+   ludependencies = AvAircraftWorkPackage;
+}
+
+action UpdateSelectedTaskContract {
+   initialcheck none;
+   ludependencies = AvExeTask;
+   parameter Selection Text;
+   parameter HmContractLineNo Number;
+   parameter HmContractId  Text;
+}
+
+action Refresh {
+   initialcheck none;
+   ludependencies = AvAircraftWorkPackage;
+}
+
+action CompleteWorkPackageCriticalItem {
+   initialcheck none;
+   parameter CriticalItemId Number;
+   ludependencies = AvExeTask, AvCriticalItem, AvAircraftWorkPackage;
+}
+
+action DeleteWpSignOffSkill {
+   initialcheck none;
+   parameter AircraftWpId Number;
+   parameter WpSignOffReqSeq Number;
+   ludependencies = AvWpSignOffReq;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+function GetConnectContractLinesInfo Structure(ContractLineInfoStructure) {
+   parameter Selection Text;
+}
+
+function IsTasksConnectedWithContract Boolean {
+   parameter AircraftWpId Number;
+}
+
+function GetAvExeTask List<Entity(AvExeTask)> {
+   parameter AircraftWorkPackageId  Number;
+   where = "objstate in ('RELEASED', 'WORKSTARTED') and aircraft_wp_id = :AircraftWorkPackageId";
+}
+
+function GetRepairableSearchContextDefaults Structure(ShowOnlyRepairableStructure);
+
+function GetWpSignOffSkills List<Entity(WpSignOffSkillLov)> {
+   parameter AircraftWpId Number;
+   where = "resource_seq not in (SELECT resource_group_seq FROM av_wp_sign_off_req_tab WHERE aircraft_wp_id = :AircraftWpId)";
+   ludependencies = AvWpSignOffReq;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure ContractLineInfoStructure {
+   attribute AircraftWpId Number;
+   attribute Selection Text;
+   attribute TaskSeq Number;
+}
+
+structure ShowOnlyRepairableStructure {
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

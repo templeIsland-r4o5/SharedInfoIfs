@@ -1,0 +1,2321 @@
+--------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+--  250228  SSIVLK  AD-14847, added iscertified condition
+--  100225  SRLALK  AD-16828, Modified AddPartsOKCommand and PartsInfoAssistantStructure to align with CmsWarningVirtual
+--  251124  OSNALK  AD-15406, Change GetAssyPosition function by adding AssmblConfigSlotPosId, added a elseif statement to plsql query.
+--  301024  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagrammama entiti
+--  240827  DUWJLK  AD-13911, Added if block to check the incompatibility of part and aircraft assembly when enter the barcode.
+--  240607  DUWJLK  AD-13216, Removed the RemovalReasonCode mandatory behavoir in the add part assitant.
+--  240603  MAILLK  AD-12720, Added RemovalReasonCode to the add part assistant.
+--  240301  PSUALK  AD-12718, Install Removal toggel in Part Requirment
+--  240320  rafalk  AD-12493, Update ludependencies of AddFaultParts action
+--  240301  majslk  AD-12350, Modified code to support Manadatory Config slot of MX publish parts
+--  240208  majslk  AD-11481, Ludependencies updated in AddFaultParts, AddTaskParts methods
+--  240104  majslk  AD-10938, Implemented surfacing is mandatory config slot in add and view parts
+--  221122  SUPKLK  AD-8948, Restricted AddPartCommand to MM_MAINT_OPERATIONS_CONTROLLER role
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  220816  VAALLK  AD-8487, Validated the part quantity to be 1 for non-batch parts in the AddPartsPartDetailGroup
+--  220728  SPATLK  AD-7819, Added check for hide Add Parts considering task and fault status.
+--  220726  DILDLK  AD-8056, Added AddTaskPartsCommand, AddTaskParts action
+--  220718  DILDLK  AD-8097, Added AddParts command, AddPartsPartDetailGroup group and AddPartsPartGroupDetailGroup group, AddPartsCommand command,PartsAssistant assistnat, AddFaultParts action , AddPartsVirtual virtual
+-------------------------------------------------------------------------------------
+
+fragment FlmParts;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Add Parts assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment InventoryServiceManager;
+include fragment AircraftLovSelector;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+warningsenabled = FetchAddPartDefaults;
+
+
+
+
+command AddPartsOKCommand for AddPartsVirtual {
+   label = "Add";
+   enabled = [PartNumberRef.PartNumber != null and(IncludeInstallation or IncludeRemoval) and(Part != null and PartGroupId != null) and((PartGroupRef.InventoryClassCode = "ASSY" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode = "ACFT" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode != "ACFT" and AssemblyConfigSlotPosRef.ConfigSlotPositionId != null and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode in("SER", "KIT", "BATCH")))];
+
+   variable InventorySearchResponse Structure(InventorySearchResponseStructure);
+   variable RemovalPartInfo Structure(RemovalPartInfoStruct);
+   variable RemovalPartNumberAltId Text;
+   variable RemovalPartGroupAltId Text;
+   variable PartChangeType Text;
+   variable PartValidationWarningInfo Structure(PartValidationWarningAssistantInfoStructure);
+   variable PartGroupSens Structure(PartGroupSensStruct);
+
+   execute {
+
+      set PartValidationWarningInfo.InstallationPartNumber = PartNumberRef.PartNumber;
+      set PartValidationWarningInfo.InstallationManufacturerCode = PartNumberRef.Manufacturer;
+      set PartValidationWarningInfo.AssmblConfSlotCode = AssemblyConfigSlotPosRef.ConfigSlotCode;
+      set PartValidationWarningInfo.AssmblConfSlotPosCode = AssemblyConfigSlotPosRef.ConfigSlotPositionCode;
+      set PartValidationWarningInfo.ConfSlotPosCode = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      if [PartNumberId = null] {
+         set PartNumber = Part;
+         set AvailabilityStatus = "Open";
+      }
+      else {
+         set PartNumber = PartNumberId;
+         set AvailabilityStatus = "Open";
+      }
+
+      if[PartNumberRef.InventoryClassCode in("ASSY", "TRK")] {
+         call GetRemovalInfoService(AircraftAltId, ConfigSlotPositionRef.ConfigSlotCode, ConfigSlotPositionRef.ConfigSlotPositionCode, AssemblyConfigSlotPosRef.ConfigSlotCode, AssemblyConfigSlotPosRef.ConfigSlotPositionCode) into InventorySearchResponse;
+         if[InventorySearchResponse != null] {
+            set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+            set RemovalPartNumberAltId = InventorySearchResponse.AltId;
+            set RemovalPartGroupAltId = InventorySearchResponse.PartGroupAltId;
+            set RemovalPartNumber = InventorySearchResponse.PartNumber;
+            set RemovalPartManufacturer = InventorySearchResponse.ManufacturerCode;
+
+            call GetRemovalPartInfo(RemovalPartNumberAltId, RemovalPartGroupAltId) into RemovalPartInfo;
+            set RemovalPartNumberId = RemovalPartInfo.RemovalPartNoId;
+            set RemovalPartGroupId = RemovalPartInfo.RemovalPartGroupId;
+         }
+         set ConfigSlot = ConfigSlotPositionRef.ConfigSlotCode;
+         set InventoryClassCode = PartNumberRef.InventoryClassCode;
+      }
+
+      if [Barcode != null] {
+         if [AssemblyConfigSlotPosRef.ConfigSlotCode != null] {
+            set IsSubAssy = "true";
+         }
+         else {
+            set IsSubAssy = "false";
+         }
+         if[InventoryClassCode in("ASSY", "TRK")] {
+            if[RemovalSerialNo != null] {
+               set PartChangeType = "REPLACE";
+            }
+            else {
+               set PartChangeType = "INSTALL";
+            }
+         }
+         if[InventoryClassCode in("SER", "BATCH")] {
+            set RemovalPartNumber = PartNumberRef.PartNumber;
+            set RemovalPartManufacturer = PartNumberRef.Manufacturer;
+            set PartChangeType = "INSTALL";
+            set ConfigSlot = PartGroupRef.PartGroupCode;
+
+            if[InventoryClassCode = "SER"] {
+               set RemovalSerialNo = "XXX";
+            }
+         }
+
+         if[InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            -- Since Removal Reason is mandatory to call CMS API,
+            -- if user do not select a Removal Reason, the default Removal Reason will be picked from Maintenix
+            if[RemovalSerialNo != null and RemovalReasonCode = null] {
+               set IsRemovalReasonFilled = false;
+               call GetDefaultRemovalReason() into RemovalReasonCode;
+            }
+
+            call CmsDryRunResponseSeverityService(RemovalPartNumber, RemovalPartManufacturer, RemovalSerialNo, RemovalReasonCode, PartNumberRef.PartNumber, PartNumberRef.Manufacturer, InstalledSerialNo, AircraftRegCode, AssemblyConfigSlotPosRef.ConfigSlotCode, AssemblyConfigSlotPosRef.ConfigSlotPositionCode, ConfigSlot, ConfigSlotPositionRef.ConfigSlotPositionCode, IsSubAssy, InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            -- CmsResponseSeverity will be -1 if there are no CMS Errors/warnings
+            -- CmsResponseSeverity will be 0 if there are only CMS warnings and no errors
+            -- CmsResponseSeverity will be 1 if there are at least one CMS Error
+            if [CmsResponseSeverity != -1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     exit CANCEL;
+                  }
+               }
+            }
+         }
+         if[(CmsResponseSeverity =-1 and InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")) or InventoryClassCode = "KIT"] {
+            if [FaultId != null] {
+               call AddFaultParts(FaultId, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, DBFormattedPGSensitivity);
+            }
+
+            if [TaskSeq != null] {
+               call AddTaskParts(TaskSeq, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, SchedulingAction, RequiredDate, PartNumberRef.PartNumber, Objkey, DBFormattedPGSensitivity, Note);
+            }
+            exit OK;
+            call ClearInterchangeableParts(Objkey);
+            success("The part requirement has been added");
+         }
+      }
+      else {
+         if [FaultId != null] {
+            call AddFaultParts(FaultId, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, DBFormattedPGSensitivity);
+         }
+
+         if [TaskSeq != null] {
+            call AddTaskParts(TaskSeq, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, SchedulingAction, RequiredDate, PartNumberRef.PartNumber, Objkey, DBFormattedPGSensitivity, Note);
+         }
+         if [OperationType = "IPCPartSearch"] {
+            if [TaskSeq != null] {
+               navigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+               exit OK;
+            }
+            else {
+               navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+               exit OK;
+            }
+            refresh;
+         }
+         else {
+            call ClearInterchangeableParts(Objkey);
+            success("The part requirement has been added");
+            exit OK;
+         }
+      }
+   }
+}
+
+command EditPartCommand for AddPartsVirtual {
+   label = "Save";
+   enabled = [IsModified and PartNumberRef.PartNumber != null and(IncludeInstallation or IncludeRemoval) and(Part != null and PartGroupId != null) and((PartGroupRef.InventoryClassCode = "ASSY" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode = "ACFT" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode != "ACFT" and AssemblyConfigSlotPosRef.ConfigSlotPositionId != null and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode in("SER", "KIT", "BATCH")))];
+
+   variable InventorySearchResponse Structure(InventorySearchResponseStructure);
+   variable RemovalPartInfo Structure(RemovalPartInfoStruct);
+   variable RemovalPartNumberAltId Text;
+   variable RemovalPartGroupAltId Text;
+   variable PartChangeType Text;
+   variable PartValidationWarningInfo Structure(PartValidationWarningAssistantInfoStructure);
+
+   execute {
+
+      if [PartNumberId = null] {
+         set PartNumber = Part;
+         set AvailabilityStatus = "Open";
+      }
+      else {
+         set PartNumber = PartNumberId;
+         set AvailabilityStatus = "Open";
+      }
+
+      if[(PartNumberRef.InventoryClassCode in("ASSY", "TRK")) and(OrgnlPart != Part or OrgnlConfigSlotPositionId != ConfigSlotPositionId)] {
+         call GetRemovalInfoService(AircraftAltId, ConfigSlotPositionRef.ConfigSlotCode, ConfigSlotPositionRef.ConfigSlotPositionCode, AssemblyConfigSlotPosRef.ConfigSlotCode, AssemblyConfigSlotPosRef.ConfigSlotPositionCode) into InventorySearchResponse;
+         if[InventorySearchResponse != null] {
+            set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+         }
+      }
+      call ModifyPart(PartNumberRef.PartNumber, RemovalSerialNo, DBFormattedPGSensitivity);
+
+      success("The part requirement has been modified");
+      exit OK;
+   }
+}
+
+command AddPartsAndSearchCommand for AddPartsVirtual {
+   label = "Add & Search Again";
+   enabled = [OperationType != "IPCPartSearch" and PartNumberRef.PartNumber != null and(IncludeInstallation or IncludeRemoval) and(Part != null and PartGroupId != null) and((PartGroupRef.InventoryClassCode = "ASSY" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode = "ACFT" and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode = "TRK" and AircraftTypeRef.AssemblyTypeClassCode != "ACFT" and AssemblyConfigSlotPosRef.ConfigSlotPositionId != null and ConfigSlotPositionId != null) or(PartGroupRef.InventoryClassCode in("SER", "KIT", "BATCH")))];
+
+   variable InventorySearchResponse Structure(InventorySearchResponseStructure);
+   variable RemovalPartInfo Structure(RemovalPartInfoStruct);
+   variable RemovalPartNumberAltId Text;
+   variable RemovalPartGroupAltId Text;
+   variable PartChangeType Text;
+   variable PartValidationWarningInfo Structure(PartValidationWarningAssistantInfoStructure);
+   variable EmptyPartNoFiled Text;
+   variable PartGroupSens Structure(PartGroupSensStruct);
+
+   execute {
+      set UIFormattedPGSensitivity = null;
+
+      set PartValidationWarningInfo.InstallationPartNumber = PartNumberRef.PartNumber;
+      set PartValidationWarningInfo.InstallationManufacturerCode = PartNumberRef.Manufacturer;
+      set PartValidationWarningInfo.AssmblConfSlotCode = AssemblyConfigSlotPosRef.ConfigSlotCode;
+      set PartValidationWarningInfo.AssmblConfSlotPosCode = AssemblyConfigSlotPosRef.ConfigSlotPositionCode;
+      set PartValidationWarningInfo.ConfSlotPosCode = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      if [PartNumberId = null] {
+         set PartNumber = Part;
+         set AvailabilityStatus = "Open";
+      }
+      else {
+         set PartNumber = PartNumberId;
+         set AvailabilityStatus = "Open";
+      }
+
+      if[PartNumberRef.InventoryClassCode in("ASSY", "TRK")] {
+         call GetRemovalInfoService(AircraftAltId, ConfigSlotPositionRef.ConfigSlotCode, ConfigSlotPositionRef.ConfigSlotPositionCode, AssemblyConfigSlotPosRef.ConfigSlotCode, AssemblyConfigSlotPosRef.ConfigSlotPositionCode) into InventorySearchResponse;
+         if[InventorySearchResponse != null] {
+            set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+            set RemovalPartNumberAltId = InventorySearchResponse.AltId;
+            set RemovalPartGroupAltId = InventorySearchResponse.PartGroupAltId;
+            set RemovalPartNumber = InventorySearchResponse.PartNumber;
+            set RemovalPartManufacturer = InventorySearchResponse.ManufacturerCode;
+
+            call GetRemovalPartInfo(RemovalPartNumberAltId, RemovalPartGroupAltId) into RemovalPartInfo;
+            set RemovalPartNumberId = RemovalPartInfo.RemovalPartNoId;
+            set RemovalPartGroupId = RemovalPartInfo.RemovalPartGroupId;
+         }
+         set ConfigSlot = ConfigSlotPositionRef.ConfigSlotCode;
+         set InventoryClassCode = PartNumberRef.InventoryClassCode;
+      }
+
+      if [Barcode != null] {
+         if [AssemblyConfigSlotPosRef.ConfigSlotCode != null] {
+            set IsSubAssy = "true";
+         }
+         else {
+            set IsSubAssy = "false";
+         }
+         if[InventoryClassCode in("ASSY", "TRK")] {
+            if[RemovalSerialNo != null] {
+               set PartChangeType = "REPLACE";
+            }
+            else {
+               set PartChangeType = "INSTALL";
+            }
+         }
+         if[InventoryClassCode in("SER", "BATCH")] {
+            set RemovalPartNumber = PartNumberRef.PartNumber;
+            set RemovalPartManufacturer = PartNumberRef.Manufacturer;
+            set PartChangeType = "INSTALL";
+            set ConfigSlot = PartGroupRef.PartGroupCode;
+
+            if[InventoryClassCode = "SER"] {
+               set RemovalSerialNo = "XXX";
+            }
+         }
+
+         if[InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            -- Since Removal Reason is mandatory to call CMS API,
+            -- if user do not select a Removal Reason, the default Removal Reason will be picked from Maintenix
+            if[RemovalSerialNo != null and RemovalReasonCode = null] {
+               set IsRemovalReasonFilled = false;
+               call GetDefaultRemovalReason() into RemovalReasonCode;
+            }
+
+            call CmsDryRunResponseSeverityService(RemovalPartNumber, RemovalPartManufacturer, RemovalSerialNo, RemovalReasonCode, PartNumberRef.PartNumber, PartNumberRef.Manufacturer, InstalledSerialNo, AircraftRegCode, AssemblyConfigSlotPosRef.ConfigSlotCode, AssemblyConfigSlotPosRef.ConfigSlotPositionCode, ConfigSlot, ConfigSlotPositionRef.ConfigSlotPositionCode, IsSubAssy, InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            -- CmsResponseSeverity will be -1 if there are no CMS Errors/warnings
+            -- CmsResponseSeverity will be 0 if there are only CMS warnings and no errors
+            -- CmsResponseSeverity will be 1 if there are at least one CMS Error
+            if [CmsResponseSeverity != -1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     exit CANCEL;
+                  }
+               }
+            }
+         }
+         if[(CmsResponseSeverity = -1 and InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")) or InventoryClassCode = "KIT"] {
+            if [FaultId != null] {
+               call AddFaultParts(FaultId, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, DBFormattedPGSensitivity);
+            }
+
+            if [TaskSeq != null] {
+               call AddTaskParts(TaskSeq, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, SchedulingAction, RequiredDate, PartNumberRef.PartNumber, Objkey, DBFormattedPGSensitivity, Note);
+            }
+            set Barcode = null;
+            set PartNoUnqId = null;
+            set Note = null;
+            call ClearInterchangeableParts(Objkey);
+            success("The part requirement has been added");
+         }
+      }
+      else {
+         if [FaultId != null] {
+            call AddFaultParts(FaultId, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, DBFormattedPGSensitivity);
+         }
+
+         if [TaskSeq != null] {
+            call AddTaskParts(TaskSeq, PartNumber, RequiredQuantity, PartGroupId, AssmblConfigSlotPosId, ConfigSlotPositionId, IncludeInstallation, IncludeRemoval, RemovalReasonCode, InstalledSerialNo, RemovalSerialNo, RemovalPartNumberId, RemovalPartGroupId, IsRemovalReasonFilled, SchedulingAction, RequiredDate, PartNumberRef.PartNumber, Objkey, DBFormattedPGSensitivity, Note);
+         }
+         call ClearInterchangeableParts(Objkey);
+         success("The part requirement has been added");
+         set Barcode = null;
+         set PartNoUnqId = null;
+         set Note = null;
+      }
+   }
+}
+
+command UnissueParts for InstalledPartsVirtual {
+   label = "Confirm";
+   execute {
+      call Finish(TaskSeq, MaintMaterialOrderNo, LineItemNo, InstalledQuantity, TaskPartId);
+   }
+}
+
+command SelectInterchangeablePart {
+   label = "Select Part";
+   mode = SingleRecord;
+   variable Manufacturer Text;
+   variable ParentPartInfo Structure(ParentPartInfo);
+   variable TaskSeq Number;
+   variable TaskAltId Text;
+
+   variable RegCode Text;
+   variable ProjectionName Text;
+   variable IfsUser Text;
+   variable CovertInvClassCode Text;
+
+   execute {
+      if [InventoryClassCode = "SUBASSY"] {
+         set CovertInvClassCode = "TRK";
+      }
+      else {
+         set CovertInvClassCode = InventoryClassCode;
+      }
+      call GetParentPartInfo(ParentObjkey) into ParentPartInfo;
+      set TaskSeq = ParentPartInfo.TaskSeq;
+      set TaskAltId = ParentPartInfo.TaskAltId;
+      set RegCode = ParentPartInfo.AircraftRegCode;
+      set ProjectionName = ParentPartInfo.ProjectionName;
+      set IfsUser = ParentPartInfo.IfsUser;
+      call SelectInterchangeablePart(PartNumber, ManufacturerCode, ConfSlotCode, ConfSlotPosCode, PartGroupCode, CovertInvClassCode, ParentObjkey);
+      call ClearInterchangeableParts(ParentObjkey);
+      call GetInterchangeableParts(RegCode, PartNumber, ManufacturerCode, ConfSlotCode, ConfSlotPosCode, TaskSeq, TaskAltId, ParentObjkey, ProjectionName, IfsUser, PartGroupCode, InventoryClassCode, AssemblyConfigSlotCode, AssemblyConfigSlotPosCode);
+
+   }
+}
+
+
+group CancelPartsGroup for InstalledPartsVirtual {
+
+   collapsed = [false];
+
+   field InstalledPartNo {
+      label = "OEM Part No";
+      size = Small;
+      editable = [false];
+   }
+   field PartName {
+      label = "Part Description";
+      editable = [false];
+   }
+   field InstalledQuantity {
+      label = "Qty";
+      editable = [false];
+      size = Small;
+   }
+   field InstalledSerialNo {
+      label = "Serial No";
+      editable = [false];
+      size = Small;
+   }
+   field InstalledBatchNo {
+      label = "Batch No";
+      editable = [false];
+      size = Small;
+   }
+
+}
+
+group AddPartsPartDetailGroup for AddPartsVirtual {
+   label = "Part Details";
+   field Barcode {
+      size = FullWidth;
+      validate command {
+         variable MtxApiResponse        Structure(InventorySearchResponseStructure);
+         variable AddPartDefaults       Structure(AddPartDefaultsStruct);
+         variable PartNumberInfo        Structure(AvPartInfoStructure);
+         variable PartGroupInfo         Structure(PartGroupInfoStructure);
+         variable AddPartSourceId       Number;
+         variable PartFromValidAssembly Boolean;
+         execute {
+            set IsResponseReceived = false;
+            call GetMtxPartInventoryService(Barcode) into MtxApiResponse;
+            set IsResponseReceived = true;
+
+            if [MtxApiResponse.IsInventoryFound and MtxApiResponse.PartNumber != null] {
+               call IsPartFromValidAssembly(AircraftId, MtxApiResponse.AltId) into PartFromValidAssembly;
+               if[PartFromValidAssembly] {
+                  call GetPartNumberInfo(MtxApiResponse.AltId, AircraftId, AssemblyTypeCode) into PartNumberInfo;
+                  set Part = PartNumberInfo.PartNumberId;
+                  set PartNoUnqId = PartNumberInfo.VrtObjkey;
+                  set InventoryClassCode = PartNumberInfo.InventoryClassCode;
+
+                  if [MtxApiResponse.PartGroupAltId != null and InventoryClassCode != "ASSY"] {
+                     set PartAssemblyTypeCode = PartNumberInfo.PartAssemblyTypeCode;
+                  }
+                  else {
+                     if [PartNumberInfo.IsSubAssy = false] {
+                        set PartAssemblyTypeCode = AssemblyTypeCode;
+                     }
+                  }
+
+                  set InstalledSerialNo = MtxApiResponse.SerialNumber;
+                  set AssemblyPositionId = null;
+                  set ConfigSlotPositionId = null;
+                  if [InventoryClassCode != "BATCH"] {
+                     set Quantity = 1;
+                  }
+                  if[FaultId != null] {
+                     set SourceOfAddPart = "Fault";
+                     set AddPartSourceId = FaultId;
+                  }
+                  else {
+                     set SourceOfAddPart = "Task";
+                     set AddPartSourceId = TaskSeq;
+                  }
+                  call GetPartGroupInfo(Part, PartAssemblyTypeCode, AircraftId, InventoryClassCode) into PartGroupInfo;
+                  set PartGroupId = PartGroupInfo.PartGroupId;
+                  set ConfigSlotStatus = PartGroupInfo.ConfigSlotStatus;
+                  set ConfigSlotCode = PartGroupInfo.ConfigSlotCode;
+                  set AssemblyType = PartGroupInfo.AssemblyTypeCode;
+
+                  if [ConfigSlotCode != null] {
+                     set ConfigSlotPositionId = PartGroupInfo.ConfigSlotPositionId;
+                     set AssmblVisibility = PartGroupInfo.AssmblVisibility;
+                     set AssmblEditable = PartGroupInfo.AssmblEditable;
+                     set AssmblConfigSlotPosId = PartGroupInfo.AssemblyPositionId;
+                  }
+                  if[PartNumberInfo.IsRepairable = false] {
+                     set IsRepairable = false;
+                  }
+                  else {
+                     set IsRepairable = true;
+                  }
+
+                  call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+                  copy AddPartDefaults into this;
+               }
+               else {
+                  if [IsCancelled = false] {
+                     alert("The scanned inventory is not applicable for the aircraft.");
+                     set Barcode = null;
+                     set PartNoUnqId = null;
+                     set PartGroupId = null;
+                     set AssemblyPositionId = null;
+                     set ConfigSlotPositionId = null;
+                     set InstallationExists = null;
+                     set RemovalExists = null;
+                     set RemovalReasonCode = null;
+                     set ConfigSlotStatus = null;
+                     set Part = null;
+                  }
+               }
+            }
+            else {
+               if [IsCancelled = false] {
+                  alert("No inventory record for the entered barcode");
+                  set Barcode = null;
+                  set PartNoUnqId = null;
+                  set PartGroupId = null;
+                  set AssemblyPositionId = null;
+                  set ConfigSlotPositionId = null;
+                  set InstallationExists = null;
+                  set RemovalExists = null;
+                  set RemovalReasonCode = null;
+                  set ConfigSlotStatus = null;
+                  set Part = null;
+               }
+            }
+         }
+      }
+   }
+   lov PartNumberRef with ReferenceAvPartNumberSelector using GetRequestPartNumber(AircraftId, AssemblyTypeCode, AircraftAppCode) {
+      label = "Part";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberRef.PartNumber;
+      size = Medium;
+      search = PartNumberRef.PartNumber;
+
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable PartGroupInfo Structure(PartGroupInfoStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+
+         execute {
+            set Part = PartNumberRef.PartNumberId;
+            set PartAssemblyTypeCode = PartNumberRef.PartAssemblyTypeCode;
+            set InventoryClassCode = PartNumberRef.InventoryClassCode;
+            set ConfigSlotCode = PartGroupRef.ConfigSlotCode;
+            set AssemblyPositionId = null;
+            set ConfigSlotPositionId = null;
+
+            call GetPartGroupInfo(Part, PartAssemblyTypeCode, AircraftId, InventoryClassCode) into PartGroupInfo;
+            set PartGroupId = PartGroupInfo.PartGroupId;
+            set ConfigSlotStatus = PartGroupInfo.ConfigSlotStatus;
+            set ConfigSlotCode = PartGroupInfo.ConfigSlotCode;
+            set AssemblyType = PartGroupInfo.AssemblyTypeCode;
+
+            if [InventoryClassCode != "BATCH"] {
+               set RequiredQuantity = 1;
+            }
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+
+            if[ConfigSlotCode != null] {
+               set ConfigSlotPositionId = PartGroupInfo.ConfigSlotPositionId;
+               set AssmblVisibility = PartGroupInfo.AssmblVisibility;
+               set AssmblEditable = PartGroupInfo.AssmblEditable;
+               set AssmblConfigSlotPosId = PartGroupInfo.AssemblyPositionId;
+            }
+
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+         }
+      }
+
+   }
+
+   field PartNumberRef.PartName {
+      label = "Part Name";
+      editable = [false];
+      size = Medium;
+      required = [true];
+   }
+   field RequiredQuantity {
+      label = "Quantity";
+      required = [true];
+      size = Medium;
+      editable = [InventoryClassCode = "BATCH"];
+      validate command {
+         execute {
+            if [RequiredQuantity < 1] {
+               alert("Quantity must be greater than 0");
+               set RequiredQuantity = null;
+            }
+         }
+      }
+   }
+}
+
+
+
+group AddPartsPartGroupDetailGroup for AddPartsVirtual {
+   label = "Part Group Details";
+   lov PartGroupRef with ReferenceAvPartGroupNewSelector using GetPartGroupLov(Part, PartAssemblyTypeCode, AircraftAppCode) {
+      label = "Part Group";
+      hidekey = [true];
+      required = [true];
+      description = PartGroupRef.PartGroupCode;
+      size = Medium;
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable ConfigSlotInfo Structure(ConfigSlotInfoStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+
+         execute {
+            set AssemblyType = PartGroupRef.AssemblyTypeCode;
+            set ConfigSlotCode = PartGroupRef.ConfigSlotCode;
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if [ConfigSlotCode != null] {
+               call GetConfigSlotInfo(ConfigSlotCode, AssemblyType, AircraftId, InventoryClassCode) into ConfigSlotInfo;
+               set ConfigSlotPositionId = ConfigSlotInfo.ConfigSlotPositionId;
+               set AssmblVisibility = ConfigSlotInfo.AssmblVisibility;
+               set AssmblEditable = ConfigSlotInfo.AssmblEditable;
+               set AssmblConfigSlotPosId = ConfigSlotInfo.AssmblConfigSlotPosId;
+            }
+            if [PartGroupId != null] {
+               call GetConfigSlotStatus(PartGroupId) into ConfigSlotStatus;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+         }
+      }
+   }
+   field PartGroupRef.PartGroupName {
+      label = "Part Group Name";
+      size = Medium;
+      required = [true];
+   }
+   field AssemblyType {
+      label = "Assembly";
+      visible = [PartGroupRef.IsCommonHardware = false];
+      editable = [false];
+      size = FullWidth;
+   }
+   field PartGroupRef.ConditionsDesc {
+      label = "Conditions";
+      visible = [PartGroupRef.IsCommonHardware = false];
+      size = FullWidth;
+   }
+   lov AssemblyConfigSlotPosRef with ReferenceAvConfigSlotPositionNewSelector using GetAssemblConfigSlotPosLov(AssemblyType, AircraftId) {
+      label = "Assembly Position";
+      required = [true];
+      editable = [AssmblEditable];
+      visible = [PartGroupRef.InventoryClassCode != "BATCH" and PartGroupRef.InventoryClassCode != "SER" and PartGroupRef.InventoryClassCode != "KIT" and AssmblVisibility];
+      hidekey = [true];
+      description = AssemblyConfigSlotPosRef.ConfigSlotPositionCode;
+      size = Medium;
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+
+         execute {
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssemblyConfigSlotPosRef.ConfigSlotPositionId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+         }
+      }
+   }
+   lov ConfigSlotPositionRef with ReferenceAvConfigSlotPositionNewSelector using GetConfigSlotPositionLov(ConfigSlotCode, AssemblyType) {
+      label = "Position";
+      required = [true];
+      visible = [PartGroupRef.InventoryClassCode != "BATCH" and PartGroupRef.InventoryClassCode != "SER" and PartGroupRef.InventoryClassCode != "KIT"];
+      hidekey = [true];
+      description = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      size = Medium;
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+         execute {
+            set InventoryClassCode = PartNumberRef.InventoryClassCode;
+            call GetAssemblyType(PartGroupId) into AssemblyType;
+            call GetAssyPosition(AircraftId, AssemblyType, AssmblConfigSlotPosId) into AssmblConfigSlotPosId;
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+         }
+      }
+   }
+   badge ConfigSlotStatus {
+      visible = [ConfigSlotStatus = "Mandatory"];
+      label = "Config Slot";
+      size = FullWidth;
+      editable = [false];
+      emphasis Info = [ConfigSlotStatus = "Mandatory"];
+   }
+}
+
+group AddPartsPartRequirement for AddPartsVirtual {
+   label = "Part Requirement";
+   field IncludeInstallation {
+      label = "Installation";
+      visible = [InstallationExists = true];
+      editable = [false];
+      falselabel = "Already Exists";
+   }
+   field IncludeInstallation {
+      label = "Installation";
+      visible = [InstallationExists = false and InstallationVisible];
+      editable = [Barcode = null];
+   }
+   field IncludeRemoval {
+      label = "Removal";
+      visible = [RemovalExists = true and not(InventoryClassCode = "BATCH" and PartNumberRef.IsRepairable = "False")];
+      editable = [false];
+      falselabel = "Already Exists";
+   }
+   field IncludeRemoval {
+      label = "Removal";
+      visible = [RemovalExists = true and(InventoryClassCode = "BATCH" and PartNumberRef.IsRepairable = "False") and RemovalVisible];
+      editable = [false];
+   }
+   field IncludeRemoval {
+      label = "Removal";
+      visible = [RemovalExists = false and RemovalVisible];
+   }
+   lov RemovalReasonRef with ReferenceAvRemovalReasonSelector {
+      label = "Part Removal Reason";
+      description = RemovalReasonCode;
+      visible = [RemovalExists = false and RemovalVisible and IncludeRemoval];
+      editable = [true];
+      validate command {
+         execute {
+            if [RemovalReasonCode != null] {
+               set IsRemovalReasonFilled = true;
+            }
+         }
+      }
+   }
+
+}
+
+group BarcodePartSearch for AddPartsVirtual {
+   label = "Barcode Part Search";
+   visible = [OperationType != "IPCPartSearch"];
+   field Barcode {
+      size = FullWidth;
+      validate command {
+         variable MtxApiResponse        Structure(InventorySearchResponseStructure);
+         variable AddPartDefaults       Structure(AddPartDefaultsStruct);
+         variable PartNumberInfo        Structure(AvPartInfoStructure);
+         variable PartGroupInfo         Structure(PartGroupInfoStructure);
+         variable AddPartSourceId       Number;
+         variable PartFromValidAssembly Boolean;
+
+         execute {
+            set IsResponseReceived = false;
+            call GetMtxPartInventoryService(Barcode) into MtxApiResponse;
+            set IsResponseReceived = true;
+
+            if [MtxApiResponse.IsInventoryFound and MtxApiResponse.PartNumber != null] {
+               call IsPartFromValidAssembly(AircraftId, MtxApiResponse.AltId) into PartFromValidAssembly;
+               if[PartFromValidAssembly] {
+                  call GetPartNumberInfo(MtxApiResponse.AltId, AircraftId, AssemblyTypeCode) into PartNumberInfo;
+                  set Part = PartNumberInfo.PartNumberId;
+                  set PartNoUnqId = PartNumberInfo.VrtObjkey;
+                  set InventoryClassCode = PartNumberInfo.InventoryClassCode;
+
+                  if [MtxApiResponse.PartGroupAltId != null and InventoryClassCode != "ASSY"] {
+                     set PartAssemblyTypeCode = PartNumberInfo.PartAssemblyTypeCode;
+                  }
+                  else {
+                     if [PartNumberInfo.IsSubAssy = false] {
+                        set PartAssemblyTypeCode = AssemblyTypeCode;
+                     }
+                  }
+
+                  set InstalledSerialNo = MtxApiResponse.SerialNumber;
+                  set AssemblyPositionId = null;
+                  set ConfigSlotPositionId = null;
+                  if [InventoryClassCode != "BATCH"] {
+                     set Quantity = 1;
+                  }
+                  if[FaultId != null] {
+                     set SourceOfAddPart = "Fault";
+                     set AddPartSourceId = FaultId;
+                  }
+                  else {
+                     set SourceOfAddPart = "Task";
+                     set AddPartSourceId = TaskSeq;
+                  }
+                  call GetPartGroupInfo(Part, PartAssemblyTypeCode, AircraftId, InventoryClassCode) into PartGroupInfo;
+                  set PartGroupId = PartGroupInfo.PartGroupId;
+                  set ConfigSlotCode = PartGroupInfo.ConfigSlotCode;
+                  set AssemblyType = PartGroupInfo.AssemblyTypeCode;
+
+                  if [ConfigSlotCode != null] {
+                     set ConfigSlotPositionId = PartGroupInfo.ConfigSlotPositionId;
+                     set AssmblVisibility = PartGroupInfo.AssmblVisibility;
+                     set AssmblEditable = PartGroupInfo.AssmblEditable;
+                     set AssmblConfigSlotPosId = PartGroupInfo.AssemblyPositionId;
+                  }
+                  if[PartNumberInfo.IsRepairable = false] {
+                     set IsRepairable = false;
+                  }
+                  else {
+                     set IsRepairable = true;
+                  }
+
+                  call GetSchedulingReqDate(WpId) into RequiredDate;
+                  set DefaultRequiredDate = RequiredDate;
+
+                  if[PartNumberRef.IsSos] {
+                     set RemovalReasonCode = "SOS";
+                     set IsRemovalReasonFilled = true;
+                  }
+                  else {
+                     set RemovalReasonCode = "UNSCHED";
+                     set IsRemovalReasonFilled = true;
+                  }
+
+                  call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+                  copy AddPartDefaults into this;
+               }
+               else {
+                  if [IsCancelled = false] {
+                     alert("The scanned inventory is not applicable for the aircraft.");
+                     set Barcode = null;
+                     set PartNoUnqId = null;
+                     set PartGroupId = null;
+                     set AssemblyPositionId = null;
+                     set ConfigSlotPositionId = null;
+                     set InstallationExists = null;
+                     set RemovalExists = null;
+                     set RemovalReasonCode = null;
+                     set Part = null;
+                  }
+               }
+            }
+            else {
+               if [IsCancelled = false] {
+                  alert("No inventory record for the entered barcode");
+                  set Barcode = null;
+                  set PartNoUnqId = null;
+                  set PartGroupId = null;
+                  set AssemblyPositionId = null;
+                  set ConfigSlotPositionId = null;
+                  set InstallationExists = null;
+                  set RemovalExists = null;
+                  set RemovalReasonCode = null;
+                  set Part = null;
+               }
+            }
+         }
+      }
+   }
+}
+
+group EnhancedPartSearchGroup for AddPartsVirtual {
+   label = "Enhanced Part Search";
+
+   lov PartNumberRef with PartNumbersNewSelector using GetRequestPartNumber(AircraftId, AssemblyTypeCode, AircraftAppCode) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberRef.PartNumber;
+      size = Medium;
+      search = PartNumberRef.PartNumber;
+      visible = [TaskSeq != null];
+      editable = [OperationType != "EDIT"];
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable PartGroupInfo Structure(PartGroupInfoStructure);
+         variable AircraftAssemblyInfo Structure(AircraftAssemblyInfo);
+         variable AssemblyConfigInfo Structure(AssemblyConfigSlotStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+         variable IsPnModified Boolean;
+         variable AltConfSlotCode Text;
+         variable AltConfSlotPosCode Text;
+         variable PartGroupSens Structure(PartGroupSensStruct);
+         variable PartGroupAltId Text;
+
+         execute {
+            set PartNo = PartNumberRef.PartNumber;
+            set Manufacturer = PartNumberRef.Manufacturer;
+            set PartGroupCode = PartNumberRef.PartGroupCode;
+            set Part = PartNumberRef.PartNumberId;
+            set PartAssemblyTypeCode = PartNumberRef.PartAssemblyTypeCode;
+            set InventoryClassCode = PartNumberRef.InventoryClassCode;
+            set InvClassCode = InventoryClassCode;
+            set ConfigSlotCode = PartNumberRef.ConfigSlotCode;
+            set AssemblyPositionId = null;
+            set ConfigSlotPositionId = null;
+            set UIFormattedPGSensitivity = null;
+            set SchedulingAction = "REQ";
+
+            set PartGroupId = PartNumberRef.PartGroupId;
+            set ConfigSlotCode = PartNumberRef.ConfigSlotCode;
+            set AssemblyType = PartNumberRef.PartAssemblyTypeCode;
+            call GetTaskAltId(TaskSeq) into TaskAltId;
+
+            call GetAssemblyInfo(PartAssemblyTypeCode, AircraftId, InventoryClassCode, PartGroupId) into PartGroupInfo;
+            set PartGroupAltId = PartGroupInfo.PartGroupAltId;
+
+            if [InventoryClassCode != "BATCH"] {
+               set RequiredQuantity = 1;
+            }
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+
+            if[ConfigSlotCode != null] {
+               set ConfigSlotPositionId = PartNumberRef.ConfigSlotPosId;
+               set AssmblVisibility = PartGroupInfo.AssmblVisibility;
+               set AssmblEditable = PartGroupInfo.AssmblEditable;
+               set AssmblConfigSlotPosId = PartGroupInfo.AssemblyPositionId;
+               if [AssmblVisibility] {
+                  set InvClassCode = "SUBASSY";
+               }
+               else {
+                  set InvClassCode = InventoryClassCode;
+               }
+            }
+
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+            if [OperationType != "EDIT"] {
+               call GetSchedulingReqDate(WpId) into RequiredDate;
+               set DefaultRequiredDate = RequiredDate;
+            }
+            if [OperationType = "EDIT"] {
+               if [Part != OrgnlPart] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsPnModified;
+                  set IsModified = IsPnModified;
+               }
+            }
+
+            if[PartNumberRef.IsSos] {
+               set RemovalReasonCode = "SOS";
+               set IsRemovalReasonFilled = true;
+            }
+            else {
+               set RemovalReasonCode = "UNSCHED";
+               set IsRemovalReasonFilled = true;
+            }
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+            set RegCode = AddPartDefaults.RegCode;
+            set ConfSlotCode = AddPartDefaults.ConfigSlotCode;
+            set ConfSlotPosCode = AddPartDefaults.ConfigSlotPositionCode;
+            call GetAssemblyConfigSlotInfo(AssmblConfigSlotPosId) into AssemblyConfigInfo;
+            set AssemblyConfigSlotCode = AssemblyConfigInfo.AssemblyConfigSlotCode;
+            set AssemblyConfigSlotPosCode = AssemblyConfigInfo.AssemblyConfigSlotPosCode;
+            set IfsUser = AddPartDefaults.IfsUser;
+            call ClearInterchangeableParts(Objkey);
+            if [InventoryClassCode != "KIT" and((AssmblVisibility = false) or(AssmblVisibility and AssmblConfigSlotPosId != null))] {
+               call GetInterchangeableParts(RegCode, PartNo, Manufacturer, ConfSlotCode, ConfSlotPosCode, TaskSeq, TaskAltId, Objkey, ProjectionName, IfsUser, PartGroupCode, InvClassCode, AssemblyConfigSlotCode, AssemblyConfigSlotPosCode);
+            }
+            if[TaskSeq != null and ClassCode = "CORR"] {
+               call GetPartGroupSensitivity(PartGroupAltId, AircraftAltId) into PartGroupSens;
+               if[PartGroupSens != null] {
+                  set UIFormattedPGSensitivity = PartGroupSens.UIFormattedSensitivities;
+                  set DBFormattedPGSensitivity = PartGroupSens.DBFormattedSensitivities;
+               }
+            }
+         }
+
+      }
+
+   }
+
+   field PartNumberRef.PartName {
+      label = "Part Name";
+      visible = [PartNumberRef.PartNumber != null];
+      editable = [false];
+      size = Medium;
+      required = [true];
+   }
+
+   badge UIFormattedPGSensitivity {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      visible = [TaskSeq != null and ClassCode = "CORR" and UIFormattedPGSensitivity != null and PartNumberRef != null];
+      editable = [false];
+   }
+
+   lov PartGroupRef with ReferenceAvPartGroupNewSelector using GetPartGroupLov(Part, PartAssemblyTypeCode, AircraftAppCode) {
+      label = "Part Group Code";
+      visible = [PartNumberRef.PartNumber != null];
+      hidekey = [true];
+      required = [true];
+      description = PartGroupRef.PartGroupCode;
+      size = Medium;
+      editable = [OperationType != "EDIT"];
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable ConfigSlotInfo Structure(ConfigSlotInfoStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+         variable PartGroupSens Structure(PartGroupSensStruct);
+
+         execute {
+            set AssemblyType = PartGroupRef.AssemblyTypeCode;
+            set ConfigSlotCode = PartGroupRef.ConfigSlotCode;
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if [ConfigSlotCode != null] {
+               call GetConfigSlotInfo(ConfigSlotCode, AssemblyType, AircraftId, InventoryClassCode) into ConfigSlotInfo;
+               set ConfigSlotPositionId = ConfigSlotInfo.ConfigSlotPositionId;
+               set AssmblVisibility = ConfigSlotInfo.AssmblVisibility;
+               set AssmblEditable = ConfigSlotInfo.AssmblEditable;
+               set AssmblConfigSlotPosId = ConfigSlotInfo.AssmblConfigSlotPosId;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+            if [OperationType = "EDIT"] {
+               if [PartGroupId != OrgnlPartGroupId] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+
+            if[TaskSeq != null and ClassCode = "CORR"] {
+               call GetPartGroupSensitivity(PartGroupRef.AltId, AircraftAltId) into PartGroupSens;
+               if[PartGroupSens != null] {
+                  set UIFormattedPGSensitivity = PartGroupSens.UIFormattedSensitivities;
+                  set DBFormattedPGSensitivity = PartGroupSens.DBFormattedSensitivities;
+               }
+            }
+         }
+      }
+   }
+   lov AssemblyConfigSlotPosRef with ReferenceAvConfigSlotPositionNewSelector using GetAssemblConfigSlotPosLov(AssemblyType, AircraftId) {
+      label = "Assembly Position";
+      required = [true];
+      editable = [AssmblEditable and OperationType != "EDIT"];
+      visible = [PartGroupRef.InventoryClassCode != "BATCH" and PartGroupRef.InventoryClassCode != "SER" and PartGroupRef.InventoryClassCode != "KIT" and AssmblVisibility and PartNumberRef.PartNumber != null];
+      hidekey = [true];
+      description = AssemblyConfigSlotPosRef.ConfigSlotPositionCode;
+      size = Medium;
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+         variable AssemblyConfigInfo Structure(AssemblyConfigSlotStructure);
+
+         execute {
+            call GetTaskAltId(TaskSeq) into TaskAltId;
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+            if [OperationType = "EDIT"] {
+               if [AssmblConfigSlotPosId != OrgnlAssmblConfigSlotPosId] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+            call GetAssemblyConfigSlotInfo(AssmblConfigSlotPosId) into AssemblyConfigInfo;
+            set AssemblyConfigSlotCode = AssemblyConfigInfo.AssemblyConfigSlotCode;
+            set AssemblyConfigSlotPosCode = AssemblyConfigInfo.AssemblyConfigSlotPosCode;
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssemblyConfigSlotPosRef.ConfigSlotPositionId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+            call ClearInterchangeableParts(Objkey);
+            set InvClassCode = "SUBASSY";
+            call GetInterchangeableParts(RegCode, PartNo, Manufacturer, ConfSlotCode, ConfSlotPosCode, TaskSeq, TaskAltId, Objkey, ProjectionName, IfsUser, PartGroupCode, InvClassCode, AssemblyConfigSlotCode, AssemblyConfigSlotPosCode);
+         }
+      }
+   }
+   lov ConfigSlotPositionRef with ReferenceAvConfigSlotPositionNewSelector using GetConfigSlotPositionLov(ConfigSlotCode, AssemblyType) {
+      label = "Position";
+      required = [true];
+      editable = [OperationType != "EDIT"];
+      visible = [PartGroupRef.InventoryClassCode != "BATCH" and PartGroupRef.InventoryClassCode != "SER" and PartGroupRef.InventoryClassCode != "KIT" and PartNumberRef.PartNumber != null];
+      hidekey = [true];
+      description = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      size = Medium;
+      validate command {
+         variable AddPartDefaults Structure(AddPartDefaultsStructure);
+         variable IsRepairable Boolean;
+         variable SourceOfAddPart Text;
+         variable AddPartSourceId Number;
+         execute {
+            set InventoryClassCode = PartNumberRef.InventoryClassCode;
+            call GetAssemblyType(PartGroupId) into AssemblyType;
+            call GetAssyPosition(AircraftId, AssemblyType, AssmblConfigSlotPosId) into AssmblConfigSlotPosId;
+            if[FaultId != null] {
+               set SourceOfAddPart = "Fault";
+               set AddPartSourceId = FaultId;
+            }
+            else {
+               set SourceOfAddPart = "Task";
+               set AddPartSourceId = TaskSeq;
+            }
+            if[PartNumberRef.IsRepairable = "False"] {
+               set IsRepairable = false;
+            }
+            else {
+               set IsRepairable = true;
+            }
+            if [OperationType = "EDIT"] {
+               if [ConfigSlotPositionId != OrgnlConfigSlotPositionId] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+            call FetchAddPartDefaults(AddPartSourceId, InventoryClassCode, AssmblConfigSlotPosId, ConfigSlotPositionId, IsRepairable, AssmblVisibility, SourceOfAddPart, AssemblyType, AircraftId) into AddPartDefaults;
+            copy AddPartDefaults into this;
+         }
+      }
+   }
+   field InstalledSerialNo {
+      label = "Serial/Batch No";
+      visible = [PartNumberRef.PartNumber != null];
+      required = [false];
+      size = Medium;
+      editable = [false];
+   }
+   field InventoryClassCode {
+      label = "Inventory Class";
+      visible = [PartNumberRef.PartNumber != null];
+      required = [false];
+      size = Medium;
+      editable = [false];
+   }
+   field AssemblyType {
+      label = "Assembly";
+      visible = [PartGroupRef.IsCommonHardware = false and PartNumberRef.PartNumber != null];
+      editable = [false];
+      size = Medium;
+   }
+   field ConfigSlotCode {
+      label = "Config Slot";
+      visible = [PartGroupRef.IsCommonHardware = false and PartNumberRef.PartNumber != null];
+      editable = [false];
+      size = Medium;
+   }
+   field ConfigSlotRef.IsMandatory {
+      label = "Mandatory Slot";
+      visible = [PartGroupRef.IsCommonHardware = false and PartNumberRef.PartNumber != null];
+      editable = [false];
+      required = [true];
+      size = Medium;
+   }
+}
+
+group SchedulingGroup for AddPartsVirtual {
+   label = "Scheduling";
+   field RequiredQuantity {
+      label = "Quantity";
+      visible = [PartNumberRef.PartNumber != null];
+      required = [true];
+      size = Medium;
+      editable = [InventoryClassCode = "BATCH" or InventoryClassCode = "SER"];
+      validate command {
+         execute {
+            if [RequiredQuantity < 1] {
+               alert("Quantity must be greater than 0");
+               set RequiredQuantity = null;
+            }
+            if [OperationType = "EDIT"] {
+               if [RequiredQuantity != OrgnlRequiredQuantity] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   field SchedulingAction {
+      label = "Action";
+      visible = [PartNumberRef.PartNumber != null];
+      editable = [OperationType != "EDIT"];
+      validate command {
+         execute {
+            if [OperationType = "EDIT"] {
+               if [SchedulingAction != "REQ"] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   field IncludeInstallation {
+      label = "Install";
+      visible = [InstallationExists = true];
+      editable = [false];
+      falselabel = "Already Exists";
+   }
+   field IncludeInstallation {
+      label = "Install";
+      visible = [InstallationExists = false and InstallationVisible and PartNumberRef.PartNumber != null];
+      editable = [Barcode = null];
+      validate command {
+         execute {
+            if [IncludeInstallation = false and SchedulingAction = "REQ"] {
+               set SchedulingAction = "NOREQ";
+            }
+            if [OperationType = "EDIT"] {
+               if [IncludeInstallation = false] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   field IncludeRemoval {
+      label = "Remove";
+      visible = [RemovalExists = true];
+      editable = [false];
+      falselabel = "Already Exists";
+   }
+   field IncludeRemoval {
+      label = "Remove";
+      visible = [RemovalExists = false and RemovalVisible and PartNumberRef.PartNumber != null];
+      validate command {
+         variable PartGroupSens Structure(PartGroupSensStruct);
+         execute {
+            if [OperationType = "EDIT"] {
+               if [(IncludeRemoval and RemovedTaskPartId = null) or(not IncludeRemoval and RemovedTaskPartId != null)] {
+                  set IsModified = true;
+                  if[TaskSeq != null and ClassCode = "CORR"] {
+                     call GetPartGroupSensitivity(PartGroupRef.AltId, AircraftAltId) into PartGroupSens;
+                     if[PartGroupSens != null] {
+                        set DBFormattedPGSensitivity = PartGroupSens.DBFormattedSensitivities;
+                     }
+                  }
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   lov RemovalReasonRef with ReferenceAvRemovalReasonSelector using GetRemovalReasonsForPart(PartNumberRef.IsSos) {
+      label = "Removal Reason";
+      description = RemovalReasonCode;
+      required = [true];
+      visible = [RemovalExists = false and RemovalVisible and IncludeRemoval and PartNumberRef.PartNumber != null];
+      editable = [true];
+      validate command {
+         execute {
+            if [RemovalReasonCode != null] {
+               set IsRemovalReasonFilled = true;
+            }
+            if [RemovalReasonCode = "ACCESS" or RemovalReasonCode = "ROB"] {
+               set IncludeInstallation = false;
+               set SchedulingAction = "NOREQ";
+            }
+            if [OperationType = "EDIT"] {
+               if [RemovalReasonCode != OrgnlRemovalReasonCode] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   field RequiredDate {
+      label = "Required Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [InstallationExists = false and InstallationVisible and SchedulingAction = "REQ" and PartNumberRef.PartNumber != null];
+      required = [InstallationExists = false and InstallationVisible and IncludeInstallation and SchedulingAction = "REQ"];
+      validate command {
+         variable ValidateMsgInfo   Structure(ValidateMessageInfoStructure);
+         variable IsReqDateModified Boolean;
+         execute {
+            call ValidateRequiredDate(WpId, RequiredDate, AssistantOpenedAt) into ValidateMsgInfo;
+            if[ValidateMsgInfo.MessageType = "ERROR"] {
+               error("${ValidateMsgInfo.Message}");
+               set RequiredDate = DefaultRequiredDate;
+            }
+            if[ValidateMsgInfo.MessageType = "WARNING"] {
+               warning("${ValidateMsgInfo.Message}");
+            }
+            if [OperationType = "EDIT"] {
+               if [RequiredDate != DefaultRequiredDate] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+   field Note {
+      label = "Note";
+      visible = [PartNumberRef.PartNumber != null];
+      maxlength = 2000;
+      validate command {
+         execute {
+            if [OperationType = "EDIT"] {
+               if [Note != OrgnlNote] {
+                  set IsModified = true;
+               }
+               else {
+                  call IsModified() into IsModified;
+               }
+            }
+         }
+      }
+   }
+}
+
+group TaskSearchGroup for AddPartsVirtual {
+   label = "Task Details";
+
+   lov AircraftRef with ReferenceAircraftLovSelector  using GetAircraftId {
+      label = "Aircraft";
+      size = Medium;
+      hidekey = [true];
+      description = AircraftRef.Aircraft;
+      required = [true];
+      validate command {
+         execute {
+            set  TaskSeq = null;
+            set  RequiredQuantity = 1;
+            set  AircraftAltId = AircraftRef.AircraftAltId;
+            set  AssemblyTypeCode = AcftRef.AssemblyTypeCode;
+            set  AircraftAppCode = AcftRef.ApplicabilityCode;
+            if [WpId != null and AvAircraftWorkPackageRef.AircraftId != AircraftId] {
+               set WpId = null;
+            }
+            if [TaskSeq != null and AvExeTaskRef.AircraftId != AircraftId] {
+               set TaskSeq = null;
+            }
+         }
+      }
+   }
+
+   lov AvAircraftWorkPackageRef with ReferenceAvAircraftWorkPackageSelector using GetWorkPackagesByAircraftId(AircraftId) {
+      label = "Work Package ID";
+      size = Medium;
+      hidekey = [true];
+      description = AvAircraftWorkPackageRef.WoNumber;
+      required = [true];
+      validate command {
+         variable AircraftInfo Structure(PartsInfoAssistantStructure);
+         execute {
+            set TurnStatus = AvFlightRef.FlightTurnStatus;
+            if [AircraftId = null] {
+               set AircraftId = AvAircraftWorkPackageRef.AircraftId;
+               call GetAircraftInfo(AircraftId) into AircraftInfo;
+               set AircraftAltId = AircraftInfo.AircraftAltId;
+               set AssemblyTypeCode = AircraftInfo.AssemblyTypeCode;
+               set AircraftAppCode = AircraftInfo.AircraftAppCode;
+            }
+            if [TaskSeq != null and AvExeTaskRef.AircraftWpId != WpId] {
+               set TaskSeq = null;
+            }
+         }
+      }
+   }
+
+   lov AvExeTaskRef with ReferenceAvExeTaskSelector using GetAvExeTasksByWpIdAndAcId(WpId, AircraftId) {
+      label = "Task";
+      editable = [true];
+      hidekey = [true];
+      required = [true];
+      description = AvExeTaskRef.Barcode;
+      validate command {
+         variable AircraftInfo Structure(PartsInfoAssistantStructure);
+         execute {
+            set TaskStatus = AvExeTaskRef.Objstate;
+            if [AircraftId = null] {
+               set AircraftId = AvExeTaskRef.AircraftId;
+               call GetAircraftInfo(AircraftId) into AircraftInfo;
+               set AircraftAltId = AircraftInfo.AircraftAltId;
+               set AssemblyTypeCode = AircraftInfo.AssemblyTypeCode;
+               set AircraftAppCode = AircraftInfo.AircraftAppCode;
+            }
+            if [WpId = null] {
+               set WpId = AvExeTaskRef.AircraftWpId;
+            }
+         }
+      }
+   }
+}
+list AlternatePartList for AlternatePartVirtual {
+   label = "Interchangeable Parts";
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field PartNumber {
+      label = "OEM Part No";
+   }
+   field PartCatalogRef.Description {
+      label = "Part Name";
+   }
+   field AvaillableQty {
+      label = "Local Available Quantity";
+   }
+   badge IsSelectedPart {
+      label = "Standard Part";
+      emphasis Primary = [IsSelectedPart = "YES" or IsSelectedPart = "Yes"];
+      emphasis Neutral = [IsSelectedPart = "NO" or IsSelectedPart = "No"];
+   }
+   field Conditions {
+      multiline = true;
+      label = "Conditions";
+   }
+   command SelectInterchangeablePart;
+}
+
+assistant PartsAssistant using AddPartsVirtualSet {
+   label = "Add Part";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         set IsResponseReceived = true;
+         set IsCancelled = false;
+      }
+   }
+   singlestep {
+      group AddPartsPartDetailGroup;
+      group AddPartsPartGroupDetailGroup;
+      group AddPartsPartRequirement;
+   }
+   command AddPartsOKCommand;
+   command Cancel {
+      execute {
+         set IsCancelled = true;
+      }
+   }
+}
+
+assistant AddRemovePartAssistant using AddPartsVirtualSet {
+   label = "Add/Remove Part";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         set IsResponseReceived = true;
+         set IsCancelled = false;
+      }
+   }
+   singlestep {
+      group BarcodePartSearch;
+      group EnhancedPartSearchGroup;
+      list AlternatePartList(AlternatePartVirtualArray);
+      group SchedulingGroup;
+   }
+   command AddPartsOKCommand;
+   command AddPartsAndSearchCommand;
+   command Cancel {
+      execute {
+         set IsCancelled = true;
+      }
+   }
+}
+
+assistant AddEditPartAssistant using AddPartsVirtualSet {
+   label = "Add/Edit Part";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         set IsResponseReceived = true;
+         set IsCancelled = false;
+
+      }
+   }
+   singlestep {
+      group EnhancedPartSearchGroup;
+      group SchedulingGroup;
+   }
+   command EditPartCommand;
+   command Cancel {
+      execute {
+         set IsCancelled = true;
+      }
+   }
+}
+
+assistant CancelPartAssistant using InstalledPartsVirtualSet {
+   label = "Unissue Confirmation";
+   savemode = OnLostFocus;
+   input this;
+   singlestep {
+      markdowntext {
+         text = "**The following part will be unissued:**";
+      }
+      group CancelPartsGroup {
+         label = " ";
+      }
+   }
+   command UnissueParts;
+   command Cancel;
+}
+
+assistant AddPartToTaskAssistant using AddPartsVirtualSet {
+   label = "Add Part to Task";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         set IsResponseReceived = true;
+         set IsCancelled = false;
+      }
+   }
+   singlestep {
+      group TaskSearchGroup;
+      group BarcodePartSearch;
+      group EnhancedPartSearchGroup;
+      list AlternatePartList(AlternatePartVirtualArray);
+      group SchedulingGroup;
+   }
+   command AddPartsOKCommand;
+   command AddPartsAndSearchCommand;
+   command Cancel {
+      execute {
+         set IsCancelled = true;
+      }
+   }
+}
+
+selector ReferenceAvPartSelector for AvPartNumber {
+   label = "";
+   static Manufacturer;
+   static PartNumber;
+   static PartName;
+   static InventoryClassCode;
+}
+selector ReferenceAvPartGroupNewSelector for AvPartGroup {
+   label = "";
+   static PartGroupCode;
+   static PartGroupName;
+   static AssemblyTypeCode;
+}
+selector ReferenceAvConfigSlotPositionNewSelector for AvConfigSlotPosition {
+   label = "";
+   static ConfigSlotCode;
+   static ConfigSlotPositionCode;
+}
+@Override
+selector ReferenceAvPartNumberSelector for PartNumbers {
+   label = "";
+   static Manufacturer;
+   static PartNumber;
+   static PartName;
+   static InventoryClassCode;
+   static PartAssemblyTypeCode {
+      label = "Assembly Code";
+   }
+}
+
+selector PartNumbersNewSelector for PartNumbers {
+   label = "";
+   static PartNumber;
+   static PartName;
+   static PartGroupCode;
+   static InventoryClassCode;
+   static PartAssemblyTypeCode {
+      label = "Assembly Code";
+
+   }
+   static ConfigSlotCode;
+   static ConfigSlotPosCode;
+}
+
+
+@Overtake
+selector ReferenceAvAircraftWorkPackageSelector  for AvAircraftWorkPackage {
+   label = "";
+   static WoNumber;
+   static Barcode;
+   static WorkPackageName;
+   static AircraftId;
+   exclude AircraftId;
+}
+@Override
+selector ReferenceAvExeTaskSelector for AvExeTask {
+   label = "";
+   static Barcode;
+   static Description;
+   static Objstate;
+   exclude TaskSeq, Site, Company, OrderNo;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset AddPartsVirtualSet for AddPartsVirtual;
+entityset AvConfigSlotPositionSet for AvConfigSlotPosition;
+entityset InstalledPartsVirtualSet for InstalledPartsVirtual;
+
+query PartNumbers {
+   from = "Part_List";
+   keys = Objkey;
+   lu = none;
+
+   attribute PartNumberId Number;
+   attribute Manufacturer Text;
+   attribute PartName Text;
+   attribute PartNumber Text;
+   attribute InventoryClassCode Text;
+   attribute PartUse Enumeration(PartUseType);
+   attribute MxUniqueKey Text;
+   attribute AltId Text;
+   attribute IsRepairable Enumeration(FndBoolean);
+   attribute PartStatus Enumeration(PartStatus);
+   attribute PartAssemblyTypeCode Text;
+   attribute GroupApplicabilityRange Text;
+   attribute PartApplicabilityRange Text;
+   attribute PartGroupId Number;
+   attribute PartGroupCode Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPosId Number;
+   attribute ConfigSlotPosCode Text;
+   attribute IsSos Boolean;
+   attribute Objkey Text;
+}
+
+action AddFaultParts {
+   initialcheck none;
+   syncpolicy Online;
+   parameter FaultId Number;
+   parameter PartNumberId Number;
+   parameter RequiredQuantity Number;
+   parameter PartGroupId Number;
+   parameter AssmblConfigSlotPosId Number;
+   parameter ConfigSlotPositionId Number;
+   parameter IncludeInstallation Boolean;
+   parameter IncludeRemoval Boolean;
+   parameter RemovalReasonCode Text;
+   parameter InstalledSerialNo Text;
+   parameter RemovalSerialNo Text;
+   parameter RemovalPartNumberId Number;
+   parameter RemovalPartGroupId Number;
+   parameter IsRemovalReasonFilled Boolean;
+   parameter Sensitivities Text;
+
+   ludependencies = AggFaultInstPartQuery, AggFaultRemovePartQuery, AvFault;
+}
+
+
+action AddTaskParts {
+   initialcheck none;
+   syncpolicy Online;
+   parameter TaskSeq Number;
+   parameter PartNumberId Number;
+   parameter RequiredQuantity Number;
+   parameter PartGroupId Number;
+   parameter AssmblConfigSlotPosId Number;
+   parameter ConfigSlotPositionId Number;
+   parameter IncludeInstallation Boolean;
+   parameter IncludeRemoval Boolean;
+   parameter RemovalReasonCode Text;
+   parameter InstalledSerialNo Text;
+   parameter RemovalSerialNo Text;
+   parameter RemovalPartNumberId Number;
+   parameter RemovalPartGroupId Number;
+   parameter IsRemovalReasonFilled Boolean;
+   parameter SchedulingAction Text;
+   parameter RequiredDate Timestamp;
+   parameter PartNumber Text;
+   parameter ParentKey Text;
+   parameter Sensitivities Text;
+   parameter Note Text;
+
+   ludependencies = AvInstalledParts, AvRemovedParts, AvExeTask, AddPartsVirtual, MaintMaterialReqLine, AvFault, AggFaultInstPartQuery, AggFaultRemovePartQuery;
+}
+
+action FetchAddPartDefaults Structure(AddPartDefaultsStructure) {
+   initialcheck none;
+   syncpolicy Online;
+   supportwarnings = [true];
+   parameter SourceId Number;
+   parameter InventoryClassCode Text;
+   parameter AssemblyPositionId Number;
+   parameter ConfigSlotPositionId Number;
+   parameter IsRepairable Boolean;
+   parameter IsSubAssy Boolean;
+   parameter SourceOfAddPart Text;
+   parameter AssemblyType Text;
+   parameter AircraftId Number;
+}
+
+action GetInterchangeableParts {
+   initialcheck none;
+   implementation = "Java";
+   parameter RegCode Text;
+   parameter PartNumber Text;
+   parameter ManufacturerCode Text;
+   parameter ConfSlotCode Text;
+   parameter ConfSlotPosCode Text;
+   parameter TaskSeq Number;
+   parameter TaskAltId Text;
+   parameter ParentKey Text;
+   parameter ProjectionName Text;
+   parameter IfsUser Text;
+   parameter PartGroupCode Text;
+   parameter InventoryClassCode Text;
+   parameter AssemblyConfigSlotCode Text;
+   parameter AssemblyConfigSlotPosCode Text;
+   ludependencies = AlternatePartVirtual;
+}
+
+action ClearInterchangeableParts {
+   initialcheck none;
+   parameter ParentKey Text;
+   ludependencies = AlternatePartVirtual;
+}
+
+action CancelParts {
+   initialcheck none;
+   parameter TaskPartId Number;
+
+   ludependencies = AvExeTaskPart, AvFaultPart;
+}
+
+action SelectInterchangeablePart {
+   initialcheck none;
+   parameter PartNumber Text;
+   parameter ManufacturerCode Text;
+   parameter ConfSlotCode Text;
+   parameter ConfSlotPosCode Text;
+   parameter PartGroupCode Text;
+   parameter InventoryClassCode Text;
+   parameter ParentKey Text;
+   ludependencies = AddPartsVirtual, AlternatePartVirtual, PartNumbers;
+}
+
+action Finish {
+   initialcheck none;
+   ludependencies = MaintMaterialReqLine, AvExeTaskPart, AvFaultPart;
+   enabled = [QtyUnissued != null];
+   supportwarnings = [true];
+   parameter TaskSeq Number;
+   parameter MaintMaterialOrderNo Number;
+   parameter LineItemNo Number;
+   parameter QtyUnissued Number;
+   parameter TaskPartId Number;
+
+}
+
+action SaveOverallTaskSensitivity {
+   initialcheck none;
+   implementation = "Java";
+   parameter   AircraftAltId Text;
+   parameter   FaultId Number;
+   parameter   EtopsSignificant Boolean;
+   parameter   ConfigSlotAltId Text;
+   parameter   TaskPartId Number;
+
+   ludependencies = AvExeTask, AvFault;
+}
+
+function GetTaskAltId Text {
+   syncpolicy Online;
+   parameter TaskSeq Number;
+}
+
+function GetRequestPartNumber List < Entity(PartNumbers) > {
+   parameter AircraftId Number;
+   parameter AssemblyTypeCode Text;
+   parameter AircraftAppCode Text;
+
+   where = "Adcom_Util_API.Get_Applicability(part_applicability_range,:AircraftAppCode) = 1 AND
+   Adcom_Util_API.Get_Applicability(group_applicability_range,:AircraftAppCode) = 1 AND (is_common_hardware IN('TRUE')
+   OR part_assembly_type_code IN(:AssemblyTypeCode) OR part_assembly_type_code IN (SELECT s.assembly_type_code
+   FROM av_sub_assy_inventory s WHERE s.aircraft_id IN (:AircraftId)))";
+}
+
+function GetPartGroupLov List < Entity(AvPartGroup) > {
+   syncpolicy Online;
+   parameter PartNumberId Number;
+   parameter AssemblyTypeCode Text;
+   parameter AircraftAppCode Text;
+
+   where = "part_group_id IN(SELECT part_group_id
+   FROM Av_Part_Group_Part
+   WHERE part_no_id = :PartNumberId) AND (assembly_type_code IN(:AssemblyTypeCode) OR is_common_hardware IN('True'))
+   AND Adcom_Util_API.Get_Applicability(applicability_range,:AircraftAppCode) = 1";
+}
+function GetConfigSlotPositionLov List < Entity(AvConfigSlotPosition) > {
+   syncpolicy Online;
+   parameter ConfigSlotCode Text;
+   parameter AssemblyType Text;
+   where = "config_slot_code IN (:ConfigSlotCode) AND assembly_type_code IN (:AssemblyType)";
+}
+function GetSpecificPartNumberLov List < Entity(AvPartNumber) > {
+   syncpolicy Online;
+   parameter PartGroupId Number;
+   where = "part_number_id IN(SELECT part_no_id FROM Av_Part_Group_Part WHERE part_group_id = :PartGroupId) ";
+}
+
+function GetAssemblConfigSlotPosLov List < Entity(AvConfigSlotPosition) > {
+   syncpolicy Online;
+   parameter AssemblyType Text;
+   parameter AircraftId Number;
+   where = "config_slot_position_id IN (SELECT config_slot_position_id FROM Av_Sub_Assy_Inventory WHERE assembly_type_code = (:AssemblyType) AND aircraft_id = (:AircraftId))";
+}
+
+function GetPartGroupInfo Structure(PartGroupInfoStructure) {
+   syncpolicy Online;
+   parameter Part Number;
+   parameter AssemblyTypeCode Text;
+   parameter AircraftId Number;
+   parameter InventoryClassCode Text;
+}
+
+function GetAssemblyConfigSlotInfo Structure(AssemblyConfigSlotStructure) {
+   syncpolicy Online;
+   parameter AssmblConfigSlotPosId Number;
+}
+
+function GetAircraftAssemblyInfo Structure(AircraftAssemblyInfo) {
+   syncpolicy Online;
+   parameter AircraftId Number;
+}
+
+function GetAircraftInfo Structure(PartsInfoAssistantStructure) {
+   parameter AircraftId Number;
+}
+
+function GetParentPartInfo Structure(ParentPartInfo) {
+   syncpolicy Online;
+   parameter ParentObjkey Text;
+}
+
+function GetAssemblyInfo Structure(PartGroupInfoStructure) {
+   parameter AssemblyTypeCode Text;
+   parameter AircraftId Number;
+   parameter InventoryClassCode Text;
+   parameter PartGroupId Number;
+}
+function GetAssemblyType Text {
+   syncpolicy Online;
+   parameter PartGroupId Number;
+}
+function GetAssyPosition Number {
+   syncpolicy Online;
+   parameter AircraftId Number;
+   parameter AssemblyTypeCode Text;
+   parameter AssmblConfigSlotPosId Number;
+}
+
+function GetConfigSlotStatus Text {
+   syncpolicy Online;
+   parameter PartGroupId Number;
+}
+
+function GetPartNumberInfo Structure(AvPartInfoStructure) {
+   syncpolicy Online;
+   parameter PartNumberAltId Text;
+   parameter AircraftId Number;
+   parameter AssemblyType Text;
+}
+
+function GetConfigSlotInfo Structure(ConfigSlotInfoStructure) {
+   syncpolicy Online;
+   parameter ConfigSlotCode Text;
+   parameter AssemblyTypeCode Text;
+   parameter AircraftId Number;
+   parameter InventoryClassCode Text;
+}
+
+function GetRemovalPartInfo Structure(RemovalPartInfoStruct) {
+   syncpolicy Online;
+   parameter RemovalPartNumberAltId Text;
+   parameter RemovalPartGroupAltId Text;
+}
+function GetSchedulingReqDate Timestamp {
+   parameter AircraftWpId Number;
+}
+function ValidateRequiredDate Structure(ValidateMessageInfoStructure) {
+   parameter AircraftWpId Number;
+   parameter RequiredDate Timestamp;
+   parameter CurrentDate Timestamp;
+}
+
+function GetRemovalReasonsForPart List < Entity(AvRemovalReason) > {
+   parameter IsSos Boolean;
+}
+
+function GetPartGroupSensitivity Structure(PartGroupSensStruct) {
+   initialcheck none;
+   implementation = "Java";
+   parameter PartGroupAltId Text;
+   parameter AircraftAltId Text;
+
+}
+
+function GetWorkPackagesByAircraftId List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "(:AircraftId IS NULL OR aircraft_id = :AircraftId) AND objstate in ('InWork', 'Active', 'Committed')";
+}
+
+function GetAvExeTasksByWpIdAndAcId List < Entity(AvExeTask) > {
+   parameter AircraftWorkPackageId  Number;
+   parameter AircraftId  Number;
+   where = "objstate in ('WORKSTARTED', 'RELEASED')
+            AND (
+                  (:AircraftWorkPackageId IS NOT NULL AND aircraft_wp_id = :AircraftWorkPackageId)
+                  OR (:AircraftWorkPackageId IS NULL AND :AircraftId IS NOT NULL AND aircraft_id = :AircraftId)
+                  OR (:AircraftWorkPackageId IS NULL AND :AircraftId IS NULL)
+                )";
+}
+
+function GetAircraftId List < Entity(AircraftLov) > {
+}
+
+structure RefreshStructure {
+   attribute Entity Text {
+      required = [true];
+   }
+   attribute Criteria Text;
+   attribute Refresh Text;
+}
+
+virtual AddPartsVirtual {
+   attribute TaskSeq Number;
+   attribute FaultId Number;
+   attribute WpId Number;
+   attribute Part Number;
+   attribute PartNumber Number;
+   attribute PartNumberId Number;
+   attribute InventoryClassCode Text;
+   attribute RequiredQuantity Number;
+   attribute IsCommonHardware Boolean;
+   attribute PartGroupId Number;
+   attribute AssemblyType Text;
+   attribute AssemblyTypeCode Text;
+   attribute ConditionsDesc Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute ConfigSlotPositionId Number;
+   attribute AssmblConfigSlotPosId Number;
+   attribute AssmblVisibility Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute AssmblEditable Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute AircraftAppCode Text;
+   attribute AircraftId Number;
+   attribute Objkey Text;
+   attribute PartNoUnqId Text;
+   attribute ConfigSlotStatus Text;
+   attribute InstallationExists Boolean;
+   attribute RemovalExists Boolean;
+   attribute InstallationVisible Boolean;
+   attribute RemovalVisible Boolean;
+   attribute IncludeInstallation Boolean {
+      default = "true";
+      required = [true];
+   }
+   attribute IncludeRemoval Boolean {
+      default = "true";
+      required = [true];
+   }
+   attribute RemovalReasonCode Text;
+   attribute Barcode Text;
+   attribute PartAssemblyTypeCode Text;
+   attribute InstalledSerialNo Text;
+   attribute IsResponseReceived Boolean;
+   attribute IsCancelled Boolean;
+   attribute RemovedSerialNo Text;
+   attribute AircraftAltId Text;
+   attribute RemovalPartNumberId Number;
+   attribute RemovalPartGroupId Number;
+   attribute IsSubAssy Text;
+   attribute ConfigSlot Text;
+   attribute CmsResponseSeverity Number;
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartGroupAltId Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RequiredDate Timestamp;
+   attribute DefaultRequiredDate Timestamp;
+   attribute AssistantOpenedAt Timestamp {
+      default = "SYSDATE";
+   }
+   attribute Note Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute IsRemovalReasonFilled Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute SchedulingAction Enumeration(SchedulingActionType) {
+      default = "'REQ'";
+   }
+   attribute IpcPartNumber Text;
+   attribute PartGroupCode Text;
+   attribute Manufacturer Text;
+   attribute ConfSlotCode Text;
+   attribute ConfSlotPosCode Text;
+   attribute UIFormattedPGSensitivity Text;
+   attribute DBFormattedPGSensitivity Text;
+   attribute ClassCode Text;
+   attribute AssemblyConfigSlotPosCode Text;
+   attribute AssemblyConfigSlotCode Text;
+   attribute InvClassCode Text;
+   attribute IfsUser Text;
+   attribute TaskAltId Text;
+   attribute PartNo Text;
+   attribute RegCode Text;
+
+   //attributes specific for Edit part
+   attribute OperationType Text;
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+   attribute InstalledTaskPartId Number;
+   attribute RemovedTaskPartId Number;
+   attribute OrgnlPart Number;
+   attribute OrgnlPartGroupId Number;
+   attribute OrgnlRequiredQuantity Number;
+   attribute OrgnlConfigSlotPositionId Number;
+   attribute OrgnlAssmblConfigSlotPosId Number;
+   attribute OrgnlRemovalReasonCode Text;
+   attribute IsModified Boolean;
+   attribute ProjectionName Text;
+   attribute CreatedUser Text;
+   attribute OrgnlNote Text;
+
+   reference RemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+   reference PartNumberRef(PartNoUnqId) to PartNumbers(Objkey);
+   reference PartGroupRef(PartGroupId) to AvPartGroup(PartGroupId);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AssemblyConfigSlotPosRef(AssmblConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AircraftTypeRef(AssemblyType) to AvAssembly(AssemblyTypeCode);
+   reference ConfigSlotRef(ConfigSlotCode, AssemblyType) to AvConfigSlot(ConfigSlotCode, AssemblyTypeCode);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference AcftRef(AircraftId) to Aircraft(AircraftId);
+   reference AvAircraftWorkPackageRef(WpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   array AlternatePartVirtualArray() to AlternatePartVirtual();
+   function IsModified Boolean {
+   }
+   action ModifyPart {
+      ludependencies = MaintMaterialReqLine, AvExeTask, AvFault, AggFaultInstPartQuery, AggFaultRemovePartQuery, AvInstalledParts, AvRemovedParts;
+      parameter PartNumber Text;
+      parameter RemovalSerialNo Text;
+      parameter Sensitivities Text;
+   }
+}
+
+virtual AlternatePartVirtual {
+   attribute PartNumber Text;
+   attribute ManufacturerCode Text;
+   attribute PartName Text;
+   attribute InventoryClassCode Text;
+   attribute IsSelectedPart Text;
+   attribute Conditions Text;
+   attribute AvaillableQty Number;
+   attribute ConfSlotCode Text;
+   attribute ConfSlotPosCode Text;
+   attribute PartGroupCode Text;
+   attribute AssemblyConfigSlotPosCode Text;
+   attribute AssemblyConfigSlotCode Text;
+
+   reference PartCatalogRef(PartNumber) to PartCatalog(PartNo);
+}
+
+virtual InstalledPartsVirtual {
+
+   attribute TaskSeq Number;
+   attribute AggregateId Text;
+   attribute TaskPartId Number;
+   attribute InstalledPartNoId Number;
+   attribute InstalledPartNo Text;
+   attribute InstalledQuantity Number;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+   attribute PartName Text;
+}
+
+structure ParentPartInfo {
+   attribute TaskSeq Number;
+   attribute TaskAltId Text;
+   attribute AircraftRegCode Text;
+   attribute ProjectionName Text;
+   attribute IfsUser Text;
+}
+
+structure InterchangeableParts {
+   attribute PartNumber Text;
+   attribute Manufacturer Text;
+   attribute PartName Text;
+   attribute InventoryClassCode Text;
+   attribute IsSelectedPart Text;
+   attribute Conditions Text;
+   attribute AvaillableQty Number;
+   reference PartCatalogRef(PartNumber) to PartCatalog(PartNo);
+
+}
+
+structure AddPartDefaultsStructure {
+   attribute RemovalExists Boolean;
+   attribute InstallationExists Boolean;
+   attribute RemovalVisible Boolean;
+   attribute InstallationVisible Boolean;
+   attribute IncludeInstallation Boolean;
+   attribute IncludeRemoval Boolean;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute RegCode Text;
+   attribute IfsUser Text;
+   attribute AircraftAssemblyType Text;
+}
+
+structure AssemblyConfigSlotStructure {
+   attribute AssemblyConfigSlotCode Text;
+   attribute AssemblyConfigSlotPosCode Text;
+}
+
+structure AddPartStructure {
+    //FauldId or TaskSeq as SourceId
+   attribute SourceId Number;
+   attribute PartNumberId Number;
+   attribute RequiredQuantity Number;
+   attribute PartGroupId Number;
+   attribute AssmblConfigSlotPosId Number;
+   attribute ConfigSlotPositionId Number;
+   attribute IsAddingInstallation Boolean;
+   attribute IsAddingRemoval Boolean;
+   attribute RemovalReasonCode Text;
+   attribute InstalledSerialNo Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalPartNumberId Number;
+}
+
+structure AvPartInfoStructure {
+   attribute PartNumberId Number;
+   attribute InventoryClassCode Text;
+   attribute PartAssemblyTypeCode Text;
+   attribute IsSubAssy Boolean;
+   attribute IsRepairable Boolean;
+   attribute VrtObjkey Text;
+}
+
+structure ValidateMessageInfoStructure {
+   attribute MessageType Text;
+   attribute Message     Text;
+}
+
+structure AircraftAssemblyInfo {
+   attribute AcConfigSlotCode Text;
+   attribute AcConfigSlotPosCode Text;
+}
+
+structure PartGroupInfoStructure {
+   attribute PartGroupId Number;
+   attribute PartGroupAltId Text;
+   attribute ConfigSlotStatus Text;
+   attribute AssemblyTypeCode Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionId Number;
+   attribute AssmblVisibility Boolean;
+   attribute AssmblEditable Boolean;
+   attribute AssemblyPositionId Number;
+}
+
+structure ConfigSlotInfoStructure {
+   attribute ConfigSlotPositionId Number;
+   attribute AssmblVisibility Boolean;
+   attribute AssmblEditable Boolean;
+   attribute AssmblConfigSlotPosId Number;
+}
+
+structure RemovalPartInfoStruct {
+   attribute RemovalPartNoId Number;
+   attribute RemovalPartGroupId Number;
+}
+
+structure PartsInfoAssistantStructure {
+   attribute TaskSeq Number;
+   attribute FaultId Number;
+   attribute WpId Number;
+   attribute AssemblyTypeCode Text;
+   attribute RequiredQuantity Number;
+   attribute AircraftAppCode Text;
+   attribute AircraftId Number;
+   attribute AircraftAltId Text;
+   attribute AircraftRegCode Text;
+   attribute OperationType Text;
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+   attribute InstalledTaskPartId Number;
+   attribute IpcPartNumber Text;
+   attribute ClassCode Text;
+   attribute UIFormattedPGSensitivity Text;
+   attribute Note Text;
+}
+
+structure PartValidationWarningAssistantInfoStructure {
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalReasonCode Text;
+   attribute InstallationPartNumber Text;
+   attribute InstallationManufacturerCode Text;
+   attribute InstalledSerialNo Text;
+   attribute AircraftRegCode Text;
+   attribute AssmblConfSlotCode Text;
+   attribute AssmblConfSlotPosCode Text;
+   attribute ConfigSlot Text;
+   attribute ConfSlotPosCode Text;
+   attribute IsSubAssy Text;
+   attribute InventoryClassCode Text;
+   attribute PartChangeType Text;
+   attribute CmsResponseSeverity Number;
+}
+
+structure PartGroupSensStruct {
+   attribute UIFormattedSensitivities Text;
+   attribute DBFormattedSensitivities  Text;
+}

@@ -1,0 +1,345 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmPartRequest
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  220126  lavwlk  AD-6508, Modify Get_Assy_Position___.
+--  220107  nignlk  AD-5733, Modify Get_Assy_Position___ .
+--  220107  nignlk  AD-5733, Added Get_Assy_Position___, Set_Assy_Position_Editable___, Get_Assy_Position_Visibility___ and modified Add_Task_Part_Req___.
+--  211122  WAISLK  AD-4643, Modified Get_Part_Group___ to fetch the part group based on the part number and the assembly.
+--  211118  ASIGLK  AD-5002, Get_Part_Group___,Get_Config_Slot_Position___ parameter AircraftTypeCode change to AssemblyTypeCode. added new Get_Assembly_Type___.
+--  211005  sevhlk  AD-4041, Modified get_config_slot_position and add_task_part_request methods.
+--  210730  SEVHLK  AD-2216, Added logic for checking parrt incompatibilities in Add_Task_Part_Req___ method.
+--  210719  himklk  AD-2214, Modified Get_Config_Slot___. Changed size of config_slot_code_.
+--  210607  SEVHLK  AD-1258, Added Add_Task_Part_Req___ method.
+--  210604  SEVHLK  AD-1258, Added Get_Part_Group___, Get_Aircraft_Type___, Get_Config_Slot___ and Get_Config_Slot_Position___ methods. 
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+FUNCTION Get_Part_Group___ (
+   part_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2) RETURN NUMBER
+IS
+   CURSOR get_part_number IS 
+    SELECT  count(av_part_group_part_tab.part_group_id) 
+    FROM av_part_group_part_tab
+    INNER JOIN av_part_group_tab
+    ON av_part_group_part_tab.part_group_id = av_part_group_tab.part_group_id
+    WHERE av_part_group_part_tab.part_no_id = part_
+    AND(av_part_group_tab.assembly_type_code = assembly_type_code_
+    OR  av_part_group_tab.is_common_hardware = 'TRUE');
+    
+   CURSOR get_part_group_id IS
+   SELECT av_part_group_tab.part_group_id 
+   FROM av_part_group_part_tab
+   INNER JOIN av_part_group_tab
+   ON av_part_group_part_tab.part_group_id = av_part_group_tab.part_group_id
+   WHERE av_part_group_part_tab.part_no_id = part_
+   AND (av_part_group_tab.assembly_type_code = assembly_type_code_
+   OR  av_part_group_tab.is_common_hardware = 'TRUE');
+    
+   count_ NUMBER;
+   part_group_id_ NUMBER;
+BEGIN
+	OPEN get_part_number;
+   FETCH get_part_number INTO count_;
+   CLOSE get_part_number;
+   
+   IF count_ = 1 THEN 
+   
+      OPEN get_part_group_id;
+      FETCH get_part_group_id INTO part_group_id_;
+      CLOSE get_part_group_id;
+   
+      RETURN part_group_id_;
+   
+   ELSE
+      RETURN NULL;
+   END IF;
+END Get_Part_Group___;
+
+-- Remove AD-5002
+FUNCTION Get_Aircraft_Type___ (
+   part_group_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   CURSOR get_aircraft_type IS
+   SELECT aircraft_type_code
+   FROM av_part_group_tab
+   WHERE part_group_id = part_group_id_;
+   
+   aircraft_type_code_ VARCHAR2(10);
+BEGIN
+	OPEN get_aircraft_type;
+   FETCH get_aircraft_type INTO aircraft_type_code_;
+   CLOSE get_aircraft_type;
+   
+   RETURN aircraft_type_code_;
+END Get_Aircraft_Type___;
+
+FUNCTION Get_Assembly_Type___ (
+   part_group_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   CURSOR get_assembly_type IS
+   SELECT assembly_type_code
+   FROM av_part_group_tab
+   WHERE part_group_id = part_group_id_;
+   
+   assembly_type_code_ VARCHAR2(10);
+BEGIN
+	OPEN get_assembly_type;
+   FETCH get_assembly_type INTO assembly_type_code_;
+   CLOSE get_assembly_type;
+   
+   RETURN assembly_type_code_;
+END Get_Assembly_Type___;
+
+FUNCTION Get_Config_Slot___ (
+   part_group_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   CURSOR get_config_slot_code IS 
+   SELECT config_slot_code
+   FROM av_part_group_tab
+   WHERE part_group_id = part_group_id_; 
+   
+   config_slot_code_ VARCHAR2(50);
+BEGIN
+	OPEN get_config_slot_code;
+   FETCH get_config_slot_code INTO config_slot_code_;
+   CLOSE get_config_slot_code;
+   
+   RETURN config_slot_code_;
+END Get_Config_Slot___;
+
+FUNCTION Get_Config_Slot_Position___ (
+   config_slot_code_ IN VARCHAR2,
+   assembly_type_code_ IN VARCHAR2) RETURN NUMBER
+IS
+   CURSOR get_config_position_count IS 
+   SELECT count(config_slot_position_code)
+   FROM av_config_slot_position_tab
+   WHERE assembly_type_code = assembly_type_code_
+   AND config_slot_code = config_slot_code_;
+   
+   CURSOR get_config_slot_position_id IS
+   SELECT config_slot_position_id
+   FROM av_config_slot_position_tab
+   WHERE assembly_type_code = assembly_type_code_
+   AND config_slot_code = config_slot_code_;
+   
+   count_ NUMBER;
+   config_slot_position_id_ NUMBER;
+BEGIN
+	OPEN get_config_position_count;
+   FETCH get_config_position_count INTO count_;
+   CLOSE get_config_position_count;
+   
+   IF count_ = 1 THEN
+      OPEN get_config_slot_position_id;
+      FETCH get_config_slot_position_id INTO config_slot_position_id_;
+      CLOSE get_config_slot_position_id;
+      
+      RETURN config_slot_position_id_;
+   ELSE
+      RETURN NULL;
+   END IF;
+      
+END Get_Config_Slot_Position___;
+
+--PROCEDURE Add_Task_Part_Req___ (
+--   task_id_ IN NUMBER,
+--   fault_id_ IN NUMBER,
+--   part_number_id_ IN NUMBER,
+--   required_quantity_ IN NUMBER,
+--   priority_ IN VARCHAR2,
+--   part_group_id_ IN NUMBER,
+--   config_slot_position_id_ IN NUMBER,
+--   availability_status_ IN VARCHAR2,
+--   aircraft_id_ IN NUMBER)
+--IS
+--   info_       VARCHAR2(4000);
+--   attr_       VARCHAR2(4000);
+--   objid_      VARCHAR2(2000);
+--   objversion_ VARCHAR2(2000);
+--   part_count_ NUMBER;
+--   
+--   CURSOR check_incompatibility IS
+--   SELECT COUNT(aircraft_id)
+--   FROM av_non_installable_part_tab
+--   WHERE aircraft_id = aircraft_id_
+--   AND   part_group_id = part_group_id_
+--   AND   part_number_id = part_number_id_;
+--BEGIN
+--   OPEN  check_incompatibility;
+--   FETCH check_incompatibility INTO part_count_;
+--   CLOSE check_incompatibility;
+--   
+--   IF part_count_ = 0 THEN 
+--      IF task_id_ IS NOT NULL THEN 
+--	      Client_SYS.Add_To_Attr('TASK_ID',   task_id_,   attr_);
+--         Client_SYS.Add_To_Attr('PART_NUMBER_ID', part_number_id_, attr_);
+--         Client_SYS.Add_To_Attr('REQUIRED_QUANTITY', required_quantity_, attr_);
+--         Client_SYS.Add_To_Attr('PRIORITY', priority_, attr_);
+--         Client_SYS.Add_To_Attr('PART_GROUP_ID', part_group_id_, attr_);
+--         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', config_slot_position_id_, attr_);
+--         Client_SYS.Add_To_Attr('AVAILABILITY_STATUS', Part_Req_Avail_Status_API.Decode(availability_status_), attr_);
+--
+--         Av_Exe_Task_Part_Request_API.New__(info_, objid_, objversion_, attr_, 'DO');
+--      
+--      ELSIF  fault_id_ IS NOT NULL THEN 
+--         Client_SYS.Add_To_Attr('FAULT_ID',   fault_id_,   attr_);
+--         Client_SYS.Add_To_Attr('PART_NUMBER_ID', part_number_id_, attr_);
+--         Client_SYS.Add_To_Attr('REQUIRED_QUANTITY', required_quantity_, attr_);
+--         Client_SYS.Add_To_Attr('PRIORITY', priority_, attr_);
+--         Client_SYS.Add_To_Attr('PART_GROUP_ID', part_group_id_, attr_);
+--         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', config_slot_position_id_, attr_);
+--         Client_SYS.Add_To_Attr('AVAILABILITY_STATUS', Part_Req_Avail_Status_API.Decode(availability_status_), attr_);
+--      
+--         Av_Fault_Part_Request_API.New__(info_, objid_, objversion_, attr_, 'DO');
+--      END IF;
+--   ELSE 
+--      Error_SYS.Record_General(lu_name_, 'ERRINVALID: The part you are attempting to install is incompatible with a task or currently installed item. Please confirm that the part number of the inventory is correct');
+--   END IF;
+--END Add_Task_Part_Req___;
+
+PROCEDURE Add_Task_Part_Req___ (
+   task_id_ IN NUMBER,
+   fault_id_ IN NUMBER,
+   part_number_id_ IN NUMBER,
+   required_quantity_ IN NUMBER,
+   priority_ IN VARCHAR2,
+   part_group_id_ IN NUMBER,
+   assmbl_config_slot_pos_id_ IN NUMBER,
+   config_slot_position_id_ IN NUMBER,
+   availability_status_ IN VARCHAR2,
+   aircraft_id_ IN NUMBER)
+IS
+   info_       VARCHAR2(4000);
+   attr_       VARCHAR2(4000);
+   objid_      VARCHAR2(2000);
+   objversion_ VARCHAR2(2000);
+   part_count_ NUMBER;
+   
+   CURSOR check_incompatibility IS
+   SELECT COUNT(aircraft_id)
+   FROM av_non_installable_part_tab
+   WHERE aircraft_id = aircraft_id_
+   AND   part_group_id = part_group_id_
+   AND   part_number_id = part_number_id_;
+BEGIN
+   OPEN  check_incompatibility;
+   FETCH check_incompatibility INTO part_count_;
+   CLOSE check_incompatibility;
+   
+   IF part_count_ = 0 THEN 
+      IF task_id_ IS NOT NULL THEN 
+	      Client_SYS.Add_To_Attr('TASK_ID',   task_id_,   attr_);
+         Client_SYS.Add_To_Attr('PART_NUMBER_ID', part_number_id_, attr_);
+         Client_SYS.Add_To_Attr('REQUIRED_QUANTITY', required_quantity_, attr_);
+         Client_SYS.Add_To_Attr('PRIORITY', priority_, attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID', part_group_id_, attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', config_slot_position_id_, attr_);
+         Client_SYS.Add_To_Attr('AVAILABILITY_STATUS', Part_Req_Avail_Status_API.Decode(availability_status_), attr_);
+
+         Av_Exe_Task_Part_Request_API.New__(info_, objid_, objversion_, attr_, 'DO');
+      
+      ELSIF  fault_id_ IS NOT NULL THEN 
+         Client_SYS.Add_To_Attr('FAULT_ID',   fault_id_,   attr_);
+         Client_SYS.Add_To_Attr('PART_NUMBER_ID', part_number_id_, attr_);
+         Client_SYS.Add_To_Attr('REQUIRED_QUANTITY', required_quantity_, attr_);
+         Client_SYS.Add_To_Attr('PRIORITY', priority_, attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID', part_group_id_, attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', assmbl_config_slot_pos_id_, attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', config_slot_position_id_, attr_);
+         Client_SYS.Add_To_Attr('AVAILABILITY_STATUS', Part_Req_Avail_Status_API.Decode(availability_status_), attr_);
+      
+         Av_Fault_Part_Request_API.New__(info_, objid_, objversion_, attr_, 'DO');
+      END IF;
+   ELSE 
+      Error_SYS.Record_General(lu_name_, 'ERRINVALID: The part you are attempting to install is incompatible with a task or currently installed item. Please confirm that the part number of the inventory is correct');
+   END IF;
+END Add_Task_Part_Req___;
+
+
+FUNCTION Get_Assy_Position_Visibility___ (
+   aircraft_id_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2) RETURN BOOLEAN 
+IS
+   CURSOR get_aircraft_assembly IS
+   SELECT assembly_type_code
+   FROM aircraft_tab
+   WHERE aircraft_id = aircraft_id_;  
+   
+   aircraft_assembly_ VARCHAR2(8);
+   availability_  BOOLEAN := FALSE;
+BEGIN
+   OPEN  get_aircraft_assembly;
+   FETCH get_aircraft_assembly INTO aircraft_assembly_;
+   CLOSE get_aircraft_assembly;
+
+   IF aircraft_assembly_ != assembly_type_code_ THEN
+      availability_ := TRUE;
+   END IF;
+   
+	RETURN availability_;
+END Get_Assy_Position_Visibility___;
+
+
+FUNCTION Set_Assy_Position_Editable___ (
+   aircraft_id_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2) RETURN BOOLEAN
+IS
+   CURSOR get_position_count IS
+   SELECT count(config_slot_position_id) 
+   FROM Av_Sub_Assy_Inventory 
+   WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+   positions_  NUMBER;
+   editable_  BOOLEAN := FALSE;
+BEGIN	   
+   OPEN  get_position_count;
+   FETCH get_position_count INTO positions_;
+   CLOSE get_position_count;
+   
+   IF positions_ > 1 THEN
+      editable_ := TRUE;
+   END IF;
+   
+   RETURN editable_;
+END Set_Assy_Position_Editable___;
+
+
+FUNCTION Get_Assy_Position___ (
+   aircraft_id_ IN NUMBER,
+   assembly_type_code_ IN VARCHAR2) RETURN NUMBER
+IS
+   CURSOR get_position IS
+   SELECT count(*)
+   FROM Av_Sub_Assy_Inventory 
+   WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+   
+   position_count_ NUMBER;
+   position_  NUMBER;
+BEGIN
+	OPEN  get_position;
+   FETCH get_position INTO position_count_;
+   CLOSE get_position;
+   
+   IF position_count_ = 1  THEN
+      SELECT config_slot_position_id 
+      INTO position_
+      FROM Av_Sub_Assy_Inventory 
+      WHERE assembly_type_code = assembly_type_code_ AND aircraft_id = aircraft_id_;
+     
+   ELSE 
+      position_ := NULL;
+   END IF;
+   
+   RETURN position_;
+END Get_Assy_Position___;

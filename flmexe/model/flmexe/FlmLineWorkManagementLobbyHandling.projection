@@ -1,0 +1,144 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  240509        waislk  AD-12570, Added FlmTaskResourceSet, AvFlightSet, TurnsAssignedToResGroupQuery, TurnsAssignedToResGroupQuery and AvailableTechniciansCount function
+--  240403        roerlk  AD-12569, Created.
+---------------------------------------------------------------------------------
+
+projection FlmLineWorkManagementLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Projection for Line Work Management Lobby in FLMEXE";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmAircraftTurnsLobbyData;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFlightSet for AvFlight;
+entityset FlmTurnResourceSet for FlmTurnResource;
+entityset FlmTaskResourceSet for FlmTaskResource;
+entityset DefClosedPastFiveDaysSet for DefClosedPastFiveDaysQuery;
+entityset AircraftInMaintenanceDeparture30MinQuerySet for AircraftInMaintenanceDeparture30MinQuery;
+entityset AircraftDepartureInNextHourQuerySet for AircraftDepartureInNextHourQuery;
+entityset AircraftArrivingInNextHourQuerySet for AircraftArrivingInNextHourQuery;
+entityset TurnsAssignedToResGroupQuerySet for TurnsAssignedToResGroupQuery;
+entityset MyPartRequestSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity FlmTurnResource using AvFlight {
+   crud = Read;
+   from = "MY_AIRCRAFT_TURNS_STATUS_VIEW";
+
+   attribute FlightId Number;
+   attribute LockedBool Boolean;
+   attribute Condition Text;
+   attribute DepartureTime Date {
+      fetch = "Av_Flight_API.Get_Departure_Time(FLIGHT_ID)";
+   }
+   attribute ResourceAssignmentStatus Number {
+      fetch = "Av_Flight_API.Get_Resource_Assignment_Status(FLIGHT_ID)";
+   }
+
+}
+@Override
+entity FlmTaskResource using AvExeTask {
+   crud = Read;
+   from = "TASK_FOR_AIRPORT_OFFSET_VIEW";
+
+   attribute TaskSeq Number;
+   attribute ResourceAssignmentStatus Number {
+      fetch = "Av_Exe_Task_API.Get_Resource_Assignment_Status(TASK_SEQ)";
+   }
+
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query DefClosedPastFiveDaysQuery {
+   from = "DEF_CLOSED_PAST_FIVE_DAYS_VIEW";
+
+   attribute Count  Number;
+   attribute FaultDate Text;
+   attribute Type  Text;
+   lu = AvFault;
+}
+
+query AircraftInMaintenanceDeparture30MinQuery {
+   ludependencies = AvFlight;
+   timestamptzref = "server";
+   from = "MY_AIRCRAFT_TURNS_STATUS_VIEW";
+
+   where = "FLIGHT_TURN_STATUS= 'InMaintenance'
+      AND Av_Flight_API.Get_Shed_Departure_Date_Time(DEPT_FLIGHT_ID) BETWEEN SYSDATE AND (SYSDATE + 1 / 48)
+      AND (LOCKED_BOOL = 'FALSE' OR LOCKED_BOOL IS NULL)
+      AND (CONDITION != 'SCRAP' AND CONDITION != 'ARCHIVE')";
+
+   attribute FlightId Number;
+   attribute LockedBool  Boolean;
+   attribute Condition Text;
+   attribute FlightTurnStatus Text;
+   attribute DepartureTime Timestamp {
+      fetch = "Av_Flight_API.Get_Shed_Departure_Date_Time(DEPT_FLIGHT_ID)";
+   }
+   lu = AvFlight;
+}
+
+query AircraftArrivingInNextHourQuery {
+   ludependencies = AvFlight;
+   timestamptzref = "server";
+   from = "MY_AIRCRAFT_TURNS_STATUS_VIEW";
+
+   where = "FLIGHT_TURN_STATUS= 'Inbound' AND SHED_ARRIVAL_DATE_TIME BETWEEN SYSDATE AND (SYSDATE + 1 / 24)
+            AND (LOCKED_BOOL= 'FALSE' OR LOCKED_BOOL IS NULL )
+            AND (CONDITION!= 'SCRAP' AND CONDITION!= 'ARCHIVE')";
+
+   attribute FlightId Number;
+   attribute ShedArrivalDateTime  Date;
+   attribute FlightTurnStatus Text;
+   lu = AvFlight;
+}
+
+query AircraftDepartureInNextHourQuery {
+   from = "MY_AIRCRAFT_TURNS_STATUS_VIEW";
+
+   where = "Av_Flight_API.Get_Actual_Departure_Date_Time(DEPT_FLIGHT_ID) BETWEEN SYSDATE AND (SYSDATE + 60 / 1440)
+            AND (LOCKED_BOOL= 'FALSE' OR LOCKED_BOOL IS NULL )
+            AND (CONDITION!= 'SCRAP' AND CONDITION!= 'ARCHIVE')";
+
+   attribute FlightId Number;
+   attribute FlightTurnStatus Text;
+   attribute ActualDepartureTime  Date {
+      fetch = "Av_Flight_API.Get_Actual_Departure_Date_Time(DEPT_FLIGHT_ID)";
+   }
+   lu = AvFlight;
+
+}
+
+query TurnsAssignedToResGroupQuery {
+   from = "ASSIGNED_TURN_RES_LOBBY_VIEW";
+   lu = AvTurnLabourAssignment;
+
+   attribute FlightId Number;
+}
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function AvailableTechniciansCount Number {
+   parameter PageParameter Number;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

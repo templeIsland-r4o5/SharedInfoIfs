@@ -1,0 +1,126 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250227  GAKOLK  AVMXSOL-4114, Changed the parent of Station Planning from MxCoreNavigator.LineMaintenance to AdcomNavigator.LineMaintenance
+--  250227  GAKOLK  AVMXSOL-4114, Added LineMaintenanceExecution as the parent for Mobile Maintenance
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250213  KASTLK  AVMXSOL-4078, Changed the FluidNav parent to MaintenanceOperationsControlNavEntry and index
+--  250211  NAJMLK  AVMXSOL-4786, Created HangarMaintenanceExecution and modified parent of HangarMaintenanceCrewLeadNav and HangarMaintenanceTechNav.
+--  250210  SABOLK  AD-14575, Modified HangarMainSupervisorMainLobbyNav entry
+--  250109  MAILLK  AD-14567, Added HangarMainCrewLeadWPOverviewNav entry
+--  250108  WEDULK  AD-15474, Removed TechWorkPackageOverviewNav entry.
+--  250108  SATNLK  AVXSOL-3530, moved Basemaintenance and visitPlanningNav to MxCoreNavigator
+--  250106  WEDULK  AD-15474, Added TechWorkPackageOverviewNav entry.
+--  241128  VAALLK  AD-14731, Added HangarMainTechnicianWPLobbyNav entry.
+--  241111  WEDULK  AD-14558,Added InternalVisitExecutionNav and HangarMaintenanceTechNav entries.
+--  221102  SUPKLK  AD-8946, Added MocNav and the Lobby value
+--  221007  DUWJLK  AD-8792, Changed label of FlmNav navigator entry.
+--  220715  SatGlk  AD-8041, Added Line Planning navigator entry
+--  211229  vifelk  AD-4114, Added Fluid Consumption lobby value to FluidNav navigator entry.
+--  211108  rjoslk  AD-3950, Added navigator entry for FLM basic data.
+--  210617  LAHNLK  AD-1278, modified, removed entry FlmexeNav
+--  210611  nignlk  AD-1279, Added lobby value to FlmNav navigator entry.
+--  210208  HasRLK  LMM2020R1-1571, Created.
+-----------------------------------------------------------------------------
+client FlmexeNavigator;
+component FLMEXE;
+layer Core;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry FlmNav parent AdcomNavigator.LineMaintenanceExecution at index 1200 {
+      label = "Mobile Maintenance";
+      lobby "32800a3e-6d9a-40a6-8ed5-d71f510ada05";
+   }
+   entry FlmBasicDataNav parent FlmexeNavigator.FlmNav at index 2000 {
+      label = "Basic Data";
+   }
+
+   entry FluidNav parent MxCoreNavigator.MaintenanceOperationsControlNavEntry at index 3300 {
+      label = "Fluid Consumption Control";
+      lobby "f36ae1f2-7f6a-4b74-86d1-1adbd7087216";
+   }
+
+}
+
+navigator {
+   entry StationPlanningNav parent AdcomNavigator.LineMaintenance at index 3000 {
+      label = "Station Planning";
+   }
+}
+
+navigator {
+
+   entry InternalVisitExecutionNav parent MxCoreNavigator.BaseMaintenance at index 5000 {
+      label = "Internal Visit Execution";
+   }
+   entry HangarMaintenanceExecution parent MxCoreNavigator.HangarMaintenance at index 1000 {
+      label = "Hangar Maintenance Execution";
+   }
+   entry HangarMaintenanceTechNav parent FlmexeNavigator.HangarMaintenanceExecution at index 1030 {
+      label = "Hangar Maintenance Technician";
+      lobby "8b4f9361-2f22-40bf-a48f-49b0e4b381d1";
+   }
+   entry HangarMaintenanceCrewLeadNav parent FlmexeNavigator.HangarMaintenanceExecution at index 1010 {
+      label = "Hangar Maintenance Crew Lead";
+      lobby "0a9a3fdf-b5e3-4325-ab78-09f1c6ff00e5";
+   }
+   entry HangarMainSupervisorMainLobbyNav parent FlmexeNavigator.HangarMaintenanceExecution at index 1020 {
+      label = "Hangar Maintenance Supervisor";
+      lobby "c34b39a9-2a38-4466-9ba5-62f97e013836";
+   }
+   entry HangarMainCrewLeadWPOverviewNav parent FlmexeNavigator.HangarMaintenanceCrewLeadNav at index 1000 {
+      label = "Crew Lead Work Package Overview";
+   }
+   @DynamicComponentDependency MXCORE
+   entry HangarMainSupervisorWPOverviewNav parent FlmexeNavigator.HangarMainSupervisorMainLobbyNav at index 1430 {
+      label = "Supervisor Work Package Overview";
+   }
+   entry NonRoutineCommercialsNav parent FlmexeNavigator.HangarMaintenanceExecution at index 2300 {
+      label = "Non-Routine Commercials";
+   }
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

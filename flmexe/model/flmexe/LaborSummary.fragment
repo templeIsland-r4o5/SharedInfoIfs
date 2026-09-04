@@ -1,0 +1,92 @@
+fragment LaborSummary;
+component FLMEXE;
+layer Core;
+description "Details about Labor Summery";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+list LaborSummaryTotalsList for LaborSummaryTotalsQuery {
+   label = "Summary Total";
+   field Skill;
+   field ScheduledHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+   field ActualHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+
+   summary = ScheduledHours, ActualHours;
+}
+
+list LaborSummaryBreakdownList for LaborSummaryBreakdownQuery {
+   label = "Summary Breakdown";
+   orderby = ResourceSeq, ResourceRemarkRank;
+
+   field Skill;
+   field ResourceRemark;
+   field ScheduledHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+   field ActualHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+   
+   summary = ScheduledHours, ActualHours;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+query LaborSummaryTotalsQuery {
+   from = "JT_TASK_TRANS_WP_TOTAL_AV_UIV";
+   keys = WorkPackageId, ResourceSeq {
+      where = "AIRCRAFT_WP_ID = :WorkPackageId";
+   }
+   lu = none;
+   attribute Skill Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute ResourceSeq Number;
+   attribute WorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute ActualHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(actual_hours)";
+      label = "Actual Hours";
+   }
+   attribute ScheduledHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(scheduled_hours)";
+      label = "Scheduled Hours";
+   }
+}
+
+query LaborSummaryBreakdownQuery {
+   from = "JT_TASK_TRANS_WP_BDOWN_AV_UIV";
+   keys = WorkPackageId, ResourceSeq, ResourceRemark {
+      where = "AIRCRAFT_WP_ID = :WorkPackageId";
+   }
+   lu = none;
+   attribute Skill Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute ResourceSeq Number;
+   attribute ResourceRemark Text {
+      label = "Assignment Role";
+   }
+   attribute ResourceRemarkRank Number;
+   attribute WorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute ActualHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(actual_hours)";
+      label = "Actual Hours";
+   }
+   attribute ScheduledHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(scheduled_hours)";
+      label = "Scheduled Hours";
+   }
+}

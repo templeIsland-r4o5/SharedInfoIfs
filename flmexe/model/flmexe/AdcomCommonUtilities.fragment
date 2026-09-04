@@ -1,0 +1,32 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250903        SSIVLK  AD-18643 Created
+---------------------------------------------------------------------------------
+
+fragment AdcomCommonUtilities;
+component FLMEXE;
+layer Core;
+description "Put some useful description here ...";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration PriorityStatuses {
+   value = "HIGH" {
+      label = "High";
+   }
+   value = "MED" {
+      label = "Med";
+   }
+   value = "LOW" {
+      label = "Low";
+   }
+}

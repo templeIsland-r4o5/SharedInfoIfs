@@ -1,0 +1,75 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  220104  LaDelk  AD-4695, Added ReferenceResourceToolEquipJoinLovSelector.
+--  211216  LaDelk  AD-4694, Created. Moved common elements of Fault Resource Tools, Task Resource Tools and record work assistant.
+-----------------------------------------------------------------------------
+fragment FlmResourceToolEquipCommonObjects;
+component FLMEXE;
+layer Core;
+description "This fragment will keep the common elements to support resource tool equipments in forward line maintenance.";
+
+--------------------------------- FRAGMENTS ---------------------------------
+@DynamicComponentDependency TOOLEQ
+include fragment ResourceToolEquipJoinLovSelector;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@Override
+@DynamicComponentDependency TOOLEQ
+selector ReferenceResourceToolEquipJoinLovSelector for ResourceToolEquipJoinLov {
+   label = "";
+   static ResourceId;
+   static Description;
+   static PartNo;
+   static SerialNo;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+@DynamicComponentDependency TOOLEQ
+function GetResources List < Entity(ResourceToolEquipJoinLov) > {
+   parameter ResourceGroupSeq Number;
+   where = "resource_id IN (SELECT r.resource_id FROM resource_parent p, resource_pub r
+                           WHERE r.resource_seq = p.resource_seq
+                           AND r.resource_type_db = 'EQUIPMENT'
+                           START WITH p.resource_parent_seq = :ResourceGroupSeq
+                           CONNECT BY NOCYCLE PRIOR p.resource_seq = p.resource_parent_seq)";
+}
+
+function GetResourceId Text {
+   parameter PartNo Text;
+   parameter SerialNo Text;
+}
+
+function GetPartSerial Structure(PartSerialStructure) {
+   parameter ResourceSeq Number;
+}
+
+@DynamicComponentDependency TOOLEQ
+function GetToolEquipGroupParts List < Entity(PartCatalogLov) > {
+   parameter ResourceGroupSeq Number;
+   where = "part_no IN (SELECT (SELECT part_no FROM resource_tool_equip_join t WHERE t.resource_seq = r.resource_seq) part_no
+                        FROM resource_parent p, resource_pub r
+                        WHERE r.resource_seq = p.resource_seq
+                        AND r.resource_type_db = 'EQUIPMENT'
+                        START WITH p.resource_parent_seq = :ResourceGroupSeq
+                        CONNECT BY NOCYCLE PRIOR p.resource_seq = p.resource_parent_seq)";
+}
+
+@DynamicComponentDependency TOOLEQ
+function GetToolEquipGroupSerials List < Entity(PartSerialCatalog) > {
+   parameter ResourceGroupSeq Number;
+   where = "serial_no IN (SELECT (SELECT serial_no FROM resource_tool_equip_join t WHERE t.resource_seq = r.resource_seq) serial_no
+                        FROM resource_parent p, resource_pub r
+                        WHERE r.resource_seq = p.resource_seq
+                        AND r.resource_type_db = 'EQUIPMENT'
+                        START WITH p.resource_parent_seq = :ResourceGroupSeq
+                        CONNECT BY NOCYCLE PRIOR p.resource_seq = p.resource_parent_seq)";
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+structure PartSerialStructure {
+   attribute PartNo Text;
+   attribute SerialNo Text;
+}

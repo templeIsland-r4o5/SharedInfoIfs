@@ -1,0 +1,167 @@
+---------------------------------------------------------------------------------------------
+--  Module : flmexe
+--
+--  Purpose: Upgrade database objects for IFS/Forward / Line Maintenance Execution
+--           from version 23.2.0 to 24.1.0
+--
+--  File   : 2410.upg
+--
+--  IFS Developer Studio Template Version 2.6
+--
+--  Date     Sign    History
+--  ------   ------  ------------------------------------------------------------------------
+--  240222   rafalk  AD-12151, Removing Line Work Management old lobby page
+--  240214   majslk  AD-12145, Modified MM permission sets with IFS_MANAGED delivery type
+--  231005   BDT     Created (by Build and Deployment Team)
+--  ------   ------  ------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+
+SET SERVEROUTPUT ON
+PROMPT START upgrading WITH 2410.upg
+
+---------------------------------------------------------------------------------------------
+------------------------------ Instructions for upg files -----------------------------------
+---------------------------------------------------------------------------------------------
+--
+--  Main section should contain all upgrade operations.
+--  Next section should contain removal of obsolete objects (any removal of data inside upg is prohibited!).
+--  Removal of backup tables and obsolete columns should be added to <component>Cl.sql script!
+--
+--  If possible, everything regarding one table should be placed in one section.
+--  If this is not possible, a proper comment about the reason should be added.
+--
+--  Each section should be started with a "-----" line and a empty line.
+--  This section should then start with a line like: "-- ***** Example_Tab Start *****"
+--  and end with a line like:                       "-- ***** Example_Tab End *****"
+--
+--  Don't forget UPPER/lower case !
+--
+--  Every part inside the section should start with a "PROMPT" line explaining what is done by the block.
+--
+--  If the PL/SQL block has DML instructions (INSERT,UPDATE,DELETE etc) there should always be a "COMMIT;" line after the block.
+--
+--  Remember ordinary coding standard rules !
+--
+--  Don't drop any Table/Column !
+--
+--  Don't forget performance when updating large table !
+--
+--  No unnecessary blank lines or comments !
+--
+--  If possible, use pure SQL commands
+--
+--  If possible, try to group several updates together in one statement.
+--
+--  Timestamps will be added automatically at the end of the project.
+--
+--  For more information refer to the "Upgrade Script Standards" and the "Performance" technical documents.
+--
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ CREATE NEW SEQUENCES -----------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+--------------- CREATE/ALTER TABLES/INDEXES AND DATA CORRECTIONS ------------------
+---------------------------------------------------------------------------------------------
+
+-- ***** FND_ROLE_TAB Start *****
+DECLARE   
+   TYPE array_t IS VARRAY(6) OF VARCHAR2(50);
+   role_array_ array_t := array_t('MM_SUPERVISOR','MM_TECHNICIAN','MM_ADMINSTRATOR', 'MM_MAINT_OPERATIONS_CONTROLLER', 'MM_LINE_PLANNER', 'MM_FLIGHT_API');
+BEGIN
+   FOR i_ IN 1..role_array_.count LOOP
+      Security_SYS.Set_Role_Delivery_Type(role_array_(i_), 'IFS_MANAGED');
+   END LOOP;
+END;
+/
+-- ***** FND_ROLE_TAB End *****
+
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME OBSOLETE TABLES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE RPT TABLES/COLUMNS -----------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE TEMPORARY TABLES -------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE PACKAGES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE VIEWS ------------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE INDEXES/SEQUENCES ------------------------------
+---------------------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE LOBBY OBJECTS ----------------------------------
+---------------------------------------------------------------------------------------------
+ 
+-- ***** Line Work Management (04a3ae84-23bb-480f-bc7b-e56857ceb298) Lobby Page Start *****
+
+EXEC Database_SYS.Log_Detail_Time_Stamp('FLMEXE','2410.upg','Timestamp_2');
+PROMPT REMOVING LINE WORK MANAGEMENT (04a3ae84-23bb-480f-bc7b-e56857ceb298)  RELATED LOBBY OBJECTS
+
+BEGIN
+   Database_SYS.Remove_Lobby_Data_Source('9874a00e-0070-4440-ab46-30ea504e05bb');
+   Database_SYS.Remove_Lobby_Data_Source('ba971a99-d5a0-4577-b4da-bc4533508752');
+   Database_SYS.Remove_Lobby_Data_Source('96066eb4-d7a7-40bc-baa9-3e1c0dfd6b14');
+   Database_SYS.Remove_Lobby_Data_Source('ecfac642-614a-4e0e-9e9a-10f607064701');
+   Database_SYS.Remove_Lobby_Data_Source('463d9ae8-e839-47e8-91da-87f379d0c3b7');
+   Database_SYS.Remove_Lobby_Data_Source('f7a24532-cb91-4020-962a-4d1503ec0cb3');
+   Database_SYS.Remove_Lobby_Data_Source('4a5e462b-415e-49bd-80e5-977c8b4e6fa2');
+   Database_SYS.Remove_Lobby_Data_Source('759c72a7-b744-4b48-866f-13e35faa0a30');
+   Database_SYS.Remove_Lobby_Data_Source('b1aa166c-1519-4117-83b0-28437fe3fcb6');
+   Database_SYS.Remove_Lobby_Data_Source('e807e900-9d45-462f-a54a-98e9ac2c943d');
+   Database_SYS.Remove_Lobby_Data_Source('e8abf679-e1ef-43a5-aed9-598abe434f3d');
+   Database_SYS.Remove_Lobby_Data_Source('a40126c6-198f-404b-9d92-cb9e6facf51e');
+   Database_SYS.Remove_Lobby_Data_Source('89a98c77-91c5-4225-a8c8-c49cb6521efa');
+   Database_SYS.Remove_Lobby_Data_Source('ac0554e8-e27a-48ec-998e-3b13c8195f32');
+   
+   Database_SYS.Remove_Lobby_Element('c444c92a-6745-482a-b1df-5f3f87d892e7');
+   Database_SYS.Remove_Lobby_Element('1a6fd1d7-4e88-4d4c-97f8-df35d398c0b8');
+   Database_SYS.Remove_Lobby_Element('138620b8-4da8-4616-b9d0-f0a0f894d252');
+   Database_SYS.Remove_Lobby_Element('bf21dec8-0334-4923-995d-092b80a6ee30');
+   Database_SYS.Remove_Lobby_Element('88095027-a9ac-47cf-acd4-1c6f80d10ba1');
+   Database_SYS.Remove_Lobby_Element('4616f2d9-8e8b-411b-820b-8789f5f90c9c');
+   Database_SYS.Remove_Lobby_Element('5f25a97a-ab1d-49ac-9752-f1eeaefe4b81');
+   Database_SYS.Remove_Lobby_Element('94ef0aae-b8b9-4a6e-bc98-cfed798488ae');
+   Database_SYS.Remove_Lobby_Element('6324861b-54fb-47cf-bbe4-84e85366c693');
+   Database_SYS.Remove_Lobby_Element('a8fd196f-650c-499b-a4b0-658829f9085a');
+   
+   Database_SYS.Remove_Lobby_Page('04a3ae84-23bb-480f-bc7b-e56857ceb298');   
+END;
+/
+
+-- ***** Line Work Management (04a3ae84-23bb-480f-bc7b-e56857ceb298) Lobby Page End *****
+  
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME INDEXES/CONSTRAINTS  ----------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+
+PROMPT Upgrade statements IN FILE 2410.upg ends here.
+
+-- Nothing is allowed to be placed below here
+---------------------------------------------------------------------------------------------

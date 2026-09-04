@@ -1,0 +1,74 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/28/25, 3:28:23 PM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HANGAR_TECH_AIRCRAFT_AT_MY_AIRPORT_SECOND</Name>
+    <ID>41e01464-1102-49b9-a9d5-745e6eb38436</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageBarcode</Column>
+            <Name>Work Package Barcode</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageName</Column>
+            <Name>Work Package Name</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Location</Column>
+            <Name>Location</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Status</Column>
+            <Name>Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>ActiveTasks</Column>
+            <Name>Active Tasks</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>InWorkTasks</Column>
+            <Name>In Work Tasks</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>CompletedTasks</Column>
+            <Name>Completed Tasks</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>DaysSinceStart</Column>
+            <Name>Days Since Start</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>DaysToFinish</Column>
+            <Name>Days To Finish</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>AircraftCode</Column>
+            <Name>Aircraft Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageId</Column>
+            <Name>Work Package Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <EntitySet>AircraftAtMyAirportSet</EntitySet>
+    <EntityType>HmAircraftsAtUserAirportQuery</EntityType>
+    <Filter>WorkPackageBarcode eq $WorkPackageBarcode$</Filter>
+</ProjectionDataSource>

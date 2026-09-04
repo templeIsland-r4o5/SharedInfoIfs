@@ -1,0 +1,71 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmComponentReturnsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date        Sign    History
+--  ----------  ------  ---------------------------------------------------------
+--  2025-09-02  Cpeilk  SCDEV-57031, Added CRUD_Default_Copy___ to clear the return source ref columns when duplicating line.
+-----------------------------------------------------------------------------
+
+layer Core;
+@Override
+PROCEDURE Create_Return_Material___ (
+   task_seq_                IN  NUMBER,
+   task_return_line_seq_    IN  NUMBER,
+   contract_                IN  VARCHAR2,
+   part_no_                 IN  VARCHAR2,
+   serial_no_               IN  VARCHAR2,
+   lot_batch_no_            IN  VARCHAR2,
+   remaining_qty_to_return_ IN  NUMBER,
+   operational_status_      IN  VARCHAR2,
+   condition_code_          IN  VARCHAR2,
+   part_ownership_          IN  VARCHAR2,
+   owner_                   IN  VARCHAR2,
+   location_no_             IN  VARCHAR2,
+   cost_detail_id_          IN  NUMBER,
+   wdr_no_                  IN  VARCHAR2,
+   catch_qty_               IN  NUMBER,
+   objkey_                  IN  VARCHAR2,   
+   connect_object_          IN  BOOLEAN,
+   info$_                   OUT VARCHAR2)
+IS
+   removal_reason_code_       VARCHAR2(100);
+   new_operational_status_    VARCHAR2(100);
+   
+   CURSOR get_removal_reason_condition IS
+      SELECT removal_reason_code
+      FROM av_exe_task_part
+      WHERE task_return_line_seq = task_return_line_seq_;
+
+BEGIN
+   
+   OPEN get_removal_reason_condition;
+   FETCH get_removal_reason_condition INTO removal_reason_code_;
+   CLOSE get_removal_reason_condition;
+
+   IF removal_reason_code_ = 'SOS' OR removal_reason_code_ = 'UNSCHED' THEN
+      new_operational_status_ := 'NON_OPERATIONAL';
+   ELSE
+      new_operational_status_ := 'OPERATIONAL';
+   END IF ;
+   
+   super(task_seq_,task_return_line_seq_,contract_,part_no_,serial_no_,lot_batch_no_,remaining_qty_to_return_,new_operational_status_,condition_code_,part_ownership_,owner_,location_no_,cost_detail_id_,wdr_no_,catch_qty_,objkey_,connect_object_,info$_);   
+
+END Create_Return_Material___;
+
+@Override
+PROCEDURE CRUD_Default_Copy___ (
+   rec_ IN OUT NOCOPY Jt_Task_Return_Rec )
+IS
+BEGIN
+   rec_.return_source_ref1     := NULL;
+   rec_.return_source_ref2     := NULL;
+   rec_.return_source_ref3     := NULL;
+   rec_.return_source_ref4     := NULL;
+   rec_.return_source_ref_type := NULL;
+   super(rec_);   
+END CRUD_Default_Copy___;
+

@@ -1,0 +1,27 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>LM, Line Maintenance, Line Supervisor, Handover Reports</Keywords>
+    <DescriptiveText>Navigate to Handover Details and Reporting page</DescriptiveText>
+    <LastModified>5/8/25, 7:19:52 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>4</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>HANDOVER DETAILS AND REPORTING</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Line_Maintenance_Handover_Reports</Name>
+    <ID>799cc93a-361a-403c-acef-6626ee40e09d</ID>
+    <WebUrl>assistant/FlmTaskWorkAssignment/HandOverDetails?$action=SetDefaultValues{DefSource:'LMS_LOBBY',DefAircraftCode:null,DefWorkPackage:null,DefWorkPackageId:null,DefAircraftId:null}</WebUrl>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>Handover Details and Reporting</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

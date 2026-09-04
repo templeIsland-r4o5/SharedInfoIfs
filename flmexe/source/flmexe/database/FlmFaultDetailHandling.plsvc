@@ -1,0 +1,573 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmFaultDetailHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  241226  WIHALK  AD-14749, Added CheckDeferNr to validate Defer Non Routines.
+--  241017  WEDILK  AD-14537, Change to use av_exe_task/jt_task_tab after changing AvExeTask with based on JtTask
+--  240715  RWELLK  AD-13037, Added aSource parameeter to the select reference URL.
+--  240625  RWELLK  AD-13037, Modify Get Select Reference URL function.
+--  240622  RWELLK  AD-13037, Added Get Select Reference URL function.
+--  231204  ROSDLK  AD-11190, Added resubmission deferral request workflow after rejecting a deferral request.
+--  231129  LAWALK  AD-11188, Added Reject_Deferral___.
+--  231128  ROSDLK  AD-11186, Removed the Authorization number field validation.
+--  231127  ROSDLK  AD-11186, Added Click_Initiate_Deferral___ and Approve_Deferral___ procedures.
+--  231127  LAHNLK  AD-11185, Modified Request_Deferral___ to support AvDeferralRequest entity
+--  230524  ROSDLK  AD-9932, Allowed to escape the reserved characters when generating the cross app navigation URL.
+--  221203  ROSDLK  AD-9099, Added Get_Find_Inventory_Url___ function.
+--  221130  LAWALK  AD-9113, Updated the body of Request_Deferral___ procedure.
+--  221125  LAWALK  AD-9113, Added Request_Deferral___ procedure for modify the fault with deferral status.
+--  221109  DUWJLK  AD-9037, Added IF block for check exiating WP in CRUD_Update___ procedure and Created check_wp_exist fuction to get WP id
+--  221022  LAHNLK  AD-8695, implemented function GetInitiateDeferralUrl
+--  221018  DUWJLK  AD-8889, Added Task update process for packaged fault by edting override CRUD_Update___ procedure
+--  220718  dildlk  AD-8097, Added Remove_Part___
+--  220616  negulk  AD-2145, Modified Remove_Fault_Skill___ to avoid the removal of the last labor skill.
+--  211216  LaDelk  AD-4694, Added CRUD_Default___, Add_Resource_Tool___, Remove_Resource_Tool___ and Modify_Resource_Tool___ to support resource tool requirements tab.
+--  210816  lahnlk  AD-3239, Modified Delete_Fault_Tool___
+--  210813  KAWJLK  AD-3239, Modified Add_Fault_Skill___, Add_Fault_Tool___, Delete_Fault_Tool___, Modify_Fault_Skill___ methods.
+--  210812  SUPKLK  AD-3284, Modified Remove_Fault_Skill___ to check for referenced task skills before removing fault skills
+--  210604  himklk  AD-1195, added Remove_Fault_Skill___ and added LABOUR_STATUS value to attr in Add_Fault_Skill___ method.
+--  210602  lahnlk  AD-1151, added Delete_Fault_Tool___ 
+--  210429  lahnlk  AD-1245, added Get_Default_Tool_Spec___ , Add_Fault_Tool___ methods ,Overridden  CRUD_Default___
+--  210310  Jihalk  LMM2020R1-1715, Added Validate_Hours Method and override CRUD_Default___ method.
+--  210222  Jihalk  LMM2020R1-1715, Added AddFaultSkill Action.
+--  210222  Jihalk  LMM2020R1-1715, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@Override
+PROCEDURE CRUD_Default___ (
+   rec_ IN OUT Add_Fault_Tool_Virtual_Rec )
+IS
+BEGIN
+   rec_.sched_duration := '00:00';   
+   super(rec_);    
+END CRUD_Default___;
+
+@Override
+PROCEDURE CRUD_Default___ (
+   rec_ IN OUT Add_Resource_Tool_Virtual_Rec )
+IS
+BEGIN
+   rec_.sched_duration := '00:00';
+   super(rec_);    
+END CRUD_Default___;
+
+FUNCTION Validate_Hours (
+   hours_per_person_ IN VARCHAR2,
+   time_var_name_    IN VARCHAR2)RETURN NUMBER
+IS
+   duration_  NUMBER;   
+BEGIN
+   duration_ := Adcom_Util_API.Validate_Format_Hours(hours_per_person_) ;
+   IF duration_ IS NULL  THEN
+      Error_SYS.Record_General(lu_name_, 'ERRINVALID: Enter :P1 in the HH:MM format.', time_var_name_);
+   END IF;
+   RETURN duration_;
+END Validate_Hours;
+
+FUNCTION Get_Default_Tool_Spec___ (
+   part_number_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   tool_spec_code_  av_tool_specification_tab.Tool_Specification_Code%TYPE;
+   tool_spec_count_ NUMBER;
+   CURSOR get_tool_spec_part IS
+      SELECT Tool_Specification_Code 
+      FROM   av_tool_specification_part_tab 
+      WHERE  part_number_id = part_number_id_;
+   
+   CURSOR get_tool_spec(tool_spec_code_ VARCHAR2) IS
+      SELECT Tool_Specification_Code 
+      FROM   av_tool_specification_tab 
+      WHERE  Tool_Specification_Code = tool_spec_code_;
+BEGIN
+   tool_spec_count_ := 0;
+   FOR tool_spec_part_ IN get_tool_spec_part LOOP
+      IF tool_spec_count_ > 1 THEN
+         RETURN NULL;
+      END IF;
+      OPEN get_tool_spec(tool_spec_part_.Tool_Specification_Code);
+      FETCH get_tool_spec INTO tool_spec_code_; 
+      CLOSE get_tool_spec;
+      IF tool_spec_code_ IS NOT NULL THEN
+         tool_spec_count_ := tool_spec_count_+1;
+      END IF;
+   END LOOP;
+   RETURN tool_spec_code_;
+END Get_Default_Tool_Spec___;
+
+
+PROCEDURE Add_Fault_Tool___ (
+   fault_id_                IN NUMBER,
+   tool_specification_code_ IN VARCHAR2,
+   part_no_id_              IN NUMBER,
+   sched_duration_          IN VARCHAR2)
+IS
+   info_                   VARCHAR2(200);
+   objid_                  VARCHAR2(200);
+   objversion_             VARCHAR2(200);
+   attr_                   VARCHAR2(32000);
+   converted_value_        VARCHAR2(32000);
+   task_seq_                NUMBER;
+   aircraft_wp_id_         NUMBER;
+   fault_tool_id_var_      VARCHAR2(32000);
+   fault_tool_id_          NUMBER;
+   
+   CURSOR get_task_data IS
+      SELECT aircraft_wp_id, task_seq
+      FROM av_exe_task
+      WHERE task_seq = Av_Exe_Task_API.Get_Task_Seq(fault_id_);
+   
+BEGIN
+   OPEN get_task_data;
+   FETCH get_task_data INTO aircraft_wp_id_,task_seq_;
+   CLOSE get_task_data  ;
+   
+   Client_SYS.Clear_Attr(attr_);
+   IF (task_seq_ IS NOT NULL) THEN
+      
+      Client_SYS.Add_To_Attr('FAULT_ID',               fault_id_,               attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NUMBER_ID',             part_no_id_,         attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHEDULED_HOURS',         converted_value_,        attr_);
+      Av_Fault_Tool_API.New__(info_, objid_,objversion_,attr_,'DO');
+      
+      fault_tool_id_var_ := Client_SYS.Get_Item_Value('FAULT_TOOL_ID', attr_);
+      fault_tool_id_     := Client_SYS.Attr_Value_To_Number(fault_tool_id_var_);
+      
+      Client_SYS.Clear_Attr(attr_); 
+      Client_SYS.Add_To_Attr('TASK_SEQ',               task_seq_,               attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NO_ID',             part_no_id_,             attr_);
+      Client_SYS.Add_To_Attr('FAULT_TOOL_ID',          fault_tool_id_,          attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHED_DURATION',         converted_value_,        attr_);
+      Av_Exe_Task_Tool_API.New__(info_, objid_,objversion_,attr_,'DO');      
+      
+   ELSE
+      Client_SYS.Add_To_Attr('FAULT_ID',               fault_id_,               attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NUMBER_ID',             part_no_id_,         attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHEDULED_HOURS',         converted_value_,        attr_);
+      Av_Fault_Tool_API.New__(info_, objid_,objversion_,attr_,'DO');
+   END IF;
+END Add_Fault_Tool___;
+
+
+PROCEDURE Delete_Fault_Tool___ (
+   fault_tool_id_ IN NUMBER)
+IS
+   task_tool_id_            NUMBER;
+   CURSOR get_task_tool_id IS
+      SELECT   task_tool_id
+      FROM     av_exe_task_tool_tab
+      WHERE    fault_tool_id = fault_tool_id_;
+BEGIN
+   OPEN  get_task_tool_id;
+   FETCH get_task_tool_id INTO task_tool_id_;
+   CLOSE get_task_tool_id;
+   
+   IF(Av_Exe_Task_Tool_API.Exists(task_tool_id_)) THEN 
+      Av_Exe_Task_Tool_API.Remove(task_tool_id_);
+   ELSE
+      Av_Fault_Tool_API.Remove(fault_tool_id_);
+   END IF;
+END Delete_Fault_Tool___;
+
+@Override
+PROCEDURE CRUD_Update___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT Av_Fault_Key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   task_info_                       VARCHAR2(2000);   
+   task_objid_                      VARCHAR2(2000);
+   task_objversion_                 VARCHAR2(2000);
+   aircraft_work_package_id_        NUMBER;
+   task_attr_                       VARCHAR2(32000);   
+   sub_system_code_                 VARCHAR2(200);   
+   
+   fault_rec_         Av_Fault_API.Public_Rec;
+   
+   CURSOR get_task_details IS
+      SELECT aircraft_wp_id, objid, objversion
+      FROM  av_exe_task
+      WHERE fault_id = key_.fault_id; 
+BEGIN 
+   
+   super(etag_, key_, attr_, info_, action_);
+   
+   OPEN get_task_details;
+   FETCH get_task_details INTO aircraft_work_package_id_,task_objid_, task_objversion_;
+   CLOSE get_task_details;
+   
+   fault_rec_ := Av_Fault_API.Get(key_.fault_id);
+   sub_system_code_      := Av_Aircraft_Sub_System_API.Get_Sub_System_Code(fault_rec_.sub_system_id);
+   
+   IF check_wp_exist(aircraft_work_package_id_) THEN
+      Client_SYS.Clear_Attr(task_attr_);
+      Client_SYS.Add_To_Attr('DESCRIPTION', fault_rec_.description, task_attr_);
+      Client_SYS.Add_To_Attr('TASK_CODE', fault_rec_.fault_code, task_attr_);
+   Client_SYS.Add_To_Attr('CONFIG_POSITION', sub_system_code_, task_attr_);
+      
+      Av_Exe_Task_API.Modify__(task_info_, task_objid_, task_objversion_, task_attr_, 'DO');
+   END IF;
+END CRUD_Update___;
+
+PROCEDURE Add_Resource_Tool___ (
+   key_      IN Add_Resource_Tool_Virtual_Key,
+   fault_id_ IN NUMBER)
+IS
+   rec_                    Add_Resource_Tool_Virtual_Rec;
+   converted_value_        NUMBER;
+   attr_                   VARCHAR2(32000);
+   source_ref_type_        VARCHAR2(5);
+   source_ref_             NUMBER;
+   task_seq_                NUMBER;
+BEGIN
+   $IF Component_Tooleq_SYS.INSTALLED $THEN
+      rec_ := Get_Record___(key_);
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('RESOURCE_GROUP_SEQ', rec_.resource_group_seq, attr_);
+      Client_SYS.Add_To_Attr('RESOURCE_SEQ', rec_.resource_seq, attr_);
+      Client_SYS.Add_To_Attr('PART_NO', rec_.part_no, attr_);
+      Client_SYS.Add_To_Attr('SERIAL_NO', rec_.serial_no, attr_);
+      converted_value_ := Validate_Hours(rec_.sched_duration, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHED_DURATION', converted_value_, attr_);
+      
+      task_seq_ := Av_Exe_Task_API.Get_Task_Seq(fault_id_); 
+      IF  task_seq_= 0 THEN
+         source_ref_type_ := Tool_Source_API.DB_FAULT;
+         source_ref_ := fault_id_;
+      ELSE
+         source_ref_type_ := Tool_Source_API.DB_TASK;
+         source_ref_ := task_seq_;
+      END IF;
+      
+      Client_SYS.Add_To_Attr('SOURCE_REF_TYPE_DB', source_ref_type_, attr_);
+      Client_SYS.Add_To_Attr('SOURCE_REF', source_ref_, attr_);
+      
+      Av_Resource_Tool_Equipment_API.New(attr_);
+   $ELSE
+      NULL;
+   $END
+END Add_Resource_Tool___;
+
+
+@DynamicComponentDependency TOOLEQ
+PROCEDURE Remove_Resource_Tool___ (
+   tool_id_ IN NUMBER)
+IS
+BEGIN
+   Av_Resource_Tool_Equipment_API.Remove(tool_id_);
+END Remove_Resource_Tool___;
+
+
+PROCEDURE Modify_Resource_Tool___ (
+   key_ IN Modify_Resource_Tool_Virtual_Key)
+IS
+   rec_              Modify_Resource_Tool_Virtual_Rec;
+   attr_             VARCHAR2(32000);
+   converted_value_  NUMBER;
+BEGIN
+   rec_ := Get_Record___(key_);
+   Client_SYS.Clear_Attr(attr_);
+   Client_SYS.Add_To_Attr('RESOURCE_SEQ', rec_.resource_seq, attr_);
+   Client_SYS.Add_To_Attr('PART_NO', rec_.part_no, attr_);
+   Client_SYS.Add_To_Attr('SERIAL_NO', rec_.serial_no, attr_);
+   converted_value_ := Validate_Hours(rec_.sched_duration, 'Scheduled Hours');
+   Client_SYS.Add_To_Attr('SCHED_DURATION', converted_value_, attr_);
+   Av_Resource_Tool_Equipment_API.Modify(rec_.tool_id, attr_);
+END Modify_Resource_Tool___;
+
+PROCEDURE Remove_Part___ (
+   fault_part_id_ IN NUMBER)
+IS
+   task_part_id_            NUMBER;
+   
+   CURSOR    get_task_part_id IS
+    SELECT   task_part_id
+    FROM     av_exe_task_part_tab
+    WHERE    fault_part_id = fault_part_id_;
+   
+BEGIN
+   
+   OPEN  get_task_part_id;
+   FETCH get_task_part_id INTO task_part_id_;
+   CLOSE get_task_part_id;
+   
+   IF(Av_Exe_Task_Part_API.Exists(task_part_id_)) THEN         
+      Av_Exe_Task_Part_API.Delete_Rec(task_part_id_);
+      Av_Fault_Part_API.Delete_Rec(fault_part_id_);
+   ELSE
+      Av_Fault_Part_API.Delete_Rec(fault_part_id_);
+   END IF;
+   
+END Remove_Part___;
+
+
+FUNCTION Get_Initiate_Deferral_Url___ (
+   external_page_url_ IN VARCHAR2,
+   aircraft_reg_code_ IN VARCHAR2,
+   logbook_desc_      IN VARCHAR2,
+   logbook_reference_ IN VARCHAR2,
+   found_by_user_     IN VARCHAR2,
+   fault_source_code_ IN VARCHAR2,
+   found_on_flight_   IN VARCHAR2,
+   flight_stage_      IN VARCHAR2,
+   record_id_         IN VARCHAR2) RETURN VARCHAR2
+IS
+   server_url_ VARCHAR2(500);
+   url_        VARCHAR2(1000);
+   
+   
+   CURSOR get_url IS
+      SELECT property_value
+      FROM   mx_config_tab
+      WHERE  property_name = 'MAINTENIX_URL';
+BEGIN
+	OPEN  get_url;
+   FETCH get_url INTO server_url_;
+   CLOSE get_url;
+   
+   IF server_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYMXIURL: You cannot initiate a deferral as the Maintenix URL has not been defined in the Mx Config system configuration parameters. Contact your system administrator.');
+   END IF;
+   
+   url_ := server_url_ || external_page_url_ || '#!/search?' ||'aRegCd='||UTL_URL.ESCAPE(aircraft_reg_code_)||chr(38)||'aLogbookDesc='||UTL_URL.ESCAPE(logbook_desc_, true)||chr(38)||'aLogbookRef='||UTL_URL.ESCAPE(logbook_reference_, true)||chr(38)||'aFoundBy='||UTL_URL.ESCAPE(found_by_user_)||chr(38)||'aFaultSource='||UTL_URL.ESCAPE(fault_source_code_)||chr(38)||'aFlight='||UTL_URL.ESCAPE(found_on_flight_)||chr(38)||'aFlightStage='||UTL_URL.ESCAPE(flight_stage_)||chr(38)||'aRecId='||UTL_URL.ESCAPE(record_id_);
+   RETURN url_;
+END Get_Initiate_Deferral_Url___;
+
+FUNCTION check_wp_exist (work_package_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   fetch_work_package_id_ NUMBER;
+   
+   CURSOR get_wp_data IS 
+      SELECT w.aircraft_work_package_id
+      FROM   av_aircraft_work_package_tab w
+      WHERE  w.aircraft_work_package_id = work_package_id_ AND w.rowstate IN ('Active', 'Committed', 'InWork');
+   
+BEGIN
+   OPEN  get_wp_data;
+   FETCH get_wp_data INTO fetch_work_package_id_;
+   CLOSE get_wp_data;
+   
+   IF fetch_work_package_id_ IS NOT NULL THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END IF;   
+END check_wp_exist;
+
+
+PROCEDURE Request_Deferral___ (
+   fault_id_ IN NUMBER)
+IS
+   attr_        VARCHAR2(32000);
+   info_        VARCHAR2(400);
+   objid_       VARCHAR2(100);
+   objversion_  VARCHAR2(100);
+   
+   CURSOR get_deferral_request IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+      FROM   av_deferral_request_tab def_req
+      WHERE  def_req.fault_id = fault_id_;
+BEGIN
+   OPEN get_deferral_request;
+   FETCH get_deferral_request INTO objid_, objversion_;
+   IF (get_deferral_request%FOUND)THEN
+      CLOSE get_deferral_request;
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+      Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_AUTHORIZATION', '', attr_);
+      Client_SYS.Add_To_Attr('REJECTION_REASON', '', attr_);
+      Client_SYS.Add_To_Attr('REAUTHORIZATION_REASON', '', attr_);
+      Av_Deferral_Request_API.Modify__(info_,objid_,objversion_,attr_, 'DO');
+   ELSE
+      CLOSE get_deferral_request;
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('FAULT_ID', fault_id_ , attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+      Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+      Av_Deferral_Request_API.New__(info_,objid_,objversion_,attr_, 'DO');
+      
+   END IF;
+END Request_Deferral___;
+
+
+FUNCTION Get_Find_Inventory_Url___ (
+   external_page_path_ IN VARCHAR2,
+   search_type_        IN VARCHAR2,
+   aircraft_reg_code_  IN VARCHAR2,
+   iata_code_          IN VARCHAR2,
+   fault_name_ref_     IN VARCHAR2) RETURN VARCHAR2
+IS
+   system_url_ FND_SETTING_TAB.value%TYPE := Fnd_Setting_API.Get_Value('SYSTEM_URL');
+   url_        VARCHAR2(1000);
+BEGIN
+   IF system_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYSYSTEMURL: You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.');
+   END IF;
+   
+   url_:= system_url_ || external_page_path_ || '?aSearchType=' || UTL_URL.ESCAPE(search_type_) || chr(38) ||'aircraftTailNumber=' || UTL_URL.ESCAPE(aircraft_reg_code_) || chr(38) ||'supplyLocationCode=' || UTL_URL.ESCAPE(iata_code_) || chr(38) || 'taskReference=' || UTL_URL.ESCAPE(fault_name_ref_) ;
+   RETURN url_; 
+END Get_Find_Inventory_Url___;
+
+FUNCTION Get_Select_Reference_Url___ (
+   external_page_path_ IN VARCHAR2,
+   a_task_seq_         IN VARCHAR2,
+   a_type_             IN VARCHAR2,
+   a_source_           IN VARCHAR2) RETURN VARCHAR2
+IS
+   system_url_ FND_SETTING_TAB.value%TYPE := Fnd_Setting_API.Get_Value('SYSTEM_URL');
+   url_        VARCHAR2(1000);
+BEGIN
+   IF system_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYSYSTEMURL: You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.');
+   END IF;
+   
+   url_:= system_url_ || external_page_path_ || '?aTaskId=' || UTL_URL.ESCAPE(a_task_seq_) || chr(38) ||'aType=' || UTL_URL.ESCAPE(a_type_) || chr(38) ||'aSource=' || UTL_URL.ESCAPE(a_source_);
+   RETURN url_; 
+END Get_Select_Reference_Url___;
+
+PROCEDURE Approve_Deferral___ (
+   fault_id_             IN NUMBER,
+   authorization_number_ IN VARCHAR2)
+IS
+   info_       VARCHAR2(32000);
+   attr_       VARCHAR2(32000);
+   rowid_      VARCHAR2(100);
+   rowversion_ VARCHAR2(100);
+   
+   CURSOR get_rec_details IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+      FROM av_deferral_request_tab 
+      WHERE fault_id = fault_id_;
+BEGIN
+	OPEN get_rec_details;
+   FETCH get_rec_details INTO rowid_,rowversion_; 
+   CLOSE get_rec_details;
+   
+   Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_APPROVED), attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_AUTHORIZATION', authorization_number_, attr_);
+	Av_Deferral_Request_API.Modify__(info_, rowid_, rowversion_, attr_, 'DO');
+END Approve_Deferral___;
+
+
+PROCEDURE Click_Initiate_Deferral___ (
+   fault_id_ IN NUMBER)
+IS
+   info_       VARCHAR2(32000);
+   attr_       VARCHAR2(32000);
+   rowid_      VARCHAR2(100);
+   rowversion_ VARCHAR2(100);
+   
+   CURSOR get_rec_details IS
+    SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+    FROM av_deferral_request_tab 
+    WHERE fault_id = fault_id_;
+BEGIN
+	OPEN get_rec_details;
+   FETCH get_rec_details INTO rowid_,rowversion_; 
+   CLOSE get_rec_details;
+   
+   Client_SYS.Add_To_Attr('IS_DEF_INITIATED', 'True', attr_);
+	Av_Deferral_Request_API.Modify__(info_, rowid_, rowversion_, attr_, 'DO');
+END Click_Initiate_Deferral___;
+
+
+PROCEDURE Reject_Deferral___ (
+   fault_id_         IN NUMBER,
+   rejection_reason_ IN VARCHAR2)
+IS
+   info_       VARCHAR2(32000);
+   attr_       VARCHAR2(32000);
+   rowid_      VARCHAR2(100);
+   rowversion_ VARCHAR2(100);
+   
+   CURSOR get_rec_details IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+      FROM av_deferral_request_tab 
+      WHERE fault_id = fault_id_;
+BEGIN
+	OPEN get_rec_details;
+   FETCH get_rec_details INTO rowid_,rowversion_; 
+   CLOSE get_rec_details;
+   
+   Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_REJECTED), attr_);
+   Client_SYS.Add_To_Attr('REJECTION_REASON', rejection_reason_, attr_);   
+	Av_Deferral_Request_API.Modify__(info_, rowid_, rowversion_, attr_, 'DO');
+   
+END Reject_Deferral___;
+
+
+PROCEDURE Resubmit_Deferral___ (
+   fault_id_               IN NUMBER,
+   reauthorization_reason_ IN VARCHAR2)
+IS
+   attr_        VARCHAR2(32000);
+   info_        VARCHAR2(400);
+   objid_       VARCHAR2(100);
+   objversion_  VARCHAR2(100);
+   
+   CURSOR get_deferral_request IS
+   SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+   FROM   av_deferral_request_tab def_req
+   WHERE  def_req.fault_id = fault_id_;
+   
+BEGIN
+   OPEN get_deferral_request;
+   FETCH get_deferral_request INTO objid_, objversion_;
+   CLOSE get_deferral_request;
+   
+   Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+   Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+   Client_SYS.Add_To_Attr('REAUTHORIZATION_REASON', reauthorization_reason_, attr_);
+   Av_Deferral_Request_API.Modify__(info_,objid_,objversion_,attr_, 'DO');
+   
+END Resubmit_Deferral___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Check_Defer_Non_Routine___(
+   fault_id_ IN NUMBER)RETURN BOOLEAN
+IS     
+BEGIN
+   RETURN Av_Fault_API.Check_Defer_Non_Routine(fault_id_);
+END Check_Defer_Non_Routine___;
+
+@IgnoreUnitTest TrivialFunction
+PROCEDURE Validate_Found_On_Date___ (
+   found_on_date_  IN DATE,
+   aircraft_wp_id_ IN NUMBER)
+IS
+BEGIN
+   Adcom_Util_API.Validate_Found_On_Date(found_on_date_, aircraft_wp_id_);
+END Validate_Found_On_Date___;
+
+PROCEDURE Complete_Critical_Item___ (
+   critical_item_id_ IN NUMBER)
+IS
+BEGIN
+	Av_Critical_Item_API.Complete_Critical_Item(critical_item_id_);
+END Complete_Critical_Item___;
+
+
+PROCEDURE Refresh___
+IS
+BEGIN
+	NULL;
+END Refresh___;

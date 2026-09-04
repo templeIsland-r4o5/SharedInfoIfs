@@ -1,0 +1,201 @@
+   --------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250214  KASTLK  AVMXSOL-4078, Changed the AssemblyFluidDefinitionPageNavEntry and OilStatusTypePageNavEntry and index
+--  211126  bhbalk  AD-4121, Created.
+-----------------------------------------------------------------------------
+client FlmAssemblyFluidDefinition;
+component FLMEXE;
+layer Core;
+projection FlmAssemblyFluidDefinitionHandling;
+description "This client is used for Fluid Definition related pages.";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AssemblyFluidDefinitionPageNavEntry parent FlmexeNavigator.FluidNav  at index 3320 {
+      label = "Assembly Fluid Definition";
+      page AssemblyFluidDefinitionPage;
+   }
+   entry OilStatusTypePageNavEntry parent FlmexeNavigator.FluidNav  at index 3340 {
+      label = "Fluid Consumption Status Types";
+      page OilStatusTypePage;
+   }
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page AssemblyFluidDefinitionPage using AvFluidDefinitionSet {
+   label = "Assembly Fluid Definition";
+   selector AssemblyFluidSelector;
+   group DetailsGroup;
+   group RateCalculationGroup;
+   tabs {
+      tab {
+         label = "Thresholds";
+         list ThresholdList(AvGeneralThresholdArray);
+      }
+      tab {
+         label = "Operator Specific Thresholds";
+         list OperatorThresholdList(AvOperatorThresholdArray);
+      }
+      tab {
+         label = "Part Number Specific Thresholds";
+         list PartThresholdList(AvPartThresholdArray);
+      }
+      tab {
+         label = "Serial Number Specific Thresholds";
+         list SerialNoThresholdList(AvSerialThresholdArray);
+      }
+   }
+}
+
+page OilStatusTypePage using AvOilStatusTypeSet {
+   label = "Fluid Consumption Status Types";
+   list OilStatusTypeList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+selector AssemblyFluidSelector for AvFluidDefinition {
+   label = "${AssemblyTypeCode} - ${FluidName}";
+   static AssemblyFluidName;
+}
+
+selector AssemblyLovSelector for AvAssembly {
+   static AssemblyTypeCode;
+   static AssemblyTypeName;
+}
+
+selector PartLovSelector for PartThresholdQuery {
+   static PartNumber;
+   static Manufacturer;
+   static PartName;
+}
+
+selector UnitMeasureLovSelector for AvEngineeringUnit {
+   static EngineeringUnitCode;
+   static EngineeringUnitDesc;
+}
+
+selector OilStatusSelector for AvOilStatus {
+   static OilStatusCode;
+   static Description;
+}
+
+selector UsageTypeSelector for AvUsageType {
+   static UsageTypeCode;
+   static UsageTypeDesc;
+}
+
+---------------------------------- GROUPS -----------------------------------
+group DetailsGroup for AvFluidDefinition {
+   label = "Details";
+   lov AvAssemblyRef with AssemblyLovSelector {
+      label = "Assembly";
+      description = AvAssemblyRef.AssemblyTypeName;
+   }
+   field FluidName;
+   lov AvEngineeringUnitRef with UnitMeasureLovSelector {
+      label = "Units of Measure";
+      description = AvEngineeringUnitRef.EngineeringUnitDesc;
+   }
+}
+
+group RateCalculationGroup for AvFluidDefinition {
+   label = "Rate Calculation";
+   field CalculateRateBool;
+   lov AvUsageTypeRef with UsageTypeSelector {
+      label = "Operator Time Parameter";
+      description = AvUsageTypeRef.UsageTypeDesc;
+      required = [CalculateRateBool];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list OilStatusTypeList for AvOilStatus {
+   label = "Fluid Consumption Status Types";
+   orderby = OilStatusOrder;
+   field OilStatusCode;
+   field Description {
+      size = Large;
+   }
+   field NotifyInUIBool;
+   field OilStatusOrder;
+}
+
+list ThresholdList for AvFluidThreshold {
+   orderby = AvOilStatusRef.OilStatusOrder;
+   lov AvOilStatusRef with OilStatusSelector {
+      label = "Status";
+      description = AvOilStatusRef.Description;
+      hidekey = [true];
+   }
+   field ThresholdValue;
+}
+
+list OperatorThresholdList for AvFluidOprThreshold {
+   orderby = AvOilStatusRef.OilStatusOrder;
+   field OperatorCode;
+   lov AvOilStatusRef with OilStatusSelector {
+      label = "Status";
+      description = AvOilStatusRef.Description;
+      hidekey = [true];
+   }
+   field ThresholdValue;
+}
+
+list PartThresholdList for AvFluidPartThreshold {
+   orderby = AvOilStatusRef.OilStatusOrder;
+   lov AvPartRef with PartLovSelector using GetPartNoForAssemblyCode(AssemblyTypeCode) {
+      label = "OEM Part No";
+      description = AvPartRef.PartNumber;
+      hidekey = [true];
+   }
+   lov AvOilStatusRef with OilStatusSelector {
+      label = "Status";
+      description = AvOilStatusRef.Description;
+      hidekey = [true];
+   }
+   field ThresholdValue;
+}
+
+list SerialNoThresholdList for AvFluidSerialThreshold {
+   orderby = AvOilStatusRef.OilStatusOrder;
+   field SerialNoOem;
+   lov AvOilStatusRef with OilStatusSelector {
+      label = "Status";
+      description = AvOilStatusRef.Description;
+      hidekey = [true];
+   }
+   field ThresholdValue;
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

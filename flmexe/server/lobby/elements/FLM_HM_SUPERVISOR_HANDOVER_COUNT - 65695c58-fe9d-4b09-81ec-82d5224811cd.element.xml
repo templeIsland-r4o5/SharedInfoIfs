@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <DescriptiveText>Displays the count of tasks stopped due to shift change (handover assignments) and allows the user to navigate to a detailed list of handover tasks.</DescriptiveText>
+    <LastModified>06/03/2025, 00:30:37</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Handover</Title>
+    <Footer>Tasks</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_SUPERVISOR_HANDOVER_COUNT</Name>
+    <ID>65695c58-fe9d-4b09-81ec-82d5224811cd</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$ and LatestJobStopReason eq HandoverReason and TaskStatus eq 'In Work'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>446301af-8f7c-44e4-89c9-2fc5b050b398</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

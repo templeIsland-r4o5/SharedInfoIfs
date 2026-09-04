@@ -1,0 +1,39 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/24/25, 10:26:36 AM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HANGAR_WP_CRW_LD_TASK_PROGRESS</Name>
+    <ID>7074a18a-33c9-4ad6-9054-a862e59dc607</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackage</Column>
+            <Name>Work Package</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskStatus</Column>
+            <Name>Task Status</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>Count</Column>
+            <Name>Count</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <EntitySet>HmWpTaskProgressByStatusQuerySet</EntitySet>
+    <EntityType>HmWpTaskProgressByStatusQuery</EntityType>
+    <Filter>WorkPackage eq $WorkPackage$</Filter>
+</ProjectionDataSource>

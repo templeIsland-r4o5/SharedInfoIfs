@@ -1,0 +1,32 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmTechnicianMyAssignmentsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250115  wedulk  added annotations IgnoreUnitTest for Get_Assignment_Status___,Refresh_Data___
+--  241217  wedulk  created, added Get_Assignment_Status___,Refresh_Data___
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Assignment_Status___ RETURN VARCHAR2
+IS
+BEGIN
+	RETURN 'Assigned;Assigned,Work Started;Work Started,Completed;Completed';
+END Get_Assignment_Status___;
+
+-- Dummy action to refresh data as a workaround to invalidate inside the move command so the data will be refreshed.
+@IgnoreUnitTest NoOutParams
+PROCEDURE Refresh_Data___
+IS
+BEGIN
+	RETURN;
+END Refresh_Data___;
+
+
+

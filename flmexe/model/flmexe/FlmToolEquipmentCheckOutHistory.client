@@ -1,0 +1,84 @@
+client FlmToolEquipmentCheckOutHistory;
+component FLMEXE;
+layer Core;
+projection FlmToolEquipmentCheckOutHistoryHandling;
+description "Tool/Equipment Check Out History in flm";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolEquipmentCheckOutHist;
+include fragment WorkTaskAllSelector;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 50 {
+      label = "Tools Check Out History";
+      page ToolEquipmentCheckOutHistoryPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+
+page ToolEquipmentCheckOutHistoryPage using ToolEquipmentCheckOutHistorySet {
+   label = "Tools Check Out History";
+   list ToolEquipmentCheckOutHistoryList;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+@Override
+list ToolEquipmentCheckOutHistoryList for ToolEquipmentCheckOutHistory {
+   lov TaskSeqRef with ReferenceWorkTaskAllSelector {
+      label = "Task ID";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[OrderRef1]";
+   }
+   field WoNumber {
+      label = "Work Package No";
+   }
+   field TaskDesc {
+      label = "Task Description";
+   }
+   field TaskSite;
+
+   fieldorder {
+      anchor Notes;
+      followedby TaskSeqRef;
+      followedby TaskDesc;
+      followedby WoNumber;
+   }
+   fieldorder {
+      anchor TaskDesc;
+      followedby TaskSite;
+   }
+}
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

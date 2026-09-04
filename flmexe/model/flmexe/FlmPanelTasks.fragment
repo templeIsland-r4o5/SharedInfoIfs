@@ -1,0 +1,420 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250604  SABOLK  AD-18384, Added MpcTasksForMaintenanceTaskList, MpcBarcodeSelector, and MpcTasksForMaintTaskQuery to accommodate to display mpc tasks for a maint task panel.
+-----------------------------------------------------------------------------
+
+fragment FlmPanelTasks;
+component FLMEXE;
+layer Core;
+description "This contains all the maintenance and open or close panel tasks for a specific panel task";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment PanelLovSelector;
+include fragment ZoneLovSelector;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+--------------------------------- SELECTORS ---------------------------------
+selector MaintBarcodeSelector for MaintTasksForPanelsQuery {
+   static Barcode;
+   static TaskSeq;
+}
+
+selector CloseBarcodeSelector for CloseTaskForOpenPanelsQuery {
+   static Barcode;
+   static TaskSeq;
+}
+
+selector OpenBarcodeSelector for OpenTaskForClosePanelsQuery {
+   static Barcode;
+   static TaskSeq;
+}
+
+selector MpcBarcodeSelector for MpcTasksForMaintTaskQuery {
+   static Barcode;
+   static TaskSeq;
+}
+
+selector MpcMaintBarcodeSelector for MaintTasksForPanelTasksQuery {
+   static Barcode;
+   static TaskSeq;
+}
+
+
+----------------------------------- LISTS -----------------------------------
+list MaintTaskList for MaintTasksForPanelsQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   lov AvBarcodeRef with MaintBarcodeSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [Objstate = "FINISHED"];
+      emphasis Alert = [Objstate = "REMOVED"];
+      emphasis Neutral = [Objstate = "CANCELLED"];
+      editable = [false];
+   }
+   field PlannedStart {
+      label = "Scheduled Start";
+      displaytimezone = MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+
+
+list MpcCloseForOpenPanelsList for CloseTaskForOpenPanelsQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   lov AvBarcodeRef with CloseBarcodeSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [Objstate = "FINISHED"];
+      emphasis Alert = [Objstate = "REMOVED"];
+      emphasis Neutral = [Objstate = "CANCELLED"];
+      editable = [false];
+   }
+   field PlannedStart {
+      label = "Scheduled Start";
+      displaytimezone = MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+
+list MpcOpenForClosePanelsList for OpenTaskForClosePanelsQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   lov AvBarcodeRef with OpenBarcodeSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [Objstate = "FINISHED"];
+      emphasis Alert = [Objstate = "REMOVED"];
+      emphasis Neutral = [Objstate = "CANCELLED"];
+      editable = [false];
+   }
+   field PlannedStart {
+      label = "Scheduled Start";
+      displaytimezone = MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+
+list MaintTaskForClosePanelsList  for MaintTasksForPanelsQuery clone MaintTaskList {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+}
+
+list MpcTasksForMaintenanceTaskList for MpcTasksForMaintTaskQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   lov AvBarcodeRef with MpcBarcodeSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [Objstate = "FINISHED"];
+      emphasis Alert = [Objstate = "REMOVED"];
+      emphasis Neutral = [Objstate = "CANCELLED"];
+      editable = [false];
+   }
+   field PlannedStart {
+      label = "Scheduled Start";
+      displaytimezone = MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+
+list MaintTaskForPanelTasksList for MaintTasksForPanelTasksQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   lov AvBarcodeRef with MpcMaintBarcodeSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [Objstate = "FINISHED"];
+      emphasis Alert = [Objstate = "REMOVED"];
+      emphasis Neutral = [Objstate = "CANCELLED"];
+      editable = [false];
+   }
+   field PlannedStart {
+      label = "Scheduled Start";
+      displaytimezone = MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+---------------------------------- QUERIES ----------------------------------
+query MaintTasksForPanelsQuery {
+   from = "Maint_Tasks_For_Panels";
+   keys = TaskSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute OpenTaskSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute Description Text;
+   attribute Barcode Text;
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute PlannedStart Timestamp;
+   attribute Objstate Enumeration(AvExeTaskState);
+
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+}
+
+query CloseTaskForOpenPanelsQuery {
+   from = "Close_Task_For_Open_Panel_Task";
+   keys = TaskSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute OpenTaskSeq Number;
+   attribute Description Text;
+   attribute Barcode Text;
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute PlannedStart Timestamp;
+   attribute Objstate Enumeration(AvExeTaskState);
+
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+}
+
+query OpenTaskForClosePanelsQuery {
+   from = "Open_Task_For_Close_Panel_Task";
+   keys = TaskSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute OpenTaskSeq Number;
+   attribute Description Text;
+   attribute Barcode Text;
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute PlannedStart Timestamp;
+   attribute Objstate Enumeration(AvExeTaskState);
+
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+}
+
+query MpcTasksForMaintTaskQuery {
+   from = "Mpc_Tasks_For_Maint_Task";
+   keys = TaskSeq;
+   lu = none;
+
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute OpenTaskSeq Number;
+   attribute MaintTaskSeq Number;
+   attribute AcPanelSeq Number;
+   attribute Description Text;
+   attribute Barcode Text;
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute PlannedStart Timestamp;
+   attribute Objstate Enumeration(AvExeTaskState);
+   attribute ClassCode Text;
+   attribute SubclassCode Text;
+
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+}
+
+query MaintTasksForPanelTasksQuery {
+   from = "Maint_Tasks_For_Panel_Tasks";
+   keys = TaskSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute OpenTaskSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute AcPanelSeq Number;
+   attribute Description Text;
+   attribute Barcode Text;
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute PlannedStart Timestamp;
+   attribute Objstate Enumeration(AvExeTaskState);
+
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function AircraftZoneLovFilter List < Entity(TaskZoneLov) > {
+   parameter AircraftId Number;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTaskZone;
+   where = "aircraft_id = :AircraftId and ((:TaskSeq is not null and aircraft_zone_info.ac_zone_seq NOT IN (
+               SELECT ac_zone_seq
+               FROM av_exe_task_zone
+               WHERE task_seq = :TaskSeq)) or :TaskSeq is null)";
+}
+function AircraftPanelLovFilter List < Entity(TaskPanelLov) > {
+   parameter AircraftId Number;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTaskPanel;
+   where = "aircraft_id = :AircraftId and ((:TaskSeq is not null and aircraft_panel_info.ac_panel_seq NOT IN (
+               SELECT ac_panel_seq
+               FROM av_exe_task_panel
+               WHERE task_seq = :TaskSeq)) or :TaskSeq is null)";
+}
+function ValidatePanelsForTask Boolean {
+   parameter TaskSeq Number;
+}
+function CanMpcCloseStart Boolean {
+   parameter MpcCloseTaskSeq Number;
+}

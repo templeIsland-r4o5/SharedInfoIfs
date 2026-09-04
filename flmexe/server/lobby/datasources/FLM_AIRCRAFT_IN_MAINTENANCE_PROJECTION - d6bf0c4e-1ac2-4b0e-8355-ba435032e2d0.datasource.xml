@@ -1,0 +1,28 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of aircraft in maintenance</DescriptiveText>
+    <LastModified>30/05/2024, 16:09:29</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_AIRCRAFT_IN_MAINTENANCE_PROJECTION</Name>
+    <ID>d6bf0c4e-1ac2-4b0e-8355-ba435032e2d0</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>AvFlightSet</EntitySet>
+    <EntityType>AvFlight</EntityType>
+    <Filter>FlightTurnStatus eq IfsApp.FlmLineWorkManagementLobbyHandling.AircraftTurnStatus'InMaintenance' and 
+LockedBool eq false or LockedBool eq null and 
+(Condition ne 'SCRAP' and Condition ne 'ARCHIVE')</Filter>
+</ProjectionDataSource>

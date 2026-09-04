@@ -1,0 +1,111 @@
+<LinksList>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display the summary of Maintenance Supervisor information</DescriptiveText>
+    <LastModified>4/24/25, 5:18:28 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>SUMMARY</Title>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Summary</Name>
+    <ID>dda65ebe-6890-4979-b7be-5337829222b1</ID>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <ColumnMapping>
+        <MappedColumns/>
+    </ColumnMapping>
+    <Links>
+        <Link>
+            <ID>54d911a2-3f87-4864-9365-96b555b917ba</ID>
+            <WebUrl>page/FlmStationTurns/StationTurnsPage</WebUrl>
+            <PassFilterToWebPage>false</PassFilterToWebPage>
+            <DataSourceId>efd3c1ed-2e12-4068-807a-d543c3fed43c</DataSourceId>
+            <ColumnMapping>
+                <MappedColumns>
+                    <MappedColumn>
+                        <Column>*</Column>
+                        <Aggregate>COUNT</Aggregate>
+                        <ConditionalFormats/>
+                    </MappedColumn>
+                </MappedColumns>
+            </ColumnMapping>
+            <LinkTitle>My Station Turns</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>dfce37b7-d049-41da-8d1d-525d87fafe3b</ID>
+            <WebUrl>page/FlmStationTurns/StationTurnsPage?$filter=FlightTurnStatus eq IfsApp.FlmStationTurnsHandling.AircraftTurnStatus'InMaintenance'</WebUrl>
+            <PassFilterToWebPage>false</PassFilterToWebPage>
+            <DataSourceId>d6bf0c4e-1ac2-4b0e-8355-ba435032e2d0</DataSourceId>
+            <ColumnMapping>
+                <MappedColumns>
+                    <MappedColumn>
+                        <Column>*</Column>
+                        <Aggregate>COUNT</Aggregate>
+                        <ConditionalFormats/>
+                    </MappedColumn>
+                </MappedColumns>
+            </ColumnMapping>
+            <LinkTitle>In-Maintenance Aircraft</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>ad274074-b18e-49d4-9aaa-dcd355ed8bf5</ID>
+            <WebUrl>page/FlmStationTurns/StationTurnsPage?$filter=ArriveInNextHour eq 1</WebUrl>
+            <PassFilterToWebPage>false</PassFilterToWebPage>
+            <DataSourceId>364a182b-b3e6-40f5-bd53-3df425cbd9a9</DataSourceId>
+            <ColumnMapping>
+                <MappedColumns>
+                    <MappedColumn>
+                        <Column>*</Column>
+                        <Aggregate>COUNT</Aggregate>
+                        <ConditionalFormats/>
+                    </MappedColumn>
+                </MappedColumns>
+            </ColumnMapping>
+            <LinkTitle>Aircraft Arriving in Next Hour</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>8f7b2c42-d0dc-4718-a3e3-1d44a711a89f</ID>
+            <WebUrl>page/FlmStationTurns/StationTurnsPage?$filter=DepartureInNextHour eq 1</WebUrl>
+            <PassFilterToWebPage>false</PassFilterToWebPage>
+            <DataSourceId>109396be-3466-4cba-9360-fecabff6b2d6</DataSourceId>
+            <ColumnMapping>
+                <MappedColumns>
+                    <MappedColumn>
+                        <Column>*</Column>
+                        <Aggregate>COUNT</Aggregate>
+                        <ConditionalFormats/>
+                    </MappedColumn>
+                </MappedColumns>
+            </ColumnMapping>
+            <LinkTitle>Aircraft Departing in Next Hour</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>afb9ff11-216f-4c47-ba86-40f7b4e2e99e</ID>
+            <WebUrl>page/FlmSupervisorAircraftTurnsDetails/TurnWorkAssignmentsPage?$filter=ResAssignDisplayStatus eq IfsApp.FlmSupervisorAircraftTurnsDetailsHandling.AssignmentStatus'Assigned' or ResAssignDisplayStatus eq IfsApp.FlmSupervisorAircraftTurnsDetailsHandling.AssignmentStatus'ResourceConflict'</WebUrl>
+            <PassFilterToWebPage>false</PassFilterToWebPage>
+            <DataSourceId>ef57469b-a3b5-4c33-89c2-193b74f459f2</DataSourceId>
+            <ColumnMapping>
+                <MappedColumns>
+                    <MappedColumn>
+                        <Column>*</Column>
+                        <Aggregate>COUNT</Aggregate>
+                        <ConditionalFormats/>
+                    </MappedColumn>
+                </MappedColumns>
+            </ColumnMapping>
+            <LinkTitle>Turns Assigned to Resource Group</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+    </Links>
+</LinksList>

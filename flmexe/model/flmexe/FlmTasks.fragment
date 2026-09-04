@@ -1,0 +1,328 @@
+fragment FlmTasks;
+component FLMEXE;
+layer Core;
+description "This contains all the tasks for a specif aircraft and specific work package";
+
+--------------------------------- FRAGMENTS ---------------------------------
+@DynamicComponentDependency ADCON
+include fragment ConnectContractInfo;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+list TasksList for AvExeTask {
+   field Barcode {
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      editable = [false];
+   }
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field MaterialAvailUserStatus {
+      editable = [false];
+   }
+   field ScheduledHours {
+      editable = [false];
+   }
+   field PlannedStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field PlannedFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov CrewRef with  HangarCrewLovSelector {
+      editable = [false];
+      label = "Crew";
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+   }
+   field ActualStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActualFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+      hidekey = [true];
+   }
+   field AircraftWpRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      multiline = true;
+   }
+   badge WpStatus {
+      emphasis StateCreated = [WpStatus = "Active"];
+      emphasis StatePlanned = [WpStatus = "Committed"];
+      emphasis StateInProgress = [WpStatus = "In Work"];
+      emphasis StateCompleted = [WpStatus = "Completed"];
+      emphasis StateClosed = [WpStatus = "Canceled"];
+      editable = [false];
+   }
+   field ConfigPosition {
+      editable = [false];
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field Location {
+      editable = [false];
+   }
+   field AircraftWpRef.LocationCode {
+      label = "Work Package Location";
+      editable = [false];
+   }
+   field IsRoutine {
+      label = "Routine";
+      editable = [false];
+   }
+   field CrewName {
+      editable = [false];
+   }
+   field PriorityId {
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+   field AssignedCrew {
+      columnvisible = [false];
+   }
+   field HmContractId {
+      label = "Contract Id";
+      columnexclude = [initcontext.WpHmContractId = null];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   lov ContractGroupRef with ReferenceHmContractGroupSelector {
+      label = "Contract Group";
+      columnexclude = [initcontext.WpHmContractId = null];
+      editable = [false];
+   }
+   field HmContractLineNo {
+      label = "Contract Line";
+      columnexclude = [initcontext.WpHmContractId = null];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   badge NrObjstate {
+      label = "NR Approval Status";
+      columnexclude = [initcontext.WpHmContractId = null];
+      emphasis Primary = [NrObjstate = "NotStarted"];
+      emphasis Complementary6 = [NrObjstate = "AwaitingApproval"];
+      emphasis Success = [NrObjstate = "Approved"];
+      emphasis False = [NrObjstate = "Rejected"];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   field ProceedAtRisk {
+      columnexclude = [initcontext.WpHmContractId = null];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   field NeedCommercialApproval {
+      label = "Commercial Approval Needed";
+      columnexclude = [initcontext.WpHmContractId = null];
+      editable = [false];
+   }
+}
+
+initcontext PageInitContext {
+
+   parameter WpBarcode Text;
+   parameter WpHmContractId  Text;
+   init command {
+      execute {
+         call GetHmContractIdByBarcode(WpBarcode) into WpHmContractId;
+      }
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+@Override
+@DynamicComponentDependency ADCON
+selector ReferenceHmContractGroupSelector for HmContractGroup {
+   static ContractId;
+   static ContractGroup;
+   static ContractGroupDescription;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+entityset AvExeTaskSet for AvExeTask;
+
+@Override
+entity AvExeTask {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute Barcode Text;
+   attribute Description Text {
+      label = "Name";
+   }
+   attribute MaterialAvailUserStatus Text {
+      label = "Material Availability";
+   }
+   attribute ScheduledHours Text {
+      label = "Scheduled Hours";
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute PlannedStart Timestamp {
+      label = "Scheduled Start";
+   }
+   attribute PlannedFinish Timestamp {
+      label = "Scheduled End";
+   }
+   attribute ActualStart Timestamp {
+      label = "Actual Start";
+   }
+   attribute ActualFinish Timestamp {
+      label = "Actual End";
+   }
+   attribute WpStatus Text {
+      label = "Work Package Status";
+      fetch = "Av_Aircraft_Work_Package_API.get_state(aircraft_wp_id)";
+   }
+   attribute ConfigPosition Text {
+      label = "Config Position";
+   }
+   attribute ClassCode Text {
+      label = "Class";
+   }
+   attribute SubclassCode Text {
+      label = "Subclass";
+   }
+   attribute Location Text {
+      label = "Task Location";
+   }
+   attribute CrewName Text {
+      label = "Crew Name";
+   }
+   attribute PriorityId Text {
+      label = "Priority";
+   }
+   attribute LongDescription Text {
+      label = "Task Description";
+   }
+   attribute WpBarcode Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Barcode(aircraft_wp_id)";
+   }
+   attribute TaskAssignmentStatus Text {
+      fetch = "Av_Exe_Task_Util_API.Get_Task_Assignment_Status(Task_Seq)";
+   }
+   attribute AssignedToMeStatus Text {
+      fetch = "Av_Exe_Task_Util_API.Get_Task_Assign_To_Me_Status(Task_Seq)";
+   }
+   attribute ShiftType Enumeration(ShiftType) {
+      fetch = "Flmexe_Util_API.Get_Shift_By_Sched_Start(planned_start, null)";
+   }
+   attribute TaskStatus Text {
+      fetch = "Av_Exe_Task_API.get_state(Task_Seq)";
+   }
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(Aircraft_Id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(Aircraft_Id)))";
+      lovcolumn = [true];
+   }
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopSkill Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Skill(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute HandoverReason Text {
+      fetch = "Labour_Assignment_Util_API.Get_Handover_Reason";
+   }
+   attribute AssignedCrew Text {
+      fetch = "Flmexe_Util_API.Handle_Null_In_Crew_Code(task_seq)";
+   }
+
+   attribute CrewCode Text;
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrObjstate Text {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Objstate_By_Fault_Id(fault_id)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute ProceedAtRisk Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Proc_At_Risk_By_Fault_Id(fault_id)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NeedCommercialApproval Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Need_Com_Appr_By_Fault_Id(fault_id)";
+   }
+
+   array TaskAssignmentEntityArray(TaskSeq) to TaskAssignmentEntity(TaskSeq);
+   reference AircraftRef(Aircraft) to AircraftLov(Aircraft);
+   reference AircraftWpRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference CrewRef(CrewCode) to HangarCrewLov(CrewCode);
+   reference WorkPackageRef(WpBarcode) to HangarWorkPackageLov(Barcode);
+
+}
+
+@Override
+entity AvAircraftWorkPackage {
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Location_Code)";
+   }
+
+}
+   --------------------------------- FUNCTIONS ---------------------------------
+function GetHmContractIdByBarcode Text {
+   parameter Barcode Text;
+}
+   ------------------------------- ENUMERATIONS --------------------------------
+

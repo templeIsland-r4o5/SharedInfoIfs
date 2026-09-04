@@ -1,0 +1,207 @@
+-----------------------------------------------------------------------------
+--
+--  Filename:      FlmPeggedAvMaterialLines.client
+--  Component:     FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15887, Created. Pegged Maintenance Material Requisition Lines client.
+-----------------------------------------------------------------------------
+
+client FlmPeggedAvMaterialLines;
+component FLMEXE;
+layer Core;
+projection FlmPeggedAvMaterialLinesHandling;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment PeggedMaterialLines;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry PeggedMaintMatReqLinesNavEntry parent MxCoreNavigator.MaterialControllerNav at index 1500 {
+      label = "Pegged Material Lines";
+      page List;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page List using JtTaskMatLinePeggingSet {
+   label = "Pegged Material Lines";
+   list JtTaskMatLinePeggingList;
+}
+-------------------------------- ASSISTANTS ---------------------------------
+
+--------------------------------- COMMANDS ----------------------------------
+@Override
+command ManualPeggingCommand for JtTaskMatLinePegging {
+   label = "Manual Pegging";
+   mode = SelectedRecords;
+   enabled = [SupplySourceRef1 != null and(SupplySourceRefType = "PurchaseOrder")];
+   bulkexecute {
+      bulknavigate "page/FlmManualPeggingAvMaterialLine/Form?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo] and LineItemNo eq $[LineItemNo]";
+   }
+}
+
+command WorkPackageCommand for JtTaskMatLinePegging {
+   label = "Work Package";
+   mode = SelectedRecords;
+   enabled = [SupplySourceRef1 != null and(SupplySourceRefType = "PurchaseOrder") and AircraftWorkPackageId != null];
+   bulkexecute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true] {
+         bulknavigate "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=AircraftWorkPackageId eq $[AircraftWorkPackageId]";
+      }
+      else {
+         bulknavigate "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+      }
+   }
+}
+
+command TaskCommand for JtTaskMatLinePegging {
+   label = "Task Details";
+   mode = SelectedRecords;
+   enabled = [SupplySourceRef1 != null and(SupplySourceRefType = "PurchaseOrder") and TaskSeq != null];
+   bulkexecute {
+      bulknavigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+
+command MaintenanceMaterialRequisitionCommand for JtTaskMatLinePegging {
+   label = "Maintenance Material Requisition";
+   mode = SelectedRecords;
+   enabled = [(SupplySourceRef1 != null) and MaintMaterialOrderNo != null];
+   bulkexecute {
+      bulknavigate "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+---------------------------------- GROUPS -----------------------------------
+
+----------------------------------- LISTS -----------------------------------
+@Override
+list JtTaskMatLinePeggingList for JtTaskMatLinePegging {
+   lov AvExeTaskRef with ReferenceAvExeTaskSelector {
+      label = "Task No";
+      size = Small;
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field AircraftWorkPackageId {
+      label = "Work Package No";
+      size = Small;
+      lovswitch {
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = true] {
+            lov AvAircraftWorkPackageRef with ReferenceAvAircraftWorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=AircraftWorkPackageId eq $[AircraftWorkPackageId]";
+            }
+         }
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = false] {
+            lov AvAircraftWorkPackageRef with ReferenceAvAircraftWorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+            }
+         }
+      }
+   }
+   @DynamicComponentDependency WO
+   lov MaintMatOrderNoRef with ReferenceMaintMaterialRequisitionSelector {
+      label = "Order No";
+      size = Small;
+      details = "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+
+   field WpBarcode {
+      label = "Work Package Barcode";
+      size = Small;
+   }
+
+   lov AircraftRef with ReferenceAircraftSelector {
+      label = "Aircraft No";
+      size = Small;
+   }
+
+   field TaskBarcode {
+      label = "Task Barcode";
+      size = Small;
+   }
+
+   @DynamicComponentDependency PURCH
+   lov SupplierRef with ReferenceSupplierSelector {
+      label = "Supplier Name";
+      size = Small;
+      hidekey = [true];
+      description = Supplier;
+      details = "page/Supplier/Form?$filter=SupplierId eq $[VendorNo]";
+      editable = [VendorNo != null];
+   }
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency WO
+   @DynamicComponentDependency DISORD
+   lov DemandSiteRef with ReferenceSiteSelector {
+      label = "Demand Site";
+      size = Small;
+      description = DemandSiteName;
+      details = "page/CompanySite/Form?$filter=Contract eq $[DemandSiteId]";
+      editable = [DemandSiteExists = true];
+   }
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   field SupplySite {
+      label = "Supply Site";
+      size = Small;
+      lovswitch {
+         when [SupplySiteExists = true] {
+            lov SupplySiteRef with ReferenceSiteSelector {
+               description = SupplySiteName;
+               details = "page/CompanySite/Form?$filter=Contract eq $[SupplySiteId]";
+            }
+         }
+      }
+   }
+
+   @DynamicComponentDependency DISORD
+   @DynamicComponentDependency SHIPOD
+   field Coordinator {
+      label = "Coordinator";
+      size = Small;
+   }
+
+   @DynamicComponentDependency PURCH
+   field PlannedArrivalDate {
+      label = "Planned Arrival Date";
+   }
+
+   commandgroup CommandgroupName {
+      commandgroup CommandgroupName {
+         label = "View";
+         @DynamicComponentDependency PURCH
+         command PurchaseOrderCommand;
+         @DynamicComponentDependency SHIPOD
+         command ShipmentOrderCommand;
+         command ManualPeggingCommand;
+         command WorkPackageCommand;
+         command TaskCommand;
+         command MaintenanceMaterialRequisitionCommand;
+      }
+   }
+}
+
+----------------------------------- CARDS -----------------------------------
+
+---------------------------------- DIALOGS ----------------------------------
+
+---------------------------------- CHARTS -----------------------------------
+
+--------------------------------- CALENDARS ---------------------------------
+
+---------------------------------- SHEETS -----------------------------------
+
+----------------------------- STATE INDICATORS ------------------------------
+
+----------------------------------- TREES -----------------------------------
+
+---------------------------------- PLUGINS ----------------------------------
+
+------------------------------- IMAGE VIEWERS -------------------------------

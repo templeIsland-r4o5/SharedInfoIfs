@@ -1,0 +1,98 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  240522  ROERLK  AD-12569, Modified StationTurnQuery with attributes ArriveInNextHour, DepartureInNextHour, SchDeparture30Mins
+--  230926  DUWJLK  AD-10795, Modify FlightTurnStatus attribute by adding Enumeration of the AircraftTurnStatus.
+--  230710  majslk  AD-9585, Modified code to support time zone changes
+--  220909  ROSDLK  AD-8613, Used NVL function to set the sched dept time as the departure time if the actual dept time is not set.
+--  220125  sbanlk  AD-6542, Added function CheckTaskWorkAssigned.
+--  211117  vifelk  AD-4114, Added lu to StationTurnQuery.
+--  211111  bhbalk  AD-3952, Created.
+-----------------------------------------------------------------------------
+projection FlmStationTurnsHandling;
+component FLMEXE;
+layer Core;
+description "This API shows the information related to station turns to supervisors";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset StationTurnQuerySet for StationTurnQuery;
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query StationTurnQuery {
+   timestamptzref = "server";
+
+   crud = Read;
+   lu = none;
+   from = "My_Aircraft_Turns_Status_View";
+   keys = FlightId;
+   where = "(locked_bool = 'FALSE' OR locked_bool IS NULL) AND (condition != 'SCRAP' AND condition != 'ARCHIVE')";
+   attribute FlightId Number;
+   attribute ArrivalAirportId Number;
+   attribute AircraftId Number;
+   attribute ActualArrivalDateTime Timestamp;
+   attribute ShedArrivalDateTime Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalGate Text;
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   attribute WorkPackageId Number;
+   attribute ActualEndDateTime Timestamp;
+   attribute DeptFlightId Text;
+   attribute NoOfOpenedFaults Number;
+   attribute NoOfAssignedTasks Number;
+   attribute GroundTime Text;
+   attribute AssemblyTypeCode Text;
+   attribute ArrivalTimestamp Timestamp;
+   attribute TotalHours Number;
+   attribute ArriveInNextHour Number;
+   attribute DepartureInNextHour Number;
+   attribute SchDeparture30Mins Number;
+   attribute FlightTurnStatus Enumeration(AircraftTurnStatus) {
+      fetch = "Aircraft_Turn_Status_API.Identifier_To_Db_Value(flight_turn_status)";
+   }
+   attribute AircraftImage Stream {
+      fetch = "Av_Assembly_API.Get_Aircraft_Type_Image(assembly_type_code)";
+   }
+   attribute ActualOutboundDeptDateTime Timestamp {
+      fetch = "NVL(Av_Flight_API.Get_Actual_Departure_Date_Time(dept_flight_id), departure_timestamp)";
+   }
+   attribute IsAircraftImageEmpty Number {
+      fetch = "DECODE(dbms_lob.getLength(Av_Assembly_API.Get_Aircraft_Type_Image(assembly_type_code)), null, 1, 0)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AvFlightDepartureRef(DeptFlightId) to AvFlight(FlightId);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference AvAssemblyRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+function CheckTaskWorkAssigned Number {
+   parameter WorkPackageId Number;
+}
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

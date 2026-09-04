@@ -1,0 +1,58 @@
+client FlmToolsAndEquipment;
+component FLMEXE;
+layer Core;
+projection FlmToolsAndEquipmentHandling;
+description "View Tool Inventories";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolsAndEquipmentBase;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolsAndEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 20 {
+      label = "Tool Inventories";
+      page ToolInventoriesPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page ToolInventoriesPage using ResourceToolEquipSet {
+   label = "Tool Inventories";
+   list ToolEquipmentList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

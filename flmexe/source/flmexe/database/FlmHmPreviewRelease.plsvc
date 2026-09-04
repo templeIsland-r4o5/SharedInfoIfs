@@ -1,0 +1,554 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmHmPreviewRelease
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251030  SABOLK  AD-22080, Added and modified changes to improve performance.
+--  251001  SABOLK  AD-22096, Modified CRUD_Create___ to fix fault summary badges not visible when aircraft has no faults
+--  250919  SABOLK  AD-21785, Modified CRUD_Create___ to improve performance when data loads.
+--  250820  PSUALK  AD-20005, Add Missing Component data to preview release
+--  250815  KAPALK  AD-20001, Add open fault data to preview release
+--  250806  RAFALK  AD-20002, Added the validation for neardue and overdue task summary badge colors
+--  250811  SRLALK  AD-20004, Add open panel data to preview release
+--  250807  SRLALK  AD-20003, Add task part waning data to preview release
+--  250806  RAFALK  AD-20002, Populated data to task related lists and summary badges
+--  250725  RAFALK  AD-20000, Created and added Get_Summary_Values___
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@Override
+@IgnoreUnitTest MethodOverride
+PROCEDURE CRUD_Create___(
+   rec_ IN Preview_Release_Virtual_Rec )
+IS
+   preview_release_new_rec_      Preview_Release_Virtual_Rec;
+   missing_manda_rec_            Missing_Manda_Comp_Virtual_Rec;
+   missing_manda_count_          NUMBER         := 0;
+   missing_comp_parm_value_      VARCHAR2(10);
+
+   CURSOR get_missing_manda_details(aircraft_alt_id_ IN VARCHAR2) IS  
+      SELECT dm.nh_assmbl_cd, dm.assy_conf_slot_cd, dm.assy_conf_slot_pos_cd, 
+             dm.conf_slot_cd, dm.conf_slot_pos_cd, dm.part_number, dm.part_sdesc,
+             dm.install_task_barcode, dm.install_task_name, dm.wp_name, dm.wp_barcode, dm.parent_inv_class_cd, RAWTOHEX(dm.parent_inv_alt_id) AS parent_inv_alt_id, dm.parent_inv_sdesc
+      FROM ad_aircraft_missing_comp_dm dm
+      WHERE dm.ac_id = aircraft_alt_id_;
+      
+BEGIN  
+   preview_release_new_rec_ := rec_;
+   super(rec_);
+   
+   --Populating missing manda comp records
+   FOR missing_manda_detail_rec_ IN get_missing_manda_details(rec_.aircraft_alt_id) LOOP 
+      missing_manda_rec_.objkey              := sys_guid();
+      missing_manda_rec_.parent_objkey       := rec_.objkey;
+      missing_manda_rec_.parent_assembly     := missing_manda_detail_rec_.nh_assmbl_cd;
+      missing_manda_rec_.assembly            := missing_manda_detail_rec_.assy_conf_slot_cd;
+      missing_manda_rec_.assembly_pos        := missing_manda_detail_rec_.assy_conf_slot_pos_cd;
+      missing_manda_rec_.config_slot         := missing_manda_detail_rec_.conf_slot_cd;
+      missing_manda_rec_.config_slot_pos     := missing_manda_detail_rec_.conf_slot_pos_cd;
+      missing_manda_rec_.part_number         := missing_manda_detail_rec_.part_number;
+      missing_manda_rec_.part_name           := missing_manda_detail_rec_.part_sdesc;
+      missing_manda_rec_.task_barcode        := missing_manda_detail_rec_.install_task_barcode;
+      missing_manda_rec_.task_name           := missing_manda_detail_rec_.install_task_name;
+      missing_manda_rec_.wp_name             := missing_manda_detail_rec_.wp_name;
+      missing_manda_rec_.wp_barcode          := missing_manda_detail_rec_.wp_barcode;
+      missing_manda_rec_.parent_inv_class_cd := missing_manda_detail_rec_.parent_inv_class_cd;
+      missing_manda_rec_.parent_inv_alt_id   := missing_manda_detail_rec_.parent_inv_alt_id;
+      missing_manda_rec_.parent_inv_sdesc    := missing_manda_detail_rec_.parent_inv_sdesc;
+      missing_manda_count_                   := missing_manda_count_ + 1;
+      CRUD_Create___(missing_manda_rec_);
+   END LOOP;
+   
+   preview_release_new_rec_.missing_manda_count := missing_manda_count_;
+   preview_release_new_rec_.missing_manda_status := 'OK';
+   
+   IF (missing_manda_count_ > 0) THEN
+      preview_release_new_rec_.missing_manda_comps := TRUE;
+      missing_comp_parm_value_        := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_MISSING_COMPONENT');
+      IF (missing_comp_parm_value_ IS NOT NULL) THEN
+         preview_release_new_rec_.missing_manda_status := missing_comp_parm_value_;
+      END IF;
+      IF missing_comp_parm_value_ = 'ERROR' THEN
+         preview_release_new_rec_.proceed_to_complete := FALSE;
+      END IF;
+   ELSE
+      preview_release_new_rec_.missing_manda_comps := FALSE;
+   END IF;
+   
+   CRUD_Update___(rec_,preview_release_new_rec_);
+   
+END CRUD_Create___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Validate_Release_Blockers___ (
+   work_package_id_  IN NUMBER,
+   aircraft_id_      IN NUMBER) RETURN Release_Blockers_Info_Structure_Rec
+IS
+   release_blockers_rec_         Release_Blockers_Info_Structure_Rec;
+   aircraft_alt_id_              Aircraft_TAB.alt_id%TYPE;
+   missing_comp_parm_value_      VARCHAR2(10);
+   missing_manda_exist_          NUMBER := 0;
+   overdue_task_parm_value_      VARCHAR2(10);
+   neardue_task_parm_value_      VARCHAR2(10);
+   open_panels_parm_value_       VARCHAR2(10);
+   open_panels_exist_            BOOLEAN := FALSE;
+   open_fault_parm_value_        VARCHAR2(10);
+   overdue_fault_parm_value_     VARCHAR2(10);
+   near_due_fault_parm_value_    VARCHAR2(10);
+   aog_fault_parm_value_         VARCHAR2(10);
+   release_notify_interval_      VARCHAR2(10)   := Av_Fault_Deadline_API.Get_Release_Notify_Interval();
+   task_exist_                   NUMBER := 0;
+   aog_fault_exist_              BOOLEAN := FALSE;
+   open_fault_exist_             BOOLEAN := FALSE;
+   overdue_fault_exist_          BOOLEAN := FALSE;
+   neardue_fault_exist_          BOOLEAN := FALSE;
+   overdue_task_exist_           BOOLEAN := FALSE;
+   neardue_task_exist_           BOOLEAN := FALSE;
+   
+   CURSOR get_prev_release_fault_details(aircraft_alt_id_ IN VARCHAR2) IS 
+      SELECT *
+      FROM AD_OPEN_FAULT_SEARCH_DM afd
+      WHERE afd.ac_alt_id= aircraft_alt_id_;
+   
+   CURSOR get_prev_release_tasks(aircraft_alt_id_ IN VARCHAR2) IS
+      SELECT atd.*
+      FROM ad_aircraft_task_due_dm atd
+      WHERE atd.is_driving_deadline = 'TRUE'
+      AND atd.extended_due_dt < (sysdate + release_notify_interval_)
+      AND atd.ac_id = aircraft_alt_id_;
+      
+   CURSOR get_missing_manda(aircraft_alt_id_ IN VARCHAR2) IS  
+      SELECT 1 AS rec_exists
+      FROM ad_aircraft_missing_comp_dm dm
+      WHERE dm.ac_id = aircraft_alt_id_
+      AND   ROWNUM < 2;
+      
+   CURSOR get_active_tasks(aircraft_wp_id_ IN NUMBER) IS
+      SELECT 1 AS rec_exists
+      FROM   av_exe_task_tab t
+      WHERE t.rowstate IN ('WORKSTARTED', 'RELEASED')
+      AND   t.aircraft_wp_id = aircraft_wp_id_
+      AND   ROWNUM < 2;
+
+BEGIN
+   aircraft_alt_id_ := Aircraft_API.Get_Alt_Id(aircraft_id_);
+   
+   missing_comp_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_MISSING_COMPONENT');
+   OPEN get_missing_manda(aircraft_alt_id_);
+   FETCH get_missing_manda INTO missing_manda_exist_;
+   IF get_missing_manda%FOUND THEN
+      release_blockers_rec_.missing_manda_comps := TRUE;
+      release_blockers_rec_.missing_manda_status := 'OK';
+      IF missing_comp_parm_value_ IN ('ERROR', 'WARN') THEN
+         CLOSE get_missing_manda;
+         release_blockers_rec_.missing_manda_status := missing_comp_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   ELSE
+      release_blockers_rec_.missing_manda_comps := FALSE;
+      release_blockers_rec_.missing_manda_status := 'OK';
+   END IF;
+   CLOSE get_missing_manda;
+   
+   -- Preview release fault - filter OPEN, OVERDUE, NEAR DUE, AOG FAULTS
+   FOR prev_release_fault_rec_ IN get_prev_release_fault_details(aircraft_alt_id_) LOOP
+      -- AOG faults
+      IF (prev_release_fault_rec_.severity_cd = 'AOG') THEN 
+         aog_fault_exist_ := TRUE;
+      END IF;
+         
+      IF ((prev_release_fault_rec_.domain_type_cd = 'CA' AND prev_release_fault_rec_.extended_due_dt < sysdate) OR (prev_release_fault_rec_.domain_type_cd != 'CA' AND ((prev_release_fault_rec_.usage_rem_qt + prev_release_fault_rec_.deviation_qt) <= 0))) THEN
+         -- Overdue faults
+         overdue_fault_exist_ := TRUE;
+      ELSIF prev_release_fault_rec_.extended_due_dt BETWEEN sysdate AND sysdate + release_notify_interval_ THEN
+         -- Near due faults
+         neardue_fault_exist_ := TRUE;
+      ELSIF ((prev_release_fault_rec_.extended_due_dt >= sysdate + release_notify_interval_) OR prev_release_fault_rec_.extended_due_dt IS NULL) THEN
+         -- Open faults
+         open_fault_exist_ := TRUE;
+      END IF;
+      
+      IF aog_fault_exist_ AND overdue_fault_exist_ AND neardue_fault_exist_ AND open_fault_exist_ THEN
+         EXIT;
+      END IF;
+   END LOOP;
+   
+   -- AOG faults
+   release_blockers_rec_.aog_fault_status := 'OK';
+   release_blockers_rec_.aog_faults := FALSE;
+   IF aog_fault_exist_ THEN
+      release_blockers_rec_.aog_faults := TRUE;
+      aog_fault_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_AOG_FAULT');
+      IF aog_fault_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.aog_fault_status := aog_fault_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   -- Open faults
+   release_blockers_rec_.open_fault_status := 'OK';
+   release_blockers_rec_.open_faults := FALSE;
+   IF open_fault_exist_ THEN
+      release_blockers_rec_.open_faults := TRUE;
+      open_fault_parm_value_  := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_LOW_SEV_OPEN_FAULT');
+      IF open_fault_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.open_fault_status := open_fault_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   -- Overdue faults
+   release_blockers_rec_.overdue_fault_status := 'OK';
+   release_blockers_rec_.overdue_faults := FALSE;
+   IF overdue_fault_exist_ THEN
+      release_blockers_rec_.overdue_faults := TRUE;
+      overdue_fault_parm_value_  := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_FAULT');
+      IF overdue_fault_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.overdue_fault_status := overdue_fault_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   -- Near due faults
+   release_blockers_rec_.neardue_fault_status := 'OK';
+   release_blockers_rec_.neardue_faults := FALSE;
+   IF neardue_fault_exist_ THEN
+      release_blockers_rec_.neardue_faults := TRUE;
+      near_due_fault_parm_value_ := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_NEAR_DUE_FAULT');
+      IF near_due_fault_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.neardue_fault_status := near_due_fault_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   -- Incomplete tasks in this WP
+   OPEN get_active_tasks(work_package_id_);
+   FETCH get_active_tasks INTO task_exist_;
+   IF get_active_tasks%FOUND THEN
+      release_blockers_rec_.incomplete_tasks := TRUE;
+      release_blockers_rec_.has_release_blockers := TRUE;
+      RETURN release_blockers_rec_;
+   ELSE
+      release_blockers_rec_.incomplete_tasks := FALSE;
+   END IF;
+   CLOSE get_active_tasks;
+   
+   -- Prev Release Tasks - filter OVERDUE and NEAR DUE tasks
+   FOR prev_release_task_rec_ IN get_prev_release_tasks(aircraft_alt_id_) LOOP
+      IF ((prev_release_task_rec_.domain_type_cd = 'CA' AND prev_release_task_rec_.extended_due_dt < sysdate) OR (prev_release_task_rec_.domain_type_cd != 'CA' AND prev_release_task_rec_.usage_rem_qt_plus_dev <= 0)) THEN
+         -- Overdue tasks
+         overdue_task_exist_ := TRUE;
+      ELSIF prev_release_task_rec_.extended_due_dt BETWEEN sysdate AND sysdate + release_notify_interval_ THEN
+         -- Near due tasks
+         neardue_task_exist_ := TRUE;
+      END IF;
+      
+      IF overdue_task_exist_ AND neardue_task_exist_ THEN
+         EXIT;
+      END IF;
+   END LOOP;
+   
+   -- Overdue tasks
+   release_blockers_rec_.overdue_tasks := FALSE;
+   release_blockers_rec_.overdue_task_status := 'OK';
+   IF overdue_task_exist_ THEN
+      release_blockers_rec_.overdue_tasks := TRUE;
+      overdue_task_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_TASK');
+      IF overdue_task_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.overdue_task_status := overdue_task_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   -- Near due tasks
+   release_blockers_rec_.neardue_tasks := FALSE;
+   release_blockers_rec_.neardue_task_status := 'OK';
+   IF neardue_task_exist_ THEN
+      release_blockers_rec_.neardue_tasks := TRUE;
+      neardue_task_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_NEAR_DUE_TASK');
+      IF neardue_task_parm_value_ IN ('ERROR', 'WARN') THEN
+         release_blockers_rec_.neardue_task_status := neardue_task_parm_value_;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      END IF;
+   END IF;
+   
+   open_panels_parm_value_    := Adcom_util_API.Get_Mx_Parm_Value('ALLOW_CHECK_MPC_PANELS_ON_COMPLETE_CHECK');
+   IF open_panels_parm_value_ = 'TRUE' THEN
+      release_blockers_rec_.show_open_panels := TRUE;
+      open_panels_exist_   := Av_Aircraft_Work_Package_API.Has_Opened_Panels_By_Wp(work_package_id_);
+      IF open_panels_exist_ THEN
+         release_blockers_rec_.open_panels := TRUE;
+         release_blockers_rec_.has_release_blockers := TRUE;
+         RETURN release_blockers_rec_;
+      ELSE
+         release_blockers_rec_.open_panels := FALSE;
+      END IF;
+   ELSE
+      release_blockers_rec_.show_open_panels := FALSE;
+   END IF;
+   
+   release_blockers_rec_.has_release_blockers := FALSE;
+   RETURN release_blockers_rec_;
+END Validate_Release_Blockers___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Set_Complete_Work_Package_Values___ (
+   aircraft_id_               IN NUMBER,
+   aircraft_work_package_id_  IN NUMBER,
+   aircraft_alt_id_           IN VARCHAR2,
+   release_blockers_info_     IN Release_Blockers_Info_Structure_Rec) RETURN Complete_Work_Package_Info_Struct_Rec
+IS
+   complete_wp_rec_  Complete_Work_Package_Info_Struct_Rec;
+   
+BEGIN
+   complete_wp_rec_.aircraft_id              := aircraft_id_;
+   complete_wp_rec_.aircraft_alt_id          := aircraft_alt_id_;
+   complete_wp_rec_.aircraft_work_package_id := aircraft_work_package_id_;
+   complete_wp_rec_.source                   := 'WORKPACKAGE';
+   complete_wp_rec_.missing_manda_comps      := release_blockers_info_.missing_manda_comps;
+   complete_wp_rec_.missing_manda_status     := release_blockers_info_.missing_manda_status;
+   complete_wp_rec_.aog_faults               := release_blockers_info_.aog_faults;
+   complete_wp_rec_.aog_fault_status         := release_blockers_info_.aog_fault_status;
+   complete_wp_rec_.open_faults              := release_blockers_info_.open_faults;
+   complete_wp_rec_.open_fault_status        := release_blockers_info_.open_fault_status;
+   complete_wp_rec_.overdue_faults           := release_blockers_info_.overdue_faults;
+   complete_wp_rec_.overdue_fault_status     := release_blockers_info_.overdue_fault_status;
+   complete_wp_rec_.neardue_faults           := release_blockers_info_.neardue_faults;
+   complete_wp_rec_.neardue_fault_status     := release_blockers_info_.neardue_fault_status;
+   complete_wp_rec_.incomplete_tasks         := release_blockers_info_.incomplete_tasks;
+   complete_wp_rec_.overdue_tasks            := release_blockers_info_.overdue_tasks;
+   complete_wp_rec_.overdue_task_status      := release_blockers_info_.overdue_task_status;
+   complete_wp_rec_.neardue_tasks            := release_blockers_info_.neardue_tasks;
+   complete_wp_rec_.neardue_task_status      := release_blockers_info_.neardue_task_status;
+   complete_wp_rec_.show_open_panels         := release_blockers_info_.show_open_panels;
+   complete_wp_rec_.open_panels              := release_blockers_info_.open_panels;
+   
+	RETURN complete_wp_rec_;
+END Set_Complete_Work_Package_Values___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Prev_Release_Summary_Info___ (
+   aircraft_work_package_id_  IN NUMBER,
+   aircraft_id_               IN NUMBER,
+   aircraft_alt_id_           IN VARCHAR2) RETURN Preview_Release_Info_Structure_Rec
+IS
+   prev_release_summary_rec_     Preview_Release_Info_Structure_Rec;
+   release_notify_interval_      VARCHAR2(10);
+   overdue_task_parm_value_      VARCHAR2(10);
+   near_due_task_parm_value_     VARCHAR2(10);
+   aog_fault_parm_value_         VARCHAR2(10);
+   open_fault_parm_value_        VARCHAR2(10);
+   overdue_fault_parm_value_     VARCHAR2(10);
+   near_due_fault_parm_value_    VARCHAR2(10);
+   open_panel_parm_value_        VARCHAR2(10);
+      
+   CURSOR get_task_part_with_warning_count IS
+      SELECT COUNT(*)
+      FROM task_part_inst_rmv_uiv task_part
+      INNER JOIN av_aircraft_work_package_tab work_package ON 
+         task_part.aircraft_wp_id = work_package.aircraft_work_package_id
+      INNER JOIN aircraft_tab aircraft ON 
+         work_package.aircraft_id = aircraft.aircraft_id
+      INNER JOIN av_exe_task_part_warning_tab tp_warning ON 
+         tp_warning.task_part_id = task_part.task_part_id
+      WHERE aircraft.aircraft_id = aircraft_id_;
+      
+   CURSOR get_prev_release_fault_details IS 
+      SELECT *
+      FROM AD_OPEN_FAULT_SEARCH_DM afd
+      WHERE afd.ac_alt_id= aircraft_alt_id_;
+   
+   CURSOR get_prev_release_tasks(release_notify_interval_ NUMBER) IS
+      SELECT atd.*
+      FROM ad_aircraft_task_due_dm atd
+      WHERE atd.is_driving_deadline = 'TRUE'
+      AND   atd.extended_due_dt < (sysdate + release_notify_interval_)
+      AND   atd.ac_id = aircraft_alt_id_;
+      
+   CURSOR get_active_task_count IS
+      SELECT COUNT(*) AS active_count
+      FROM  av_exe_task_tab t
+      WHERE t.rowstate IN ('WORKSTARTED', 'RELEASED')
+      AND   t.aircraft_wp_id = aircraft_work_package_id_;
+BEGIN
+   release_notify_interval_   := NVL(Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_NOTIFY_INTERVAL'), 5);
+   prev_release_summary_rec_.release_notify_intvl     := release_notify_interval_;
+   prev_release_summary_rec_.proceed_to_complete      := TRUE;
+
+   -- Configuration Warning data
+   prev_release_summary_rec_.cms_status   := Av_Exe_Task_Part_Warning_API.Get_Cms_Status(aircraft_id_);
+   
+   OPEN get_task_part_with_warning_count;
+   FETCH get_task_part_with_warning_count INTO prev_release_summary_rec_.cms_warning_count;
+   CLOSE get_task_part_with_warning_count;
+   
+   IF prev_release_summary_rec_.cms_status >= 0 THEN 
+      prev_release_summary_rec_.cms_warning_exist  := TRUE;
+   ELSE
+      prev_release_summary_rec_.cms_warning_exist  := FALSE;
+   END IF;
+
+   -- Preview release fault - filter OPEN, OVERDUE, NEAR DUE, AOG FAULTS
+   prev_release_summary_rec_.aog_faults_count      := 0;
+   prev_release_summary_rec_.open_faults_count     := 0;
+   prev_release_summary_rec_.overdue_faults_count  := 0;
+   prev_release_summary_rec_.neardue_faults_count  := 0;
+   FOR prev_release_fault_rec_ IN get_prev_release_fault_details LOOP
+      -- AOG faults
+      IF (prev_release_fault_rec_.severity_cd = 'AOG') THEN 
+         prev_release_summary_rec_.aog_faults_count   := prev_release_summary_rec_.aog_faults_count + 1;
+      END IF;
+         
+      IF ((prev_release_fault_rec_.domain_type_cd = 'CA' AND prev_release_fault_rec_.extended_due_dt < sysdate) OR (prev_release_fault_rec_.domain_type_cd != 'CA' AND ((prev_release_fault_rec_.usage_rem_qt + prev_release_fault_rec_.deviation_qt) <= 0))) THEN
+         -- Overdue faults
+         prev_release_summary_rec_.overdue_faults_count  := prev_release_summary_rec_.overdue_faults_count + 1;
+      ELSIF prev_release_fault_rec_.extended_due_dt BETWEEN sysdate AND sysdate + release_notify_interval_ THEN
+         -- Near due faults
+         prev_release_summary_rec_.neardue_faults_count  := prev_release_summary_rec_.neardue_faults_count + 1;
+      ELSIF ((prev_release_fault_rec_.extended_due_dt > sysdate + release_notify_interval_) OR prev_release_fault_rec_.extended_due_dt IS NULL) THEN
+         -- Open faults
+         prev_release_summary_rec_.open_faults_count     := prev_release_summary_rec_.open_faults_count + 1;
+      END IF;
+   END LOOP;
+   
+   -- AOG Faults data
+   prev_release_summary_rec_.aog_faults         := FALSE;
+   prev_release_summary_rec_.aog_fault_status   := 'OK';
+   IF prev_release_summary_rec_.aog_faults_count > 0 THEN
+      prev_release_summary_rec_.aog_faults   := TRUE;
+      aog_fault_parm_value_                  := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_AOG_FAULT');
+      IF (aog_fault_parm_value_ IS NOT NULL) THEN
+         prev_release_summary_rec_.aog_fault_status   := aog_fault_parm_value_;
+         IF aog_fault_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+   
+   -- Open Faults data
+   prev_release_summary_rec_.open_faults        := FALSE;
+   prev_release_summary_rec_.open_fault_status  := 'OK';
+   IF prev_release_summary_rec_.open_faults_count > 0 THEN
+      prev_release_summary_rec_.open_faults  := TRUE;
+      open_fault_parm_value_     := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_LOW_SEV_OPEN_FAULT');
+      IF open_fault_parm_value_ IS NOT NULL THEN
+         prev_release_summary_rec_.open_fault_status  := open_fault_parm_value_;
+         IF open_fault_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+   
+   -- Overdue Faults data
+   prev_release_summary_rec_.overdue_faults        := FALSE;
+   prev_release_summary_rec_.overdue_fault_status  := 'OK';
+   IF prev_release_summary_rec_.overdue_faults_count > 0 THEN
+      prev_release_summary_rec_.overdue_faults  := TRUE;
+      overdue_fault_parm_value_  := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_FAULT');
+      IF overdue_fault_parm_value_ IS NOT NULL THEN
+         prev_release_summary_rec_.overdue_fault_status  := overdue_fault_parm_value_;
+         IF overdue_fault_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+   
+   -- Near Due Faults data
+   prev_release_summary_rec_.neardue_faults        := FALSE;
+   prev_release_summary_rec_.neardue_fault_status  := 'OK';
+   IF prev_release_summary_rec_.neardue_faults_count > 0 THEN
+      prev_release_summary_rec_.neardue_faults  := TRUE;
+      near_due_fault_parm_value_ := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_NEAR_DUE_FAULT');
+      IF near_due_fault_parm_value_ IS NOT NULL THEN
+         prev_release_summary_rec_.neardue_fault_status  := near_due_fault_parm_value_;
+         IF near_due_fault_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+
+   -- Incomplete Tasks in This Wp data
+   OPEN get_active_task_count;
+   FETCH get_active_task_count INTO prev_release_summary_rec_.incomplete_tasks_count;
+   CLOSE get_active_task_count;
+   
+   IF prev_release_summary_rec_.incomplete_tasks_count > 0 THEN
+      prev_release_summary_rec_.incomplete_tasks      := TRUE;
+      prev_release_summary_rec_.proceed_to_complete   := FALSE;
+   ELSE
+      prev_release_summary_rec_.incomplete_tasks      := FALSE; 
+   END IF;
+
+   -- Prev Release Tasks - filter OVERDUE and NEAR DUE tasks
+   prev_release_summary_rec_.overdue_tasks_count := 0;
+   prev_release_summary_rec_.neardue_tasks_count := 0;
+   FOR prev_release_task_rec_ IN get_prev_release_tasks(release_notify_interval_) LOOP
+      IF ((prev_release_task_rec_.domain_type_cd = 'CA' AND prev_release_task_rec_.extended_due_dt < sysdate) OR (prev_release_task_rec_.domain_type_cd != 'CA' AND prev_release_task_rec_.usage_rem_qt_plus_dev <= 0)) THEN
+         -- Overdue tasks
+         prev_release_summary_rec_.overdue_tasks_count   := prev_release_summary_rec_.overdue_tasks_count + 1;
+      ELSIF prev_release_task_rec_.extended_due_dt BETWEEN sysdate AND sysdate + release_notify_interval_ THEN
+         -- Near due tasks
+         prev_release_summary_rec_.neardue_tasks_count   := prev_release_summary_rec_.neardue_tasks_count + 1;
+      END IF;
+   END LOOP;
+   
+   -- Overdue Tasks data
+   prev_release_summary_rec_.overdue_tasks         := FALSE;
+   prev_release_summary_rec_.overdue_task_status   := 'OK';
+   IF prev_release_summary_rec_.overdue_tasks_count > 0 THEN
+      prev_release_summary_rec_.overdue_tasks   := TRUE;
+      overdue_task_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_TASK');
+      IF (overdue_task_parm_value_ IS NOT NULL) THEN
+         prev_release_summary_rec_.overdue_task_status   := overdue_task_parm_value_;
+         IF overdue_task_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+   
+   -- Near Due Tasks data
+   prev_release_summary_rec_.neardue_tasks         := FALSE;
+   prev_release_summary_rec_.neardue_task_status   := 'OK';
+   IF prev_release_summary_rec_.neardue_tasks_count > 0 THEN
+      prev_release_summary_rec_.neardue_tasks   := TRUE;
+      near_due_task_parm_value_   := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_NEAR_DUE_TASK');
+      IF (near_due_task_parm_value_ IS NOT NULL) THEN
+         prev_release_summary_rec_.neardue_task_status   := near_due_task_parm_value_;
+         IF near_due_task_parm_value_ = 'ERROR' THEN
+            prev_release_summary_rec_.proceed_to_complete   := FALSE;
+         END IF;
+      END IF;
+   END IF;
+
+   -- Open Panels data
+   open_panel_parm_value_  := Adcom_util_API.Get_Mx_Parm_Value('ALLOW_CHECK_MPC_PANELS_ON_COMPLETE_CHECK');
+   IF open_panel_parm_value_ = 'FALSE' OR open_panel_parm_value_ IS NULL THEN
+      prev_release_summary_rec_.show_open_panels   := FALSE;
+   ELSE 
+      prev_release_summary_rec_.show_open_panels   := TRUE;
+      prev_release_summary_rec_.open_panel_count   := Av_Aircraft_Work_Package_API.Get_Opened_Panels_Count_By_Wp(aircraft_work_package_id_);
+      IF prev_release_summary_rec_.open_panel_count > 0 THEN
+         prev_release_summary_rec_.open_panels           := TRUE;
+         prev_release_summary_rec_.proceed_to_complete   := FALSE;
+      ELSE
+         prev_release_summary_rec_.open_panels           := FALSE;
+      END IF;
+   END IF;
+
+	RETURN prev_release_summary_rec_;
+END Get_Prev_Release_Summary_Info___;

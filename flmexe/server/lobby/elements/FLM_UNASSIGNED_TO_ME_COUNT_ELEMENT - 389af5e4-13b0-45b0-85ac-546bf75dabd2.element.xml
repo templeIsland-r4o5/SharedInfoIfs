@@ -1,0 +1,37 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Details of all the unassigned task assignments in the user's current shift.</DescriptiveText>
+    <LastModified>8/28/25, 3:46:25 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLM</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Unassigned</Title>
+    <Footer>in My Shift</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_UNASSIGNED_TO_ME_COUNT_ELEMENT</Name>
+    <ID>389af5e4-13b0-45b0-85ac-546bf75dabd2</ID>
+    <WebUrl>page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?searchcontext=Shift:CurrentShift&amp;$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$ and AssignedResourceId eq null and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work')
+
+
+</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>3435a40d-1071-4411-a2be-adc0d706be35</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

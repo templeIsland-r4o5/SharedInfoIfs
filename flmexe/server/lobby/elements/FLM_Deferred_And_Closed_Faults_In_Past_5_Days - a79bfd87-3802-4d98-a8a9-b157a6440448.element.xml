@@ -1,0 +1,69 @@
+<BarChart>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display deferred and closed faults count within 5 days</DescriptiveText>
+    <LastModified>17/04/2024, 23:14:42</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>FAULT DEFFERED/CLOSED AT MY STATION IN THE LAST 5 DAYS</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Deferred_And_Closed_Faults_In_Past_5_Days</Name>
+    <ID>a79bfd87-3802-4d98-a8a9-b157a6440448</ID>
+    <WebUrl></WebUrl>
+    <ColorStyle>Default</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>3e765c7d-c21b-475f-8b9b-20a49d95682a</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FaultDate</Column>
+                <Name>Fault Date</Name>
+                <DisplayName>FaultDate</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Count</Column>
+                <Name>Count</Name>
+                <DisplayName>Count</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Type</Column>
+                <Name>Type</Name>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+    <DisplayNullValueAs>Zero</DisplayNullValueAs>
+    <XYDataSeries>
+        <TopNOptions/>
+        <XColumn>
+            <Name>FaultDate</Name>
+            <Aggregate>NA</Aggregate>
+        </XColumn>
+        <YColumn>
+            <Name>Count</Name>
+            <Aggregate>NA</Aggregate>
+            <DisplayName>Count</DisplayName>
+        </YColumn>
+        <FColumn>
+            <Name>Type</Name>
+            <Aggregate>NA</Aggregate>
+            <DisplayName>Type</DisplayName>
+        </FColumn>
+    </XYDataSeries>
+    <OptionalDataSeries/>
+    <UseMultiSeries>true</UseMultiSeries>
+    <YAxisTitle>Faults Deferred/Closed</YAxisTitle>
+</BarChart>

@@ -1,0 +1,1223 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250602  DNMALK  AMDEV-22449, Commented Use of HmContractNo since Attribute not in Core.
+--  250529  SSIVLK  AD-18620, Modified AggFaultInstPartQuery query
+--  250527  SRLALK  AD-18264, Added entityset and references for HmNonRoutineApproval
+--  250228  SSIVLK  AD-14847, added hassignedchildrecord condition
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  241226  WIHALK  AD-14749, Added CheckDeferNr to validate Defer Non Routines.
+--  241206  WIHALK  AD-14739, Added IsNonRoutine attribute to check whether task is Non-Routine or not.
+--  241112  WEDILK  AD-14795, Introduce new fragment and leverage JTTaskStep to populate Task/Fault Step records
+--  241121  SILILK  AD-14805, Added JtTaskResourceArray to connect with AvFault.
+--  240828  VAALLK  AD-13967, Modified TaskPartId fetches in AggFaultInstPartQuery,AggFaultRemovePartQuery
+--  240715  RWELLK  AD-13037, Added aSource parameeter to the select reference URL.
+--  240714  RWELLK  AD-12997, Done the Modifications related to edit fault MEX and CAMMO integration.
+--  240622  RWELLK  AD-13037, Added DeferWithPhoneUpDeferral and externalId attributes.
+--  240610  RWELLK  AD-12981, Changed Edit fault logics.
+--  240605  LAWALK  AD-12742, Added new array for display CMS warning details in nested table.
+--  240513  SABOLK  AD-12727, Added CMS warnings exist attribute to AggFaultInstPartQuery and AggFaultRemovePartQuery.
+--  240301  majslk  AD-12350, Modified code to support Manadatory Config slot of MX publish parts
+--  240219  VAALLK  AD-11917, Added config slot mandatory attribute for part installations/part removals.
+--  240209  LAWALK  AD-11364, Added AggFaultRemovePartQuery
+--  240130  ROSDLK  AD-11373, Added AggFaultInstPartQuery
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  240206  VAALLK  AD-11376, Added step order,action type in FaultActionsQuery
+--  240111  VAALLK  AD-11368, Added FaultActionsQuery
+--  240111  VAALLK  AD-11361, Updated measured_date on MeasurementsQuery to be a timestamp
+--  240111  LAHNLK  AD-11367, Added AggFaultLabourQuery
+--  240108  majslk  AD-10938, Implemented surfacing is mandatory config slot in add and view parts
+--  240105  LAHNLK  AD-11365, Added AggFaultToolQuery
+--  240105  LAWALK  AD-11362, Added StepQuery
+--  231218  VAALLK  AD-11361, Added MeasurementQuery
+--  231204  ROSDLK  AD-11190, Added resubmission deferral request workflow after rejecting a deferral request.
+--  231129  LAWALK  AD-11188, Added action and vertual for deferral rejection workflow.
+--  231127  ROSDLK  AD-11186, Added deferral approval workflow related changes.
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230328  SEVHLK  AD-9659, Added Installed date to FaultInstalledParts query and Removed date to RemovedInstalledParts query
+--  230315  vaallk  AD-9618, Modified to use signed by user id instead of the user description after record work
+--  221214  majslk  AD-9053, Added RemovalReasonCode to FaultRemovedParts query
+--  221203  ROSDLK  AD-9099, Added GetFindInventoryUrl function to navigate to mtx inventory search page.
+--  221201  SEVHLK  AD-8999, Removed code snippets related to AvDeferralClass, AvDeferralReference, AvDeferralRefStatus and AvFaultDeferralRequest entities
+--  221130  LAWALK  AD-9113, Added LU Dependancies for RequestDeferral action.
+--  221125  LAWALK  AD-9113, Added RequestDeferral action.
+--  221122  SUPKLK  AD-8948, Rename fetch method Get_User_Role to Get_User_Roles
+--  221117  RWELLK  AD-8701, AvFaultDeferralRequest refference removed.
+--  221114  SUPKLK  AD-8948, Added UserRole attribute to AvFault, AvFaultTool, AvFaultLabour entities and FaultRemovedParts, FaultInstalledParts queries
+--  221102  rosdlk  AD-8697, Modified IsMocRoleExist attribute in the AvFault entity.
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  221022  LAHNLK  AD-8695, added function GetInitiateDeferralUrl
+--  220815  JIWELK  AD-8440, Add a reference to AvFaultSource entity in AvFault entity
+--  220728  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220718  DILDLK  AD-8097, Added RemovePart action, Updated AvFaultPart virtual.
+--  220719  JIWELK  AD-7980, Added IsFlmStandalone attribute in the AvFault entity
+--  220511  LAHNLK  AD-6764, added function GetAircraftSubSystemList
+--  220315  ROSDLK  AD-7114, Set username instead of using user's description for the actions taken
+--  220107  RWELLK  AD-5733, Added AssmblSlotPositionRef reference to AvFaultPartRequest, FaultInstalledParts and FaultRemovedParts
+--  220104  LaDelk  AD-4695, Added UseMaintenixTools attribute to fetch the value stored in system parameter.
+--  220104  LaDelk  AD-4695, Added UseMaintenixTools attribute to fetch if maintenix tools are used.
+--  211216  LaDelk  AD-4694, Added resource tool requirements tab.
+--  211118  ASIGLK  AD-5002, AvFault parameter AircraftTypeCode change to AssemblyTypeCode.
+--  211102  SatGlk  AD-4698, Set AircraftID to not editable.
+--  211005  sevhlk  AD-4041, Removed config_slot_code, config_slot_position_code and aircraft_type_code from AvExeTaskPartTab, AvFaultPartTab, AvExeTaskPartRequestTab and AvFaultPartRequestTab and added config_slot_position_id to these entity sets.
+--  210630  SatGlk  AD-1964, Used Adcom_Util_API.Get_Text_Time to fetch converted text hours for Actual,Scheduled Hours, Hours per Person attributes
+--  210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+--  210611  sevhlk  AD-1168, Added ModifyFaultSkill action and modified av_fault_labour entity.
+--  210604  himklk  AD-1195, added action RemoveFaultSkill and added FaultState attribute to AvFaultLabour.
+--  210602  lahnlk  AD-1151, added DeleteFaultTool
+--  210429  lahnlk  AD-1245,added AddFaultToolVirtual,AddFaultTool,GetPartNumber,GetDefaultToolSpec,GetToolSpec
+--  210311  Jihalk  LMM2020R1-1591, Modified HoursPerPerson to Text.
+--  210309  Jihalk  LMM2020R1-1591, Added ConvertedHours to AvFaultLabour entity.
+--  210308  tprelk  LMM2020R1-1581, Added workpackage details and removed installedpart query.
+--  210304  tprelk  LMM2020R1-1583, Added Part Request Tab .
+--  210303  Jihalk  LMM2020R1-1715, Added ludependency for AddFaultSkill.
+--  210301  Jihalk  LMM2020R1-1715, Added AddFaultSkill Action.
+--  210225  siydlk  LMM2020R1-1591, Removed the duplication of AvFaultLabourSet.
+--  210223  asselk  LMM2020R1-1718, Added Part Removals list.
+--  210218  Jihalk  LMM2020R1-1586, Override AvFaultAction entity.
+--  210218  siydlk  LMM2020R1-1591, Added Skill list.
+--  210218  asselk  LMM2020R1-1581, Projection name changed added tool list.
+--  210210  asselk  LMM2020R1-1581, Created.
+-----------------------------------------------------------------------------
+projection FlmFaultDetailHandling;
+component FLMEXE;
+layer Core;
+description "Fault Details Projection";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmParts;
+include fragment FlmResourceToolEquipmentTab;
+include fragment FlmTaskAssignments;
+include fragment FlmJtTaskStep;
+include fragment AvTaskReturns;
+include fragment AvTaskMaterial;
+include fragment AvCriticalItem;
+@DynamicComponentDependency ADCON
+include fragment HeavyMaintenanceInfo;
+include fragment FlmTaskTool;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFaultDetailSet for AvFault;
+entityset AvFaultDeferralSet for AvFaultDeferral;
+entityset FaultToolsSet for AvFaultTool;
+entityset FaultActionSet for AvFaultAction;
+entityset AvFaultPartSet for AvFaultPart;
+entityset AvDeferralRequestSet for AvDeferralRequest;
+entityset ModifyFaultVirtualSet for ModifyFaultVirtual;
+entityset AddFaultToolVirtualSet for AddFaultToolVirtual;
+entityset AddResourceToolVirtualSet for AddResourceToolVirtual;
+entityset ModifyResourceToolVirtualSet for ModifyResourceToolVirtual;
+entityset ApproveDeferralVirtualSet for ApproveDeferralVirtual;
+entityset RejectDeferralVirtualSet for RejectDeferralVirtual;
+entityset ResubmitDeferralRequestVirtualSet for ResubmitDeferralRequestVirtual;
+entityset MeasurementQuerySet for MeasurementsQuery;
+entityset FaultActionsQuerySet for FaultActionsQuery;
+@DynamicComponentDependency ADCON
+entityset HmNonRoutineApprovalSet for HmNonRoutineApproval;
+entityset AvCriticalItemSet for AvCriticalItem;
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvExeTask {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   crud = Create, Read, Update, Delete;
+}
+
+@Override
+entity AvFault {
+   timestamptzref = "server";
+
+   crud = Create, Read, Update, Delete;
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute SubSystemId Number;
+   attribute FaultCode Text;
+   attribute FaultSourceCode Text;
+   attribute FoundOnType Text;
+   attribute Description Text;
+   attribute FoundOnId Number;
+   attribute PhaseOfFlightCode Text;
+   attribute FailureTypeCode Text;
+   attribute FaultSeverityCode Text;
+   attribute AircraftId Number;
+   attribute ExternalId Text;
+   attribute AltId Text;
+   attribute AssemblyTypeCode Text {
+      fetch = "Aircraft_API.Get_Assembly_Type_Code(aircraft_id)";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+      editable = [false];
+   }
+   attribute TaskSeq Number;
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Closed";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute LastFaultActionId Text {
+      fetch = "Av_Fault_Action_API.Get_Last_Action_Id(fault_id)";
+   }
+   attribute LastFaultUser Text {
+      fetch = "Av_Fault_Action_API.Get_Action_User(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute LastFaultDate Timestamp {
+      fetch = "Av_Fault_Action_API.Get_Action_Date(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute DeferralReferenceId Number {
+      fetch = "Av_Fault_Deferral_API.Get_Act_Deferral_reference_Id(fault_id)";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute DeferralId Text {
+      fetch = "Av_Fault_Deferral_API.Get_Active_Deferral(fault_id)";
+   }
+   attribute FaultPartCount Number {
+      fetch = "Av_Fault_Part_API.Get_Fault_Part_Count(fault_id)";
+   }
+   attribute ToolsCount Number {
+      fetch = "Av_Fault_Tool_API.Get_Fault_Tools_Count(fault_id)";
+   }
+   attribute FaultActionCount Number {
+      fetch = "Av_Fault_Action_API.Get_Fault_Action_Count(fault_id)";
+   }
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute Barcode Text;
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute ClosedFaultOffsetDate Timestamp {
+      fetch = "Av_Fault_API.Get_Closed_Fault_Offset_Date(Fnd_Session_API.Get_Fnd_User(),fault_id)";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Fault_API.Get_Aircraft(fault_id)";
+      editable = [false];
+   }
+   attribute WorkPackageId Number {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Av_Work_Package_id (fault_id)";
+   }
+
+   attribute UseMaintenixTools Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Maintenix_Tools_Used()";
+   }
+
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_FLM_Standalone()";
+   }
+
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id , NULL)";
+   }
+
+   attribute IsMocRoleExist Boolean("TRUE", "FALSE") {
+      fetch = "Flmexe_Util_API.Is_MOC_Role_Exists(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   attribute AircraftRegCode Text {
+      fetch = "Aircraft_API.Get_Reg_Code(aircraft_id)";
+   }
+
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute HasPreviousMaintenance Boolean("TRUE", "FALSE") {
+      fetch = "Av_Fault_API.Has_Previous_Maintenace(fault_id,external_id,Objstate)";
+   }
+   attribute SourceRef1 Text {
+      fetch = "Av_Exe_Task_API.Get_Source_Ref1(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute SourceConnectionLuName Enumeration(JtConnectedObject) {
+      fetch = "Av_Exe_Task_API.Get_Source_Connection_Lu_Na_Db(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute IsNonRoutine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute Evaluated Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(Evaluated, 1, 'TRUE','FALSE')";
+      editable = [false];
+   }
+   attribute EvaluatedBy Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(Evaluated_By))";
+   }
+   attribute HasFlightSafetyImpact Boolean {
+      fetch = "DECODE(flight_safety_impact, 1, 'TRUE','FALSE')";
+      editable = [false];
+   }
+   attribute TaskSite Text {
+      fetch = "Work_Task_API.Get_Site(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute ActualStartDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(Av_Aircraft_Work_Package_API.Get_Av_Work_Package_id (fault_id))";
+   }
+   attribute SchedEndDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(Av_Aircraft_Work_Package_API.Get_Av_Work_Package_id (fault_id))";
+   }
+   attribute PriorityId Text {
+      fetch = "Av_Exe_Task_API.Get_Priority_id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute IsJobstopDetailsVisible Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_Jobstop_Details_Visible()";
+   }
+   attribute IsCertified Text {
+      fetch = "DECODE(Av_Exe_Task_API.Get_Approval_Number(task_seq), NULL, 'PENDING','SIGNED')";
+      editable = [false];
+   }
+   attribute ClassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Class_Code(task_seq)";
+   }
+   attribute SubclassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Subclass_Code(task_seq)";
+   }
+   attribute FoundDuringTaskStatus Text {
+      fetch = "Av_Exe_Task_API.Get_State(found_on_id)";
+   }
+   attribute FoundDuringFaultId Number {
+      fetch = "Av_Exe_Task_API.Get_Fault_Id(found_on_id)";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   attribute IsInsPartSensExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Sens_API.Is_Ins_Part_Sens_Exist(fault_id)";
+   }
+   attribute IsRemPartSensExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Sens_API.Is_Rem_Part_Sens_Exist(fault_id)";
+   }
+   attribute FoundByUserContactWidget Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(Av_Fault_API.Get_Found_By_User(fault_id)))";
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(fault_id)";
+   }
+   attribute IsHangarSupervisor Boolean("TRUE", "FALSE") {
+      fetch = "Flmexe_Util_API.Is_Hangar_Supervisor()";
+   }
+   attribute IsHangarCrewLead Boolean("TRUE", "FALSE") {
+      fetch = "Flmexe_Util_API.Is_Hangar_Crew_Lead()";
+   }
+   attribute CriticalItemCount Number {
+      fetch = "Av_Critical_Item_API.Get_Task_Citical_Item_Count(task_seq)";
+   }
+   attribute TaskControlAuthorityEnabled Text {
+      fetch = "Adcom_Util_API.Get_User_Task_Ctrl_Auth_Perm(Fnd_Session_API.Get_Fnd_User())";
+   }
+   attribute TaskObjstate Text {
+      fetch = "Av_Exe_Task_API.Get_Objstate(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute IsExecutionBlockedByCap Boolean("TRUE", "FALSE") {
+      fetch = "Adcon_Util_API.Is_Execution_Blocked_By_Cap()";
+   }
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference FoundOnFlightRef(FoundOnId) to AvFlight(FlightId);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvFaultDeferralRef(DeferralId) to AvFaultDeferral(DeferralId);
+   reference AvLogbookTypeCodeRef(LogbookTypeCode) to  AvLogbookType(LogbookTypeCode);
+   reference AvPhaseOfFlightCodeRef(PhaseOfFlightCode) to AvPhaseOfFlight(PhaseOfFlightCode);
+   reference AvFailureTypeCodeRef(FailureTypeCode) to   AvFailureType(FailureTypeCode);
+   reference AvFaultSeverityCodeRef(FaultSeverityCode) to   AvFaultSeverity(FaultSeverityCode);
+   reference AvFaultSourceCodeRef(FaultSourceCode) to   AvFaultSource(FaultSourceCode);
+   reference AvExeTaskNewRef(FaultId) to AvExeTask(FaultId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+   reference FoundOnTaskRef(FoundOnId) to AvExeTask(TaskSeq);
+   reference FoundOnWorkPackageRef(FoundOnId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvAirportForUserRef(FoundByUser) to FndUser(Identity);
+   reference PriorityLovRef(PriorityId) to MaintenancePriority(PriorityId);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+
+   array FaultToolArray(FaultId) to AvFaultTool(FaultId);
+   array FaultActionArray(FaultId) to AvFaultAction(FaultId);
+   array FaultPartRemovalArray(FaultId) to FaultRemovedParts(FaultId);
+   array FaultPartInstallArray(FaultId) to FaultInstalledParts(FaultId);
+   array AggFaultToolArray(FaultId) to AggFaultToolQuery(MmFaultId);
+   array MeasurementArray(FaultId) to MeasurementsQuery(MmFaultId);
+   array FaultActionsArray(FaultId) to FaultActionsQuery(MmFaultId);
+   array AggFaultInstPartArray(FaultId) to AggFaultInstPartQuery(MmFaultId);
+   array AggFaultRemovePartArray(FaultId) to AggFaultRemovePartQuery(MmFaultId);
+   array JtTaskResourceArray(TaskSeq) to JtTaskResourceDemandQuery(TaskSeq);
+   array JtTaskStepArray(TaskSeq) to JtTaskStep(TaskSeq);
+   array AvTaskReturnArray(TaskSeq) to JtTaskReturn(TaskSeq);
+   array MaintMaterialRequisitionArray(TaskSeq) to MaintMaterialReqLine(TaskSeq);
+   array CriticalItemsArray(TaskSeq) to AvCriticalItem(TaskSeq);
+   array TaskToolDemandQueryArray(TaskSeq) to ToolDemandQuery(TaskSeq);
+}
+
+@Override
+entity AvDeferralRequest {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+}
+
+@Override
+entity AvFaultTool {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+
+   attribute FaultId Number;
+   attribute FaultToolId Number {
+      required = [false];
+   }
+   attribute ToolStatus Text {
+      fetch = "Av_Fault_Tool_API.Get_Tool_Status(fault_tool_id)";
+   }
+   attribute PartGroupCode Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Code(Av_Part_Group_Part_API.Get_Part_Group_Id(Part_Number_Id))";
+   }
+   attribute PartGroupName Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Name(Av_Part_Group_Part_API.Get_Part_Group_Id(Part_Number_Id))";
+   }
+   attribute ConvertAccTime Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(actual_hours)";
+   }
+   attribute ConvertSchedTime Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(scheduled_hours)";
+   }
+   attribute AssignedUser Text {
+      fetch = "Av_Fault_Tool_API.Get_Assigned_User(fault_tool_id)";
+   }
+
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   reference  PartNumberRef(PartNumberId) to AvPartNumber(PartNumberId);
+   reference  AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AvToolSpecificationRef(ToolSpecificationCode) to AvToolSpecification(ToolSpecificationCode);
+}
+
+@Override
+entity AvFaultAction {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+
+   attribute ActionUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(Av_Fault_Action_API.Get_Action_User(fault_action_id)))";
+   }
+   reference  AvFaultRef(FaultId) to AvFault(FaultId);
+}
+
+@Override
+entity AvFaultPart {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+   attribute FaultId Number;
+   attribute FaultPartId Number;
+   attribute InstalledQuantity Number;
+   attribute InstalledUser Text;
+   attribute Position Text {
+      fetch = "Av_Config_Slot_Position_API.Get_Config_Slot_Position_Code(config_slot_position_id)";
+   }
+   attribute PartGroupCode Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Code(part_group_id)";
+   }
+   attribute PartGroupName Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Name(part_group_id)";
+   }
+   attribute RemovalStates Text {
+      fetch = "Av_Fault_Part_API.Get_Removal_States(fault_part_id)";
+   }
+   attribute InstallStates Text {
+      fetch = "Av_Fault_Part_API.Get_Install_States(fault_part_id)";
+   }
+   attribute RemovedPartNo Text {
+      fetch = "Av_Part_Number_API.Get_Part_Number(removed_part_no_id)";
+   }
+   attribute InstalledPartNo Text {
+      fetch = "Av_Part_Number_API.Get_Part_Number(installed_part_no_id)";
+   }
+   attribute RemovalReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removal_reason_code)";
+   }
+   attribute ConfigSlotPositionId Number;
+   reference AvConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AvRemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+   reference AvPartGroupRef(PartGroupId) to AvPartGroup(PartGroupId);
+}
+
+@Override
+entity AvConfigSlot {
+   crud = Read;
+}
+
+@Override
+entity AvExeTaskPartWarning {
+   crud = Read;
+   ludependencies = AvExeTaskPart;
+   reference AvExeTaskPartRef(TaskPartId) to AvExeTaskPart(TaskPartId);
+}
+
+query FaultInstalledParts {
+   timestamptzref = "server";
+   from = "Av_Fault_Part";
+   keys = FaultPartId;
+   where = "installed_quantity IS NOT null";
+   lu = AvFaultPart;
+
+   attribute FaultId Number;
+   attribute FaultPartId Number;
+   attribute ConfigSlotPositionCode Text {
+      fetch = "Av_Config_Slot_Position_API.Get_Config_Slot_Position_Code(config_slot_position_id)";
+   }
+   attribute InstalledQuantity Number;
+   attribute InstalledDate Timestamp;
+   attribute InstalledSerialNo Text;
+   attribute PartGroupCode Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Code(part_group_id)";
+   }
+   attribute PartGroupName Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Name(part_group_id)";
+   }
+   attribute InstallStates Text {
+      fetch = "Av_Fault_Part_API.Get_Install_States(fault_part_id)";
+   }
+   attribute InstalledPartNo Text {
+      fetch = "Av_Part_Number_API.Get_Part_Number(installed_part_no_id)";
+   }
+   attribute InstalledUser Text {
+      fetch = "Av_Fault_Part_API.Get_Installed_User(fault_part_id)";
+   }
+   attribute AssmblyConfigSlotPosId Number {
+      fetch = "Av_Fault_Part_API.Get_Assy_Config_Position(fault_part_id,part_group_id)";
+   }
+
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   attribute InstalledConfigSlot Text {
+      fetch = "Av_Config_Slot_API.Is_Mandatory_Config_Slot(part_group_id)";
+   }
+
+   attribute AssemblyTypeCode Text {
+      fetch = "Av_Part_Group_API.Get_Asse_Type_Code_By_Part_Grp(part_group_id)";
+   }
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+}
+
+@Override
+@DynamicComponentDependency ADCON
+entity HmNonRoutineApproval {
+   crud = Read;
+   attribute ApprovalStatus Enumeration(HmNonRoutineApprovalState) {
+      fetch = "objstate";
+      editable = [false];
+   }
+}
+
+query FaultRemovedParts {
+   timestamptzref = "server";
+
+   from = "Av_Fault_Part";
+   keys = FaultPartId;
+   where = "removed_quantity IS NOT null";
+   lu = AvFaultPart;
+
+   attribute FaultId Number;
+   attribute FaultPartId Number;
+   attribute ConfigSlotPositionCode Text {
+      fetch = "Av_Config_Slot_Position_API.Get_Config_Slot_Position_Code(config_slot_position_id)";
+   }
+   attribute RemovedSerialNo Text;
+   attribute RemovedQuantity Text;
+   attribute RemovedDate Timestamp;
+   attribute RemovalReasonCode Text;
+   attribute PartGroupCode Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Code(part_group_id)";
+   }
+   attribute PartGroupName Text {
+      fetch = "Av_Part_Group_API.Get_Part_Group_Name(part_group_id)";
+   }
+   attribute RemovalReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removal_reason_code)";
+   }
+   attribute RemovalStates Text {
+      fetch = "Av_Fault_Part_API.Get_Removal_States(fault_part_id)";
+   }
+   attribute RemovedPartNo Text {
+      fetch = "Av_Part_Number_API.Get_Part_Number(removed_part_no_id)";
+   }
+   attribute RemovedUser Text {
+      fetch = "Av_Fault_Part_API.Get_Removed_User(fault_part_id)";
+   }
+   attribute AssmblyConfigSlotPosId Number {
+      fetch = "Av_Fault_Part_API.Get_Assy_Config_Position(fault_part_id,part_group_id)";
+   }
+
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+   attribute RemovedConfigSlot Text {
+      fetch = "Av_Config_Slot_API.Is_Mandatory_Config_Slot(part_group_id)";
+   }
+   attribute AssemblyTypeCode Text {
+      fetch = "Av_Part_Group_API.Get_Asse_Type_Code_By_Part_Grp(part_group_id)";
+   }
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+}
+query AggFaultToolQuery {
+   timestamptzref = "server";
+
+   from = "Agg_Fault_Tool_Mm_Owned";
+   keys = AggregateId;
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute ToolSpecificationCode Text;
+   attribute ActualHoursFmt Text;
+   attribute ScheduledHoursFmt Text;
+   attribute PartNumber Text;
+   attribute SerialNo Text;
+   attribute AssignedUser Text;
+   attribute AssignedDateTime Timestamp;
+   attribute Status Text;
+   attribute MmFaultId Number;
+
+   reference AvToolSpecAggRef(ToolSpecificationCode) to AvToolSpecification(ToolSpecificationCode);
+   reference AvFaultRef(MmFaultId) to AvFault(FaultId);
+}
+query MeasurementsQuery {
+   timestamptzref = "server";
+   from = "Agg_Fault_Measurement_Mm_Owned";
+   keys = AggregateId;
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute MmFaultId Number;
+   attribute MeasurementOrder Number;
+   attribute Measurement Text;
+   attribute Quantity Text;
+   attribute MeasuredUser Text;
+   attribute MeasuredDate Timestamp;
+   attribute Status Text;
+
+   reference  AvFaultRef(MmFaultId) to AvFault(FaultId);
+}
+
+query FaultActionsQuery {
+   timestamptzref = "server";
+   from = "Aggre_Fault_Action_Mm_Owned";
+   keys = AggregateId;
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute MmFaultId Number;
+   attribute ActionDescription Text;
+   attribute ActionDate Timestamp;
+   attribute ActionUser Text;
+   attribute StepOrder Text;
+   attribute ActionType Text;
+
+   reference AvFaultRef(MmFaultId) to AvFault(FaultId);
+}
+
+query AggFaultInstPartQuery {
+   timestamptzref = "server";
+   from = "Agg_Fault_Inst_Part_Mm_Owned";
+   keys = AggregateId;
+   where = "installed_quantity IS NOT null";
+   lu = none;
+   ludependencies = AvFaultPart, AvExeTaskPart, MaintMaterialReqLine;
+
+   attribute AggregateId Text;
+   attribute PartGroupCode Text;
+   attribute PartGroupName Text;
+   attribute Assembly Text;
+   attribute AssemblyPosition Text;
+   attribute Position Text;
+   attribute PartNumber Text;
+   attribute SerialNo Text;
+   attribute InstalledQuantity Number;
+   attribute IsCommonHardware Text;
+   attribute SignedUser Text;
+   attribute SignedDate Timestamp;
+   attribute Status Text;
+   attribute MmFaultId Number;
+   attribute ConfigIsMandatory Text;
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "AV_EXE_TASK_PART_API.Is_Part_Warnings_Exist(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskPartId Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id)";
+   }
+   attribute ConfigSlotPositionId Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Config_Slot_Position_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute InstalledPartNoId Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Installed_Part_No_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute CreatedBy Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Created_By(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute SchedulingAction Enumeration(SchedulingActionType) {
+      fetch = "AV_EXE_TASK_PART_API.Get_Scheduling_Action(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(AV_EXE_TASK_PART_API.Get_Installed_Quantity(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(AV_EXE_TASK_PART_API.Get_Task_Seq(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))),Av_Part_Number_API.Get_Part_Number(AV_EXE_TASK_PART_API.Get_Installed_Part_No_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id)))))";
+   }
+   attribute InstalledSerialNo Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Installed_Serial_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute InstalledBatchNo Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Installed_Batch_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Part_Sens_API.Get_Task_Part_Sensitivities(Av_Exe_Task_API.Get_Task_Seq(Mm_Fault_Id),AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute CancelledBy Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Cancelled_By(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute MaintMaterialOrderNo Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Maint_Material_Order_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute LineItemNo Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Line_Item_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskSeq Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Task_Seq(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskControlAuthorityEnabled Text {
+      fetch = "Adcom_Util_API.Get_User_Task_Ctrl_Auth_Perm(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   reference AvFaultRef(MmFaultId) to AvFault(FaultId);
+   reference AvPartNumberRef(InstalledPartNoId) to AvPartNumber(PartNumberId);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference MaintMaterialReqRef(MaintMaterialOrderNo, LineItemNo) to MaintMaterialReqLine(MaintMaterialOrderNo, LineItemNo);
+   array FaultPartInstallWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+query AggFaultRemovePartQuery {
+   timestamptzref = "server";
+   from = "Agg_Fault_Remove_Part_Mm_Owned";
+   keys = AggregateId;
+   where = "quantity IS NOT null";
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute PartGroupCode Text;
+   attribute PartGroupName Text;
+   attribute Assembly Text;
+   attribute AssemblyPosition Text;
+   attribute Position Text;
+   attribute PartNumber Text;
+   attribute SerialNo Text;
+   attribute Quantity Number;
+   attribute RemovedReasonCode Text;
+   attribute IsCommonHardware Text;
+   attribute SignedUser Text;
+   attribute SignedDate Timestamp;
+   attribute Status Text;
+   attribute MmFaultId Number;
+   attribute ConfigIsMandatory Text;
+   attribute RemovedReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removed_reason_code)";
+   }
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "AV_EXE_TASK_PART_API.Is_Part_Warnings_Exist(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskPartId Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id)";
+   }
+   attribute ConfigSlotPositionId Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Config_Slot_Position_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskReturnLineSeq Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Task_Return_Line_Seq(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute CreatedBy Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Created_By(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute RemovedQuantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(AV_EXE_TASK_PART_API.Get_Task_Seq(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))),Av_Part_Number_API.Get_Part_Number(AV_EXE_TASK_PART_API.Get_Removed_Part_No_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id)))))";
+   }
+   attribute RemovedPartNoId Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Removed_Part_No_Id(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute RemovedSerialNo Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Removed_Serial_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute RemovedBatchNo Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Removed_Batch_No(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Part_Sens_API.Get_Task_Part_Sensitivities(Av_Exe_Task_API.Get_Task_Seq(Mm_Fault_Id),AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskSeq Number {
+      fetch = "AV_EXE_TASK_PART_API.Get_Task_Seq(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute CancelledBy Text {
+      fetch = "AV_EXE_TASK_PART_API.Get_Cancelled_By(AV_EXE_TASK_PART_API.Get_T_Part_Id_From_F_Part_Id(Aggregate_Id))";
+   }
+   attribute TaskControlAuthorityEnabled Text {
+      fetch = "Adcom_Util_API.Get_User_Task_Ctrl_Auth_Perm(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   reference AvFaultRef(MmFaultId) to AvFault(FaultId);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference JtTaskReturnRef(TaskReturnLineSeq) to JtTaskReturn(TaskReturnLineSeq);
+   reference AvPartNumberRef(RemovedPartNoId) to AvPartNumber(PartNumberId);
+   reference PartSerialCatalogRef(PartNumber, RemovedSerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   array FaultPartRemovalWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration FaultStatus {
+   value = "Open" {
+      label = "Open";
+   }
+   value = "Deferred" {
+      label = "Deferred";
+   }
+   value = "Closed" {
+      label = "Closed";
+   }
+}
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+action AddFaultTool {
+   initialcheck none;
+   parameter FaultId       Number;
+   parameter ToolSpecificationCode  Text;
+   parameter PartNoId Number;
+   parameter SchedDuration Text;
+   ludependencies = AvExeTaskTool, AvFaultTool, AggFaultToolQuery;
+}
+action DeleteFaultTool {
+   initialcheck none;
+   parameter FaultToolId       Number;
+   ludependencies = AvExeTaskTool, AvFaultTool, AggFaultToolQuery;
+}
+action RemovePart {
+   initialcheck none;
+   parameter    FaultPartId    Number;
+   ludependencies = AvFault, AvExeTaskPart, AvFaultPart, FaultInstalledParts, FaultRemovedParts, AggFaultInstPartQuery, AggFaultRemovePartQuery;
+}
+
+@DynamicComponentDependency TOOLEQ
+action RemoveResourceTool {
+   initialcheck none;
+   parameter ToolId Number;
+   ludependencies = AvResourceToolEquipment;
+}
+
+action RequestDeferral {
+   initialcheck none;
+   parameter FaultId Number;
+   ludependencies = AvFault;
+}
+
+action ApproveDeferral {
+   initialcheck none;
+   ludependencies = AvFault, AvDeferralRequest;
+   parameter FaultId Number;
+   parameter AuthorizationNumber Text;
+}
+
+action ClickInitiateDeferral {
+   initialcheck none;
+   ludependencies = AvFault;
+   parameter FaultId Number;
+}
+
+action RejectDeferral {
+   initialcheck none;
+   ludependencies = AvFault, AvDeferralRequest;
+   parameter FaultId Number;
+   parameter RejectionReason Text;
+}
+
+action ResubmitDeferral {
+   initialcheck none;
+   parameter FaultId Number;
+   parameter ReauthorizationReason Text;
+   ludependencies = AvExeTask, AvFault, AvDeferralRequest;
+}
+
+action ModifyFaultService {
+   initialcheck none;
+   implementation = "Java";
+
+   parameter FaultId Number;
+   parameter SubSystemId Number;
+   parameter LogbookReference Text;
+   parameter Description Text;
+   parameter LogbookTypeCode Text;
+   parameter FailureTypeCode Text;
+   parameter FaultSeverityCode Text;
+   parameter FaultSourceCode Text;
+   parameter FaultCode Text;
+   parameter PhaseOfFlightCode Text;
+   parameter AircraftAltId Text;
+   parameter AircraftSubSystemAltId Text;
+   parameter FaultAltId Text;
+   parameter ExternalId Text;
+   parameter FoundOnDate Timestamp;
+   parameter FoundByUser Text;
+   parameter LongDescription Text;
+   parameter PriorityId Text;
+   parameter EtopsSignificant Boolean;
+   parameter FlightSafetyImpact Boolean;
+
+   ludependencies = AvFault, MeasurementsQuery;
+}
+
+action EvaluateNonRoutineService {
+   initialcheck none;
+   implementation = "Java";
+
+   parameter FaultId Number;
+   parameter AltId Text;
+
+   ludependencies = AvFault, AvExeTask;
+}
+
+action ValidateFoundOnDate {
+   initialcheck none;
+   timestamptzref = "server";
+
+   parameter FoundOnDate Timestamp;
+   parameter AircraftWpId Number;
+}
+
+action CompleteCriticalItem {
+   initialcheck none;
+   parameter CriticalItemId Number;
+   ludependencies = AvExeTask, AvFault, AvCriticalItem;
+}
+
+action Refresh {
+   initialcheck none;
+   ludependencies = AvFault, AvExeTask;
+}
+--------------------------------- FUNCTIONS ---------------------------------
+function GetPartNumber List<Entity(AvPartNumber)> {
+   parameter PartNumberId  Number;
+   where = "part_number_id IN (SELECT part_number_id FROM av_tool_specification_part WHERE tool_Specification_code IN(SELECT tool_specification_code FROM av_Tool_Specification))";
+}
+function GetDefaultToolSpec Text {
+   parameter PartNumberId  Number;
+}
+function GetToolSpec List<Entity(AvToolSpecification)> {
+   parameter PartNoId Number;
+   where = "tool_specification_code IN (SELECT tool_specification_code FROM av_tool_specification_part WHERE part_Number_id = :PartNoId)";
+}
+function GetResourceTools List<Entity(AvResourceToolEquipment)> {
+   timestamptzref = "site(TaskSite)";
+   parameter FaultId Number;
+   parameter TaskSite Text;
+   where = "(source_ref_type_db = 'FAULT' AND source_ref = :FaultId) OR (source_ref_type_db = 'TASK' AND source_ref = Av_Exe_Task_API.Get_Task_Seq(:FaultId))";
+}
+function GetAircraftSubSystemList List<Entity(AvAircraftSubSystem)> {
+   parameter AssemblyTypeCode Text;
+   where = "system_id IN (SELECT System_Id FROM Av_Aircraft_System WHERE assembly_type_code = :AssemblyTypeCode)";
+}
+function GetInitiateDeferralUrl Text {
+   parameter ExternalPageUrl Text;
+   parameter AircraftRegCode Text;
+   parameter LogbookDesc Text;
+   parameter LogbookReference Text;
+   parameter FoundByUser Text;
+   parameter FaultSourceCode Text;
+   parameter FoundOnFlight Text;
+   parameter FlightStage Text;
+   parameter RecordId Text;
+}
+
+function GetFindInventoryUrl Text {
+   parameter ExternalPagePath Text;
+   parameter SearchType Text;
+   parameter AircraftRegCode Text;
+   parameter IataCode Text;
+   parameter FaultNameRef Text;
+}
+
+function GetSelectReferenceUrl Text {
+   parameter ExternalPagePath Text;
+   parameter ATaskSeq Text;
+   parameter AType Text;
+   parameter ASource Text;
+}
+function CheckDeferNonRoutine Boolean {
+   parameter FaultId Number;
+}
+function GetAirportUserList List<Entity(FndUser)> {
+   where = "identity IN (SELECT Identity FROM Av_Airport_For_User WHERE Airport_Id = (SELECT Airport_Id FROM Av_Airport_For_User WHERE identity = Fnd_Session_API.Get_Fnd_User()))";
+}
+function GetFailedSystemSensitivity Structure(SensitivityResponseStructure) {
+   initialcheck none;
+   implementation = "Java";
+   parameter ConfigSlotAltId Text;
+   parameter AircraftAltId Text;
+
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure ModifyFaultInfoStructure {
+   timestamptzref = "server";
+
+   attribute FaultId                    Number;
+   attribute AircraftId                 Number;
+   attribute Aircraft                   Text;
+   attribute Description                Text;
+   attribute SubSystemId                Number;
+   attribute LogbookReference           Text;
+   attribute AssemblyTypeCode           Text;
+   attribute LogbookTypeCode            Text;
+   attribute FailureTypeCode            Text;
+   attribute FaultSourceCode            Text;
+   attribute FaultSeverityCode          Text;
+   attribute FaultCode                  Text;
+   attribute PhaseOfFlightCode          Text;
+   attribute AircraftAltId              Text;
+   attribute AircraftSubSystemAltId     Text;
+   attribute FaultAltId                 Text;
+   attribute ExternalId                 Text;
+   attribute FoundOnDate                Timestamp;
+   attribute FoundByUser                Text;
+   attribute LongDescription            Text;
+   attribute PriorityId                 Text;
+   attribute FlightSafetyImpact         Boolean;
+   attribute EtopsSignificant           Boolean;
+   attribute IsNonRoutine               Boolean;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute WorkPackageId              Number;
+}
+
+structure ModifyResourceToolInfoStructure {
+   attribute ToolId Number;
+   attribute ResourceGroupId Text;
+   attribute ResourceGroupSeq Number;
+   attribute ResourceId Text;
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute ScheduleTime Text;
+}
+
+structure InstallPartsInfoStructure {
+
+   attribute AggregateId Text;
+   attribute TaskSeq Number;
+   attribute TaskPartId Number;
+   attribute InstalledPartNoId Number;
+   attribute InstalledPartNo Text;
+   attribute InstalledQuantity Number;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute PartName Text;
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+
+}
+structure SensitivityResponseStructure {
+   attribute UIFormattedSensitivities Text;
+}
+--------------------------------- VIRTUALS ----------------------------------
+virtual ModifyFaultVirtual {
+   ludependencies = AvFault;
+   timestamptzref = "server";
+
+   attribute FaultId                    Number;
+   attribute AircraftId                 Number;
+   attribute Description                Text;
+   attribute SubSystemId                Number;
+   attribute AssemblyTypeCode           Text;
+   attribute LogbookTypeCode            Text;
+   attribute FailureTypeCode            Text;
+   attribute FaultSourceCode            Text;
+   attribute FaultSeverityCode          Text;
+   attribute FaultCode                  Text;
+   attribute PhaseOfFlightCode          Text;
+   attribute AircraftAltId              Text;
+   attribute AircraftSubSystemAltId     Text;
+   attribute FaultAltId                 Text;
+   attribute ExternalId                 Text;
+   attribute PriorityId                 Text;
+   attribute FoundByUser                Text;
+   attribute FoundOnDate                Timestamp;
+   attribute LongDescription            Text;
+   attribute FlightSafetyImpact         Boolean;
+   attribute EtopsSignificant           Boolean;
+   attribute IsNonRoutine               Boolean;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute SensitivityForFailedSys    Text;
+
+   reference AircraftRef(AircraftId)                     to Aircraft(AircraftId);
+   reference AvAircraftSubSystemRef(SubSystemId)         to AvAircraftSubSystem(SubSystemId);
+   reference AvLogbookTypeCodeRef(LogbookTypeCode)       to AvLogbookType(LogbookTypeCode);
+   reference AvPhaseOfFlightCodeRef(PhaseOfFlightCode)   to AvPhaseOfFlight(PhaseOfFlightCode);
+   reference AvFailureTypeCodeRef(FailureTypeCode)       to AvFailureType(FailureTypeCode);
+   reference AvFaultSourceCodeRef(FaultSourceCode)       to AvFaultSource(FaultSourceCode);
+   reference AvFaultSeverityCodeRef(FaultSeverityCode)   to AvFaultSeverity(FaultSeverityCode);
+   reference AvDeferralRequestRef(FaultId)               to AvDeferralRequest(FaultId);
+}
+virtual AddFaultToolVirtual {
+   attribute FaultId Number;
+   attribute ToolSpecificationCode Text {
+      required = [true];
+   }
+   attribute PartNoId Number {
+      required = [true];
+   }
+   attribute SerialNo Text;
+   attribute AssignedUser Text;
+   attribute SchedDuration Text;
+   attribute AssignedDateTiime Date;
+   attribute ActualDuration Number;
+   attribute Type Text;
+
+   reference AvToolSpecificationRef(ToolSpecificationCode) to AvToolSpecification(ToolSpecificationCode);
+   reference AvPartNumberRef(PartNoId) to AvPartNumber(PartNumberId);
+}
+
+virtual AddResourceToolVirtual {
+   attribute FaultId Number;
+   attribute ToolId Number;
+   attribute ResourceGroupId Text {
+      required = [true];
+   }
+   attribute ResourceId Text;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute AssignedUser Text {
+      label = "Signed By";
+   }
+   attribute IsSigned Boolean;
+   attribute AssignedDateTime Date {
+      label = "Assigned Date";
+   }
+   attribute SchedDuration Text {
+      label = "Scheduled Hours(HH:MM)";
+   }
+   attribute ActualDuration Text {
+      label = "Actual Hours(HH:MM)";
+   }
+
+   reference ResourceGroupIdRef(ResourceGroupId) to ResourceGroupMaintLov(ResourceId) {
+      label = "Tool/Equipment Group";
+      copy ResourceSeq to ResourceGroupSeq;
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+      copy ResourceSeq to ResourceSeq;
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo) {
+      label = "Serial No";
+   }
+   action AddResourceTool {
+      parameter FaultId Number;
+      ludependencies = AvResourceToolEquipment;
+   }
+}
+
+virtual ModifyResourceToolVirtual {
+   attribute ToolId Number;
+   attribute ResourceGroupId Text {
+      label = "Tool/Equipment Group";
+      editable = [false];
+   }
+   attribute ResourceId Text;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute SchedDuration Text {
+      label = "Scheduled Hours(HH:MM)";
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+      copy ResourceSeq to ResourceSeq;
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo) {
+      label = "Serial No";
+   }
+   action ModifyResourceTool {
+      ludependencies = AvResourceToolEquipment;
+   }
+}
+
+virtual ApproveDeferralVirtual {
+   ludependencies = AvFault, AvDeferralRequest;
+   attribute FaultId                    Number;
+   attribute DeferralAuthorization      Text;
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+}
+
+virtual RejectDeferralVirtual {
+   ludependencies = AvFault, AvDeferralRequest;
+   attribute FaultId              Number;
+   attribute RejectionReason      Text;
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+}
+
+virtual ResubmitDeferralRequestVirtual {
+   ludependencies = AvFault, AvDeferralRequest;
+   attribute FaultId                    Number;
+   attribute ReauthorizationReason      Text;
+   reference AvFaultRef(FaultId)           to AvFault(FaultId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+}
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

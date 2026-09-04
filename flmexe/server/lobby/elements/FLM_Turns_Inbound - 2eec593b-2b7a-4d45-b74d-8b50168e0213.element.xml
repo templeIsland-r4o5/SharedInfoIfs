@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:33:44 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Inbound</Title>
+    <Footer>Aircraft</Footer>
+    <Background>#FF006996</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_Inbound</Name>
+    <ID>2eec593b-2b7a-4d45-b74d-8b50168e0213</ID>
+    <WebUrl>page/FlmMyAircraftTurns/MyAircraftTurnsCardPage;$filter=FlightTurnStatus eq 'Inbound'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>2bf467de-1904-41f3-a459-88857b5e60bc</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

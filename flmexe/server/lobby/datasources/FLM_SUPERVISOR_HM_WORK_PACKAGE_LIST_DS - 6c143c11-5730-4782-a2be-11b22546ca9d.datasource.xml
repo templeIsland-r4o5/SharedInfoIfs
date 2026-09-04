@@ -1,0 +1,94 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>2/18/25, 4:19:15 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_SUPERVISOR_HM_WORK_PACKAGE_LIST_DS</Name>
+    <ID>6c143c11-5730-4782-a2be-11b22546ca9d</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageBarcode</Column>
+            <Name>Work Package Barcode</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageName</Column>
+            <Name>Work Package Name</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>Location</Column>
+            <Name>Location</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>Status</Column>
+            <Name>Status</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>ActiveTasks</Column>
+            <Name>Active Tasks</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>InWorkTasks</Column>
+            <Name>In Work Tasks</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>CompletedTasks</Column>
+            <Name>Completed Tasks</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>DaysSinceStart</Column>
+            <Name>Days Since Start</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>DaysToFinish</Column>
+            <Name>Days To Finish</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageId</Column>
+            <Name>Work Package Id</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>StartDateInAirportTz</Column>
+            <Name>Start Date In Airport Tz</Name>
+            <DataType>DateTime</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>AircraftCode</Column>
+            <Name>Aircraft Code</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <EntitySet>HmAircraftsAtUserAirportQuerySet</EntitySet>
+    <EntityType>HmAircraftsAtUserAirportQuery</EntityType>
+    <Filter>WorkPackageId eq $WorkPackageId$</Filter>
+</ProjectionDataSource>

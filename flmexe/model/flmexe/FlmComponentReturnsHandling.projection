@@ -1,0 +1,88 @@
+-------------------------------------------------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  --------------------------------------------------------------------------------------------
+-- 2025-11-03  Saddlk  AVMXSOL-14021, Return Parts to Inventory assistant enhancements.
+-- 2025-09-02  Cpeilk  SCDEV-57031, Added four Return Source Ref attributes and a Return Source Ref Type attribute.
+-------------------------------------------------------------------------------------------------------------------
+
+projection FlmComponentReturnsHandling;
+component FLMEXE;
+layer Core;
+description "Component Returns Handling Projection";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+include fragment FlmTaskReturnToInventoryAssistant;
+include fragment JtTaskReturn;
+include fragment InventoryPartWoLovSelector;
+include fragment CustomerInfoCustcategoryPubSelector;
+include fragment UserAllowedSiteLovSelector;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+@Override
+entityset JtTaskReturnSet for JtTaskReturn;
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity JtTaskReturn {
+   from = "jt_task_return_av_uiv";
+   ludependencies = JtTaskReturn;
+   keys = TaskReturnLineSeq;
+   @DynamicComponentDependency CROMFG
+   attribute IncludedInCro Boolean("TRUE", "FALSE") {
+      fetch = "Cro_Line_Material_Route_API.Is_Cro_Line_For_Task_Return(task_seq,task_return_line_seq)";
+      label = "Included In CRO";
+      editable = [false];
+   }
+   attribute IsMainMatLineConnected Boolean("TRUE", "FALSE");
+   attribute LocationNo Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_location_No_From_Inv_Part(site,part_no,serial_no,lot_batch_no)";
+      editable = [false];
+   }
+   attribute LocationDescription Text {
+      fetch = "Inventory_Location_API.Get_Location_Name(site,Av_Exe_Task_Part_Util_API.Get_location_No_From_Inv_Part(site,part_no,serial_no,lot_batch_no))";
+      label = "Location Description";
+      maxlength = 200;
+      editable = [false];
+   }
+   attribute PartAvailabilityControl Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Inv_Part_Avail_Ctrl(serial_no,site,part_no,lot_batch_no)";
+      label = "Part Availability Control";
+   }
+   attribute AircraftId Number;
+   attribute ReturnSourceRef1 Text;
+   attribute ReturnSourceRef2 Text;
+   attribute ReturnSourceRef3 Text;
+   attribute ReturnSourceRef4 Number {
+      fetch = "DECODE(return_source_ref_type_db, 'PURCHASE_ORDER', TO_NUMBER(return_source_ref4))";
+   }
+   attribute ReturnSourceRefTypeDb Text;
+
+   reference TaskPartRef(TaskReturnLineSeq) to AvExeTaskPart(TaskReturnLineSeq);
+   reference PartSerialRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   @DynamicComponentDependency PDMCON
+   reference EngPartRef(PartNo) to EngPartMaster(PartNo);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+
+}
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

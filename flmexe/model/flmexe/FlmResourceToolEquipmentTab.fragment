@@ -1,0 +1,248 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  230627  majslk  AD-9584, Modified code to support time zone changes
+--  221122  SUPKLK  AD-8948, Rename fetch method Get_User_Role to Get_User_Roles
+--  221114  SUPKLK  AD-8948, Added UserRole attribute to AvResourceToolEquipment
+--  220125  LaDelk  AD-6395, Added CheckedOut attribute to AvExeResourceToolEquipmentList.
+--  220117  LaDelk  AD-5116, Added ToolStatus attribute to AvExeResourceToolEquipmentList.
+--  211223  LaDelk  AD-5560, Added lov descriptions and corrected field labels.
+--  211216  LaDelk  AD-4694, Created. Moved common elements from Fault Resource Tools and Task Resource Tools Tabs.
+-----------------------------------------------------------------------------
+fragment FlmResourceToolEquipmentTab;
+component FLMEXE;
+layer Core;
+description "Resource Tool Requirements for a Task or a Fault.";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmResourceToolEquipCommonObjects;
+include fragment ResourceGroupMaintLovSelector;
+@DynamicComponentDependency TOOLEQ
+include fragment ResourceToolEquipJoinLovSelector;
+include fragment PartCatalogLovSelector;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@DynamicComponentDependency TOOLEQ
+list AvExeResourceToolEquipmentList for AvResourceToolEquipment {
+   lov ResourceGroupIdRef with ReferenceResourceGroupMaintLovSelector using GetResourceEquipmentGroups {
+      search = ResourceId, Description;
+      description = ResourceGroupIdRef.Description;
+      preview = ResourceGroupMaintLovCard;
+      validate command {
+         execute {
+            if [ResourceId != null] {
+               set ResourceId = null;
+            }
+            if [PartNo != null] {
+               set PartNo = null;
+            }
+            if [SerialNo != null] {
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+   lov ResourceIdRef with ReferenceResourceToolEquipJoinLovSelector using GetResources(ResourceGroupSeq) {
+      description = ResourceIdRef.Description;
+      search = ResourceId, Description;
+      details = "page/ToolEquipment/Form?$filter=ResourceSeq eq $[ResourceSeq]";
+      editable = [ResourceGroupSeq != null];
+      validate command {
+         variable PartSerialVar Structure(PartSerialStructure);
+
+         execute {
+            if [ResourceId != null] {
+               call GetPartSerial(ResourceSeq) into PartSerialVar;
+               copy PartSerialVar into this;
+            }
+            else {
+               set ResourceSeq = null;
+               set PartNo = null;
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+   field PartNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipGroupParts(ResourceGroupSeq) {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipParts {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field SerialNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipGroupSerials(ResourceGroupSeq) {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipSerials {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field ScheduleTime;
+   badge ResourceToolStatus {
+      label = "Status";
+      emphasis StatePlanned = [ResourceToolStatus = "Planned"];
+      emphasis StatePrepared = [ResourceToolStatus = "Allocated"];
+      emphasis StateCompleted = [ResourceToolStatus = "Signed"];
+   }
+   field CheckedOut {
+      enumerationtrue = "Yes";
+      enumerationfalse = "No";
+      required = [true];
+   }
+   field ActualDuration;
+   field AssignedDateTime {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignedUser;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity AvResourceToolEquipment {
+   timestamptzref = "site(Work_Task_API.Get_Site(Source_Ref))";
+
+   from = "av_resource_tool_equipment_ext";
+
+   attribute ToolId Number {
+      required = [false];
+   }
+   attribute ResourceId Text {
+      fetch = "resource_id";
+   }
+   attribute ResourceGroupId Text {
+      fetch = "resource_group_id";
+      required = [true];
+   }
+   attribute ResourceToolStatus Enumeration(ToolStatus) {
+      fetch = "Av_Resource_Tool_Equipment_API.Get_Tool_Status_Db(tool_id)";
+      editable = [false];
+   }
+   attribute CheckedOut Enumeration(GenYesNo) {
+      fetch = "Av_Resource_Tool_Equipment_API.Is_Checked_Out(tool_id)";
+      editable = [false];
+   }
+   attribute ScheduleTime Text {
+      label = "Scheduled Hours (HH:MM) ";
+      fetch = "Adcom_Util_API.Get_Text_Time(sched_duration)";
+   }
+   attribute ActualDuration Text {
+      label = "Actual Hours (HH:MM)";
+      fetch = "Adcom_Util_API.Get_Text_Time(actual_duration)";
+      insertable = [false];
+      updatable = [false];
+      editable = [false];
+   }
+   attribute AssignedDateTime Timestamp {
+      label = "Date";
+      insertable = [false];
+      updatable = [false];
+      editable = [false];
+   }
+   attribute AssignedUser Text {
+      label = "Signed By";
+      insertable = [false];
+      updatable = [false];
+      editable = [false];
+   }
+
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference ResourceGroupIdRef(ResourceGroupId) to ResourceGroupMaintLov(ResourceId) {
+      label = "Tool/Equipment Group";
+      copy ResourceSeq to ResourceGroupSeq;
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+      copy ResourceSeq to ResourceSeq;
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo) {
+      label = "Serial No";
+   }
+}
+
+function GetResourceEquipmentGroups List < Entity(ResourceGroupMaintLov) > {
+   where = "resource_type_db = 'EQUIPMENT_GROUP'";
+}
+
+@DynamicComponentDependency TOOLEQ
+function GetToolEquipParts List < Entity(PartCatalogLov) > {
+   where = "part_no IN (SELECT part_no FROM resource_tool_equip_join)";
+}
+
+@DynamicComponentDependency TOOLEQ
+function GetToolEquipSerials List < Entity(PartSerialCatalog) > {
+   where = "serial_no IN (SELECT serial_no FROM resource_tool_equip_join)";
+}

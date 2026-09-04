@@ -1,0 +1,73 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmResourceAllocationGanttHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+--  220112  NaLrlk  AD-4705, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+-- Get_Time_Range___
+--   Returns start and end date/time for gantt chart time range.
+FUNCTION Get_Time_Range___ (
+   task_seq_ IN NUMBER) RETURN Time_Range_Structure_Rec
+IS
+   dates_         Time_Range_Structure_Rec;
+   av_wp_rec_     Av_Aircraft_Work_Package_API.Public_Rec;
+BEGIN
+   av_wp_rec_        := Av_Aircraft_Work_Package_API.Get(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq_));
+   dates_.start_date := av_wp_rec_.sched_start_date_time - 8/24;
+   dates_.end_date   := av_wp_rec_.sched_end_date_time + 8/24;
+   RETURN dates_;
+END Get_Time_Range___;
+
+-- Create_Allocation___
+--   Creates tool allocation for specified tool record using the gantt.
+FUNCTION Create_Allocation___ (
+   key_                 IN Allocate_Gantt_Resource_Query_Key,
+   alloc_resource_seq_  IN NUMBER,
+   start_date_          IN DATE,
+   end_date_            IN DATE,
+   duration_            IN NUMBER ) RETURN VARCHAR2
+IS
+BEGIN
+	Av_Resource_Tool_Equipment_API.Allocate_Resource(key_.tool_id,
+                                                    alloc_resource_seq_, 
+                                                    start_date_, 
+                                                    end_date_,
+                                                    duration_);
+   RETURN Resource_API.Get_Resource_Id(alloc_resource_seq_);                                                             
+END Create_Allocation___;
+
+-- Modify_Allocation___
+--   Modify allocated tool for specified tool record using the gantt.
+PROCEDURE Modify_Allocation___ (
+   key_                 IN Allocate_Gantt_Resource_Query_Key,
+   alloc_resource_seq_  IN NUMBER,
+   start_date_          IN DATE,
+   end_date_            IN DATE)
+IS
+   duration_ NUMBER;
+BEGIN
+   duration_ := ROUND((end_date_ - start_date_)*24, 2);
+	Av_Resource_Tool_Equipment_API.Allocate_Resource(key_.tool_id,
+                                                    alloc_resource_seq_, 
+                                                    start_date_, 
+                                                    end_date_, 
+                                                    duration_);
+END Modify_Allocation___;
+
+-- Remove_Allocation___
+--   Remove allocated tool from specified tool record using the gantt.
+PROCEDURE Remove_Allocation___ (
+   key_ IN Av_Resource_Tool_Equipment_Key)
+IS
+BEGIN
+	Av_Resource_Tool_Equipment_API.Unallocate_Resource(key_.tool_id);
+END Remove_Allocation___;

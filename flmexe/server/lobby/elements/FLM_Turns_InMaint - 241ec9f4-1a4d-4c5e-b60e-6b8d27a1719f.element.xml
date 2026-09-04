@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:32:20 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>In Maintenance</Title>
+    <Footer>Aircraft</Footer>
+    <Background>#FF006996</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_InMaint</Name>
+    <ID>241ec9f4-1a4d-4c5e-b60e-6b8d27a1719f</ID>
+    <WebUrl>page/FlmMyAircraftTurns/MyAircraftTurnsCardPage;$filter=FlightTurnStatus eq 'InMaintenance'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>68ac78e7-a6f6-41f3-bd05-093357d3199d</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

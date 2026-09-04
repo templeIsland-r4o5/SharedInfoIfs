@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display count of unassigned tasks</DescriptiveText>
+    <LastModified>5/9/24, 2:59:24 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>3</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>UNASSIGNED TASKS</Title>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Unassigned_Tasks</Name>
+    <ID>598473f6-8b43-451b-a73c-78d8e23f2ebf</ID>
+    <WebUrl>page/FlmTaskWorkAssignment/WorkTaskAssignmentPage?$filter=ResourceAssignmentStatus eq 1 or ResourceAssignmentStatus eq 2</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>5f1d9667-d125-4c3c-a22c-6c0d77607574</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>TaskSeq</Column>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

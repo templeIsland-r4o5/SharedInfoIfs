@@ -1,0 +1,133 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241126  OSNALK  AD-15711, Remove enumerationtype = Standard from enumeration in FLM and FLMEXE
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230315  DUWJLK  AD-9628, Created TurnState Enumaration and added that enumaration newly created TurnState attribute.
+--  221103  lawalk  AD-9009, Added new attribute 'OpenFaultCountForFlight' in MyAircraftTurnQuery.
+--  220909  ROSDLK  AD-8613, Used NVL function to set the sched dept time as the departure time if the actual dept time is not set at flight creation.
+--  220704  jiwelk  AD-7977, Modified structure SearchContextStructure, changed attribute HasTurnAssignedToMe
+--  220201  rosdlk  AD-6630: Modified MyAircraftTurnQuery to retrict displaying the flights created from flight-ops
+--  211223  vifelk  AD-4132, Added HasTurnAssignedToMe attribute to MyAircraftTurnQuery.
+--  211217  vifelk  AD-4117, Added HasTurnNotAssignedToMe attribute to MyAircraftTurnQuery and SearchContext structure.
+--  211117  lavwlk  AD-5002, Modified MyAircraftTurnQuery by replacing AssemblyTypeCode instead of AircraftTypeCode.
+--  211117  vifelk  AD-4114, Added lu to MyAircraftTurnQuery.
+--  210913  nignlk  AD-3336, Added ActualOutboundDeptDateTime to MyAircraftTurnQuery.
+--  210416  majslk  AD-1086, Added where clause to MyAircraftTurnQuery.
+--  210304  siydlk  LMM2020R1-1788, Modified MyAircraftTurnQuery.
+--  210225  siydlk  LMM2020R1-1568, Modified MyAircraftTurnQuery and added DeptLegNo.
+--  210223  siselk  LMM2020R1-1744, Changed LegNo to FlightId in AvFlightDepartureRef
+--  210218  siydlk  LMM2020R1-1568, Created.
+-----------------------------------------------------------------------------
+projection FlmMyAircraftTurnsHandling;
+component FLMEXE;
+layer Core;
+description "This API shows the information related to My Aircraft Turns Card View";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset MyAircraftTurnQuerySet for MyAircraftTurnQuery;
+entityset AvFlightSet for AvFlight;
+entityset AvAirportSet for AvAirport;
+entityset AircraftSet for Aircraft;
+entityset AvAircraftWorkPackageSet for AvAircraftWorkPackage;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration TurnStatusEnum {
+   value = "Inbound" {
+      identifier = "Inbound";
+      label = "Inbound";
+   }
+   value = "Arrived" {
+      identifier = "Arrived";
+      label = "Arrived";
+   }
+   value = "Departed" {
+      identifier = "Departed";
+      label = "Departed";
+   }
+   value = "InMaintenance" {
+      identifier = "InMaintenance";
+      label = "In Maintenance";
+   }
+   value = "Released" {
+      identifier = "Released";
+      label = "Released";
+   }
+   value = "NotApplicable" {
+      identifier = "NotApplicable";
+      label = "Not Applicable";
+   }
+}
+
+---------------------------------- QUERIES ----------------------------------
+query MyAircraftTurnQuery {
+   timestamptzref = "server";
+
+   from = "My_Aircraft_Turns_Status_View";
+   lu = none;
+   keys = FlightId;
+   attribute FlightId Number;
+   attribute ArrivalAirportId Number;
+   attribute AircraftId Number;
+   attribute ActualArrivalDateTime Timestamp;
+   attribute ShedArrivalDateTime Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalGate Text;
+   attribute FlightTurnStatus Text;
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   attribute WorkPackageId Number;
+   attribute ActualEndDateTime Timestamp;
+   attribute DeptFlightId Text;
+   attribute NoOfOpenedFaults Number;
+   attribute GroundTime Text;
+   attribute AssemblyTypeCode Text;
+   attribute ArrivalTimestamp Timestamp;
+   attribute ActualOutboundDeptDateTime Timestamp {
+      fetch = "NVL(Av_Flight_API.Get_Actual_Departure_Date_Time(dept_flight_id), departure_timestamp)";
+   }
+   attribute HasTurnAssignedToMe Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(Av_Turn_Labour_Assignment_API.Has_Turn_Assigned_To_User(flight_id,work_package_id), 1, 'TRUE','FALSE')";
+   }
+
+   attribute OpenFaultCountForFlight Number;
+   attribute TurnStatus Enumeration(TurnStatusEnum) {
+      fetch = "Flight_Turn_Status";
+   }
+
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AvFlightDepartureRef(DeptFlightId) to AvFlight(FlightId);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference AvAircraftTypeRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+
+   where = "(locked_bool = 'FALSE' or locked_bool is null) and (condition != 'SCRAP' and condition != 'ARCHIVE')";
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetDefaultValue Structure(SearchContextStructure);
+
+
+-------------------------------- STRUCTURES ---------------------------------
+structure SearchContextStructure {
+   attribute HasTurnAssignedToMe Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

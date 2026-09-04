@@ -1,0 +1,39 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <DescriptiveText>Details of all the tasks scheduled to start during the user’s current shift. </DescriptiveText>
+    <LastModified>2/18/25, 3:53:30 PM</LastModified>
+    <CopiedFrom>adb42759-53b5-4533-a84f-d4636d01ae13</CopiedFrom>
+    <CopiedFromName>FLM_CREW_LEAD_ASSIGNED_TO_ME</CopiedFromName>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>My Shift</Title>
+    <Footer>Tasks</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_SUPERVISOR_CURRENT_SHIFT</Name>
+    <ID>782c5415-8f2f-4e7c-82f8-4c40dd22a5ec</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?searchcontext=Shift:CurrentShift&amp;$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$ and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work' )</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>OK</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>a8baa1a3-7331-4a0d-b00c-f55d4211932b</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+    <UseKMB>false</UseKMB>
+    <RoundValue>false</RoundValue>
+    <ShowAsPercent>false</ShowAsPercent>
+</Counter>

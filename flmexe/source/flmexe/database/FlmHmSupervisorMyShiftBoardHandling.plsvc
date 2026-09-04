@@ -1,0 +1,28 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmSupervisorMyShiftBoardHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Shift_Board_Task_Status___ RETURN VARCHAR2
+IS
+BEGIN
+	RETURN 'Active;Active,In Work;In Work,Completed;Completed';
+END Get_Shift_Board_Task_Status___;
+
+
+-- Dummy action to refresh data as a workaround to invalidate inside the move command so the data will be refreshed.
+@IgnoreUnitTest NoOutParams
+PROCEDURE Refresh_Data___
+IS
+BEGIN
+	RETURN;
+END Refresh_Data___;
+

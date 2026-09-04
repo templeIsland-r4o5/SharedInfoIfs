@@ -1,0 +1,42 @@
+--  Date        Sign    History
+--  ----------  ------  -----------------------------------------------------
+--  08-05-2025  kosrus  AD-18208, Projection for handling Critical Item Severities Basic Data page
+-----------------------------------------------------------------------------
+projection FlmCriticalItemSeveritiesHandling;
+component FLMEXE;
+layer Core;
+description "Projection for managing severity levels of critical items basic data page.";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvCriticalItemSeveritySet for AvCriticalItemSeverity;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvCriticalItemSeverity {
+   crud = Create, Update;
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

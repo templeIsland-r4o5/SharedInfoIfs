@@ -1,0 +1,385 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmReleaseAircraft
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  301024  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagram
+--  240320  waislk  AD-12447 Added unit test for Get_Open_Faults___
+--  240221  Maillk  AD-12015 Modified unit tests for Get_Compliance_Info___
+--  240220  majslk  AD-12017 Modified unit tests for Get_Compliance_Info___
+--  240216  Maillk  AD-12014 Modified unit tests for Get_Compliance_Info___
+--  240215  Satglk  AD-12170 Added unit tests for Get_Compliance_Info___
+--  220725  MAILLK  AD-8002, Created
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Bool_To_Number(value_ BOOLEAN) RETURN NUMBER
+IS
+BEGIN
+   RETURN CASE WHEN value_ THEN 1 ELSE 0 END;
+END Bool_To_Number;
+
+UNITTEST "Get_Open_Tasks_Status___ should return false or true when aircraft_wp_id_ passed in" FOR
+   FUNCTION Get_Open_Tasks_Status___ (
+      aircraft_wp_id_ IN     NUMBER) RETURN BOOLEAN;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockTable av_exe_task
+   VALUES
+      | task_seq | aircraft_wp_id | objstate     |
+      | 1        | 1              | 'RELEASED'   |
+      | 2        | 2              | 'WORKSTARTED'|
+      | 3        | 3              | 'FINISHED'   |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   BOOLEAN;
+   expected_ BOOLEAN;
+BEGIN
+   FOR
+      | expected_ | aircraft_wp_id_ |
+      | TRUE      | 1               |
+      | TRUE      | 2               |
+      | FALSE     | 3               |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Open_Tasks_Status___(aircraft_wp_id_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Load_Compliance_Info___ should construct the record correctly when the record is passed" FOR
+   PROCEDURE Load_Compliance_Info___ (
+      rec_ IN OUT Release_Aircraft_Virtual_Rec);
+USING
+   is_flm_standalone_      VARCHAR2(2000);
+   no_of_missing_comp_     NUMBER;
+   no_of_overdue_faults_   NUMBER;
+   no_of_neardue_faults_   NUMBER;
+   parm_value_             VARCHAR2(100);
+   test_case_              VARCHAR2(100);
+   no_of_overdue_tasks_    NUMBER;
+   no_of_neardue_tasks_    NUMBER;
+
+   --Insert your mock directives and mock return variables here
+   @MockPackage Adcom_Util_API
+   FUNCTION Is_Flm_Standalone  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN is_flm_standalone_;
+   END Is_Flm_Standalone;
+
+   @MockPackage Aircraft_API
+   FUNCTION Get_Missing_Manda_Comp_Count (
+      aircraft_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN no_of_missing_comp_;
+   END Get_Missing_Manda_Comp_Count;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Get_Mx_Parm_Value (
+      parm_name_ IN     VARCHAR2 )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN parm_value_;
+   END Get_Mx_Parm_Value;
+
+   @MockPackage Av_Fault_Deadline_API
+   FUNCTION Get_Overdue_Fault_Count (
+      aircraft_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN no_of_overdue_faults_;
+   END Get_Overdue_Fault_Count;
+
+   @MockPackage Av_Fault_Deadline_API
+   FUNCTION Get_Neardue_Fault_Count (
+      aircraft_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN no_of_neardue_faults_;
+   END Get_Neardue_Fault_Count;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Has_Release_Override_Rights  RETURN  BOOLEAN
+   IS
+   BEGIN
+      RETURN TRUE;
+   END Has_Release_Override_Rights;
+
+   @MockPackage Av_Exe_Task_Deadline_API
+   FUNCTION Get_Overdue_Task_Count (
+      aircraft_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN no_of_overdue_tasks_;
+   END Get_Overdue_Task_Count;
+
+   @MockPackage Av_Exe_Task_Deadline_API
+   FUNCTION Get_Neardue_Task_Count (
+      aircraft_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN no_of_neardue_tasks_;
+   END Get_Neardue_Task_Count;
+
+IS
+   --Insert your test variables here
+   output_     Release_Aircraft_Virtual_Rec;
+   expected_   Release_Aircraft_Virtual_Rec;
+   expected1_  Release_Aircraft_Virtual_Rec;
+   expected2_  Release_Aircraft_Virtual_Rec;
+   expected3_  Release_Aircraft_Virtual_Rec;
+   expected4_  Release_Aircraft_Virtual_Rec;
+   expected5_  Release_Aircraft_Virtual_Rec;
+   expected6_  Release_Aircraft_Virtual_Rec;
+   expected7_  Release_Aircraft_Virtual_Rec;
+   expected8_  Release_Aircraft_Virtual_Rec;
+   expected9_  Release_Aircraft_Virtual_Rec;
+   expected10_ Release_Aircraft_Virtual_Rec;
+   expected11_ Release_Aircraft_Virtual_Rec;
+BEGIN
+   expected1_.missing_component_status := 'OK';
+   expected1_.is_mandatory_components_missing := FALSE;
+   expected1_.is_flm_standalone := TRUE;
+   expected1_.overdue_fault_status := 'OK';
+   expected1_.has_overdue_faults := FALSE;
+   expected1_.has_neardue_faults := FALSE;
+   expected1_.has_overdue_tasks := FALSE;
+   expected1_.overdue_task_status := 'OK';
+   expected1_.has_release_override_rights := FALSE;
+   expected1_.has_neardue_tasks := FALSE;
+
+   expected2_.missing_component_status := 'OK';
+   expected2_.is_mandatory_components_missing := FALSE;
+   expected2_.is_flm_standalone := FALSE;
+   expected2_.overdue_fault_status := 'ERROR';
+   expected2_.has_overdue_faults := TRUE;
+   expected2_.has_neardue_faults := FALSE;
+   expected2_.has_overdue_tasks := FALSE;
+   expected2_.overdue_task_status := 'OK';
+   expected2_.has_release_override_rights := TRUE;
+   expected2_.has_neardue_tasks := FALSE;
+
+   expected3_.is_flm_standalone := FALSE;
+   expected3_.is_mandatory_components_missing := FALSE;
+   expected3_.has_overdue_faults := TRUE;
+   expected3_.has_neardue_faults := TRUE;
+   expected3_.missing_component_status := 'OK';
+   expected3_.overdue_fault_status := 'ERROR';
+   expected3_.has_overdue_tasks := FALSE;
+   expected3_.overdue_task_status := 'OK';
+   expected3_.has_release_override_rights := TRUE;
+   expected3_.has_neardue_tasks := TRUE;
+
+   expected4_.is_flm_standalone := FALSE;
+   expected4_.is_mandatory_components_missing := FALSE;
+   expected4_.has_overdue_faults := FALSE;
+   expected4_.has_neardue_faults := FALSE;
+   expected4_.missing_component_status := 'OK';
+   expected4_.overdue_fault_status := 'OK';
+   expected4_.has_overdue_tasks := FALSE;
+   expected4_.overdue_task_status := 'OK';
+   expected4_.has_release_override_rights := TRUE;
+   expected4_.has_neardue_tasks := FALSE;
+
+   expected5_.is_flm_standalone := FALSE;
+   expected5_.is_mandatory_components_missing := FALSE;
+   expected5_.has_overdue_faults := FALSE;
+   expected5_.has_neardue_faults := TRUE;
+   expected5_.missing_component_status := 'OK';
+   expected5_.overdue_fault_status := 'OK';
+   expected5_.has_overdue_tasks := FALSE;
+   expected5_.overdue_task_status := 'OK';
+   expected5_.has_release_override_rights := TRUE;
+   expected5_.has_neardue_tasks := TRUE;
+
+   expected6_.is_flm_standalone := FALSE;
+   expected6_.is_mandatory_components_missing := TRUE;
+   expected6_.has_overdue_faults := TRUE;
+   expected6_.has_neardue_faults := FALSE;
+   expected6_.missing_component_status := 'ERROR';
+   expected6_.overdue_fault_status := 'ERROR';
+   expected6_.has_overdue_tasks := FALSE;
+   expected6_.overdue_task_status := 'OK';
+   expected6_.has_release_override_rights := TRUE;
+   expected6_.has_neardue_tasks := FALSE;
+
+   expected7_.is_flm_standalone := FALSE;
+   expected7_.is_mandatory_components_missing := TRUE;
+   expected7_.has_overdue_faults := TRUE;
+   expected7_.has_neardue_faults := TRUE;
+   expected7_.missing_component_status := 'ERROR';
+   expected7_.overdue_fault_status := 'ERROR';
+   expected7_.has_overdue_tasks := FALSE;
+   expected7_.overdue_task_status := 'OK';
+   expected7_.has_release_override_rights := TRUE;
+   expected7_.has_neardue_tasks := TRUE;
+
+   expected8_.is_flm_standalone := FALSE;
+   expected8_.is_mandatory_components_missing := TRUE;
+   expected8_.has_overdue_faults := FALSE;
+   expected8_.has_neardue_faults := FALSE;
+   expected8_.missing_component_status := 'ERROR';
+   expected8_.overdue_fault_status := 'OK';
+   expected8_.has_overdue_tasks := FALSE;
+   expected8_.overdue_task_status := 'OK';
+   expected8_.has_release_override_rights := TRUE;
+   expected8_.has_neardue_tasks := FALSE;
+
+   expected9_.is_flm_standalone := FALSE;
+   expected9_.is_mandatory_components_missing := TRUE;
+   expected9_.has_overdue_faults := FALSE;
+   expected9_.has_neardue_faults := TRUE;
+   expected9_.missing_component_status := 'ERROR';
+   expected9_.overdue_fault_status := 'OK';
+   expected9_.has_overdue_tasks := FALSE;
+   expected9_.overdue_task_status := 'OK';
+   expected9_.has_release_override_rights := TRUE;
+   expected9_.has_neardue_tasks := TRUE;
+
+   expected10_.is_flm_standalone := TRUE;
+   expected10_.is_mandatory_components_missing := FALSE;
+   expected10_.has_overdue_faults := FALSE;
+   expected10_.has_neardue_faults := FALSE;
+   expected10_.has_overdue_tasks := FALSE;
+   expected10_.missing_component_status := 'OK';
+   expected10_.overdue_task_status := 'OK';
+   expected10_.overdue_fault_status := 'OK';
+   expected10_.has_release_override_rights := FALSE;
+   expected10_.has_neardue_tasks := FALSE;
+
+   expected11_.is_flm_standalone := FALSE;
+   expected11_.is_mandatory_components_missing := FALSE;
+   expected11_.has_overdue_faults := FALSE;
+   expected11_.has_neardue_faults := FALSE;
+   expected11_.has_overdue_tasks := TRUE;
+   expected11_.missing_component_status := 'OK';
+   expected11_.overdue_task_status := 'ERROR';
+   expected11_.overdue_fault_status := 'OK';
+   expected11_.has_release_override_rights := TRUE;
+   expected11_.has_neardue_tasks := TRUE;
+   expected11_.has_release_override_rights := TRUE;
+
+   FOR
+      |rec_ | is_flm_standalone_ | no_of_missing_comp_| no_of_overdue_faults_ | no_of_neardue_faults_ | no_of_overdue_tasks_  | no_of_neardue_tasks_ | parm_value_ |expected_  | test_case_ |
+      | NULL| 'TRUE'             |  0                 |     0                 |      0                |          0            |      1               | 'ERROR'     |expected1_ | 'test_1'   |
+      | NULL| 'FALSE'            |  0                 |     1                 |      0                |          0            |      0               | 'ERROR'     |expected2_ | 'test_2'   |
+      | NULL| 'FALSE'            |  0                 |     1                 |      1                |          0            |      1               | 'ERROR'     |expected3_ | 'test_3'   |
+      | NULL| 'FALSE'            |  0                 |     0                 |      0                |          0            |      0               | 'ERROR'     |expected4_ | 'test_4'   |
+      | NULL| 'FALSE'            |  0                 |     0                 |      1                |          0            |      1               | 'ERROR'     |expected5_ | 'test_5'   |
+      | NULL| 'FALSE'            |  1                 |     1                 |      0                |          0            |      0               | 'ERROR'     |expected6_ | 'test_6'   |
+      | NULL| 'FALSE'            |  1                 |     1                 |      1                |          0            |      1               | 'ERROR'     |expected7_ | 'test_7'   |
+      | NULL| 'FALSE'            |  1                 |     0                 |      0                |          0            |      0               | 'ERROR'     |expected8_ | 'test_8'   |
+      | NULL| 'FALSE'            |  1                 |     0                 |      1                |          0            |      1               | 'ERROR'     |expected9_ | 'test_9'   |
+      | NULL| 'TRUE'             |  0                 |     0                 |      0                |          1            |      1               | 'ERROR'     |expected10_| 'test_10'  |
+      | NULL| 'FALSE'            |  0                 |     0                 |      0                |          1            |      1               | 'ERROR'     |expected11_| 'test_11'  |
+
+   LOOP
+      --Insert your test code here
+      output_ := rec_;
+      Load_Compliance_Info___(output_);
+      --Insert your assertions here
+      ASSERT Bool_To_Number(output_.is_flm_standalone) = Bool_To_Number(expected_.is_flm_standalone) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.is_flm_standalone) ||' but returned '||Bool_To_Number(output_.is_flm_standalone);
+
+      ASSERT output_.missing_component_status = expected_.missing_component_status MESSAGE test_case_ || ':'  ||'Expected '|| expected_.missing_component_status ||' but returned '||output_.missing_component_status;
+
+      ASSERT Bool_To_Number(output_.is_mandatory_components_missing) = Bool_To_Number(expected_.is_mandatory_components_missing) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.is_mandatory_components_missing) ||' but returned '||Bool_To_Number(output_.is_mandatory_components_missing);
+
+      ASSERT output_.overdue_fault_status = expected_.overdue_fault_status MESSAGE test_case_ || ': '  || 'Expected '|| expected_.overdue_fault_status ||' but returned '||output_.overdue_fault_status;
+
+      ASSERT Bool_To_Number(output_.has_overdue_faults) = Bool_To_Number(expected_.has_overdue_faults) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.has_overdue_faults) ||' but returned '|| Bool_To_Number(output_.has_overdue_faults);
+
+      ASSERT Bool_To_Number(output_.has_neardue_faults) = Bool_To_Number(expected_.has_neardue_faults) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.has_neardue_faults) ||' but returned '|| Bool_To_Number(output_.has_neardue_faults);
+
+      ASSERT Bool_To_Number(output_.has_release_override_rights) = Bool_To_Number(expected_.has_release_override_rights) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.has_release_override_rights) ||' but returned '|| Bool_To_Number(output_.has_release_override_rights);
+
+      ASSERT Bool_To_Number(output_.has_neardue_tasks) = Bool_To_Number(expected_.has_neardue_tasks) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.has_neardue_tasks) ||' but returned '|| Bool_To_Number(output_.has_neardue_tasks);
+
+      ASSERT output_.overdue_task_status = expected_.overdue_task_status MESSAGE test_case_ || ': '  || 'Expected '|| expected_.overdue_task_status ||' but returned '||output_.overdue_task_status;
+
+      ASSERT Bool_To_Number(output_.has_overdue_tasks) = Bool_To_Number(expected_.has_overdue_tasks) MESSAGE test_case_ || ':'  ||'Expected '|| Bool_To_Number(expected_.has_overdue_tasks) ||' but returned '|| Bool_To_Number(output_.has_overdue_tasks);
+
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Get_Open_Faults___ should return fault records when aircraft has open faults" FOR
+   FUNCTION Get_Open_Faults___ (
+      aircraft_id_ IN     NUMBER) RETURN Release_Status_Details_Struct_Arr;
+USING
+
+   @MockTable av_fault_tab
+   VALUES
+      | barcode | description |  logbook_type_code|found_on_date | logbook_reference | sub_system_id | aircraft_id | rowstate |
+      | 'TRF7N0013R7F'   | 'FAULT01'   |  'CABIN'          |sysdate       | 'TEST01'          | 1             | 1           | 'Open'   |
+      | 'TRF7N0013R7G'   | 'FAULT02'   |  'AUTH'           |sysdate       | 'TEST02'          | 2             | 2           | 'Open'   |
+   END VALUES;
+
+   @MockTable av_aircraft_sub_system
+   VALUES
+      | sub_system_name | sub_system_id |
+      | 'SYS01'         | 1             |
+      | 'SYS02'         | 2             |
+   END VALUES;
+IS
+   --Insert your test variables here
+   return_   Release_Status_Details_Struct_Arr;
+   expected_ Release_Status_Details_Struct_Arr;
+   first_set_ Release_Status_Details_Struct_Arr;
+   second_set_ Release_Status_Details_Struct_Arr;
+   rec01_ Release_Status_Details_Struct_Rec;
+
+BEGIN
+   first_set_ := Release_Status_Details_Struct_Arr();
+   first_set_.extend(1);
+   rec01_.barcode := 'TRF7N0013R7F';
+   rec01_.description := 'FAULT01';
+   rec01_.sub_system_name := 'SYS01';
+   rec01_.logbook_type_code := 'CABIN' ;
+   rec01_.logbook_reference := 'TEST01';
+   rec01_.found_on_date := sysdate;
+   rec01_.utc_time_zone_code := 'UTC';
+   first_set_(1) := rec01_;
+   second_set_ := Release_Status_Details_Struct_Arr();
+   second_set_.extend(1);
+   rec01_.barcode := 'TRF7N0013R7G';
+   rec01_.description := 'FAULT02';
+   rec01_.sub_system_name := 'SYS02';
+   rec01_.logbook_type_code := 'AUTH' ;
+   rec01_.logbook_reference := 'TEST02';
+   rec01_.found_on_date := sysdate;
+   rec01_.utc_time_zone_code := 'UTC';
+   second_set_(1) := rec01_;
+
+   FOR
+
+      |expected_     | aircraft_id_ |
+      |first_set_    | 1            |
+      |second_set_   | 2            |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Open_Faults___(aircraft_id_);
+      --Insert your assertions here
+
+      FOR i_ IN 1 .. expected_.count LOOP
+         ASSERT return_(i_).barcode = expected_(i_).barcode MESSAGE 'Expected '||expected_(i_).barcode||' but returned '||return_(i_).barcode;
+         ASSERT return_(i_).description = expected_(i_).description MESSAGE 'Expected '||expected_(i_).description||' but returned '||return_(i_).description;
+         ASSERT return_(i_).sub_system_name = expected_(i_).sub_system_name MESSAGE 'Expected '||expected_(i_).sub_system_name||' but returned '||return_(i_).sub_system_name;
+         ASSERT return_(i_).logbook_type_code = expected_(i_).logbook_type_code MESSAGE 'Expected '||expected_(i_).logbook_type_code||' but returned '||return_(i_).logbook_type_code;
+         ASSERT return_(i_).logbook_reference = expected_(i_).logbook_reference MESSAGE 'Expected '||expected_(i_).logbook_reference||' but returned '||return_(i_).logbook_reference;
+         ASSERT return_(i_).found_on_date = expected_(i_).found_on_date MESSAGE 'Expected '||expected_(i_).found_on_date||' but returned '||return_(i_).found_on_date;
+         ASSERT return_(i_).utc_time_zone_code = expected_(i_).utc_time_zone_code MESSAGE 'Expected '||expected_(i_).utc_time_zone_code||' but returned '||return_(i_).utc_time_zone_code;
+      END LOOP;
+
+   END LOOP;
+
+END UNITTEST;
+

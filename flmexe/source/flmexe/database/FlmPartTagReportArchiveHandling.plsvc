@@ -1,0 +1,37 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmPartTagReportArchiveHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+FUNCTION Get_Part_Tag_Print_Job_Id___ (
+   result_key_ IN NUMBER) RETURN Print_Job_Structure_Rec
+IS
+   print_job_id_ NUMBER;
+   pdf_id_ VARCHAR2(50);
+   rec_     Print_Job_Structure_Rec;
+   
+   CURSOR get_latest_print_job_id IS
+      SELECT   print_job_id, id
+      FROM     pdf_archive
+      WHERE    result_key = result_key_
+      ORDER BY created DESC
+      FETCH FIRST 1 ROW ONLY;
+BEGIN
+   OPEN   get_latest_print_job_id;
+   FETCH  get_latest_print_job_id INTO  print_job_id_,pdf_id_;
+   CLOSE  get_latest_print_job_id;
+   
+   rec_.print_id := print_job_id_;
+   rec_.id := pdf_id_;
+   
+   RETURN rec_;
+END Get_Part_Tag_Print_Job_Id___;

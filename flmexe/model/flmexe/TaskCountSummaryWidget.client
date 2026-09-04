@@ -1,0 +1,117 @@
+client TaskCountSummaryWidget;
+component FLMEXE;
+layer Core;
+projection TaskCountSummaryWidgetHandling;
+description "Translations for Task Count Summary Widget";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+page TranslationsPage using WidgetTranslationSet {
+   list TranslationsList;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list TranslationsList for WidgetTranslation {
+   field WidgetTitle {
+      label = "Task Count Summary";
+   }
+   field WidgetDescription {
+      label = "The Task Count Summary Widget provides real time visibility of Routine and Non-Routine tasks in active work packages. Supervisors/Crew Leads can track completed vs. open tasks, percentages, and average Non-Routine tasks per day.";
+   }
+   field WidgetSettingsHeader {
+      label = "Manage Task Count Summary Settings";
+   }
+   field ConfigSectionName {
+      label = "Widget Parameters";
+   }
+   field ConfigDropDownLable {
+      label = "Last Open/Completed(Hrs)";
+   }
+   field Completed {
+      label = "Completed";
+   }
+   field TotalCompletedTasks {
+      label = "Total Completed Tasks";
+   }
+   field Open {
+      label = "Open";
+   }
+   field TotalOpenTasks {
+      label = "Total Open Tasks";
+   }
+   field TotalTasksCount {
+      label = "Total Tasks Count";
+   }
+   field TotalPercentageCompleted {
+      label = "Total % Completed";
+   }
+   field TaskType {
+      label = "Task Type";
+   }
+   field NoWorkPackagesDataAvailable {
+      label = "No Active work packages available";
+   }
+   field TasksDataNotAvailable {
+      label = "No Tasks available";
+   }
+   field FailedToLoadTasksData {
+      label = "Failed to load tasks data";
+   }
+   field AircraftKey {
+      label = "Aircraft";
+   }
+   field WorkPackageNameKey {
+      label = "Workpackage";
+   }
+   field Routine {
+      label = "Routine";
+   }
+   field NonRoutine {
+      label = "Non Routine";
+   }
+   field Total {
+      label = "Total";
+   }
+   field NonRoutineAvgPerDay {
+      label = "Non Routine Avg Per Day";
+   }
+   field NonSch {
+      label = "Non Sch";
+   }
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

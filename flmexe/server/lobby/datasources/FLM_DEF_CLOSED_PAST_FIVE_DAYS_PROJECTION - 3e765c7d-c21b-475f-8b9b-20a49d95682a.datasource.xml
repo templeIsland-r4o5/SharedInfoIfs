@@ -1,0 +1,35 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of deferred and closed faults counts</DescriptiveText>
+    <LastModified>18/04/2024, 07:36:46</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_DEF_CLOSED_PAST_FIVE_DAYS_PROJECTION</Name>
+    <ID>3e765c7d-c21b-475f-8b9b-20a49d95682a</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Count</Column>
+            <Name>Count</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>FaultDate</Column>
+            <Name>Fault Date</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Type</Column>
+            <Name>Type</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>DefClosedPastFiveDaysSet</EntitySet>
+    <EntityType>DefClosedPastFiveDaysQuery</EntityType>
+</ProjectionDataSource>

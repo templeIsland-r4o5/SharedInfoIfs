@@ -1,0 +1,979 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmFaultDeferral
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  241102  OSNALK  AD-14257, Refactor the code to use structures
+--  240830  WIHALK  AD-14020, Repopulated the values in the fault deferral Assistant and Changed IsMocRequired to Boolean attribute.
+--  240430  KAWJLK  AD-10914, Added headerlogo and MediaObject attribute.
+--  240502  PSUALK  AD-12551, Fixing Hash Content validation  Error on defer fault
+--  240228  VAALLK  AD-12267, Modified UpdateDeferralDetails action with more parameters of deferral details.
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  231129  LAWALK  AD-11187, Updated max length of deferral authorization no and updated the deferral flow.
+--  231124  LAWALK  AD-11187, Pre-populated the DeferralAuthorization when going to defer a fault.
+--  231026  rosdlk  AD-10255, Added e-sig file name changes for defer fault workflow.
+--  230824  ROSDLK  AD-10254, Added esignature security remediation related defer fault changes.
+--  230804  majslk  AD-10387, Modified labels to support time zone changes
+--  230801  KAWJLK  AD-10341, Modified signdocument responce type to Structure and include FndEsignature fragment
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230404  KAWJLK  AD-7387, Modified RecordDeferralDetails, RecordDeferralDetailsCommand and FaultDefMainVirtual
+--  221201  SEVHLK  AD-8999, Removed code snippets related to AvDeferralClass, AvDeferralReference, AvDeferralRefStatus and AvFaultDeferralRequest entities
+--  221115  RWELLK  AD-8701, Removed code snipits related to Deferral References and Requests.
+--  221019  SUPKLK  AD-8696, Modified UI to Enable Standalone Deferral Management Solution in Co-Deployed Solution
+--  221004  waislk  AD-8716, Removed assistant SelectDeferralRefereneNew, command SelectReferenceCommand, command RecordDeferralAction, assistant RecordDeferralActionAssistant.
+--  220818  SRCHLK  AD-8467, Adding new function to get sysdate and set the value to ActionDate
+--  220817  SRCHLK  AD-8476, Fetch Username instead of user description in the Fault Defferal page.
+--  220816  JIWELK  AD-8440, Added a reference to AvFaultSource entity in AvFault overridden entity
+--  220726  VAALLK  AD-8199, Added validations for the maximum lenghts of attributes in RecordDeferralDetailsVirtual
+--  220722  LAHNLK  AD-8168, changed command Sign to not to call exit when the response is SUCCESS or FAIL
+--  220720  ROSDLK  AD-7912, Changed the order of the fields in record deferral assistant.
+--  220711  VAALLK  AD-7909, Changes to support the fault deferral in standalone mode
+--  220315  ROSDLK  AD-7114, Set username instead of using user's description for the actions taken
+--  220224  KAWJLK  AD-6705, Modified SignCommand.
+--  220128  KAWJLK  AD-5799, Modified assistant FaultDeferralMainPage, command Sign for FaultDefMainVirtual, command Finish for FaultDefMainVirtual and FaultDefMainVirtual.
+--  211117  lavwlk  AD-5002, Modified AvDeferralReferenceRef lov, AircraftLov query, GetActvDeferralReference function query and AvFault by replacing AssemblyTypeCode instead of AircraftTypeCode.
+--  210701  himklk  AD-2278, Added multiline =true to fields which can contain long text.
+--  210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+--  210504  LAHNLK  AD-1585, modified GetActvDeferralReference
+--  210422  KAWJLK  AD-1672, Added command Finish, command Sign, DeferFinish action, modefied FaultDefMainVirtual, modified FaultDefMainVirtual
+--  210420  KAWJLK  AD-1128, Added ActionList, SelectDeferralRefereneNew
+--  210407  KAWJLK  AD-1601, Added FaultDeferralMainPage, command RecordDeferralAction, command SaveAction, RecordDeferralActionAssistant, FaultDefMainVirtual, RecordDeferralActionVirtual, function GetFaultStatus
+--  210408  LAHNLK  AD-1583, Added ConflictingDeferredFaultList
+--  210408  LAHNLK  AD-1569, Added UpcomingFlightsList , UpcomingFlightsQuery
+--  210323  LAHNLK  AD-1585, Created. added SelectReferenceCommand,SelectDeferralReferene assistant, virtual DefRefVirtual
+-----------------------------------------------------------------------------
+fragment FlmFaultDeferral;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Fault deferral assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FndEsignature;
+include fragment AircraftLovSelector;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+selector AircraftSubSystemNewSelector for AvAircraftSubSystem {
+   label = "${SubSystemCode} - ${SubSystemName}";
+   static SubSystemCode;
+   static SubSystemName;
+}
+
+selector TaskSelector for AvFault {
+   label = "${Barcode}";
+   static Barcode {
+      label = "Barcode";
+   }
+}
+
+group FaultDetailsGroup for FaultDefMainVirtual {
+   label = "Fault Details";
+   field AircraftRef.AircraftMob {
+      label = "Aircraft";
+      editable = [false];
+      size = Medium;
+   }
+   field FaultQueryRef.SubSystemCode {
+      label = "System";
+      size = Small;
+      editable = [false];
+   }
+   field AvFaultRef.LogbookReference {
+      label = "Logbook Reference";
+      size = Small;
+      editable = [false];
+   }
+   field AvFaultRef.Description {
+      size = FullWidth;
+      label = "Name";
+      editable = [AvFaultRef.Objstate != "Closed"];
+      multiline = true;
+   }
+   field AvFaultRef.FoundOnDate {
+      label = "Found on Date";
+      size = Medium;
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field AvFaultRef.FoundOnDesc {
+      label = "Found on Flight";
+      size = Medium;
+      editable = [false];
+      visible = [AvFaultRef.FoundOnType = "FLIGHT"];
+   }
+   field AvFaultRef.FoundOnDesc {
+      label = "Found on Task";
+      size = Medium;
+      editable = [false];
+      visible = [AvFaultRef.FoundOnType = "TASK"];
+   }
+   field AvFaultRef.FoundOnDesc {
+      label = "Found on";
+      size = Medium;
+      editable = [false];
+      visible = [AvFaultRef.FoundOnType = null];
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      editable = [false];
+      size = Medium;
+   }
+   field AvAircraftWorkPackageRef.LocationCode {
+      label = "Location";
+      editable = [false];
+      size = Medium;
+   }
+}
+
+group DeferralInfoGroup for FaultDefMainVirtual {
+   label = "Deferral Information";
+   digitalsignature for AvFaultDeferral {
+      hashcontent = [ESigPermission = "Yes" or ESigPermission = null];
+   }
+
+   field DeferralAuthorization {
+      visible = [IsMocRequired = true];
+      editable = [false];
+      label = "Deferral Authorization No";
+      size = Medium;
+   }
+   field DeferralReferenceName {
+      editable = [false];
+      label = "Selected Reference";
+      size = Medium;
+      excludefromsignaturemapping = true;
+   }
+   field DeferralClassCode {
+      editable = [false];
+      label = "Deferral Type";
+      size = Medium;
+      excludefromsignaturemapping = true;
+   }
+   field DeferralReqReasonCode {
+      editable = [false];
+      label = "Deferral Reason";
+      size = Medium;
+   }
+   field Note {
+      editable = [false];
+      label = "Deferral Note";
+      size = Medium;
+   }
+}
+
+group ActionGroup for FaultDefMainVirtual {
+   label = "Deferral Details";
+   field ActionDesc {
+      editable = [false];
+      size = Large;
+      label = "Deferral Action";
+   }
+   badge FaultStatus {
+      label = "Fault Status";
+      style = TextOnly;
+      size = Small;
+      editable = [false];
+      emphasis Complementary7 = [FaultStatus = "Open"];
+      emphasis Ok = [FaultStatus = "Closed"];
+      emphasis Neutral = [FaultStatus = "Deferred"];
+   }
+   field ActionDate {
+      label = "Date";
+      editable = [false];
+   }
+   field FaultQueryRef.ActionUser {
+      label = "Signed By";
+      visible = [ActionDesc != null];
+      editable = [false];
+   }
+}
+
+group FaultDeferralGroup for DefRefVirtual {
+   label = "Fault Deferral";
+   field Note {
+      label = "Note";
+      size = Large;
+      multiline = true;
+   }
+}
+
+group RecordDeferralActionGroup for RecordDeferralActionVirtual {
+   label = "Record Deferral Action";
+   field ActionDesc {
+      label = "Deferral Action Taken";
+      multiline = true;
+      size = Large;
+   }
+}
+
+group RecordDeferralDetailsGroup for RecordDeferralDetailsVirtual {
+   label = "";
+   field DeferralAuthorization {
+      label = "Deferral Authorization No";
+      visible = [IsMocRequired = true];
+      size = Large;
+      editable = [false];
+      maxlength = 30;
+   }
+   field AvDeferralReqReasonRef {
+      label = "Deferral Reason";
+      size = Large;
+      editable = [false];
+   }
+   field Action {
+      label = "Deferral Action Taken";
+      size = Large;
+      multiline = true;
+      required = [true];
+   }
+   field Note {
+      label = "Deferral Note";
+      size = Large;
+      multiline = true;
+   }
+}
+
+list ActionList for FaultDefMainVirtual {
+   label = "Deferral Actions";
+   disable = Create, Delete, Update;
+   digitalsignature for AvExeTaskAction {
+      hashcontent = [FaultStatus = "Deferred"];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   field ActionDesc {
+      size = Large;
+      multiline = true;
+      editable = [false];
+      label = "Deferral Action";
+   }
+   badge FaultStatus {
+      label = "Fault Status";
+      style = TextOnly;
+      size = Small;
+      editable = [false];
+      emphasis Complementary7 = [FaultStatus = "Open"];
+      emphasis Ok = [FaultStatus = "Closed"];
+      emphasis Info = [FaultStatus = "Deferred"];
+      excludefromsignaturemapping = true;
+   }
+   field ActionDate {
+      label = "Date";
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field ActionUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   conditionalformat {
+      when [FaultStatus = "Deferred"] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+}
+
+list ConflictingDeferredFaultList for ConflictingDeferralStruct {
+   label = "Conflicting Deferrals";
+   toolbar {
+      enabled = [false];
+   }
+   field Barcode;
+   field DeferralReference;
+   field DueDate;
+   field Description {
+      size = Large;
+      label = "Name";
+      multiline = true;
+   }
+}
+
+list UpcomingFlightsList for UpcomingFlightsQuery {
+   label = "Upcoming Flights";
+   orderby = ShedDepartureDateTime asc;
+   toolbar {
+      enabled = [false];
+   }
+   field LegNo {
+      label = "Leg No";
+      size = Small;
+   }
+   field AvDepartureAirportRef.IataCode {
+      label = "Departure";
+      size = Small;
+   }
+   field AvArrivalAirportRef.IataCode {
+      label = "Arrival";
+      size = Small;
+   }
+   field ShedDepartureDateTime {
+      label = "Departure Time";
+      size = Small;
+   }
+   field ShedArrivalDateTime {
+      label = "Arrival Time";
+      size = Small;
+   }
+}
+
+assistant SelectDeferralReferene using DefRefVirtualSet {
+   label = "Select Deferral Referene";
+   savemode = OnLostFocus;
+   input(FaultId, AircraftId, SignedBy, DeferralReferenceId, Note);
+   output(DeferralReferenceId, Note, DeferralRequestId);
+
+   init command {
+      execute {
+         call GetUpcomingFlightsCount(AircraftId) into UpcomingFlightsCount;
+      }
+   }
+
+   singlestep {
+      group FaultDeferralGroup;
+      list ConflictingDeferredFaultList using GetConflictingDeferrals(DeferralReferenceId, AircraftId);
+      list UpcomingFlightsList(UpcomingFlightsArray);
+   }
+   command Save;
+   command Cancel;
+}
+
+
+assistant RecordDeferralDetails using RecordDeferralDetailsVirtualSet {
+   label = "Deferral Details";
+   savemode = OnLostFocus;
+   input this;
+   output(DeferralAuthorization, DeferralReqReasonCode, Note, Action);
+   singlestep {
+      group RecordDeferralDetailsGroup;
+   }
+
+   command SaveDeferralDetails;
+   command Cancel;
+}
+
+assistant FaultDeferralMainPage using FaultDefMainVirtualSet {
+   label = "Fault Deferral";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         call GetCurrentUser() into LoginUser;
+         call GetESigPermission(LoginUser) into ESigPermission;
+         call GetFaultStatus("MAIN", FaultId) into FaultStatus;
+         call GetMxFaultStatus(FaultAltId) into MxFaultStatus;
+         call GetEsigFileName(AircraftId, TaskSeq, FaultId) into FileName;
+      }
+   }
+   singlestep {
+      group FaultDetailsGroup;
+      group DeferralInfoGroup;
+      list ActionList using FaultDefMainVirtualSet;
+   }
+   command RecordDeferralDetailsCommand;
+   command Cancel {
+      visible = [false];
+   }
+
+   command Sign;
+   command Finish;
+}
+
+command Save for DefRefVirtual {
+   execute {
+      exit OK;
+   }
+}
+
+
+command SaveAction for RecordDeferralActionVirtual {
+   label = "Save";
+   enabled = [ActionDesc != null];
+   execute {
+      exit OK;
+   }
+}
+
+command SaveDeferralDetails for RecordDeferralDetailsVirtual {
+   label = "OK";
+   enabled = [((IsMocRequired = true and DeferralAuthorization != null) or(IsMocRequired = false)) and Action != null];
+   execute {
+      exit OK;
+   }
+}
+
+command Sign for FaultDefMainVirtual {
+   label = "Sign";
+   visible = [FaultId != null and FaultStatus in("Deferred") and(ESigPermission = "Yes" or ESigPermission = null)];
+   variable SignResponse {
+      type = Structure(EsigResponseStructure);
+   }
+   variable DeferFaultResponse {
+      type = Structure(DeferFaultResponse);
+   }
+   execute {
+      signdocument into SignResponse {
+         headerlogo = MediaObject;
+         keyref = ParentKeyRef;
+         luname = ParentLuName;
+         filenameprefix = "${FileName}";
+         documenttype = pdf;
+      }
+      if [SignResponse.State = "SUCCESS" or SignResponse.State = "FAIL"] {
+         if [SignResponse.State = "SUCCESS"] {
+            call FaultDeferralService(FaultId, ActionDesc, ActionDate, Note, DeferralReqReasonCode, DeferralAuthorization, SignResponse.Guid, AltId, TaskSeq, WorkPackageAltId, MxFaultStatus, AvFaultRef.Description, AvFaultRef.Barcode) into DeferFaultResponse;
+            if [FlightId != null] {
+               navigate "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+            }
+            else {
+               navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+            }
+         }
+         if [SignResponse.State = "FAIL"] {
+            error("Failed to record electronic signature. Review changes and try again.");
+         }
+      }
+      else {
+         exit;
+      }
+   }
+}
+
+command Finish for FaultDefMainVirtual {
+   label = "Finish";
+   visible = [FaultId != null and FaultStatus in("Deferred") and ESigPermission = "No"];
+   variable DeferFaultResponse {
+      type = Structure(DeferFaultResponse);
+   }
+   execute {
+      set Guid = "";
+      call FaultDeferralService(FaultId, ActionDesc, ActionDate, Note, DeferralReqReasonCode, DeferralAuthorization, Guid, AltId, TaskSeq, WorkPackageAltId, MxFaultStatus, AvFaultRef.Description, AvFaultRef.Barcode) into DeferFaultResponse;
+      if [FlightId != null] {
+         navigate "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+      }
+      else {
+         navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      }
+   }
+}
+
+
+-- This command is used in the fault deferral flow in the standalone mode
+command RecordDeferralDetailsCommand for FaultDefMainVirtual {
+   label = "Record Deferral Details";
+   enabled = [FaultId != null and FaultStatus in("Open")];
+   variable RecordDeferralDetailsInfo Structure(RecordDeferralDetailsInfoStructure);
+
+   execute {
+      copy this into RecordDeferralDetailsInfo;
+      assistant RecordDeferralDetails(RecordDeferralDetailsInfo) into(DeferralAuthorization, DeferralReqReasonCode, Note, ActionDesc, IsMocRequired) {
+         when OK {
+            if [((DeferralAuthorization != null and IsMocRequired = true) or(DeferralAuthorization = null and IsMocRequired = false)) and ActionDesc != null] {
+               set FaultStatus = "Deferred";
+               call UpdateDeferralDetails(FaultStatus, ActionDesc, DeferralAuthorization, DeferralReqReasonCode, Note);
+            }
+            else {
+               set FaultStatus = "Open";
+               call UpdateDeferralDetails(FaultStatus, ActionDesc, Null, Null, Null);
+            }
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset AvFaultDetailSet for AvFault;
+entityset AvFaultDeferralSet for AvFaultDeferral;
+entityset DefRefVirtualSet for DefRefVirtual;
+entityset ConflictingDeferralVirtualSet for ConflictingDeferralVirtual;
+entityset UpcomingFlightsVirtualSet for UpcomingFlightsVirtual;
+entityset FaultDefMainVirtualSet for FaultDefMainVirtual;
+entityset RecordDeferralActionVirtualSet for RecordDeferralActionVirtual;
+entityset RecordDeferralDetailsVirtualSet for RecordDeferralDetailsVirtual;
+
+@Override
+entity AvFault {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute SubSystemId Number;
+   attribute FaultCode Text;
+   attribute FaultSourceCode Text;
+   attribute FoundOnType Text;
+   attribute Description Text;
+   attribute FoundOnId Number;
+   attribute PhaseOfFlightCode Text;
+   attribute FailureTypeCode Text;
+   attribute AircraftId Number;
+   attribute AssemblyTypeCode Text {
+      fetch = "Aircraft_API.Get_Assembly_Type_Code(aircraft_id)";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute TaskSeq Number {
+      fetch = "Av_Exe_Task_API.Get_Task_Seq(fault_id)";
+   }
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute FoundOnDateUtc Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Closed";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute LastFaultActionId Text {
+      fetch = "Av_Fault_Action_API.Get_Last_Action_Id(fault_id)";
+   }
+   attribute LastFaultUser Text {
+      fetch = "Av_Fault_Action_API.Get_Action_User(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute LastFaultDate Timestamp {
+      fetch = "Av_Fault_Action_API.Get_Action_Date(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute DeferralReferenceId Number {
+      fetch = "Av_Fault_Deferral_API.Get_Act_Deferral_reference_Id(fault_id)";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute DeferralId Text {
+      fetch = "Av_Fault_Deferral_API.Get_Active_Deferral(fault_id)";
+   }
+   attribute FaultPartCount Number {
+      fetch = "Av_Fault_Part_API.Get_Fault_Part_Count(fault_id)";
+   }
+   attribute ToolsCount Number {
+      fetch = "Av_Fault_Tool_API.Get_Fault_Tools_Count(fault_id)";
+   }
+   attribute FaultActionCount Number {
+      fetch = "Av_Fault_Action_API.Get_Fault_Action_Count(fault_id)";
+   }
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute Barcode Text;
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute ClosedFaultOffsetDate Timestamp {
+      fetch = "Av_Fault_API.Get_Closed_Fault_Offset_Date(Fnd_Session_API.Get_Fnd_User(),fault_id)";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Fault_API.Get_Aircraft(fault_id)";
+   }
+   attribute WorkPackageId Number {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Av_Work_Package_id (fault_id)";
+   }
+   attribute UserRole Text {
+      fetch = "Flmexe_Util_API.Get_User_Roles(Fnd_Session_API.Get_Fnd_User())";
+   }
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvFaultDeferralRef(DeferralId) to AvFaultDeferral(DeferralId);
+   reference AvLogbookTypeCodeRef(LogbookTypeCode) to  AvLogbookType(LogbookTypeCode);
+   reference AvPhaseOfFlightCodeRef(PhaseOfFlightCode) to AvPhaseOfFlight(PhaseOfFlightCode);
+   reference AvFailureTypeCodeRef(FailureTypeCode) to   AvFailureType(FailureTypeCode);
+   reference AvFaultSourceCodeRef(FaultSourceCode) to   AvFaultSource(FaultSourceCode);
+   reference AvExeTaskNewRef(FaultId) to AvExeTask(FaultId);
+}
+
+virtual DefRefVirtual {
+
+   attribute DeferralReferenceId Number;
+   attribute DeferralRequestId Number;
+   attribute Note Text;
+   attribute FaultId Number;
+   attribute AircraftId Number;
+   attribute ConflictingDefCount Number;
+   attribute UpcomingFlightsCount Number;
+   attribute DeferralClassCode Text;
+   attribute Action Number;
+   attribute ActionDesc Text;
+   attribute ActionDate Date;
+   attribute FaultStatus Text;
+   attribute ActionUser Text;
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference FaultQueryRef(FaultId) to FaultQuery(FaultId);
+   array UpcomingFlightsArray(AircraftId) to UpcomingFlightsQuery(AircraftId);
+
+}
+virtual ConflictingDeferralVirtual {
+   attribute DeferralReferenceId Number;
+   attribute AircraftId Number;
+}
+virtual UpcomingFlightsVirtual {
+   attribute AircraftId Number;
+   array UpcomingFlightsArray(AircraftId) to UpcomingFlightsQuery(AircraftId);
+}
+
+virtual FaultDefMainVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute DeferralReferenceId Number;
+   attribute DeferralReqReasonCode Text;
+   attribute Note Text;
+   attribute Action Number;
+   attribute FaultId Number;
+   attribute AircraftId Number;
+   attribute DeferralRequestId Number;
+   attribute ActionDesc Text;
+   attribute DeferralClassCode Text;
+   attribute TaskSeq Number;
+   attribute AircraftWpId Number;
+   attribute ActionDate Timestamp;
+   attribute SignedBy Text;
+   attribute SubSystemId Number;
+   attribute FaultStatus Text;
+   attribute MxFaultStatus Text;
+   attribute ActionUser Text;
+   attribute FlightId Number;
+   attribute LoginUser Text;
+   attribute ESigPermission Text;
+   attribute DeferralAuthorization Text;
+   attribute FileName Text;
+   attribute IsMocRequired Boolean("TRUE", "FALSE");
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute MediaObject Stream {
+      implementation = "Java";
+   }
+   attribute AltId Text;
+   attribute FaultAltId Text;
+   attribute WorkPackageAltId Text;
+   attribute DeferralReferenceName Text;
+
+   reference AvDeferralReqReasonRef(DeferralReqReasonCode) to AvDeferralReqReason(DeferralReqReasonCode);
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference FaultQueryRef(FaultId) to FaultQuery(FaultId);
+   array FaultArray(FaultId)to AvFaultAction(FaultId);
+
+   action DeferFinish {
+      ludependencies = AvExeTask, AvFault, AvFlight, AvAircraftWorkPackage;
+
+      parameter BindSignatureId Text;
+   }
+   action UpdateDeferralDetails {
+      ludependencies = AvExeTask, AvFault, AvFlight, AvAircraftWorkPackage, FaultDefMainVirtual;
+      parameter FaultStatus Text;
+      parameter ActionDesc Text;
+      parameter DeferralAuthorization Text;
+      parameter DeferralReqReasonCode Text;
+      parameter Note Text;
+   }
+}
+
+virtual RecordDeferralActionVirtual {
+
+   attribute Action Number;
+   attribute FaultId Number;
+   attribute AircraftId Number;
+   attribute ActionDesc Text;
+   attribute ActionDate Date;
+   attribute FaultStatus Text;
+
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference FaultQueryRef(FaultId) to FaultQuery(FaultId);
+}
+
+virtual RecordDeferralDetailsVirtual {
+
+   attribute DeferralAuthorization Text {
+      maxlength = 30;
+   }
+   attribute DeferralReqReasonCode Text;
+   attribute Note Text {
+      maxlength = 4000;
+   }
+   attribute Action Text {
+      maxlength = 4000;
+   }
+   attribute FaultId Number;
+   attribute IsMocRequired Boolean("TRUE", "FALSE");
+
+   reference AvDeferralReqReasonRef(DeferralReqReasonCode) to AvDeferralReqReason(DeferralReqReasonCode);
+   reference FaultQueryRef(FaultId) to FaultQuery(FaultId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId) {
+      copy DeferralAuthorization to DeferralAuthorization;
+   }
+}
+
+enumeration FaultStatus {
+   value = "Open" {
+      label = "Open";
+   }
+   value = "Deferred" {
+      label = "Deferred";
+   }
+   value = "Closed" {
+      label = "Closed";
+   }
+}
+
+query DefferedFaultsQuery {
+   from = "Av_Fault";
+   keys = FaultId;
+   where = "objstate IN ('Deferred')";
+   lu = AvFault;
+   timestamptzref = "server";
+
+
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute SubSystemId Number;
+   attribute AircraftId Number;
+
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Due Date";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute DeferralReferenceId Number {
+      fetch = "Av_Fault_Deferral_API.Get_Act_Deferral_reference_Id(fault_id)";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute DeferralId Text {
+      fetch = "Av_Fault_Deferral_API.Get_Active_Deferral(fault_id)";
+   }
+   attribute DeferralRequestId Text;
+
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvFaultDeferralRef(DeferralId) to AvFaultDeferral(DeferralId);
+   reference AvFaultIdDeferralRef(FaultId) to AvFaultDeferral(FaultId);
+   reference DeferredFaultRef(Barcode) to AvFault(Barcode);
+}
+query UpcomingFlightsQuery {
+   from = "Av_Flight";
+   keys = FlightId;
+   where = "Shed_Departure_Date_Time > Time_Util_API.Get_Sysdate_In_Utc ";
+   lu = AvFlight;
+   timestamptzref = "server";
+
+
+   attribute FlightId Number;
+   attribute DepartureAirportId Number;
+   attribute ArrivalAirportId Number;
+   attribute AircraftId Number;
+   attribute ShedArrivalDateTime Timestamp;
+   attribute ShedDepartureDateTime Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalGate Text;
+
+   reference AvArrivalAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AvDepartureAirportRef(DepartureAirportId) to AvAirport(AirportId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+}
+@Override
+query AircraftLov {
+   from = "aircraft_lov";
+   lu = none;
+   keys = AircraftId;
+
+   ludependencies = Aircraft;
+   attribute AircraftId Number {
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute AircraftMob Text {
+      label = "Aircraft";
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute Manufacturer Text {
+      lovcolumn = [true];
+   }
+   attribute CapabilityCode Text {
+      lovcolumn = [true];
+   }
+   attribute AssemblyTypeCode Text;
+}
+
+query FaultQuery {
+   from = "av_fault";
+   lu = none;
+   keys = FaultId;
+   timestamptzref = "server";
+
+   attribute FaultId Number;
+   attribute ActionDesc Text {
+      fetch = "Av_Fault_Action_API.Get_Action_Desc(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute ActionDate Date {
+      fetch = "Av_Fault_Action_API.Get_Action_Date(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute FaultStatus Text {
+      fetch = "Av_Fault_API.Get_State (fault_id)";
+   }
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute SubSystemCode Text {
+      fetch = "Av_Aircraft_Sub_System_API.Get_Sub_System_Code(Av_Fault_API.Get_Sub_System_Id(fault_id))";
+   }
+   attribute ActionUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+}
+
+function GetUpcomingFlightsCount Number {
+   parameter AircraftId Number;
+}
+
+function GetConflictingDeferrals List < Structure(ConflictingDeferralStruct) > {
+   timestamptzref = "server";
+   parameter DeferralReferenceId Number;
+   parameter AircraftId Number;
+}
+function GetFaultStatus Text {
+   parameter From Text;
+   parameter FaultId Number;
+}
+
+function GetMxFaultStatus Text {
+   parameter AltId Text;
+}
+
+function GetSysDate Timestamp {
+   timestamptzref = "server";
+}
+
+structure ConflictingDeferralStruct {
+   timestamptzref = "server";
+
+   attribute FaultId Number;
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute DeferralReference Text;
+   attribute DueDate Timestamp;
+}
+
+structure DeferFaultResponse {
+   attribute FaultActionId Number;
+   attribute TaskActionId  Number;
+}
+
+structure RecordDeferralDetailsInfoStructure {
+   attribute FaultId Number;
+   attribute DeferralAuthorization Text;
+   attribute DeferralReqReasonCode Text;
+   attribute Note Text;
+   attribute IsMocRequired Boolean("TRUE", "FALSE");
+}
+structure FaultDeferralMainPageInfoStructure {
+   attribute FaultId Number;
+   attribute AircraftWpId Number;
+   attribute TaskSeq Number;
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute ParentKeyRef Text;
+   attribute ParentLuName Text;
+   attribute AltId Text;
+   attribute DeferralAuthorization Text;
+   attribute DeferralReferenceName Text;
+   attribute DeferralReqReasonCode Text;
+   attribute DeferralClassCode Text;
+   attribute Note Text;
+   attribute WorkPackageAltId Text;
+   attribute IsMocRequired Boolean("TRUE", "FALSE");
+   attribute FaultAltId Text;
+}
+structure FaultDeferralMainPageInfoTaskDetailStructure {
+   attribute FaultId Number;
+   attribute AircraftWpId Number;
+   attribute TaskSeq Number;
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute ParentKeyRef Text;
+   attribute ParentLuName Text;
+   attribute AltId Text;
+   attribute DeferralAuthorization Text;
+   attribute DeferralReferenceName Text;
+   attribute DeferralReqReasonCode Text;
+   attribute DeferralClassCode Text;
+   attribute Note Text;
+   attribute WorkPackageAltId Text;
+   attribute IsMocRequired Boolean("TRUE", "FALSE");
+   attribute FaultAltId Text;
+}
+action FaultDeferralService Structure(DeferFaultResponse) {
+   initialcheck none;
+   implementation = "Java";
+   timestamptzref = "server";
+
+   parameter FaultId Number;
+   parameter ActionDesc Text;
+   parameter ActionDate Timestamp;
+   parameter Note Text;
+   parameter DeferralReqReasonCode Text;
+   parameter DeferralAuthorization Text;
+   parameter BindSignatureId Text;
+   parameter TaskAltId Text;
+   parameter TaskSeq Number;
+   parameter WorkPackageAltId Text;
+   parameter MxFaultStatus Text;
+   parameter Description Text;
+   parameter Barcode Text;
+   ludependencies = AvExeTask, AvFault, AvFlight, AvAircraftWorkPackage;
+}

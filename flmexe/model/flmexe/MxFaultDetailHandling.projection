@@ -1,0 +1,250 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+--  240304  VAALLK  AD-12268, Added fetches for LastActionLdesc,LastActionUser,LastActionDt in GetFaultList.
+--  240219  VAALLK  AD-11917, Added config slot mandatory attribute for part installations/part removals.
+--  240211  ROSDLK  AD-11372, Added FaultPartInstallQuery.
+--  240208  VAALLK  AD-11373, Added FaultPartRemovalsQuery.
+--  240201  ROSDLK  AD-11374, Changed the data type of MxTaskId in TaskStepQuery.
+--  240206  VAALLK  AD-11376, Added FaultActionsQuery.
+--  240202  LAWALK  AD-11375, Added FaultSkillQuery and @DynamicComponentDependency for MXCORE
+--  240127  RWELLK  AD-11369, GetFaultList code enhancement.
+--  240124  ROSDLK  AD-11374, Added TaskStepQuery.
+--  240124  LAHNLK  AD-11374, Added AggFaultToolQuery
+--  240121  RWELLK  AD-11369, Added new attributes.
+--  240119  LAHNLK  AD-11370, Added MeasurementsQuery
+--  240117  RWELLK  AD-11369, Created FaultDetails page.
+-----------------------------------------------------------------------------
+projection MxFaultDetailHandling;
+component FLMEXE;
+layer Core;
+description "Maintenix Fault Detail Page";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset MxFaultDetailSet for GetFaultList;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+query GetFaultList {
+   from = "ad_aircraft_fault_dm";
+   keys = Barcode;
+   lu = none;
+   timestamptzref = "server";
+   attribute Id Text;
+   attribute TaskId Text;
+   attribute Barcode Text;
+   attribute AcRegistrationCd Text;
+   attribute AcTypeCd Text;
+   attribute AcFailedSystemCd Text;
+   attribute LogbookReference Text;
+   attribute Description Text;
+   attribute LogbookTypeCd Text;
+   attribute FailureTypeCd Text;
+   attribute SourceCd Text;
+   attribute Code Text;
+   attribute Rowstate Text;
+   attribute FoundOnDt Timestamp;
+   attribute FoundOnDesc Text;
+   attribute FoundOnType Text;
+   attribute FoflightPhaseCd Text;
+   attribute WpId Text;
+   attribute WpName Text;
+   attribute WpWorkOrderNumber Text;
+   attribute WpStatus Text;
+   attribute WpScheduledStartDt Timestamp;
+   attribute WpScheduledEndDt Timestamp;
+   attribute WpActualStartDt Timestamp;
+   attribute WpActualEndDt Timestamp;
+   attribute DeferralAuthorization Text;
+   attribute DeferralNote Text;
+   attribute DeferralReasonCd Text;
+   attribute AcFailedSystemName Text;
+   attribute ExternalKey Text;
+
+   attribute LastActionLdesc LongText {
+      fetch = "Av_Fault_Action_API.Get_Last_Action_For_Mx_Fault(Barcode,Av_Fault_API.Get_Fault_Id_From_Record_Id(external_key),Rowstate)";
+   }
+   attribute LastActionUser Text {
+      fetch = "Av_Fault_Action_API.Get_Action_User_For_Mx_Fault(Barcode,Av_Fault_API.Get_Fault_Id_From_Record_Id(external_key),Rowstate)";
+   }
+   attribute LastActionDt Timestamp {
+      fetch = "Av_Fault_Action_API.Get_Action_Date_For_Mx_Fault(Barcode,Av_Fault_API.Get_Fault_Id_From_Record_Id(external_key),Rowstate)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute IsAssignToWP Boolean {
+      fetch = "DECODE(wp_status,'ACTV', 'TRUE','COMMIT', 'TRUE','CANCEL', 'FALSE','IN WORK', 'TRUE','COMPLETE', 'FALSE',NULL,'FALSE')";
+   }
+   attribute IsAssignToWpForClosed Text {
+      fetch = "NULL";
+   }
+
+   array MeasurementArray(TaskId) to MeasurementsQuery(MxTaskId);
+   array AggFaultToolArray(TaskId) to AggFaultToolQuery(MxTaskId);
+   array TaskStepsArray(TaskId) to TaskStepQuery(MxTaskId);
+   array FaultSkillArray(TaskId) to FaultSkillQuery(TaskId);
+   array FaultActionsArray(TaskId) to FaultActionsQuery(MxTaskId);
+   array AggFaultPartRemovalArray(TaskId) to FaultPartRemovalsQuery(MxTaskId);
+   array AggFaultPartInstallationArray(TaskId) to FaultPartInstallQuery(MxTaskId);
+
+}
+query MeasurementsQuery {
+   from = "Agg_Fault_Measurement_Mx_Owned";
+   keys = AggregateId;
+   lu = none;
+   timestamptzref = "server";
+   attribute AggregateId Text;
+   attribute MxTaskId Text;
+   attribute MeasurementOrder Number;
+   attribute Measurement Text;
+   attribute Quantity Text;
+   attribute MeasuredUser Text;
+   attribute MeasuredDateTime Timestamp;
+   attribute Status Text;
+
+   reference  RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+query AggFaultToolQuery {
+   from = "Agg_Fault_Tool_Mx_Owned";
+   keys = AggregateId;
+   lu = none;
+   timestamptzref = "server";
+   attribute AggregateId Text;
+   attribute ToolSpecificationCode Text;
+   attribute ActualHoursFmt Text;
+   attribute ScheduledHoursFmt Text;
+   attribute PartNumber Text;
+   attribute SerialNo Text;
+   attribute AssignedUser Text;
+   attribute AssignedDateTime Timestamp;
+   attribute Status Text;
+   attribute MxTaskId Number;
+
+   reference AvToolSpecAggRef(ToolSpecificationCode) to AvToolSpecification(ToolSpecificationCode);
+   reference  RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+query TaskStepQuery {
+   from = "Agg_Fault_Step_Mx_Owned";
+   keys = AggregateId;
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute MxTaskId Text;
+   attribute StepOrder Text;
+   attribute StepDescription Text;
+   attribute StepStatus Text;
+   attribute Objid Text;
+
+   reference RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+query FaultSkillQuery {
+   from = "Agg_Fault_Labour_Mx_Owned";
+   keys = AggregateId;
+   lu = none;
+
+   attribute AggregateId Text;
+   attribute TaskId Text;
+   attribute AssignedUser Text;
+   attribute CompetencyDescription Text;
+   attribute LabourStatus Text;
+   attribute ConvertedHours Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(converted_hours)";
+   }
+
+}
+query FaultActionsQuery {
+   from = "Aggre_Fault_Action_Mx_Owned";
+   keys = AggregateId;
+   lu = none;
+   timestamptzref = "server";
+   attribute AggregateId Text;
+   attribute MxTaskId Text;
+   attribute ActionDescription Text;
+   attribute ActionDate Timestamp;
+   attribute ActionUser Text;
+   attribute StepOrder Text;
+   attribute ActionType Text;
+
+   reference RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+query FaultPartRemovalsQuery {
+   from = "Agg_Fault_Rmvd_Part_Mx_Owned";
+   keys = AggregateId;
+   where = "removed_quantity IS NOT null";
+   lu = none;
+   timestamptzref = "server";
+
+   attribute AggregateId Text;
+   attribute MxTaskId Text;
+   attribute PartGroupCode Text;
+   attribute PartGroupName Text;
+   attribute AssemblyTypeCode Text;
+   attribute IsCommonHardware Text;
+   attribute AssemblyPosition Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute RemovedPartNo Text;
+   attribute RemovedSerialNo Text;
+   attribute RemovedQuantity Number;
+   attribute RemovalReasonCode Text;
+   attribute RemovalReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removal_reason_code)";
+   }
+   attribute RemovalStatus Text;
+   attribute RemovedDate Timestamp;
+   attribute RemovedUser Text;
+   attribute ConfigIsMandatory Text;
+
+   reference RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+
+query FaultPartInstallQuery {
+   from = "Agg_Fault_Inst_Part_Mx_Owned";
+   keys = AggregateId;
+   where = "installed_quantity IS NOT null";
+   lu = none;
+   timestamptzref = "server";
+   attribute AggregateId Text;
+   attribute MxTaskId Text;
+   attribute PartGroupCode Text;
+   attribute PartGroupName Text;
+   attribute AssemblyTypeCode Text;
+   attribute IsCommonHardware Text;
+   attribute AssemblyPosition Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute InstalledPartNo Text;
+   attribute InstalledSerialNo Text;
+   attribute InstalledQuantity Number;
+   attribute InstalledStatus Text;
+   attribute InstalledDate Timestamp;
+   attribute InstalledUser Text;
+   attribute ConfigIsMandatory Text;
+
+   reference RefGetFaultList(MxTaskId) to GetFaultList(TaskId);
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

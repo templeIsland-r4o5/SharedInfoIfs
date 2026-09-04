@@ -1,0 +1,30 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/24/24, 5:53:36 PM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_TASKS_WITH_RESOURCE_CONFLICTS_PROJECTION</Name>
+    <ID>24fd7fbf-092e-474f-9e8e-e7c2926b6b3e</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>TaskSeq</Column>
+            <Name>Task Seq</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>ResourceAssignmentStatus</Column>
+            <Name>Resource Assignment Status</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>FlmTaskResourceSet</EntitySet>
+    <EntityType>FlmTaskResource</EntityType>
+    <Filter>ResourceAssignmentStatus eq 3</Filter>
+</ProjectionDataSource>

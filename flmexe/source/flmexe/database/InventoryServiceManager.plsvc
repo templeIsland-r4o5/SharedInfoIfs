@@ -1,0 +1,52 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     InventoryServiceManager
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  240827  DUWJLK  AD-13911, Added IsPartFromValidAssembly function.
+--  240719  majslk  AD-13685, Created
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+FUNCTION Get_Default_Removal_Reason___ RETURN VARCHAR2
+IS
+BEGIN
+	RETURN Adcom_Util_API.Get_Mx_Parm_Value('DEFAULT_REASON_FOR_REMOVAL');
+END Get_Default_Removal_Reason___;
+
+FUNCTION Is_Part_From_Valid_Assembly___ (
+   aircraft_id_        IN NUMBER,
+   part_number_alt_id_ IN VARCHAR2) RETURN BOOLEAN
+IS
+   aircraft_assmbly_type_code_     VARCHAR2(8);
+   is_part_number_available_       NUMBER;
+   
+   CURSOR get_is_part_from_valid_assembly_ (aircraft_assembly_type_ VARCHAR2) IS
+    SELECT  1
+    FROM part_group_part_list
+    WHERE (is_common_hardware = 'TRUE' OR 
+           part_assembly_type_code = aircraft_assembly_type_ OR 
+           part_assembly_type_code IN (SELECT sub.assembly_type_code
+                                       FROM av_sub_assy_inventory sub
+                                       WHERE sub.aircraft_id = (aircraft_id_))) AND 
+           part_group_part_list.alt_id = part_number_alt_id_;
+BEGIN
+   aircraft_assmbly_type_code_:= Aircraft_API.Get_Assembly_Type_Code(aircraft_id_);
+   
+   OPEN  get_is_part_from_valid_assembly_(aircraft_assmbly_type_code_);
+   FETCH get_is_part_from_valid_assembly_ INTO is_part_number_available_;
+   IF (get_is_part_from_valid_assembly_%FOUND) THEN
+      CLOSE get_is_part_from_valid_assembly_;
+      RETURN TRUE;
+   ELSE
+      CLOSE get_is_part_from_valid_assembly_;
+      RETURN FALSE;
+   END IF;
+END Is_Part_From_Valid_Assembly___;
+

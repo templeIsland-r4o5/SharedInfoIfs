@@ -1,0 +1,20 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmStationTurnsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  220125  sbanlk  AD-6542, Added function Check_Task_Work_Assigned___.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Check_Task_Work_Assigned___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+BEGIN
+   RETURN Av_Flight_API.Has_Skills_Assigned_Previously(work_package_id_);
+END Check_Task_Work_Assigned___;

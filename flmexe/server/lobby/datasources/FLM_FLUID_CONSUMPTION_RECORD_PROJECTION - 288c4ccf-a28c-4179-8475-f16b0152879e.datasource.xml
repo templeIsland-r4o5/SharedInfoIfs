@@ -1,0 +1,39 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Fluid Consumptions, FLM</Keywords>
+    <DescriptiveText>Oil Consumption Record Counts against the Statuses defined in 'Fluid Consumption Status Types' page</DescriptiveText>
+    <LastModified>5/9/24, 12:23:39 PM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_FLUID_CONSUMPTION_RECORD_PROJECTION</Name>
+    <ID>288c4ccf-a28c-4179-8475-f16b0152879e</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>RecordStatusCode</Column>
+            <Name>Record Status Code</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>RecordStatus</Column>
+            <Name>Record Status</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>RecordCount</Column>
+            <Name>Record Count</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>AssemblyTypeCode</Column>
+            <Name>Assembly Type Code</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmFluidConsumptionLobbyHandling</Projection>
+    <EntitySet>AvHistFluidSerStatusCount</EntitySet>
+    <EntityType>AvHistFldServiceDet</EntityType>
+</ProjectionDataSource>

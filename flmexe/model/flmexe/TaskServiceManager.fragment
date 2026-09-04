@@ -1,0 +1,24 @@
+fragment TaskServiceManager;
+component FLMEXE;
+layer Core;
+description "Contains methods required to interact with Maintenix to send Task information";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+---------------------------------- ACTIONS ----------------------------------
+action AddTaskActionService {
+   initialcheck none;
+   implementation = "Java";
+   timestamptzref = "server";
+
+   parameter Description Text;
+   parameter ActionDate Timestamp;
+   parameter Username Text;
+   parameter TaskAltId Text;
+}

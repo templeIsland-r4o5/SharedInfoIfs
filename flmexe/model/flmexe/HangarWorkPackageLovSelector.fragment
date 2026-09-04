@@ -1,0 +1,28 @@
+fragment HangarWorkPackageLovSelector;
+component FLMEXE;
+layer Core;
+description "List of values fragment defining view  Hangar work_package_lov";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@Overtake
+selector ReferenceHangarWorkPackageLovSelector for HangarWorkPackageLov {
+   static Barcode;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+query HangarWorkPackageLov {
+   from = "Work_Package_Lov";
+   lu = AvAircraftWorkPackage;
+   where = "is_heavy = 1 AND wp_airport_id= Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User)";
+   keys = AircraftWorkPackageId;
+   attribute AircraftWorkPackageId Number;
+   attribute Barcode Text {
+      lovcolumn = [true];
+   }
+   attribute AircraftId Text;
+   attribute IsHeavy Number;
+   attribute HmContractId Text;
+}

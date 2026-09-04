@@ -1,0 +1,43 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250528  RAFALK  AD-18301 Created.
+-----------------------------------------------------------------------------
+
+fragment ZoneLovSelector;
+component FLMEXE;
+layer Core;
+description "This contains data related to zone LoV selector";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+selector ZoneCodeSelector for TaskZoneLov {
+   label = "${ZoneCode}";
+   static ZoneCode;
+   static ZoneDescription;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+query TaskZoneLov {
+   from = "Aircraft_Zone_Info";
+   lu = AvAircraftZone;
+   keys = AcZoneSeq;
+
+   attribute AcZoneSeq Number;
+
+   attribute ZoneCode Text {
+      label = "Code";
+      lovcolumn = [true];
+   }
+   attribute ZoneDescription Text {
+      label = "Description";
+      lovcolumn = [true];
+   }
+
+   attribute AircraftId Number {
+      label = "Aircraft ID";
+      lovcolumn = [false];
+   }
+}

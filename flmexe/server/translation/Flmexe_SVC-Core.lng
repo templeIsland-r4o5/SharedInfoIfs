@@ -1,0 +1,3461 @@
+-------------------------------------------------------
+File Type: IFS Foundation Language File
+Type version: 10.00
+-------------------------------------------------------
+Module: FLMEXE
+Layer: Core
+Main Type: SVC
+Sub Type: All
+Content: 
+-------------------------------------------------------
+CS:FlmAircraftTurnsDetailsHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:ERRINVALID^SVC^Message^N^N
+		A:Text^Please enter valid value(HH:MM) for :P1 field^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^Start Date should be less than the End Date.^
+	CE:
+	CS:ERROREMPTYSYSTEMURL^SVC^Message^N^N
+		A:Text^You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.^
+	CE:
+	CS:ESIGERRORRERA^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:FlightStatusEnum^SVC^Enumeration^N^N
+		CS:CANCELED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Canceled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^9^
+			A:Text^Completed^
+		CE:
+		CS:DIVERTED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Diverted^
+		CE:
+		CS:IN^SVC^Iid Element^N^N
+			P:Position^8^
+			A:Text^In^
+		CE:
+		CS:OFF^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Off^
+		CE:
+		CS:ON^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^On^
+		CE:
+		CS:OUT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Out^
+		CE:
+		CS:PLANNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Planned^
+		CE:
+		CS:RETURNED^SVC^Iid Element^N^N
+			P:Position^7^
+			A:Text^Returned^
+		CE:
+	CE:
+	CS:FoundSourceOptions^SVC^Enumeration^N^N
+		CS:TASK^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Task^
+		CE:
+		CS:WORKPACKAGE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Work Package^
+		CE:
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:INVALIDALLOCATEDHOURS^SVC^Message^N^N
+		A:Text^Allocated Hours cannot be 0.^
+	CE:
+	CS:INVALIDALLOCATEDHOURSFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDENDTIME^SVC^Message^N^N
+		A:Text^End Date should not be a future date^
+	CE:
+	CS:INVALIDSTARTTIME^SVC^Message^N^N
+		A:Text^Start Date should not be a future date^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:PriorityStatuses^SVC^Enumeration^N^N
+		CS:HIGH^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^High^
+		CE:
+		CS:LOW^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Low^
+		CE:
+		CS:MED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Med^
+		CE:
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:RaiseFaultActionOptions^SVC^Enumeration^N^N
+		CS:RAISEANDCLOSE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Raise and close^
+		CE:
+		CS:RAISEANDOPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Raise and leave open^
+		CE:
+	CE:
+	CS:RaiseFaultOptions^SVC^Enumeration^N^N
+		CS:LOGBOOKFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Raise Logbook Fault^
+		CE:
+		CS:NONROUTINE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Raise Non Routine^
+		CE:
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:ToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+	CS:TurnStatusEnum^SVC^Enumeration^N^N
+		CS:ARRIVED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Arrived^
+		CE:
+		CS:DEPARTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Departed^
+		CE:
+		CS:INBOUND^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Inbound^
+		CE:
+		CS:INMAINTENANCE^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^In Maintenance^
+		CE:
+		CS:NOTAPPLICABLE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Applicable^
+		CE:
+		CS:RELEASED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Released^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:WRONGTURN^SVC^Message^N^N
+		A:Text^Aircraft Turn Status should be Inbound, Arrived or InMaintenance^
+	CE:
+CE:
+CS:FlmComponentReturnsHandling^SVC^Projection^N^N
+	CS:EQUIPDEFAULTREMARK^SVC^Message^N^N
+		A:Text^Created by^
+	CE:
+	CS:ERROR_COST_STRUCTURE^SVC^Message^N^N
+		A:Text^A material, labor or subcontracting cost bucket must be added.^
+	CE:
+CE:
+CS:FlmCriticalItemSeveritiesHandling^SVC^Projection^N^N
+	CS:ValidityEnum^SVC^Enumeration^N^N
+		CS:ACTIVE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Active^
+		CE:
+		CS:INACTIVE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Inactive^
+		CE:
+	CE:
+CE:
+CS:FlmCriticalItemTypeHandling^SVC^Projection^N^N
+	CS:ValidityEnum^SVC^Enumeration^N^N
+		CS:ACTIVE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Active^
+		CE:
+		CS:INACTIVE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Inactive^
+		CE:
+	CE:
+CE:
+CS:FlmFaultDetail^SVC^Projection^N^N
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+CE:
+CS:FlmFaultDetailHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:AVLQTYLESTOUNIS^SVC^Message^N^N
+		A:Text^Available quantity to unissue is :P1.^
+	CE:
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALID^SVC^Message^N^N
+		A:Text^Enter :P1 in the HH:MM format.^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:ERROREMPTYMXIURL^SVC^Message^N^N
+		A:Text^You cannot initiate a deferral as the Maintenix URL has not been defined in the Mx Config system configuration parameters. Contact your system administrator.^
+	CE:
+	CS:ERROREMPTYSYSTEMURL^SVC^Message^N^N
+		A:Text^You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.^
+	CE:
+	CS:ERROR_COST_STRUCTURE^SVC^Message^N^N
+		A:Text^A material, labor or subcontracting cost bucket must be added.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:INSPNOCERTIDERROR^SVC^Message^N^N
+		A:Text^The certificate ID is mandatory for the inspector of the required skill.^
+	CE:
+	CS:INVALIDALLOCATEDHOURS^SVC^Message^N^N
+		A:Text^Allocated Hours cannot be 0.^
+	CE:
+	CS:INVALIDALLOCATEDHOURSFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:LASTCERTERROR^SVC^Message^N^N
+		A:Text^This step must have at least one certifier sign-off requirement to disconnect it.^
+	CE:
+	CS:LASTEXECERROR^SVC^Message^N^N
+		A:Text^This step must have at least one executor sign-off requirement to disconnect it.^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NOCERTFOUNDERROR^SVC^Message^N^N
+		A:Text^A corresponding certifier certificate ID is mandatory for any executor certificate ID.^
+	CE:
+	CS:NOCERTWITHOUTCERTIDERROR^SVC^Message^N^N
+		A:Text^An executor role without a certificate ID must also have a corresponding certifier role without a certificate ID.^
+	CE:
+	CS:NOEXECERT^SVC^Message^N^N
+		A:Text^A sign-off requirement with an Inspector certificate ID requires a corresponding Certifier and Executor with certificate IDs of the same skill.^
+	CE:
+	CS:NOEXECERTWITHCERT^SVC^Message^N^N
+		A:Text^An Executor role without a certificate ID must also have corresponding Inspector and Certifier roles without certificate IDs.^
+	CE:
+	CS:NOEXEFOUNDERROR^SVC^Message^N^N
+		A:Text^A corresponding executor certificate ID is mandatory for any certifier certificate ID.^
+	CE:
+	CS:NOEXEWITHOUTCERTIDERROR^SVC^Message^N^N
+		A:Text^A certifier role without a certificate ID must also have a corresponding executor role without a certificate ID.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:NOROLESELECTEDERROR^SVC^Message^N^N
+		A:Text^Select a role before selecting a certificate ID.^
+	CE:
+	CS:NOSIGNOFFSEXISTERROR^SVC^Message^N^N
+		A:Text^You need at least one sign-off requirement of both executor and certifier roles to create this step.^
+	CE:
+	CS:ORDERNOEXISTERROR^SVC^Message^N^N
+		A:Text^The order number you entered is already in use. Enter a new one for this step.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PRTNOTINMEX^SVC^Message^N^N
+		A:Text^Selected Part is not persisted in the MEX^
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:QTYUNISHAVVALUE^SVC^Message^N^N
+		A:Text^Quantity to Unissue must have a value^
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:SAMECERTDUPLICATEERROR^SVC^Message^N^N
+		A:Text^The certificate ID :P1 you entered is already added for this step.^
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:SignOffConnection^SVC^Enumeration^N^N
+		CS:TASK^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Task^
+		CE:
+		CS:TASKSTEP^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Task Step and Panel^
+		CE:
+	CE:
+	CS:SignOffReqType^SVC^Enumeration^N^N
+		CS:EXECUTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Executor^
+		CE:
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Inspector^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Certifier^
+		CE:
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:ToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+CE:
+CS:FlmFaultSearchHandling^SVC^Projection^N^N
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:NOFAULTFOUND^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^No Fault Found^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:OwnerType^SVC^Enumeration^N^N
+		CS:MM^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^M M^
+		CE:
+		CS:MX^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^M X^
+		CE:
+	CE:
+CE:
+CS:FlmHmCrewLeadTasksHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TurnStatusEnum^SVC^Enumeration^N^N
+		CS:ARRIVED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Arrived^
+		CE:
+		CS:DEPARTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Departed^
+		CE:
+		CS:INBOUND^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Inbound^
+		CE:
+		CS:INMAINTENANCE^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^In Maintenance^
+		CE:
+		CS:NOTAPPLICABLE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Applicable^
+		CE:
+		CS:RELEASED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Released^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmHmPreviewReleaseHandling^SVC^Projection^N^N
+	CS:ERRINVALIDSKILL^SVC^Message^N^N
+		A:Text^You do not have the required skill to sign off the work package completion.^
+	CE:
+	CS:ESIGWERROR^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+CE:
+CS:FlmHmSupervisorMyShiftBoardHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmHmTechnicianMyAssignmentsHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmHmTechnicianTaskAssignmentsHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmHmWorkPackageHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:ERRINVALIDSKILL^SVC^Message^N^N
+		A:Text^You do not have the required skill to sign off the work package completion.^
+	CE:
+	CS:ESIGWERROR^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:PriorityStatuses^SVC^Enumeration^N^N
+		CS:HIGH^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^High^
+		CE:
+		CS:LOW^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Low^
+		CE:
+		CS:MED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Med^
+		CE:
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+CE:
+CS:FlmLoadHangarMaintenanceWorkscopeHandling^SVC^Projection^N^N
+	CS:LineStatus^SVC^Enumeration^N^N
+		CS:FAILED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Failed^
+		CE:
+		CS:SUCCESSFUL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Successful^
+		CE:
+	CE:
+CE:
+CS:FlmLoadWorkscopeHandling^SVC^Projection^N^N
+	CS:LineStatus^SVC^Enumeration^N^N
+		CS:FAILED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Failed^
+		CE:
+		CS:SUCCESSFUL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Successful^
+		CE:
+	CE:
+CE:
+CS:FlmMaintenanceOperationControlHandling^SVC^Projection^N^N
+	CS:ERROREMPTYMXIURL^SVC^Message^N^N
+		A:Text^You cannot initiate a deferral as the Maintenix URL has not been defined in the Mx Config system configuration parameters. Contact your system administrator.^
+	CE:
+	CS:ERRORMXCOMPONENTNOTINSTALLED^SVC^Message^N^N
+		A:Text^You cannot initiate a deferral as Maintenix has not been installed. Contact your system administrator.^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:NOFAULTFOUND^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^No Fault Found^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:OwnerType^SVC^Enumeration^N^N
+		CS:MM^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^M M^
+		CE:
+		CS:MX^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^M X^
+		CE:
+	CE:
+CE:
+CS:FlmMyAircraftTurnsHandling^SVC^Projection^N^N
+	CS:TurnStatusEnum^SVC^Enumeration^N^N
+		CS:ARRIVED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Arrived^
+		CE:
+		CS:DEPARTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Departed^
+		CE:
+		CS:INBOUND^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Inbound^
+		CE:
+		CS:INMAINTENANCE^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^In Maintenance^
+		CE:
+		CS:NOTAPPLICABLE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Applicable^
+		CE:
+		CS:RELEASED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Released^
+		CE:
+	CE:
+CE:
+CS:FlmMyPartRequestHandling^SVC^Projection^N^N
+	CS:AVLQTYLESTOUNIS^SVC^Message^N^N
+		A:Text^Available quantity to unissue is :P1.^
+	CE:
+	CS:PRTNOTINMEX^SVC^Message^N^N
+		A:Text^Selected Part is not persisted in the MEX^
+	CE:
+	CS:QTYUNISHAVVALUE^SVC^Message^N^N
+		A:Text^Quantity to Unissue must have a value^
+	CE:
+CE:
+CS:FlmMyWorksHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRCERTSIGNBEFOREEXEC^SVC^Message^N^N
+		A:Text^Certifier cannot sign before the Executor.^
+	CE:
+	CS:ERRINSPSIGNBEFORECERT^SVC^Message^N^N
+		A:Text^Inspector cannot sign before the Certifier.^
+	CE:
+	CS:ERRINVALASSIGNROLE^SVC^Message^N^N
+		A:Text^You cannot perform actions for this skill as it is not part of your assigned role.^
+	CE:
+	CS:ERRINVALID^SVC^Message^N^N
+		A:Text^Enter :P1 in the HH:MM format.^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 should be less than the :P2.^
+	CE:
+	CS:ERRINVALIDUSER^SVC^Message^N^N
+		A:Text^You have already signed one or more steps as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVALIDUSERTSKCD^SVC^Message^N^N
+		A:Text^You have already signed this step as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVINSTQTY^SVC^Message^N^N
+		A:Text^Installed quantity should be greater than 0.^
+	CE:
+	CS:ERRINVQTY^SVC^Message^N^N
+		A:Text^Please create another part requirement for the additional quantity of installed parts.^
+	CE:
+	CS:ERRINVRMVDQTY^SVC^Message^N^N
+		A:Text^Removed quantity should be greater than 0.^
+	CE:
+	CS:ERRNOREQQULIFICATION^SVC^Message^N^N
+		A:Text^You do not have the required qualification to perform this action.^
+	CE:
+	CS:ERRPRTAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTAPPR^SVC^Message^N^N
+		A:Text^Cannot install part which is not approved.^
+	CE:
+	CS:ERRPRTGRPAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part Group is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTINTORDER^SVC^Message^N^N
+		A:Text^Cannot install part. Interchangeability order of the installing part should be greater than or equal to the interchangeability order of the removing part.^
+	CE:
+	CS:ERRPRTSTATUS^SVC^Message^N^N
+		A:Text^Cannot install part with :P1 status.^
+	CE:
+	CS:ESIGWERROR^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:INCOMPLETEEXECUTION^SVC^Message^N^N
+		A:Text^One or more steps have not been executed.^
+	CE:
+	CS:INVALIDALLOCATEDHOURS^SVC^Message^N^N
+		A:Text^Actual Hours cannot be 0.^
+	CE:
+	CS:INVALIDALLOCATEDHOURSFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDCERTIFICATE^SVC^Message^N^N
+		A:Text^You do not have the required skill or qualification.^
+	CE:
+	CS:INVALIDFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:MISSINGASSIGNMENT^SVC^Message^N^N
+		A:Text^You must have an assignment to sign off.^
+	CE:
+	CS:MISSINGSKILL^SVC^Message^N^N
+		A:Text^Skill is required.^
+	CE:
+	CS:MXWPSTARTERROR^SVC^Message^N^N
+		A:Text^Work Package not started. WP status: - :P1^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:REQUIREDVALUES^SVC^Message^N^N
+		A:Text^Tool/Equipment or part no with serial no are required to record tool.^
+	CE:
+	CS:RESNOTCHECKEDOUT^SVC^Message^N^N
+		A:Text^Assigned tool is not checked out.^
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:SignOffReqType^SVC^Enumeration^N^N
+		CS:EXECUTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Executor^
+		CE:
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Inspector^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Certifier^
+		CE:
+	CE:
+	CS:SignOffReqTypeEnum^SVC^Enumeration^N^N
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Independent Inspector (RII)^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Certifying Staff^
+		CE:
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TaskStepEnum^SVC^Enumeration^N^N
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:DONE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Done^
+		CE:
+		CS:NOTDONE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Done^
+		CE:
+		CS:PENDING^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Pending^
+		CE:
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:ToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+	CS:UNCERTIFIEDSTEPS^SVC^Message^N^N
+		A:Text^One or more steps have not been certified.^
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmNonRoutinesForApprovalHandling^SVC^Projection^N^N
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+CE:
+CS:FlmSupervisorAircraftTurnsDetailsHandling^SVC^Projection^N^N
+	CS:ASSIGNMENTOUTSIDE^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+CE:
+CS:FlmTaskCardHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRCERTSIGNBEFOREEXEC^SVC^Message^N^N
+		A:Text^Certifier cannot sign before the Executor.^
+	CE:
+	CS:ERRINSPSIGNBEFORECERT^SVC^Message^N^N
+		A:Text^Inspector cannot sign before the Certifier.^
+	CE:
+	CS:ERRINVALASSIGNROLE^SVC^Message^N^N
+		A:Text^You cannot perform actions for this skill as it is not part of your assigned role.^
+	CE:
+	CS:ERRINVALID^SVC^Message^N^N
+		A:Text^Enter :P1 in the HH:MM format.^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 should be less than the :P2.^
+	CE:
+	CS:ERRINVALIDUSER^SVC^Message^N^N
+		A:Text^You have already signed one or more steps as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVALIDUSERTSKCD^SVC^Message^N^N
+		A:Text^You have already signed this step as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVINSTQTY^SVC^Message^N^N
+		A:Text^Installed quantity should be greater than 0.^
+	CE:
+	CS:ERRINVQTY^SVC^Message^N^N
+		A:Text^Please create another part requirement for the additional quantity of installed parts.^
+	CE:
+	CS:ERRINVRMVDQTY^SVC^Message^N^N
+		A:Text^Removed quantity should be greater than 0.^
+	CE:
+	CS:ERRNOREQQULIFICATION^SVC^Message^N^N
+		A:Text^You do not have the required qualification to perform this action.^
+	CE:
+	CS:ERRPRTAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTAPPR^SVC^Message^N^N
+		A:Text^Cannot install part which is not approved.^
+	CE:
+	CS:ERRPRTGRPAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part Group is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTINTORDER^SVC^Message^N^N
+		A:Text^Cannot install part. Interchangeability order of the installing part should be greater than or equal to the interchangeability order of the removing part.^
+	CE:
+	CS:ERRPRTSTATUS^SVC^Message^N^N
+		A:Text^Cannot install part with :P1 status.^
+	CE:
+	CS:ESIGWERROR^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:INCOMPLETEEXECUTION^SVC^Message^N^N
+		A:Text^One or more steps have not been executed.^
+	CE:
+	CS:INVALIDALLOCATEDHOURS^SVC^Message^N^N
+		A:Text^Actual Hours cannot be 0.^
+	CE:
+	CS:INVALIDALLOCATEDHOURSFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDCERTIFICATE^SVC^Message^N^N
+		A:Text^You do not have the required skill or qualification.^
+	CE:
+	CS:INVALIDFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:MISSINGASSIGNMENT^SVC^Message^N^N
+		A:Text^You must have an assignment to sign off.^
+	CE:
+	CS:MISSINGSKILL^SVC^Message^N^N
+		A:Text^Skill is required.^
+	CE:
+	CS:MXWPSTARTERROR^SVC^Message^N^N
+		A:Text^Work Package not started. WP status: - :P1^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:REQUIREDVALUES^SVC^Message^N^N
+		A:Text^Tool/Equipment or part no with serial no are required to record tool.^
+	CE:
+	CS:RESNOTCHECKEDOUT^SVC^Message^N^N
+		A:Text^Assigned tool is not checked out.^
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:SignOffReqType^SVC^Enumeration^N^N
+		CS:EXECUTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Executor^
+		CE:
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Inspector^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Certifier^
+		CE:
+	CE:
+	CS:SignOffReqTypeEnum^SVC^Enumeration^N^N
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Independent Inspector (RII)^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Certifying Staff^
+		CE:
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TaskStepEnum^SVC^Enumeration^N^N
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:DONE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Done^
+		CE:
+		CS:NOTDONE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Done^
+		CE:
+		CS:PENDING^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Pending^
+		CE:
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:ToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+	CS:UNCERTIFIEDSTEPS^SVC^Message^N^N
+		A:Text^One or more steps have not been certified.^
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmTaskDetailHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:AVLQTYLESTOUNIS^SVC^Message^N^N
+		A:Text^Available quantity to unissue is :P1.^
+	CE:
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRCERTSIGNBEFOREEXEC^SVC^Message^N^N
+		A:Text^Certifier cannot sign before the Executor.^
+	CE:
+	CS:ERRINSPSIGNBEFORECERT^SVC^Message^N^N
+		A:Text^Inspector cannot sign before the Certifier.^
+	CE:
+	CS:ERRINVALASSIGNROLE^SVC^Message^N^N
+		A:Text^You cannot perform actions for this skill as it is not part of your assigned role.^
+	CE:
+	CS:ERRINVALID^SVC^Message^N^N
+		A:Text^Please enter valid value(HH:MM) for :P1 field^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^Start Date should be less than the End Date.^
+	CE:
+	CS:ERRINVALIDUSER^SVC^Message^N^N
+		A:Text^You have already signed one or more steps as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVALIDUSERTSKCD^SVC^Message^N^N
+		A:Text^You have already signed this step as Executor or Certifier. You cannot sign as Inspector.^
+	CE:
+	CS:ERRINVINSTQTY^SVC^Message^N^N
+		A:Text^Installed quantity should be greater than 0.^
+	CE:
+	CS:ERRINVQTY^SVC^Message^N^N
+		A:Text^Please create another part requirement for the additional quantity of installed parts.^
+	CE:
+	CS:ERRINVRMVDQTY^SVC^Message^N^N
+		A:Text^Removed quantity should be greater than 0.^
+	CE:
+	CS:ERRNOREQQULIFICATION^SVC^Message^N^N
+		A:Text^You do not have the required qualification to perform this action.^
+	CE:
+	CS:ERROREMPTYQTY^SVC^Message^N^N
+		A:Text^Quantity cannot exceed the issued amount.^
+	CE:
+	CS:ERROREMPTYSYSTEMURL^SVC^Message^N^N
+		A:Text^You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.^
+	CE:
+	CS:ERROR_COST_STRUCTURE^SVC^Message^N^N
+		A:Text^A material, labor or subcontracting cost bucket must be added.^
+	CE:
+	CS:ERRPRTAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTAPPR^SVC^Message^N^N
+		A:Text^Cannot install part which is not approved.^
+	CE:
+	CS:ERRPRTGRPAPPL^SVC^Message^N^N
+		A:Text^Cannot install part. Part Group is not applicable to the aircraft.^
+	CE:
+	CS:ERRPRTINTORDER^SVC^Message^N^N
+		A:Text^Cannot install part. Interchangeability order of the installing part should be greater than or equal to the interchangeability order of the removing part.^
+	CE:
+	CS:ERRPRTSTATUS^SVC^Message^N^N
+		A:Text^Cannot install part with :P1 status.^
+	CE:
+	CS:ESIGWERROR^SVC^Message^N^N
+		A:Text^Failed to record electronic signature. Review changes and try again.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:FaultStatus^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Closed^
+		CE:
+		CS:DEFERRED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Deferred^
+		CE:
+		CS:OPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Open^
+		CE:
+	CE:
+	CS:FlightStatusEnum^SVC^Enumeration^N^N
+		CS:CANCELED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Canceled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^9^
+			A:Text^Completed^
+		CE:
+		CS:DIVERTED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Diverted^
+		CE:
+		CS:IN^SVC^Iid Element^N^N
+			P:Position^8^
+			A:Text^In^
+		CE:
+		CS:OFF^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Off^
+		CE:
+		CS:ON^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^On^
+		CE:
+		CS:OUT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Out^
+		CE:
+		CS:PLANNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Planned^
+		CE:
+		CS:RETURNED^SVC^Iid Element^N^N
+			P:Position^7^
+			A:Text^Returned^
+		CE:
+	CE:
+	CS:FoundSourceOptions^SVC^Enumeration^N^N
+		CS:TASK^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Task^
+		CE:
+		CS:WORKPACKAGE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Work Package^
+		CE:
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:INCOMPLETEEXECUTION^SVC^Message^N^N
+		A:Text^One or more steps have not been executed.^
+	CE:
+	CS:INSPNOCERTIDERROR^SVC^Message^N^N
+		A:Text^The certificate ID is mandatory for the inspector of the required skill.^
+	CE:
+	CS:INVALIDALLOCATEDHOURS^SVC^Message^N^N
+		A:Text^Actual Hours cannot be 0.^
+	CE:
+	CS:INVALIDALLOCATEDHOURSFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDCERTIFICATE^SVC^Message^N^N
+		A:Text^You do not have the required skill or qualification.^
+	CE:
+	CS:INVALIDENDTIME^SVC^Message^N^N
+		A:Text^End Date should not be a future date^
+	CE:
+	CS:INVALIDFORMAT^SVC^Message^N^N
+		A:Text^Enter Allocated Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:INVALIDSTARTTIME^SVC^Message^N^N
+		A:Text^Start Date should not be a future date^
+	CE:
+	CS:LASTCERTERROR^SVC^Message^N^N
+		A:Text^This step must have at least one certifier sign-off requirement to disconnect it.^
+	CE:
+	CS:LASTEXECERROR^SVC^Message^N^N
+		A:Text^This step must have at least one executor sign-off requirement to disconnect it.^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:MISSINGASSIGNMENT^SVC^Message^N^N
+		A:Text^You must have an assignment to sign off.^
+	CE:
+	CS:MISSINGSKILL^SVC^Message^N^N
+		A:Text^Skill is required.^
+	CE:
+	CS:MXWPSTARTERROR^SVC^Message^N^N
+		A:Text^Work Package not started. WP status: - :P1^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NOCERTFOUNDERROR^SVC^Message^N^N
+		A:Text^A corresponding certifier certificate ID is mandatory for any executor certificate ID.^
+	CE:
+	CS:NOCERTWITHOUTCERTIDERROR^SVC^Message^N^N
+		A:Text^An executor role without a certificate ID must also have a corresponding certifier role without a certificate ID.^
+	CE:
+	CS:NOEXECERT^SVC^Message^N^N
+		A:Text^A sign-off requirement with an Inspector certificate ID requires a corresponding Certifier and Executor with certificate IDs of the same skill.^
+	CE:
+	CS:NOEXECERTWITHCERT^SVC^Message^N^N
+		A:Text^An Executor role without a certificate ID must also have corresponding Inspector and Certifier roles without certificate IDs.^
+	CE:
+	CS:NOEXEFOUNDERROR^SVC^Message^N^N
+		A:Text^A corresponding executor certificate ID is mandatory for any certifier certificate ID.^
+	CE:
+	CS:NOEXEWITHOUTCERTIDERROR^SVC^Message^N^N
+		A:Text^A certifier role without a certificate ID must also have a corresponding executor role without a certificate ID.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:NOROLESELECTEDERROR^SVC^Message^N^N
+		A:Text^Select a role before selecting a certificate ID.^
+	CE:
+	CS:NOSIGNOFFSEXISTERROR^SVC^Message^N^N
+		A:Text^You need at least one sign-off requirement of both executor and certifier roles to create this step.^
+	CE:
+	CS:ORDERNOEXISTERROR^SVC^Message^N^N
+		A:Text^The order number you entered is already in use. Enter a new one for this step.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PRTNOTINMEX^SVC^Message^N^N
+		A:Text^Selected Part is not persisted in the MEX^
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:PriorityStatuses^SVC^Enumeration^N^N
+		CS:HIGH^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^High^
+		CE:
+		CS:LOW^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Low^
+		CE:
+		CS:MED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Med^
+		CE:
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:QTYUNISHAVVALUE^SVC^Message^N^N
+		A:Text^Quantity to Unissue must have a value^
+	CE:
+	CS:REQUIREDVALUES^SVC^Message^N^N
+		A:Text^Tool/Equipment or part no with serial no are required to record tool.^
+	CE:
+	CS:RESNOTCHECKEDOUT^SVC^Message^N^N
+		A:Text^Assigned tool is not checked out.^
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:RaiseFaultActionOptions^SVC^Enumeration^N^N
+		CS:RAISEANDCLOSE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Raise and close^
+		CE:
+		CS:RAISEANDOPEN^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Raise and leave open^
+		CE:
+	CE:
+	CS:RaiseFaultOptions^SVC^Enumeration^N^N
+		CS:LOGBOOKFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Raise Logbook Fault^
+		CE:
+		CS:NONROUTINE^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Raise Non Routine^
+		CE:
+	CE:
+	CS:SAMECERTDUPLICATEERROR^SVC^Message^N^N
+		A:Text^The certificate ID :P1 you entered is already added for this step.^
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:SignOffConnection^SVC^Enumeration^N^N
+		CS:TASK^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Task^
+		CE:
+		CS:TASKSTEP^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Task Step and Panel^
+		CE:
+	CE:
+	CS:SignOffReqType^SVC^Enumeration^N^N
+		CS:EXECUTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Executor^
+		CE:
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Inspector^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Certifier^
+		CE:
+	CE:
+	CS:SignOffReqTypeEnum^SVC^Enumeration^N^N
+		CS:INDEPENDENT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Independent Inspector (RII)^
+		CE:
+		CS:INSPECTOR^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Certifying Staff^
+		CE:
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TaskStepEnum^SVC^Enumeration^N^N
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:DONE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Done^
+		CE:
+		CS:NOTDONE^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Done^
+		CE:
+		CS:PENDING^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Pending^
+		CE:
+	CE:
+	CS:TaskToolAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:ToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+	CS:TurnStatusEnum^SVC^Enumeration^N^N
+		CS:ARRIVED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Arrived^
+		CE:
+		CS:DEPARTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Departed^
+		CE:
+		CS:INBOUND^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Inbound^
+		CE:
+		CS:INMAINTENANCE^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^In Maintenance^
+		CE:
+		CS:NOTAPPLICABLE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Applicable^
+		CE:
+		CS:RELEASED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Released^
+		CE:
+	CE:
+	CS:UNCERTIFIEDSTEPS^SVC^Message^N^N
+		A:Text^One or more steps have not been certified.^
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:WRONGTURN^SVC^Message^N^N
+		A:Text^Aircraft Turn Status should be Inbound, Arrived or InMaintenance^
+	CE:
+CE:
+CS:FlmTaskMaterialLinesHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:AVLQTYLESTOUNIS^SVC^Message^N^N
+		A:Text^Available quantity to unissue is :P1.^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PRTNOTINMEX^SVC^Message^N^N
+		A:Text^Selected Part is not persisted in the MEX^
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:QTYUNISHAVVALUE^SVC^Message^N^N
+		A:Text^Quantity to Unissue must have a value^
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+CE:
+CS:FlmTaskMaterialRequisitionHandling^SVC^Projection^N^N
+	CS:ACTUALCONNTYPEVIM^SVC^Message^N^N
+		A:Text^Actual Connection Type should be "VIM"^
+	CE:
+	CS:ADJUSTPEGGEDFORMATERIAL^SVC^Message^N^N
+		A:Text^You need to adjust Pegging from material line, if you want to Purchase Receive again.^
+	CE:
+	CS:AVALERR^SVC^Message^N^N
+		A:Text^The Quantity Available for the selected line is :P1.^
+	CE:
+	CS:AVLQTYLESTOUNIS^SVC^Message^N^N
+		A:Text^Available quantity to unissue is :P1.^
+	CE:
+	CS:EXCCEDCHARLIMITPLSR^SVC^Message^N^N
+		A:Text^Query cannot handle this amount of data, try querying with lesser number of pick list source references via the Pick Lists page.^
+	CE:
+	CS:EXPIREERR^SVC^Message^N^N
+		A:Text^Reserving Expired Inventory Parts.^
+	CE:
+	CS:FROMSERIALEMPTY^SVC^Message^N^N
+		A:Text^The start value must have a value when an interval is used^
+	CE:
+	CS:FROMSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The start value must be an integer if an interval is used^
+	CE:
+	CS:GENERATEDTOOMANYSERIALS^SVC^Message^N^N
+		A:Text^More serials were generated than existing records. Remaining serials will be discarded^
+	CE:
+	CS:MAINTMATREQERR^SVC^Message^N^N
+		A:Text^Corresponding :P1 Line :P2 should be removed first.^
+	CE:
+	CS:MAXQTYERR^SVC^Message^N^N
+		A:Text^The maximum quantity required for this part is :P1.^
+	CE:
+	CS:NEGATIVEERR^SVC^Message^N^N
+		A:Text^Not allowed to use negative values.^
+	CE:
+	CS:NONEGATIVEINTERVAL^SVC^Message^N^N
+		A:Text^Negative values not allowed in intervals^
+	CE:
+	CS:NORESERVEDMATLINE^SVC^Message^N^N
+		A:Text^No reserved material line was found to be printed.^
+	CE:
+	CS:PICKUPTASKERR^SVC^Message^N^N
+		A:Text^Corresponding Pickup Task :P1 should be removed first.^
+	CE:
+	CS:PRTNOTINMEX^SVC^Message^N^N
+		A:Text^Selected Part is not persisted in the MEX^
+	CE:
+	CS:PickListOption^SVC^Enumeration^N^N
+		CS:CREATEPICKLIST^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^New Pick List^
+		CE:
+		CS:PRINTPICKLIST^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Print Pick List^
+		CE:
+		CS:VIEWPICKLIST^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^View Pick List^
+		CE:
+	CE:
+	CS:PrintOptions^SVC^Enumeration^N^N
+		CS:LOC^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^List By Location^
+		CE:
+		CS:SRC^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^List By Source^
+		CE:
+	CE:
+	CS:QTYSUMHIGLOQTYREQ^SVC^Message^N^N
+		A:Text^Sum of split quantities should not be greater than quantity required.^
+	CE:
+	CS:QTYUNISHAVVALUE^SVC^Message^N^N
+		A:Text^Quantity to Unissue must have a value^
+	CE:
+	CS:SERIALREGREMPARTCA^SVC^Message^N^N
+		A:Text^A serial no has to be registered before reservation of customer order. Still want to save the record?^
+	CE:
+	CS:SPAREPARTDETPRT^SVC^Message^N^N
+		A:Text^Spare Parts in Detached Part List^
+	CE:
+	CS:SPAREPRTINOBJ^SVC^Message^N^N
+		A:Text^Spare Parts in Object^
+	CE:
+	CS:SPAREPRTOBJSTR^SVC^Message^N^N
+		A:Text^Spare Parts in Object Structure^
+	CE:
+	CS:TOOLONGSERIALS^SVC^Message^N^N
+		A:Text^The length of one or several of the generated serials exceeds 50 characters.^
+	CE:
+	CS:TOSERIALNOTNUMERIC^SVC^Message^N^N
+		A:Text^The end value must be an integer if an interval is used^
+	CE:
+	CS:TRANSPORTTASKCREATED^SVC^Message^N^N
+		A:Text^Transport Task :P1 Created.^
+	CE:
+	CS:UserWarehouseEnum2^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Connected^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Default^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumAll^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^All^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumConnected^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:CONNECTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Connected^
+		CE:
+	CE:
+	CS:UserWarehouseEnum2WarehouseEnumDefult^SVC^Enumeration^N^N
+		CS:ALL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^All^
+		CE:
+		CS:DEFAULT^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Default^
+		CE:
+	CE:
+CE:
+CS:FlmTaskWorkAssignmentHandling^SVC^Projection^N^N
+	CS:AssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Assigned^
+		CE:
+		CS:NOREQSKILL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^No Required Skills^
+		CE:
+		CS:PARTIALLYASSIGNED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Partially Assigned^
+		CE:
+		CS:RESOURCECONFLICT^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Resource Conflict^
+		CE:
+		CS:UNASSIGNED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Unassigned^
+		CE:
+	CE:
+	CS:ERRDELETION^SVC^Message^N^N
+		A:Text^Cannot remove. Work on other roles for this skill has already started or finished.^
+	CE:
+	CS:ERRINVALIDDATES^SVC^Message^N^N
+		A:Text^:P1 Scheduled Start Date should be less than the Scheduled End Date.^
+	CE:
+	CS:EXCEEDINTERVAL^SVC^Message^N^N
+		A:Text^:P1 Scheduled hours exceed the schedule date interval^
+	CE:
+	CS:INVALIDASSIGNMENT^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDASSIGNMENT2^SVC^Message^N^N
+		A:Text^Assignment is outside the schedule time.^
+	CE:
+	CS:INVALIDRESGROUPERROR^SVC^Message^N^N
+		A:Text^:P1 does not possess the required skill^
+	CE:
+	CS:INVALIDSCHEDHOURS^SVC^Message^N^N
+		A:Text^Enter :P1 Scheduled Hours in the HH:MM format.^
+	CE:
+	CS:INVALIDSCHEDHOURS2^SVC^Message^N^N
+		A:Text^Exceeded maximum allowed :P1 Schedule Hours.^
+	CE:
+	CS:OverallAssignmentStatuses^SVC^Enumeration^N^N
+		CS:FINISHED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Finished^
+		CE:
+		CS:INPROGRESS^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^In Progress^
+		CE:
+		CS:NOTSTARTED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Not Started^
+		CE:
+		CS:PAUSED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Paused^
+		CE:
+	CE:
+	CS:PanelStatuses^SVC^Enumeration^N^N
+		CS:CLOSED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Closed^
+		CE:
+		CS:NOMPC^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^No MPC^
+		CE:
+		CS:NOTLINKED^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Linked^
+		CE:
+		CS:OPENED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Opened^
+		CE:
+		CS:READYTOCLOSE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Ready to Close^
+		CE:
+		CS:TOBEOPENED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^To be Opened^
+		CE:
+	CE:
+	CS:RESSKILLSNOTFOUND^SVC^Message^N^N
+		A:Text^Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.^
+	CE:
+	CS:TaskAssignmentStatus^SVC^Enumeration^N^N
+		CS:ASSIGNED^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Assigned^
+		CE:
+		CS:CANCELLED^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^Cancelled^
+		CE:
+		CS:COMPLETED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Completed^
+		CE:
+		CS:WORKSTARTED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Work Started^
+		CE:
+	CE:
+	CS:TurnStatusEnum^SVC^Enumeration^N^N
+		CS:ARRIVED^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^Arrived^
+		CE:
+		CS:DEPARTED^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^Departed^
+		CE:
+		CS:INBOUND^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^Inbound^
+		CE:
+		CS:INMAINTENANCE^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^In Maintenance^
+		CE:
+		CS:NOTAPPLICABLE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^Not Applicable^
+		CE:
+		CS:RELEASED^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^Released^
+		CE:
+	CE:
+	CS:USRRESNOTEXIST^SVC^Message^N^N
+		A:Text^:P1 Resource does not exist.^
+	CE:
+CE:
+CS:FlmToolEquipmentCheckInAssistantHandling^SVC^Projection^N^N
+	CS:TOOLEXISTS^SVC^Message^N^N
+		A:Text^Tool :P1 is included in the list more than once.^
+	CE:
+CE:
+CS:FlmToolEquipmentHandling^SVC^Projection^N^N
+	CS:BUFFERSIZEEXCEED^SVC^Message^N^N
+		A:Text^Too many Work Tasks to cancel. Please choose less Work Tasks.^
+	CE:
+	CS:CONNECTOBJ^SVC^Message^N^N
+		A:Text^Connected to Tool/Equipment :P1^
+	CE:
+	CS:CancelType^SVC^Enumeration^N^N
+		CS:JT_EXECUTION_INSTANCE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^J T E X E C U T I O N I N S T A N C E^
+		CE:
+		CS:JT_TASK^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^J T T A S K^
+		CE:
+		CS:JT_TASK_STEP^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^J T T A S K S T E P^
+		CE:
+		CS:NONE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^N O N E^
+		CE:
+		CS:SERVICE_TASK^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^S E R V I C E T A S K^
+		CE:
+		CS:WORK_ORDER^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^W O R K O R D E R^
+		CE:
+	CE:
+	CS:DIFFCHILDCOMPANY^SVC^Message^N^N
+		A:Text^Selected tasks and the bundle task are not in the same company.^
+	CE:
+	CS:DIFFCOMPANY^SVC^Message^N^N
+		A:Text^Tasks from different companies cannot be bundled together.^
+	CE:
+	CS:DISCONNECTOBJ^SVC^Message^N^N
+		A:Text^Disconnected from Tool/Equipment :P1^
+	CE:
+	CS:DISCONTSKWARR^SVC^Message^N^N
+		A:Text^Deleting Warranty Type on work task will not update existing postings^
+	CE:
+	CS:DOWNTIMEEXIST^SVC^Message^N^N
+		A:Text^Due to equipment down time tracking on one or more work tasks selected, state change to WorkDone cannot be handled in bulk. Perform the state change on each record separately^
+	CE:
+	CS:EQUIPDEFAULTREMARK^SVC^Message^N^N
+		A:Text^Created by^
+	CE:
+	CS:ETAG_INCORRECT^SVC^Message^N^N
+		A:Text^ETag is incorrect^
+	CE:
+	CS:EXCEEDMAXDELAYSTART^SVC^Message^N^N
+		A:Text^Max Delay Start Proportion value should between 0 and 1.^
+	CE:
+	CS:EXCEEDMINDELAYSTART^SVC^Message^N^N
+		A:Text^Min Delay Start Proportion value should between 0 and 1.^
+	CE:
+	CS:GENTASKTOMOBILE^SVC^Message^N^N
+		A:Text^Mulitple Pool Task To Mobile^
+	CE:
+	CS:INACTIVEWO^SVC^Message^N^N
+		A:Text^Work Order :P1 is not active.^
+	CE:
+	CS:INVALIDMAXDELAY^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Max. Delay.^
+	CE:
+	CS:INVALIDMINDELAY^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Min. Delay.^
+	CE:
+	CS:INVALIDORDERINSENTIVE^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Order Incentive.^
+	CE:
+	CS:INVALIDWO^SVC^Message^N^N
+		A:Text^The Work Order :P1 does not exist^
+	CE:
+	CS:METERENDVALUENULL^SVC^Message^N^N
+		A:Text^Old Meter end value cannot be NULL.^
+	CE:
+	CS:METERHASNOTCHANGE^SVC^Message^N^N
+		A:Text^New Meter ID cannot be same as old Meter ID.^
+	CE:
+	CS:METERREQUIRED^SVC^Message^N^N
+		A:Text^Meter ID is required for parameter :P1^
+	CE:
+	CS:METERREQUIRED2^SVC^Message^N^N
+		A:Text^A Meter ID is required^
+	CE:
+	CS:MINEXCEEDMAXDELAY^SVC^Message^N^N
+		A:Text^Max. Delay is not allowed to be less than Min. Delay.^
+	CE:
+	CS:MISSTEPSIGNOFF^SVC^Message^N^N
+		A:Text^For task :P1 there are task step sign off requirements not connected to task steps. Consider removing these task step sign off requirements after changing the task status.^
+	CE:
+	CS:MULTIMASTER^SVC^Message^N^N
+		A:Text^Multiple Master Tasks cannot be cancelled. Cancel each Master Task separately.^
+	CE:
+	CS:NOCOMPLETEAMOUNT^SVC^Message^N^N
+		A:Text^The line amounts must sum up to :P1, the total amount to distribute.^
+	CE:
+	CS:NOCOMPLETEPERCENTAGE^SVC^Message^N^N
+		A:Text^The line percentages must sum up to 100 %.^
+	CE:
+	CS:NOTALLOWMINDELAYVAL^SVC^Message^N^N
+		A:Text^Min. Delay cannot define when the Overlap Allow field is enabled.^
+	CE:
+	CS:NOTALLOWTRUEVAL^SVC^Message^N^N
+		A:Text^Both "Same Resource" and "Overlap Allowed" cannot be set to "True".^
+	CE:
+	CS:ODATA_TO_PLSQL_PROTOCOL^SVC^Message^N^N
+		A:Text^ETag must have a valid value, was [:P1]^
+	CE:
+	CS:PROCESSPRELIMINARY^SVC^Message^N^N
+		A:Text^Meter change is not allowed. Process Priliminary Redords first^
+	CE:
+	CS:WORKORDEROPEN^SVC^Message^N^N
+		A:Text^Cannot disconnect the Serial Object when there are open work orders for Tool/Equipment.^
+	CE:
+	CS:WRONGCHANGEDATE^SVC^Message^N^N
+		A:Text^Meter Setup/Change date must be later than Registration date of the last recorded reading.^
+	CE:
+	CS:WRONGENDVALUE^SVC^Message^N^N
+		A:Text^For accumulated parameters, old meter end value must be larger than last recorded reading.^
+	CE:
+	CS:WRONGSTARTVALUE^SVC^Message^N^N
+		A:Text^Start value cannot be larger than meter roll-over value.^
+	CE:
+CE:
+CS:FlmToolsAndEquipmentCheckOutHandling^SVC^Projection^N^N
+	CS:FlmToolCondition^SVC^Enumeration^N^N
+		CS:NON_OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^INREP^
+		CE:
+		CS:NOT_APPLICABLE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^N/A^
+		CE:
+		CS:OPERATIONAL^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^SRV^
+		CE:
+	CE:
+CE:
+CS:FlmToolsAndEquipmentHandling^SVC^Projection^N^N
+	CS:BUFFERSIZEEXCEED^SVC^Message^N^N
+		A:Text^Too many Work Tasks to cancel. Please choose less Work Tasks.^
+	CE:
+	CS:CancelType^SVC^Enumeration^N^N
+		CS:JT_EXECUTION_INSTANCE^SVC^Iid Element^N^N
+			P:Position^3^
+			A:Text^J T E X E C U T I O N I N S T A N C E^
+		CE:
+		CS:JT_TASK^SVC^Iid Element^N^N
+			P:Position^2^
+			A:Text^J T T A S K^
+		CE:
+		CS:JT_TASK_STEP^SVC^Iid Element^N^N
+			P:Position^4^
+			A:Text^J T T A S K S T E P^
+		CE:
+		CS:NONE^SVC^Iid Element^N^N
+			P:Position^6^
+			A:Text^N O N E^
+		CE:
+		CS:SERVICE_TASK^SVC^Iid Element^N^N
+			P:Position^5^
+			A:Text^S E R V I C E T A S K^
+		CE:
+		CS:WORK_ORDER^SVC^Iid Element^N^N
+			P:Position^1^
+			A:Text^W O R K O R D E R^
+		CE:
+	CE:
+	CS:DIFFCHILDCOMPANY^SVC^Message^N^N
+		A:Text^Selected tasks and the bundle task are not in the same company.^
+	CE:
+	CS:DIFFCOMPANY^SVC^Message^N^N
+		A:Text^Tasks from different companies cannot be bundled together.^
+	CE:
+	CS:DISCONTSKWARR^SVC^Message^N^N
+		A:Text^Deleting Warranty Type on work task will not update existing postings^
+	CE:
+	CS:DOWNTIMEEXIST^SVC^Message^N^N
+		A:Text^Due to equipment down time tracking on one or more work tasks selected, state change to WorkDone cannot be handled in bulk. Perform the state change on each record separately^
+	CE:
+	CS:EQUIPDEFAULTREMARK^SVC^Message^N^N
+		A:Text^Created by^
+	CE:
+	CS:ETAG_INCORRECT^SVC^Message^N^N
+		A:Text^ETag is incorrect^
+	CE:
+	CS:EXCEEDMAXDELAYSTART^SVC^Message^N^N
+		A:Text^Max Delay Start Proportion value should between 0 and 1.^
+	CE:
+	CS:EXCEEDMINDELAYSTART^SVC^Message^N^N
+		A:Text^Min Delay Start Proportion value should between 0 and 1.^
+	CE:
+	CS:GENTASKTOMOBILE^SVC^Message^N^N
+		A:Text^Mulitple Pool Task To Mobile^
+	CE:
+	CS:INACTIVEWO^SVC^Message^N^N
+		A:Text^Work Order :P1 is not active.^
+	CE:
+	CS:INVALIDMAXDELAY^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Max. Delay.^
+	CE:
+	CS:INVALIDMINDELAY^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Min. Delay.^
+	CE:
+	CS:INVALIDORDERINSENTIVE^SVC^Message^N^N
+		A:Text^Only positive values are allowed for Order Incentive.^
+	CE:
+	CS:INVALIDWO^SVC^Message^N^N
+		A:Text^The Work Order :P1 does not exist^
+	CE:
+	CS:METERENDVALUENULL^SVC^Message^N^N
+		A:Text^Old Meter end value cannot be NULL.^
+	CE:
+	CS:METERHASNOTCHANGE^SVC^Message^N^N
+		A:Text^New Meter ID cannot be same as old Meter ID.^
+	CE:
+	CS:METERREQUIRED^SVC^Message^N^N
+		A:Text^Meter ID is required for parameter :P1^
+	CE:
+	CS:METERREQUIRED2^SVC^Message^N^N
+		A:Text^A Meter ID is required^
+	CE:
+	CS:MINEXCEEDMAXDELAY^SVC^Message^N^N
+		A:Text^Max. Delay is not allowed to be less than Min. Delay.^
+	CE:
+	CS:MISSTEPSIGNOFF^SVC^Message^N^N
+		A:Text^For task :P1 there are task step sign off requirements not connected to task steps. Consider removing these task step sign off requirements after changing the task status.^
+	CE:
+	CS:MULTIMASTER^SVC^Message^N^N
+		A:Text^Multiple Master Tasks cannot be cancelled. Cancel each Master Task separately.^
+	CE:
+	CS:NOCOMPLETEAMOUNT^SVC^Message^N^N
+		A:Text^The line amounts must sum up to :P1, the total amount to distribute.^
+	CE:
+	CS:NOCOMPLETEPERCENTAGE^SVC^Message^N^N
+		A:Text^The line percentages must sum up to 100 %.^
+	CE:
+	CS:NOTALLOWMINDELAYVAL^SVC^Message^N^N
+		A:Text^Min. Delay cannot define when the Overlap Allow field is enabled.^
+	CE:
+	CS:NOTALLOWTRUEVAL^SVC^Message^N^N
+		A:Text^Both "Same Resource" and "Overlap Allowed" cannot be set to "True".^
+	CE:
+	CS:ODATA_TO_PLSQL_PROTOCOL^SVC^Message^N^N
+		A:Text^ETag must have a valid value, was [:P1]^
+	CE:
+	CS:PROCESSPRELIMINARY^SVC^Message^N^N
+		A:Text^Meter change is not allowed. Process Priliminary Redords first^
+	CE:
+	CS:WRONGCHANGEDATE^SVC^Message^N^N
+		A:Text^Meter Setup/Change date must be later than Registration date of the last recorded reading.^
+	CE:
+	CS:WRONGENDVALUE^SVC^Message^N^N
+		A:Text^For accumulated parameters, old meter end value must be larger than last recorded reading.^
+	CE:
+	CS:WRONGSTARTVALUE^SVC^Message^N^N
+		A:Text^Start value cannot be larger than meter roll-over value.^
+	CE:
+CE:

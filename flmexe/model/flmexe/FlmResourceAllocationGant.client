@@ -1,0 +1,315 @@
+-----------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  ------------------------------------------------------
+-- 24-03-2025  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  301024  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagram
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+-- 2023-07-10  majslk  AD-9585, Modified code to support time zone changes
+-- 2022-09-01  SRCHLK  AD-7985, Hiding material availability field in the UI
+-- 2022-08-01  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode.
+-- 2022-01-12  NaLrlk  AD-4705, Created.
+-----------------------------------------------------------------------------
+client FlmResourceAllocationGant;
+component FLMEXE;
+layer Core;
+projection FlmResourceAllocationGanttHandling;
+description "Client to allocate tool/equipment resources using gantt chart";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+@DynamicComponentDependency TOOLEQ
+entry WorkTaskAssignmentEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2110 {
+   label = "Allocate Tool/Equipment";
+   page Form;
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+@DynamicComponentDependency TOOLEQ
+page Form using AvResourceToolEquipmentSet {
+   label = "Allocate Tool/Equipment";
+   stateindicator AvExeTaskStateIndicator;
+   selector AvTaskResourceToolEquipmentSelector;
+   group AvResourceToolEquipmentTaskGroup {
+      collapsed = [true];
+   }
+   group AvResourceToolEquipmentToolGroup;
+   ganttchart ResourceGantt(ResourcesArray) using ResourceSet;
+   command UnallocateCommand;
+   command TaskDetailsCommand;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+command UnallocateCommand for AvResourceToolEquipment {
+   label = "Unallocate";
+   enabled = [ResourceActAllocSeq != null];
+   execute {
+      confirm("The allocation of the tool/equipment will be removed.") {
+         when OK {
+            call RemoveAllocation();
+         }
+      }
+   }
+}
+command TaskDetailsCommand for AvResourceToolEquipment {
+   label = "Task Details";
+   enabled = [TaskSeq != null];
+   execute {
+      navigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+selector AvTaskResourceToolEquipmentSelector for AvResourceToolEquipment {
+   label = "${RecordId}";
+   static  RecordId {
+      label = "Record ID";
+   }
+   static TaskName;
+   static ResourceGroupId;
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group AvResourceToolEquipmentTaskGroup for AvResourceToolEquipment {
+   label = "Task Details";
+   field AircraftTypeName;
+   field TaskCode;
+   field RecordId {
+      label = "Record ID";
+   }
+   field TaskName {
+      label = "Name";
+      size = Large;
+      multiline = true;
+   }
+   static AvAirportRef.IataCode {
+      label = "Airport";
+   }
+   field SchedStartDateTime {
+      label = "Scheduled Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEndDateTime {
+      label = "Scheduled End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field Priority;
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+   }
+   field AvAircraftWorkPackageRef.LocationCode {
+      label = "Maintenance Location";
+      size = Medium;
+   }
+}
+group AvResourceToolEquipmentToolGroup for AvResourceToolEquipment {
+   label = "Tool Requirement";
+   lov ResourceGroupIdRef with ReferenceResourceGroupMaintLovSelector {
+      search = ResourceId, Description;
+      description = ResourceGroupIdRef.Description;
+   }
+   @DynamicComponentDependency TOOLEQ
+   lov ResourceIdRef with ReferenceResourceToolEquipJoinLovSelector {
+      description = ResourceIdRef.Description;
+      search = ResourceId, Description;
+      details = "page/ToolEquipment/Form?$filter=ResourceSeq eq $[ResourceSeq]";
+   }
+   field PartNo;
+   field SerialNo;
+   field ScheduleTime;
+}
+
+----------------------------------- LISTS -----------------------------------
+
+
+
+-------------------------------- GANTT CHART --------------------------------
+
+
+ganttchart ResourceGantt for ResourceGanttQuery {
+   label = "Tool/Equipment Allocation";
+   orderby = ResourceSeq;
+   rowheight = medium;
+   height = large;
+   expandable = [true];
+   zoomlevels(Month, Week, Day, Hour, Minute) {
+      defaults = Day;
+   }
+
+   itemfocus = Start;
+   timerange = GetTimeRange(TaskSeq);
+   datagrid {
+      ganttcolumn ResourceId {
+         label = "Tool/Equipment ID";
+      }
+      ganttcolumn Description {
+         label = "Description";
+      }
+      ganttcolumn PartNo {
+         label = "Part No";
+      }
+      ganttcolumn SerialNo {
+         label = "Serial No";
+      }
+   }
+   ganttchartitem ResourceItem(ResourceItemArray);
+   ganttchartitem AllocatedItem(AllocItemArray);
+
+}
+
+ganttchartitem ResourceItem for AllocateGanttResourceQuery {
+   starttime StartDate;
+   endtime EndDate;
+   itemid = "${TaskSeq}^${ToolId}^${ResourceActAllocSeq}";
+   height = small;
+   tooltip {
+      field StartDate {
+         label = "Start Date";
+      }
+      field EndDate {
+         label = "End Date";
+      }
+   }
+   exclusive = [true];
+   resize command {
+      enabled = [ResourceSeq > 0];
+      execute {
+         call ModifyAllocation(ResourceSeq, StartDate, EndDate);
+      }
+   }
+   move command {
+      enabled = [ResourceSeq != -1];
+      execute {
+         call CreateAllocation(ResourceSeq, StartDate, EndDate, Duration) into ResourceIdVar {
+            when SUCCESS {
+               success("Tool ${ResourceIdVar} is allocated to the work task.");
+            }
+         }
+      }
+   }
+   ganttfield ResourceDetail {
+      visible = [ResourceSeq >= 0];
+   }
+   iconset {
+      icon "tools" {
+         expression = [ResourceSeq > 0];
+      }
+      icon "home" {
+         expression = [ResourceSeq = 0];
+      }
+   }
+   ganttchartitemstyle ResourceItemSummaryStyle = [ResourceSeq = -1];
+   ganttchartitemstyle ResourceItemGanttStyle = [ResourceSeq = 0];
+   ganttchartitemstyle ResourceItemAllocationsStyle = [ResourceSeq > 0];
+
+}
+ganttchartitem AllocatedItem for AllocatedResourceQuery {
+   starttime StartDate;
+   endtime EndDate;
+   itemid = "${ResourceActAllocSeq}";
+   height = small;
+   tooltip {
+      field TaskSeq {
+         label = "WO Work Task";
+         visible = [OriginLuDb = "JtTaskResource"];
+      }
+      field Barcode {
+         label = "FLM Work Task";
+         visible = [OriginLuDb = "AvResourceToolEquipment"];
+      }
+      field StartDate {
+         label = "Allocated Start";
+      }
+      field EndDate {
+         label = "Allocated End";
+      }
+   }
+   ganttfield FlmWorkTaskDetail {
+      visible = [OriginLuDb = "AvResourceToolEquipment"];
+   }
+   ganttfield WoWorkTaskDetail {
+      visible = [OriginLuDb = "JtTaskResource"];
+   }
+   iconset {
+      icon "tools-alt" {
+         expression = [ResourceSeq > 0];
+      }
+   }
+   ganttchartitemstyle AllocatedItemSummaryStyle = [true];
+}
+ganttchartitemstyle ResourceItemSummaryStyle {
+   label = "Resource";
+   emphasis = DatavizBlue9;
+   shape = bracket;
+   toggle = [true];
+}
+ganttchartitemstyle ResourceItemGanttStyle {
+   label = "Resource";
+   emphasis = DatavizGreen9;
+   shape = default;
+   toggle = [true];
+   icon = "tools";
+}
+ganttchartitemstyle ResourceItemAllocationsStyle {
+   label = "Assigned";
+   emphasis = Complementary3;
+   icon = "home";
+}
+
+ganttchartitemstyle AllocatedItemSummaryStyle {
+   label = "Allocated";
+   emphasis = DatavizYellow4;
+   shape = default;
+   toggle = [true];
+   icon = "tools-alt";
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+@Override
+stateindicator AvExeTaskStateIndicator for AvExeTask {
+   state "Active" {
+      completed = 30%;
+      emphasis StateCreated = [Objstate = "RELEASED"];
+   }
+   state "InWork" {
+      completed = 50%;
+      emphasis StateDefined = [Objstate = "WORKSTARTED"];
+   }
+   state "Completed" {
+      completed = 100%;
+      emphasis StateApproved = [Objstate = "FINISHED"];
+   }
+   state "Removed" {
+      completed = 0%;
+      emphasis StateObsolete = [Objstate = "REMOVED"];
+   }
+}
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

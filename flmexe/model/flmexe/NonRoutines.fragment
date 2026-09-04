@@ -1,0 +1,344 @@
+--------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+-- 250110  majslk  AD-16262, Created
+-------------------------------------------------------------------------------------
+fragment NonRoutines;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for View Non Routines";
+
+--------------------------------- FRAGMENTS ---------------------------------
+@DynamicComponentDependency ADCON
+include fragment ConnectContractInfo;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+group AvWorkPackageGroup for AvAircraftWorkPackage {
+   label = "Work Package Details";
+
+   field Aircraft {
+      size = Medium;
+   }
+   field Barcode {
+      label = "Work Package Barcode";
+      size = Medium;
+   }
+   field WorkPackageName {
+      label = "Work Package Name";
+      size = Medium;
+   }
+   badge Objstate {
+      style = TextOnly;
+      label = "Status";
+      size = Medium;
+      emphasis StatePlanned = [Objstate = "Committed"];
+      emphasis StateInProgress = [Objstate = "InWork"];
+   }
+
+}
+
+list NonRoutinesList for AvFault {
+   label = "Non Routines";
+
+   orderby = FoundOnDate desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field Barcode;
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      columnvisible = [parent.SensitiveFaultCount != 0];
+   }
+   field AvAircraftSubSystemRef.SubSystemCode {
+      label = "Failed System";
+   }
+   field FoundSource {
+      label = "Found During";
+   }
+   field FoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field FaultSeverityCode {
+      label = "Fault Severity";
+   }
+   badge Objstate {
+      label = "Status";
+      style = TextOnly;
+      emphasis Complementary7 = [Objstate = "Open"];
+      emphasis Info = [Objstate = "Deferred"];
+      emphasis Ok = [Objstate = "Closed"];
+   }
+   badge IsCmsWarningsExist {
+      label = "Configuration Warning";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [IsCmsWarningsExist = true];
+      emphasis Ok = [IsCmsWarningsExist = false];
+   }
+   field LongDescription {
+      label = "Description";
+      multiline = true;
+   }
+   field Aircraft;
+   field Priority {
+      label = "Fault Priority";
+   }
+   badge FlightSafetyImpact {
+      label = "Flight Safety Impact";
+      style = TextOnly;
+      emphasis Info = [HasFlightSafetyImpact = true];
+      emphasis Neutral = [HasFlightSafetyImpact = false];
+      visible = [IsNonRoutine];
+   }
+   field FailureTypeCode {
+      label = "Failure Type";
+   }
+   field FaultSourceCode {
+      label = "Fault Source";
+   }
+   field FoundByUser {
+      label = "Found By";
+   }
+   field Evaluated;
+   field EvaluatedBy;
+   field FaultCode;
+   field AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+      columnvisible = [initcontext.Source = "HMLOBBY"];
+   }
+   field WorkPackageBarcode {
+      label = "Work Package Barcode";
+      columnvisible = [initcontext.Source = "HMLOBBY"];
+   }
+   field ActualStartDateTime {
+      label = "Actual Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      columnvisible = [initcontext.Source = "HMLOBBY"];
+   }
+   field SchedEndDateTime {
+      label = "Estimated End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      columnvisible = [initcontext.Source = "HMLOBBY"];
+   }
+   field Action {
+      label = "Action Taken";
+      multiline = true;
+   }
+   field AvDeferralRequestRef.DeferralAuthorization {
+      label = "Deferral Authorization No";
+   }
+   field AvDeferralRequestRef.DeferralReqReasonCode {
+      label = "Deferral Reason";
+   }
+   field AvDeferralRequestRef.Note {
+      label = "Deferral Note";
+      multiline = true;
+   }
+   field DeferralAction {
+      label = "Deferral Action";
+      multiline = true;
+   }
+   badge IsAssignToWP {
+      label = "Assigned To WP";
+      style = TextOnly;
+      emphasis Info = [IsAssignToWP = true];
+      emphasis Neutral = [IsAssignToWP = false];
+   }
+   field LogbookReference {
+      label = "Logbook Reference";
+      size = Medium;
+   }
+   field LogbookTypeCode {
+      label = "Logbook Type";
+      size = Medium;
+   }
+   badge HasPreviousMaintenance {
+      label = "Previous Maintenance";
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary7 = [HasPreviousMaintenance = true];
+   }
+   field HmContractId {
+      label = "Contract ID";
+      columnexclude = [parent.HmContractId = null];
+   }
+   @DynamicComponentDependency ADCON
+   lov ContractGroupRef with ReferenceHmContractGroupSelector {
+      label = "Contract Group";
+      editable = [false];
+      columnexclude = [parent.HmContractId = null];
+   }
+   field HmContractLineNo {
+      label = "Contract Line";
+      columnexclude = [parent.HmContractId = null];
+   }
+   @DynamicComponentDependency ADCON
+   badge NrObjstate {
+      label = "NR Approval Status";
+      columnexclude = [parent.HmContractId = null];
+      emphasis Primary = [NrObjstate = "NotStarted"];
+      emphasis Complementary6 = [NrObjstate = "AwaitingApproval"];
+      emphasis Success = [NrObjstate = "Approved"];
+      emphasis False = [NrObjstate = "Rejected"];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   field ProceedAtRisk {
+      columnexclude = [parent.HmContractId = null];
+      editable = [false];
+   }
+   @DynamicComponentDependency ADCON
+   field NeedCommercialApproval {
+      label = "Commercial Approval Needed";
+      columnexclude = [parent.HmContractId = null];
+      editable = [false];
+   }
+}
+
+searchcontext NonRoutinesCreatedByMeSearchContext for SearchContextStructure {
+   label = "";
+   field IsCreatedByMe {
+      label = "Created by Me";
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+@Override
+@DynamicComponentDependency ADCON
+selector ReferenceHmContractGroupSelector for HmContractGroup {
+   static ContractGroup;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset AvFaultSet for AvFault;
+entityset AvAircraftWorkPackageSet for AvAircraftWorkPackage;
+
+@Override
+entity AvFault {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute IsCreatedByMe Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(Av_Fault_API.Get_Found_By_User(fault_id), Fnd_Session_API.Get_Fnd_User(), 'TRUE','FALSE')";
+   }
+   attribute FoundSource Text {
+      fetch = "Av_Fault_API.Get_Found_Source(fault_id)";
+   }
+   attribute AircraftWorkPackageId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute WorkPackageBarcode Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Barcode(Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id)))";
+   }
+   attribute IsCmsWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Cms_Warnings_Exist(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute Aircraft Text {
+      fetch = "CONCAT(CONCAT(Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(aircraft_id)))";
+      editable = [false];
+   }
+   attribute Priority Text {
+      fetch = "Av_Exe_Task_API.Get_Priority_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute HasFlightSafetyImpact Boolean {
+      fetch = "DECODE(flight_safety_impact, 1, 'TRUE','FALSE')";
+      editable = [false];
+   }
+   attribute Evaluated Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(Evaluated, 1, 'TRUE','FALSE')";
+      editable = [false];
+   }
+   attribute EvaluatedBy Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(Evaluated_By))";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute HasPreviousMaintenance Boolean("TRUE", "FALSE") {
+      fetch = "Av_Fault_API.Has_Previous_Maintenace(fault_id,external_id,Objstate)";
+   }
+   attribute DeferralAction Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute SchedEndDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id)))";
+   }
+   attribute ActualStartDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(Av_Exe_Task_API.Get_Task_Seq(fault_id)))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute HmContractId Text {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Id(task_seq)";
+   }
+   attribute HmContractLineNo Number {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Line_No(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrObjstate Text {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Objstate_By_Fault_Id(fault_id)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute ProceedAtRisk Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Proc_At_Risk_By_Fault_Id(fault_id)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NeedCommercialApproval Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Need_Com_Appr_By_Fault_Id(fault_id)";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+   reference AvAircraftWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+
+   where = "fault_id in (select fault_id from av_exe_task where ((source_ref1 != 0) and objtype = 'AvExeTask'))";
+}
+
+@Override
+entity AvAircraftWorkPackage {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute Aircraft Text {
+      fetch = "CONCAT(CONCAT(Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(aircraft_id)))";
+      editable = [false];
+   }
+   computed SensitiveFaultCount Integer {
+      compute = count(AvFault, [Sensitivities != null]);
+   }
+
+   array FaultArray(AircraftWorkPackageId) to AvFault(AircraftWorkPackageId);
+
+   where = "(objstate in ('Committed', 'InWork') and (location_code in (select location_code from av_maintenance_location where airport_id in (Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User())))))";
+}
+
+function GetDefaultValue Structure(SearchContextStructure);
+
+structure SearchContextStructure {
+   attribute IsCreatedByMe Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+}

@@ -1,0 +1,42 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmResourceToolEquipCommonObjects
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  211216  LaDelk  AD-4694, Created. Moved common elements of Fault Resource Tools, Task Resource Tools and record work assistant.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Resource_Id___ (
+   part_no_   IN VARCHAR2,
+   serial_no_ IN VARCHAR2) RETURN VARCHAR2
+IS
+   resource_seq_ NUMBER;
+   resource_id_  VARCHAR2(100);
+BEGIN
+   $IF Component_Tooleq_SYS.INSTALLED $THEN 
+      Resource_Tool_Equip_API.Get_Tool_Equip_Info(resource_seq_, resource_id_, part_no_,  serial_no_);
+   $END
+   RETURN resource_id_;
+END Get_Resource_Id___;
+
+FUNCTION Get_Part_Serial___ (
+   resource_seq_ IN NUMBER) RETURN Part_Serial_Structure_Rec
+IS
+   rec_  Part_Serial_Structure_Rec;
+   $IF Component_Tooleq_SYS.INSTALLED $THEN 
+      resource_tool_equip_rec_   Resource_Tool_Equip_API.Public_Rec;
+   $END
+BEGIN   
+   $IF Component_Tooleq_SYS.INSTALLED $THEN 
+      resource_tool_equip_rec_ := Resource_Tool_Equip_API.Get(resource_seq_);
+      rec_.part_no := resource_tool_equip_rec_.part_no;
+      rec_.serial_no := resource_tool_equip_rec_.serial_no;
+   $END
+   RETURN rec_;
+END Get_Part_Serial___;

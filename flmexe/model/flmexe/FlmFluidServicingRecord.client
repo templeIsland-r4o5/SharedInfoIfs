@@ -1,0 +1,144 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250217        SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250213        KASTLK  AVMXSOL-4078, Changed the FluidServicingRecordEntry index
+--  230904        psualk  AD-10510, introduce UTC badge infront of timestamps
+--  211130        bhbalk  AD-4130, Created.
+---------------------------------------------------------------------------------
+
+client FlmFluidServicingRecord;
+component FLMEXE;
+layer Core;
+projection FlmFluidServicingRecordHandling;
+description "Client for Fluid Service Records";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+entry FluidServicingRecordEntry parent FlmexeNavigator.FluidNav at index 3350 {
+   label = "Fluid Servicing Records";
+   page FluidServicingRecordPage;
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page FluidServicingRecordPage using AvHistFluidServiceSet {
+   label = "Fluid Servicing Records";
+   startupmode = search;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   selector ServiceDetailsSelector;
+   group ServiceDetailsGroup bind ServiceDetailsSelector;
+   list FluidRecordList(AvHistFldServiceDetailArray) bind ServiceDetailsSelector;
+   command SignatureCommand {
+//     Making visibility false since functionality has not been implemented yet.
+      visible = [false];
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+--------------------------------- SELECTORS ---------------------------------
+selector ServiceDetailsSelector for AvHistFluidService {
+   label = "${ServiceName} - ${AircraftRegCode} - ${RecordedDate}";
+   static ServiceName;
+   static AircraftRegCode;
+   field RecordedDate {
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group ServiceDetailsGroup for AvHistFluidService {
+   label = "Details";
+   field  AircraftRegCode;
+   field ServiceName;
+   field AircraftLegNo;
+   field AircraftIataCode;
+   field ArrivalTime {
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field FndUserRef.Description {
+      label = "Recorded By";
+   }
+   field RecordedDateUtc {
+      label = "Recorded Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field RecordComment {
+      label = "Remarks";
+      multiline = true;
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list FluidRecordList for AvHistFldServiceDet {
+   label = "Fluids and Gases Recorded";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field InventoryDesc {
+      label = "Assembly";
+      size = Large;
+   }
+   field ConfigSlotPositionRef.ConfigSlotPositionCode {
+      label = "Position";
+   }
+   field FluidDefinitionRef.FluidName {
+      label = "Fluid/Gas";
+   }
+   field UptakeAmount;
+   field FluidDefinitionRef.MeasurementUnit;
+}
+
+command SignatureCommand {
+   label = "View Signature";
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

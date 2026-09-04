@@ -1,0 +1,64 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>3/14/25, 10:53:17 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_CREW_TASK_LIST</Name>
+    <ID>b67e03e9-41fe-47ae-b098-6ddd8075d7f2</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>CrewCode</Column>
+            <Name>Crew Code</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>ActiveTasks</Column>
+            <Name>Active Tasks</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>AssignedTasks</Column>
+            <Name>Assigned Tasks</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>InWorkTasks</Column>
+            <Name>In Work Tasks</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>CompletedTasks</Column>
+            <Name>Completed Tasks</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>Crew</Column>
+            <Name>Crew</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageId</Column>
+            <Name>Work Package Id</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>PendingTasks</Column>
+            <Name>Pending Tasks</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <EntitySet>CrewTaskSummaryQuerySet</EntitySet>
+    <EntityType>CrewTaskSummaryQuery</EntityType>
+    <Filter>WorkPackageId eq $WorkPackageId$</Filter>
+    <Parameters/>
+</ProjectionDataSource>

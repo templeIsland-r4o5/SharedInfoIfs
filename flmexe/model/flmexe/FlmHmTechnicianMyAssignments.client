@@ -1,0 +1,208 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250211  NAJMLK  AVMXSOL-4786, Modified parent of navigator MyAssignmentsNav.
+--  241217  wedulk  AD-15474, Created.
+-----------------------------------------------------------------------------
+client FlmHmTechnicianMyAssignments;
+component FLMEXE;
+layer Core;
+projection FlmHmTechnicianMyAssignmentsHandling;
+description "This client is used for My Assignments Kanban View for Hangar Maintenance Technician";
+include fragment FlmTaskAssignments;
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry MyAssignmentsNav parent FlmexeNavigator.HangarMaintenanceExecution at index 1040 {
+      label = "My Assignments";
+      page MyAssignmentsPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+
+page MyAssignmentsPage using HmMyTaskAssignmentsSet {
+   label = "My Assignments";
+   kanbanboard MyAssignmentsKanbanBoard;
+
+   list MyAssignmentsList {
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+command TaskDetailsCommand for TaskAssignmentEntity {
+   label = "Details";
+   execute {
+      navigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      refresh;
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list MyAssignmentsList for TaskAssignmentEntity {
+   label = "My Assignments List";
+   field Barcode {
+      label = "Task Barcode";
+      editable = [false];
+   }
+   field TaskName {
+      editable = [false];
+      multiline = true;
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      editable = [false];
+   }
+   field ResourceDemand {
+      editable = [false];
+   }
+   field Remark {
+      label = "Assignment Role";
+      editable = [false];
+   }
+   badge ExecutionInstanceStatus {
+      emphasis Complementary5 = [ExecutionInstanceStatus = "Assigned"];
+      emphasis Complementary9 = [ExecutionInstanceStatus = "Completed"];
+      emphasis Complementary6 = [ExecutionInstanceStatus = "Work Started"];
+      editable = [false];
+   }
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field MaterialAvailability {
+      editable = [false];
+   }
+   field LaborScheduledHours {
+      label = "Scheduled Hours";
+      editable = [false];
+   }
+   field SchedStart {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEnd {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   lov AircraftDescRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------
+
+
+----------------------------- VISUAL COMPONENTS -----------------------------
+kanbanboard MyAssignmentsKanbanBoard for TaskAssignmentEntity {
+   label = "My Assignments";
+   kanbancolumn ExecutionInstanceStatus;
+   kanbancolumnname = GetAssignmentStatus();
+   kanbancard MyAssignmentsKanbanCard;
+   move command {
+      execute {
+         call RefreshData();
+         messagebox("", information, "To change the status of the assignment, you will be redirected to the Task Details page. Do you want to continue?") {
+            when YES {
+               navigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+               refresh;
+            }
+            when NO {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+kanbancard MyAssignmentsKanbanCard for TaskAssignmentEntity {
+   emphasis Complementary5 = [ExecutionInstanceStatus = "Assigned"];
+   emphasis Complementary9 = [ExecutionInstanceStatus = "Completed"];
+   emphasis Complementary6 = [ExecutionInstanceStatus = "Work Started"];
+   field TaskName;
+   field Barcode;
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      size = Small;
+   }
+   field Aircraft;
+   field  WpBarcode {
+      label = "Work Package";
+      visible = [false];
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+   }
+   command TaskDetailsCommand;
+}

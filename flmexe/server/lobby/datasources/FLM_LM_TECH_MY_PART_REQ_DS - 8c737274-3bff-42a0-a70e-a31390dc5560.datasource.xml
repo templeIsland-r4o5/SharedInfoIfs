@@ -1,0 +1,42 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>19/08/2025, 16:38:54</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_LM_TECH_MY_PART_REQ_DS</Name>
+    <ID>8c737274-3bff-42a0-a70e-a31390dc5560</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>TaskSeq</Column>
+            <Name>Task Seq</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>MaintMaterialOrderNo</Column>
+            <Name>Maint Material Order No</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>LineItemNo</Column>
+            <Name>Line Item No</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>OrderLineNo</Column>
+            <Name>Order Line No</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SITE</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmTechnicianLobbyHandling</Projection>
+    <EntitySet>MyPartRequestSet</EntitySet>
+    <EntityType>MaintMaterialReqLine</EntityType>
+</ProjectionDataSource>

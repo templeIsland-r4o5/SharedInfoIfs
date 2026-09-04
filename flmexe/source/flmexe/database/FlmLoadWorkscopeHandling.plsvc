@@ -1,0 +1,59 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmLoadWorkscopeHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  221114  SatGlk   AD-8837,Removed Import_External_File___ and used Adcom_Util_API.Start_WSL_Upload
+--  220830  DUWJLK   AD-8572,Override the CRUD_Update method to limit the uploading file size
+--  220725  SATGLK   AD-8045,Implemented Av_File_Upload_API.Start_Workscope_Upload functionality
+--  220710  KAPALK   AD-8042,Added two procedures to read and unpack data to ext_file_trans_tab
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest BLOBDataType
+FUNCTION Import_File___ (
+   key_ IN Workscope_File_Load_Virtual_Key) RETURN Import_File_Info_Structure_Rec
+IS
+   info_                VARCHAR2(32000);
+   load_file_id_        NUMBER;
+   rec_                 Import_File_Info_Structure_Rec;
+   file_data_blob_      BLOB;
+   head_rec_            Workscope_File_Load_Virtual_Rec;
+   
+   CURSOR get_blob_object IS
+      SELECT FILE_DATA
+      FROM ${PROJECTION}_WORKSCOPE_FILE_LOAD_VIRTUAL_VRT
+      WHERE Objkey = head_rec_.objkey; 
+BEGIN
+   head_rec_ := Get_Record___(key_);
+ 
+   OPEN get_blob_object;
+   FETCH get_blob_object INTO file_data_blob_;
+   CLOSE get_blob_object;
+   
+   Adcom_Util_API.Start_WSL_Upload(head_rec_.file_name, load_file_id_, info_, file_data_blob_);   
+   info_  := REPLACE(REPLACE(info_, 'INFO'||chr(31)),chr(30));
+   rec_.load_file_id := load_file_id_;
+   rec_.info := REPLACE(REPLACE(info_, 'INFO'||chr(31)),chr(30));
+   
+   RETURN rec_;
+END Import_File___;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Upload___ (
+   objkey_ IN VARCHAR2,
+   file_data##    IN     Stream_Data_Rec,
+   workscope_file_load_virtual## IN VARCHAR2)
+IS
+BEGIN
+   IF (dbms_lob.getlength(file_data##.stream_data) > 819200) THEN 
+      Error_SYS.Record_General(lu_name_, 'Maximum file size has been exceeded. Upload a file that is less than 800KB');
+   END IF;   
+   super(objkey_, file_data##, workscope_file_load_virtual##);
+END CRUD_Upload___;

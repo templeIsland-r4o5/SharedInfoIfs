@@ -1,0 +1,87 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  240919  LAWALK  AD-14313, Added fault severity in GetFaultList query.
+--  240219  VAALLK  AD-11917, Added CurrentUserAirportTimeZone in GetFaultList query.
+--  240118  ROSDLK  AD-11358, Removed the 30 days limitation for closed faults.
+--  240116  ROSDLK  AD-11358, Added data filteration in Fault Search page.
+--  240107  RWELLK  AD-11357, UI and Timezone Enhancements.
+--  240101  RWELLK  AD-11357, Added Where clause to avoid the NULL Record.
+--  231212  RWELLK  AD-11357, Created fault search projection file.
+-----------------------------------------------------------------------------
+
+projection FlmFaultSearchHandling;
+component FLMEXE;
+layer Core;
+description "Fault Search Projection";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFaultSearchSet for GetFaultList;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration FaultStatus {
+   value = "Open";
+   value = "Deferred";
+   value = "Closed";
+   value = "NoFaultFound";
+}
+
+enumeration OwnerType {
+   value = "MM";
+   value = "MX";
+}
+
+
+---------------------------------- QUERIES ----------------------------------
+query GetFaultList {
+   from = "Aggregate_Fault_View";
+   where = "aggregate_id IS NOT NULL";
+   lu = none;
+   timestamptzref = "server";
+
+   attribute AggregateId Text;
+   attribute MmId Number;
+   attribute MxId Text;
+   attribute LogbookReference Text;
+   attribute Owner Enumeration(OwnerType);
+   attribute Description Text;
+   attribute DeferralReqReasonDesc Text;
+   attribute DeferralAuthorization Text;
+   attribute DueDate Timestamp;
+   attribute Status Enumeration(FaultStatus);
+   attribute ClosedDate Timestamp;
+   attribute Aircraft Text;
+   attribute RegCode Text;
+   attribute AircraftTypeCode Text;
+   attribute SubSystem Text;
+   attribute FoundOnDate Timestamp;
+   attribute LogbookTypeCode Text;
+   attribute LastActionDesc Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute FaultSeverity Text {
+      label = "Fault Severity";
+   }
+
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+-------------------------------- STRUCTURES ---------------------------------
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

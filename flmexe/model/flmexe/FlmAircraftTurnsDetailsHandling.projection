@@ -1,0 +1,1013 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250704        SSIVLK  AD-18641, Added JtTaskReturnArray
+--  250630        SSIVLK  AD-18638, Added MaintMaterialReqArray
+--  250616        SSIVLK  AD-19146, Added RemovedPartsQuery
+--  250604        SSIVLK  AD-19145, Introduced InstalledPartsQuery
+--  250505        PSUALK  AD-18296, MPC Open/Close Tasks on the Aircraft Turn Details page.
+--  250228        SSIVLK  AD-14847, added hassignedchildrecord condition
+--  250218        DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  250217        SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250116        NIRTLK  AD-15508, Added LaborSummaryBreakdownQuery and modified LaborSummaryTotalsQuery.
+--  250109        WAISLK  AD-14612, Added scheduled and actual routine/non-routine hours fields.
+--  241127        ALNILK  AD-14610, Added LaborSummaryTotalsArray and LaborSummaryTotalsQuery.
+--  241118        VAALLK  AD-14724, Added labour related parameters in RaiseNonRoutineService.
+--  241118        BACHLK  AD-14727, Added RaiseNonRoutineService
+--  241104        SILILK  AD-14828, Added laborSkill & ScheduledHour attribute in RaiseFaultService action.
+--  241102        OSNALK  AD-14257, Refactor the code to use structures
+--  240626        LAWALK  AD-13521, Added IsCmsWarningForAircraft attribute in AvFlight entity.
+--  240610        LAHNLK  AD-12996, added RaiseFaultService
+--  240607        LAWALK  AD-12742, Added CheckCmsWarnForAircraft attribute for fetch the Check_Cms_Warn_For_Aircraft function.
+--  240514        KAWJLK  AD-12728, Added attribute 'IsCmsWarningsExist' in DefferedFaultsQuery to display CMS warnings in Deferred Faults.
+--  240212        VAALLK  AD-11372, Added mxcore dependency for CheckClosedFaultOwnership
+--  240126        WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  240123        LAWALK  AD-11649, Added new action CheckClosedFaultOwnership for check the ownership of the fault.
+--  231108        MAILLK  AD-9566, Added UpdateTaskUnstart action and CurrentUser, HasSignedTaskChildRecords attributes to the overridden entity AvExeTask
+--  230925        KAWJLK  AD-10793, Modified AvAircraftWorkPackage.
+--  250923        srchlk  AD-10643, Added IsFlmStandalone attribute to AvFault overriden entity and DefferedFaultsQuery.
+--  230828        bhsilk  AD-10359, Added UpdateTaskStart action
+--  230810        majslk  AD-9590, Modified code to support time zone changes in fluid servicing
+--  230804        majslk  AD-10387, Modified code to support time zone changes
+--  230614        majslk  AD-9584, Modified code to support time zone changes
+--  230502        MAILLK  AD-9725, Change DeptlegNo, DepartureGate attributes in AvFlight entity
+--  230110        LAHNLK  AD-9056, added CmsFailedWarnings,CmsPendingWarnings attributes to avFlight entity
+--  221215        ROSDLK  AD-9194, Added attribute 'RequestFailedTasksStatus' and 'IsCmsWarningsExist' to display CMS warnings.
+--  221109        majslk  AD-8943, Added FailureTypeCode, FaultCode, FoundByUser, PhaseOfFlightCode to DefferedFaultsQuery
+--  221104        RWELLK  AD-9028, changed parameeter name in GetFindInventoryUrl.
+--  220909        rosdlk  AD-8613, Used NVL function to set the sched dept time as the departure time if the actual dept time is not set.
+--  220826        majslk  AD-8312, Added four new fields for DefferedFaultsQuery
+--  220728        PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220725        ROSDLK  AD-7979, Added attributes to check IsFlmStandalone and DeferralAction to show in DeferredFaultList.
+--  220613        PSUALK  AD-7222, Rename Release Aircraft button after Released.
+--  220602        majslk  AD-7000, Added ConvertedDuration field for AvAircraftWorkPackage entity.
+--  220525        srchlk  AD-7179, Adding ludependency for AvFlight for DefferedFaultsQuery.
+--  220113        majslk  AD-5956, Removed Modify_Task___ method.
+--  211223        sbanlk  AD-4125, AircraftLabel,FlightLegNo,ActionUser attributes.
+--  211201        Rjoslk  AD-4124, Added implementation for recording fluid uplifts.
+--  211122        chdslk  AD-3954, Removed AssignedUser from AvExeTask and removed unused attribute PartialStateStepExist.
+--  211117        lavwlk  AD-5002, Modified AvFlight, AvAirport by replacing AssemblyTypeCode instead of AircraftTypeCode and AssemblyTypeName instead of AircraftTypeName.
+--  210913        nignlk  AD-3336, Added ActualOutboundDeptDateTime to AvFlight.
+--  210826        majslk  AD-3448, Added HasIncompleteTxns attribute to AvFlight and RequestStateCd to DefferedFaultsQuery.
+--  210702        himklk  AD-2278, Added ludependencies to AvFlight.
+--  210430        kawjlk  AD-1242, Added PartialStateStepExist attribute to AvExeTask.
+--  210420        sevhlk  AD-1196, Added the ClearReleaseAircraftVirtual action.
+--  210408        supklk  AD-1065, Changed Priority from enum to Text
+--  210329        siydlk  AD-1157, Added AddActualDateTime action and added SignedBy and SignedUserName attributes to overriden AvExeTask.
+--  210323        LAHNLK  AD-1256, Include fragment FlmRaiseFault.
+--  210325        KAWJLK  AD-1265, Added PackageOpenFault action
+--  210323        LAHNLK  AD-1256, Include fragment FlmRaiseFault
+--  210319        tprelk  LMM2020R1-1569 - modfied av_flight using with my_aircraft_turns view
+--  210224        tprelk  LMM2020R1-1569, Added Deptlegno for particular flight id
+--  210223        siselk  LMM2020R1-1744, Changed Get_Departure_Flight to Get_Departure_Flight_Id in AvFlight entity. Used FlightId for AvFlightDepartureRef
+--  210219        tprelk  LMM2020R1-1569,Query added
+--  210217        tprelk  LMM2020R1-1569,Created
+--  221025        sevhlk  AD-8650 Added GetFindInventoryUrl function
+---------------------------------------------------------------------------------
+
+projection FlmAircraftTurnsDetailsHandling;
+component FLMEXE;
+layer Core;
+description "Details about Aircraft Turn";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+include fragment FlmRaiseFault;
+include fragment FlmReleaseAircraft;
+include fragment LaborSummary;
+include fragment FlmPanelTasks;
+include fragment AvTurnMaterial;
+include fragment AvTurnReturn;
+include fragment FlmTaskTool;
+include fragment AdcomCommonUtilities;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFlightSet for AvFlight;
+entityset AvFlightQuerySet for AvFlightQuery;
+entityset AvAirportSet for AvAirport;
+entityset AircraftSet for Aircraft;
+entityset AvAirportForUserSet for AvAirportForUser;
+entityset AvHistFluidServiceSet for AvHistFluidService;
+entityset AvHistFldServiceDetSet for AvHistFldServiceDet;
+entityset FluidServiceVrtSet for FluidServiceVirtual;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvFlight {
+   crud = Create, Read, Update, Delete;
+   exclude attributes = Description;
+   from = "MY_AIRCRAFT_TURNS";
+   ludependencies = AvHistFluidService, FluidServiceDetVirtual, FluidServiceVirtual, AvFlight;
+   timestamptzref = "server";
+
+
+   attribute WorkPackageActualStart Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Actual_Start (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageActualEnd Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Actual_End (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageScheduledStart Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Scheduled_Start (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageScheduledEnd Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Scheduled_End (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute DeptlegNo Text {
+      fetch = "Av_Flight_API.Get_Leg_No(dept_flight_id)";
+   }
+   attribute DepartureGate Text {
+      fetch = "Av_Flight_API.Get_Departure_Gate(dept_flight_id)";
+   }
+   attribute DepartObjstate Text {
+      fetch = "Av_Flight_API.Get_Objstate(dept_flight_id)";
+   }
+   attribute AssemblyTypeName Text {
+      fetch = "Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id))";
+   }
+   attribute ActualOutboundDeptDateTime Timestamp {
+      fetch = "NVL(Av_Flight_API.Get_Actual_Departure_Date_Time(dept_flight_id), departure_timestamp)";
+   }
+   attribute HasIncompleteTxns Boolean {
+      fetch = "Ad_Async_Request_API.Has_Incompleted_Txns('av_fault_tab', (CONCAT('aircraft_id = ', aircraft_id)))";
+   }
+   attribute ReleaseButtonLabel Text {
+      fetch = "Adcom_Util_API.Release_Ac_Button_Text(flight_turn_status)";
+   }
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_FLM_Standalone()";
+   }
+   attribute IataCode Text {
+      fetch = "Av_Airport_API.Get_Iata_Code(arrival_airport_id)";
+   }
+   attribute AircraftRegCode Text {
+      fetch = "Aircraft_API.Get_Reg_Code(aircraft_id)";
+   }
+
+   attribute RequestFailedTasksStatus Boolean("TRUE", "FALSE") {
+      fetch = "Av_Flight_API.Get_Rqst_Failed_Tasks_Status(work_package_id)";
+   }
+   attribute CmsFailedWarnings Boolean("TRUE", "FALSE") {
+      fetch = "Av_Flight_API.Get_Cms_Failed_Warning_Status(work_package_id)";
+   }
+   attribute CmsPendingWarnings Boolean("TRUE", "FALSE") {
+      fetch = "Av_Flight_API.Get_Cms_Pending_Status(work_package_id)";
+   }
+   attribute IsCmsWarningForAircraft Boolean("TRUE", "FALSE") {
+      fetch = "Aircraft_API.Is_Cms_Warning_For_Aircraft(aircraft_id)";
+   }
+   attribute SchedRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Sched_Routine_Hours(work_package_id)";
+   }
+   attribute ActualRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Actual_Routine_Hours(work_package_id)";
+   }
+   attribute SchedNonRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Sched_Non_Routine_Hours(work_package_id)";
+   }
+   attribute ActualNonRoutineHours Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_WP_Actual_NR_Hours(work_package_id)";
+   }
+   computed SensitiveTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null]);
+   }
+   computed SensitiveFaultCount Integer {
+      compute = count(AvFault, [Sensitivities != null]);
+   }
+   computed SensitiveDefferedFaultCount Integer {
+      compute = count(DefferedFaultsQuery, [Sensitivities != null]);
+   }
+   computed SensitiveMPCOpenTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null and ClassCode = "MPC" and SubclassCode = "MPCOPEN"]);
+   }
+   computed SensitiveMPCCloseTaskCount Integer {
+      compute = count(AvExeTask, [Sensitivities != null and ClassCode = "MPC" and SubclassCode = "MPCCLOSE"]);
+   }
+   computed SensitiveClosedFaultCount Integer {
+      compute = count(ClosedFaultsQuery, [Sensitivities != null]);
+   }
+
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute LastReleaseDate Timestamp;
+   attribute WorkPackageId Number;
+   attribute ArrivalTimestamp Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute DeptFlightId Text;
+   attribute DeptFlightObjstate Text;
+   attribute ShedDeptTime Text;
+   attribute GroundTime Text;
+   attribute AssemblyTypeCode Text;
+   attribute ArrivalTime Text;
+   attribute DepartureTime Text;
+   attribute FlightTurnStatus Enumeration(TurnStatusEnum);
+   attribute NoOfAssignedTasks Number;
+   attribute NoOfOpenedFaults Number;
+   attribute NoOfDeferredFaults Number;
+   attribute NoOfClosedFaults Number;
+   attribute OutboundStation Text;
+   attribute ReleaseSignedBy Text;
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   reference AvAircraftTypeRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+   reference FndUserRef(ReleaseSignedBy) to FndUser(Identity);
+   reference AvAirportForUserRef(ReleaseSignedBy) to AvAirportForUser(Identity);
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AircraftTypeRef(AircraftId) to Aircraft(AssemblyTypeCode);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference TaskRef(AircraftId) to AvExeTask(AircraftId);
+   reference DepartureAirportRef(DepartureAirportId) to AvAirport(AirportId);
+   array LaborSummaryTotalsArray(WorkPackageId) to LaborSummaryTotalsQuery(WorkPackageId);
+   array LaborSummaryBreakdownArray(WorkPackageId) to LaborSummaryBreakdownQuery(WorkPackageId);
+   array FaultArray(AircraftId) to AvFault(AircraftId);
+   array DeferredFaultArray(AircraftId) to DefferedFaultsQuery(AircraftId);
+   array TaskArray(WorkPackageId) to AvExeTask(AircraftWpId);
+   array CloseFaultArray(AircraftId) to ClosedFaultsQuery(AircraftId);
+   array AvHistFluidServiceArray(FlightId) to AvHistFluidService(FlightId);
+   array PartInstallationViewArray(WorkPackageId) to InstalledPartsQuery(WorkPackageId);
+   array PartRemovalViewArray(WorkPackageId) to RemovedPartsQuery(WorkPackageId);
+   array MaintMaterialReqArray(WorkPackageId) to MaintMaterialReqLine(AircraftWpId);
+   array JtTaskReturnArray(WorkPackageId) to JtTaskReturn(AircraftWpId);
+   array WorkPackageToolDemandQueryArray(WorkPackageId) to ToolDemandQuery(WorkPackageId);
+
+   where = "flight_id IN (SELECT flight_id from FLIGHTS_FOR_USER) AND Arrival_Airport_Id IN (Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User()))";
+}
+@Override
+entity AvAirport {
+   crud = Create, Read, Update, Delete;
+   reference AvAircraftTypeRef(AirportId) to AvAssembly(AssemblyTypeCode);
+}
+
+@Override
+entity Aircraft {
+   crud = Create, Read, Update, Delete;
+
+   where = "aircraft_id IN (SELECT aircraft_id FROM FLIGHTS_FOR_USER)";
+}
+
+@Override
+entity AvAirportForUser {
+   crud = Create, Read, Update, Delete;
+
+   where = "identity = Fnd_Session_API.Get_Fnd_User()";
+}
+
+@Override
+entity AvAircraftWorkPackage {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+   attribute ConvertedDuration Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute SchedStartDateTimeUtc Timestamp {
+      fetch = "sched_start_date_time";
+   }
+   attribute ActualStartDateTimeUtc Timestamp {
+      fetch = "actual_start_date_time";
+   }
+   attribute ActualEndDateTimeUtc Timestamp {
+      fetch = "actual_end_date_time";
+   }
+}
+
+@Override
+entity AvFault {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute SubSystemId Number;
+   attribute FaultCode Text;
+   attribute FaultSourceCode Text;
+   attribute FoundOnType Text;
+
+   attribute FoundOnId Number;
+   attribute PhaseOfFlightCode Text;
+   attribute FailureTypeCode Text;
+   attribute AircraftId Number;
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id ,NULL)";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute TaskSeq Number {
+      fetch = "Av_Exe_Task_API.Get_Task_Seq(fault_id)";
+   }
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Due Date";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute LastFaultUser Text {
+      fetch = "Av_Fault_Action_API.Get_Action_User(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute LastFaultDate Timestamp {
+      fetch = "Av_Fault_Action_API.Get_Action_Date(Av_Fault_Action_API.Get_Last_Action_Id(fault_id))";
+   }
+   attribute DeferralReferenceId Number {
+      fetch = "Av_Fault_Deferral_API.Get_Act_Deferral_reference_Id(fault_id)";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute DeferralId Text {
+      fetch = "Av_Fault_Deferral_API.Get_Active_Deferral(fault_id)";
+   }
+   attribute FaultPartCount Number {
+      fetch = "Av_Fault_Part_API.Get_Fault_Part_Count(fault_id)";
+   }
+   attribute ToolsCount Number {
+      fetch = "Av_Fault_Tool_API.Get_Fault_Tools_Count(fault_id)";
+   }
+   attribute FaultActionCount Number {
+      fetch = "Av_Fault_Action_API.Get_Fault_Action_Count(fault_id)";
+   }
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute Code Text {
+      fetch = "NVL(Av_Exe_Task_API.Get_Barcode(Av_Exe_Task_API.Get_Task_Seq(fault_id)), barcode)";
+   }
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute ClosedFaultOffsetDate Timestamp {
+      fetch = "Av_Fault_API.Get_Closed_Fault_Offset_Date(Fnd_Session_API.Get_Fnd_User(),fault_id)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_FLM_Standalone()";
+   }
+   attribute IsNonRoitine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvFaultDeferralRef(DeferralId) to AvFaultDeferral(DeferralId);
+   reference AvFaultIdDeferralRef(FaultId) to AvFaultDeferral(FaultId);
+   reference AvLogbookTypeCodeRef(LogbookTypeCode) to  AvLogbookType(LogbookTypeCode);
+   reference AvPhaseOfFlightCodeRef(PhaseOfFlightCode) to AvPhaseOfFlight(PhaseOfFlightCode);
+   reference AvFailureTypeCodeRef(FailureTypeCode) to   AvFailureType(FailureTypeCode);
+   reference AvExeTaskNewRef(FaultId) to AvExeTask(FaultId);
+   reference OpenfaultRef(Barcode) to AvFault(Barcode);
+
+   where = "objstate IN ('Open')";
+
+}
+@Override
+entity AvHistFault {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+   attribute FaultBarcode Text {
+      label = "Barcode";
+   }
+   attribute Description Text {
+      label = "Name";
+   }
+   attribute FailedSystem Number;
+
+   attribute FlightId Number;
+
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Closed";
+   }
+   attribute LogBookTypeCode Text {
+      fetch = "log_Book_type_code";
+      label = "Logbook Type";
+   }
+   attribute Action Text {
+      fetch = "Av_Hist_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_barcode)";
+   }
+
+}
+@Override
+entity AvExeTask {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number {
+      required = [false];
+   }
+   attribute AircraftId Number;
+   attribute Barcode Text;
+
+   attribute AircraftWpId Text;
+   attribute FaultId Number;
+
+   attribute Description Text;
+   attribute ConfigPosition Text;
+   attribute PriorityId Enumeration(PriorityStatuses);
+   attribute Objstate Enumeration(AvExeTaskState) {
+      fetch = "objstate";
+      label = "State";
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute SignedUserName Text {
+      fetch = "Fnd_User_API.Get_Description(Fnd_Session_API.Get_Fnd_User())";
+   }
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id , task_seq)";
+   }
+   attribute IsCmsWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Cms_Warnings_Exist(task_seq)";
+   }
+
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+
+   attribute HasSignedTaskChildRecords Text {
+      fetch = "Av_Exe_Task_API.Has_Signed_Task_Child_Records(task_seq)";
+   }
+
+   attribute IsNonRoitine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(task_seq)";
+   }
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopSkill Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Skill(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute Location Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id)";
+   }
+   attribute MaintenanceLocationTimeZone Text {
+      fetch = "Av_Maintenance_Location_API.Get_Location_Time_Zone(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute ClassCode Text {
+      fetch = "Class_Code";
+   }
+   attribute SubclassCode Text {
+      fetch = "Subclass_Code";
+   }
+   attribute TaskDuration Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute ExternalId Text {
+      fetch = "av_external_id";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   attribute MaterialAvailabilityStatus Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Mat_Availability_Status(task_seq)";
+   }
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference AvExeTaskMeasurementRef(TaskSeq) to  AvExeTaskMeasurement(TaskSeq);
+   reference TaskRef(Barcode) to AvExeTask(Barcode);
+   reference AvBarcodeRef(Barcode) to AvExeTask(Barcode);
+   array MaintTasksForOpenTaskArray(TaskSeq) to MaintTasksForPanelsQuery(OpenTaskSeq);
+   array CloseTaskForOpenTaskArray(TaskSeq) to CloseTaskForOpenPanelsQuery(OpenTaskSeq);
+   array MaintTasksForCloseTaskArray(TaskSeq) to MaintTasksForPanelsQuery(CloseTaskSeq);
+   array OpenTaskForCloseTaskArray(TaskSeq) to OpenTaskForClosePanelsQuery(CloseTaskSeq);
+
+}
+
+@Override
+entity AvHistFluidService {
+   ludependencies = AvHistFluidService, FluidServiceDetVirtual, FluidServiceVirtual, AvFlight;
+
+   attribute AircraftId Number;
+   attribute AssemblyTypeCode Text {
+      fetch = "Aircraft_API.Get_Assembly_Type_Code(aircraft_id)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference FluidServiceDefRef(AssemblyTypeCode) to AvFluidServiceDef(AssemblyTypeCode);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference FndUserRef(RecordedBy) to FndUser(Identity);
+   array AvHistFldServiceDetArray(FluidServiceId) to AvHistFldServiceDet(FluidServiceId);
+}
+
+@Override
+entity AvHistFldServiceDet {
+   ludependencies = AvHistFluidService, FluidServiceDetVirtual, FluidServiceVirtual;
+
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AvFluidDefinitionRef(FluidDefinitionId, AssemblyTypeCode) to AvFluidDefinition(FluidDefinitionId, AssemblyTypeCode);
+}
+
+@Override
+entity AvAircraftRelease {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+}
+
+
+query DefferedFaultsQuery {
+   from = "Av_Fault";
+   keys = FaultId;
+   where = "objstate IN ('Deferred')";
+   lu = AvFault;
+   ludependencies = AvFlight;
+   timestamptzref = "server";
+
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute SubSystemId Number;
+   attribute AircraftId Number;
+
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Due Date";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute DeferralReferenceId Number {
+      fetch = "Av_Fault_Deferral_API.Get_Act_Deferral_reference_Id(fault_id)";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute DeferralId Text {
+      fetch = "Av_Fault_Deferral_API.Get_Active_Deferral(fault_id)";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute RequestStateCd Enumeration(ReqStateType) {
+      fetch = "Request_State_Cd";
+      label = "Request Status";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id , NULL)";
+   }
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_FLM_Standalone()";
+   }
+   attribute ExternalId Text;
+   attribute FaultSourceCode Text;
+   attribute LogbookReference Text;
+   attribute IsMobileClientRequestDb Enumeration(FndBoolean);
+   attribute FailureTypeCode Text;
+   attribute FaultCode Text;
+   attribute FoundByUser Text;
+   attribute PhaseOfFlightCode Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute IsCmsWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Cms_Warnings_Exist(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvFaultDeferralRef(DeferralId) to AvFaultDeferral(DeferralId);
+   reference AvFaultIdDeferralRef(FaultId) to AvFaultDeferral(FaultId);
+   reference DeferredFaultRef(Barcode) to AvFault(Barcode);
+}
+
+query InstalledPartsQuery {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   from = "TASK_PART_INST_RMV_UIV";
+   keys = WorkPackageId, TaskSeq, TaskPartId {
+      where = "AIRCRAFT_WP_ID = :WorkPackageId";
+   }
+   where = "installed_quantity IS NOT NULL";
+   lu = AvExeTaskPart;
+   ludependencies = AvExeTask, WorkTask;
+
+   attribute TaskSeq Number;
+   attribute TaskName Text;
+   attribute WorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute TaskPartId Number;
+
+   attribute Barcode Text;
+   attribute AssmblyConfigSlotPosId Number;
+   attribute InstalledPartNoId Number;
+   attribute CreatedBy Text;
+   attribute CancelledBy Text;
+   attribute ConfigSlotPositionId Number;
+   attribute InstalledQuantity Number;
+   attribute InstalledDate Timestamp;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute InstalledUser Text;
+   attribute PartName Text;
+   attribute PartNumber Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute PartGroupCode Text;
+   attribute AssemblyTypeCode Text;
+   attribute IsMandatory Text;
+   attribute SchedulingAction Enumeration(SchedulingActionType);
+
+   attribute InstallStates Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Install_States(task_part_id)";
+   }
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_API.Is_Part_Warnings_Exist(task_part_id)";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Installed_Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(Task_Seq),Av_Part_Number_API.Get_Part_Number(installed_part_no_id)))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Part_Sens_API.Get_Task_Part_Sensitivities(task_seq,task_part_id)";
+   }
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Part_Number_API.Get_Is_Repairable_Db(installed_part_no_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   array TaskPartInstallationWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+query RemovedPartsQuery {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   from = "TASK_PART_INST_RMV_UIV";
+   keys = WorkPackageId, TaskSeq, TaskPartId {
+      where = "AIRCRAFT_WP_ID = :WorkPackageId";
+   }
+   where = "Removed_quantity IS NOT NULL";
+   lu = AvExeTaskPart;
+   ludependencies = AvExeTask, WorkTask;
+
+   attribute TaskSeq Number;
+   attribute TaskName Text;
+   attribute TaskPartId Number;
+   attribute WorkPackageId Number {
+      fetch = "aircraft_wp_id";
+   }
+
+   attribute Barcode Text;
+   attribute AssmblyConfigSlotPosId Number;
+   attribute CreatedBy Text;
+   attribute TaskReturnLineSeq Number;
+   attribute ConfigSlotPositionId Number;
+   attribute RemovedSerialNo Text;
+   attribute RemovedBatchNo  Text;
+   attribute RemovedQuantity Text;
+   attribute RemovedDate Timestamp;
+   attribute RemovalReasonCode Text;
+   attribute RemPartNumber Text;
+   attribute PartGroupCode Text;
+   attribute IsMandatory Text;
+   attribute AssemblyTypeCode Text;
+   attribute ConfigSlotCode Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute RemPartName Text;
+   attribute RemovedUser Text;
+   attribute CancelledBy Text;
+
+   attribute RemovalReason Text {
+      fetch = "Av_Removal_Reason_API.Get_Removal_Reason_Desc(removal_reason_code)";
+   }
+   attribute RemovalStates Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Removal_States(Task_Part_Id)";
+   }
+   attribute IsPartWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_API.Is_Part_Warnings_Exist(task_part_id)";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Removed_Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(Task_Seq),Av_Part_Number_API.Get_Part_Number(removed_part_no_id)))";
+   }
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Part_Number_API.Get_Is_Repairable_Db(removed_part_no_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AssmblSlotPositionRef(AssmblyConfigSlotPosId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference JtTaskReturnRef(TaskReturnLineSeq) to JtTaskReturn(TaskReturnLineSeq);
+   reference PartSerialCatalogRef(RemPartNumber, RemovedSerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   array TaskPartRemovalWarningArray(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+@Override
+query ToolDemandQuery {
+   keys = WorkPackageId, TaskSeq, TaskResourceSeq {
+      where = "work_package_id = :WorkPackageId";
+   }
+
+   attribute TaskSeq Text;
+   attribute TaskResourceSeq Number;
+   attribute WorkPackageId Number;
+}
+------------------------------- ENUMERATIONS --------------------------------
+enumeration FaultStatus {
+   value = "Open" {
+      label = "Open";
+   }
+   value = "Deferred" {
+      label = "Deferred";
+   }
+   value = "Closed" {
+      label = "Closed";
+   }
+}
+
+enumeration OverallAssignmentStatuses {
+   value = "NotStarted" {
+      label = "Not Started";
+   }
+   value = "InProgress" {
+      label = "In Progress";
+   }
+   value = "Paused" {
+      label = "Paused";
+   }
+   value = "Finished" {
+      label = "Finished";
+   }
+}
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+action LoadServiceDetails {
+   initialcheck none;
+   parameter AssemblyTypeCode Text;
+   parameter FluidServiceDefId Number;
+   parameter AircraftId Number;
+   parameter Objkey Text;
+}
+
+action AddActualDateTime Timestamp {
+   initialcheck none;
+   ludependencies = AvExeTask;
+   timestamptzref = "server";
+
+}
+action PackageOpenFault {
+   initialcheck none;
+   parameter FaultId Number;
+   parameter FlightId Number;
+   parameter AircraftWorkPackageId Number;
+   ludependencies = AvFault, AvFlight, AvExeTask;
+}
+action ClearReleaseAircraftVirtual {
+   initialcheck none;
+}
+
+action UpdateTaskStart {
+   initialcheck none;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTask, AvAircraftWorkPackage, AvFlight;
+}
+
+action UpdateTaskUnstart {
+   initialcheck none;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTask, AvAircraftWorkPackage, AvFlight;
+}
+
+action CheckClosedFaultOwnership Text {
+   initialcheck none;
+   parameter FaultId Number;
+   ludependencies = AvExeTask, AvAircraftWorkPackage, AvFlight;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetInitData Structure(FluidInitStruct) {
+   timestamptzref = "server";
+
+   parameter AircraftId Number;
+   parameter FlightId Number;
+}
+
+structure FluidInitStruct {
+   timestamptzref = "server";
+
+   attribute AircraftType        Text;
+   attribute RegCode             Text;
+   attribute ArrivalTime         Timestamp;
+   attribute DepartureTime       Timestamp;
+   attribute UptakeLocation      Text;
+   attribute FlightLegNo         Text;
+   attribute DefFluidServiceDef  Text;
+}
+
+
+function GetFluidDefinitionsForAircraftType List<Entity(AvFluidServiceDef)> {
+   parameter AssemblyTypeCode Text;
+}
+
+function GetFindInventoryUrl Text {
+   parameter ExternalPagePath Text;
+   parameter SearchType Text;
+   parameter AircraftRegCode Text;
+   parameter IataCode Text;
+   parameter TaskNameRef Text;
+}
+
+function CheckInworkWp Boolean {
+   parameter AircraftId Number;
+   parameter Location Text;
+}
+
+function GetRepairableSearchContextDefaults Structure(ShowOnlyRepairableStructure);
+-------------------------------- STRUCTURES ---------------------------------
+structure ReleaseAircraftInfoStructure {
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute CmsFailedWarnings Boolean;
+   attribute CmsPendingWarnings Boolean;
+   attribute KeyRef Text;
+   attribute LuName Text;
+}
+
+structure RaiseFaultInfoStructure {
+   attribute AircraftId Number;
+   attribute AircraftWpId Number;
+   attribute FoundOnId Number;
+   attribute Source Text;
+   attribute Title Text;
+}
+
+structure FluidServicingInfoStructure {
+   attribute AircraftId Number;
+   attribute FlightId Number;
+}
+
+structure ShowOnlyRepairableStructure {
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+}
+--------------------------------- VIRTUALS ----------------------------------
+virtual FluidServiceVirtual {
+   timestamptzref = "server";
+   ludependencies = FluidServiceDetVirtual;
+
+   action SaveAndFinish {
+      ludependencies = AvHistFluidService, FluidServiceDetVirtual, FluidServiceVirtual, AvFlight;
+   }
+
+   attribute AircraftId       Number;
+   attribute RecordedDate     Timestamp;
+   attribute RecordedBy       Text;
+   attribute RecordComment    Text;
+   attribute AircraftType     Text;
+   attribute FlightId          Number;
+   attribute FluidServiceDefId Number;
+   attribute ServiceName      Text;
+   attribute RegCode          Text;
+   attribute InboundFlight    Number;
+   attribute ArrivalTime      Timestamp;
+   attribute DepartureTime    Timestamp;
+   attribute UptakeLocation   Text;
+   attribute AircraftLabel    Text;
+   attribute FlightLegNo      Text;
+   attribute ActionUserName   Text;
+
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference FluidServiceDefRef(FluidServiceDefId) to AvFluidServiceDef(FluidServiceDefId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   array FluidServiceDetVirtualArr() to FluidServiceDetVirtual();
+}
+
+virtual FluidServiceDetVirtual {
+   ludependencies = FluidServiceVirtual;
+   attribute   AssemblyTypeCode     Text;
+   attribute   FluidDefinitionId    Number;
+   attribute   FldServiceDetId      Number;
+   attribute   ConfigSlotPositionId Number;
+   attribute   UptakeAmount         Number;
+   attribute   Rate                 Number;
+   attribute   OilStatusCode        Text;
+   attribute   RecordOrder          Number;
+   attribute   InventoryId          Number;
+   attribute   InventoryDesc        Text;
+
+   reference AvFluidDefinitionRef(FluidDefinitionId, AssemblyTypeCode) to AvFluidDefinition(FluidDefinitionId, AssemblyTypeCode);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+}
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+action FaultProjectionService Structure(RaiseFaultResponse) {
+   initialcheck none;
+   implementation = "Java";
+   timestamptzref = "server";
+
+   parameter   AircraftId Number;
+   parameter   SubSystemId Number;
+   parameter   FaultCode Text;
+   parameter   FaultSourceCode Text;
+   parameter   LogbookTypeCode Text;
+   parameter   FoundOnType Text;
+   parameter   FoundOnId Number;
+   parameter   Description Text;
+   parameter   PhaseOfFlightCode Text;
+   parameter   FailureTypeCode Text;
+   parameter   LogbookReference Text;
+   parameter   FaultSeverityCode Text;
+   parameter   FoundSource Text;
+   parameter   CurrentUser Text;
+   parameter   FoundOnDate Timestamp;
+   parameter   FlightSafetyImpact Boolean;
+   parameter   EtopsSignificant Boolean;
+   parameter   FlightId Number;
+   parameter   TaskSeq Number;
+   parameter   ConfigSlotAltId Text;
+   parameter   AircraftAltId Text;
+   parameter   FoundOnTaskId Text;
+   parameter   AircraftWorkPackageId Number;
+   parameter   IsRoutine Boolean;
+   parameter   ResourceSeq Number;
+   parameter   ScheduledHours Text;
+   parameter   ResourceId Text;
+   parameter   PriorityId Text;
+   parameter   Objkey Text;
+   parameter   DefaultResourceSeq Text;
+   parameter   CertificationRequired Boolean;
+   parameter   InspectionRequired Boolean;
+   parameter   RaiseFaultOption Text;
+   parameter   IsMobileClientRequest Boolean;
+   parameter   LongDescription Text;
+   parameter   RaiseFaultActionOption Text;
+   parameter   StartTime Timestamp;
+   parameter   EndTime Timestamp;
+   parameter   Duration Number;
+   parameter   LocationCode Text;
+   parameter   AcZoneSeq Number;
+   parameter   AcPanelSeq Number;
+
+   ludependencies = AvFault, AvExeTask, AvAircraftWorkPackage, AvFlight;
+}

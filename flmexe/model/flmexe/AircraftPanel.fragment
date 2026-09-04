@@ -1,0 +1,43 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250603  KAPALK  AD-18302 Added the query TaskInstructionLov
+--  250528  RAFALK  AD-18301 Created.
+-----------------------------------------------------------------------------
+
+fragment AircraftPanel;
+component FLMEXE;
+layer Core;
+description "This contains data related to aircraft panel LoV";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+query AircraftPanelLov {
+   from = "Aircraft_Panel_Info";
+   lu = AvAircraftPanel;
+   keys = AcPanelSeq;
+   attribute AcPanelSeq Number;
+   attribute PanelCode Text;
+   attribute PanelDescription Text;
+   attribute ZoneCode Text;
+   attribute ZoneDescription Text;
+   attribute PanelAltId Text;
+   attribute ZoneAltId Text;
+}
+
+query TaskInstructionLov {
+   from = "Panel_Instructions";
+   lu = AvAircraftPanel;
+   keys = AcPanelSeq, AltId;
+   attribute AltId Text;
+   attribute AcPanelSeq Number;
+   attribute PanelInstruction Text {
+      label = "Panel Instructions";
+   }
+   attribute TaskClassCd Text;
+}

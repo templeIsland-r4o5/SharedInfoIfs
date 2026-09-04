@@ -1,0 +1,60 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>2/18/25, 4:06:42 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HM_AIRCRAFT_AT_SUP_AIRPORT_HANGAR_PROJECTION</Name>
+    <ID>c29c0d7e-2ea8-4481-a0cd-130a41855984</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageId</Column>
+            <Name>Work Package Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackage</Column>
+            <Name>Work Package</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Location</Column>
+            <Name>Location</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Status</Column>
+            <Name>Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageBarcode</Column>
+            <Name>Work Package Barcode</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageName</Column>
+            <Name>Work Package Name</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>AircraftCode</Column>
+            <Name>Aircraft Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>StartDateInAirportTz</Column>
+            <Name>Start Date In Airport Tz</Name>
+            <DataType>DateTime</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <EntitySet>HmAircraftsAtUserAirportQuerySet</EntitySet>
+    <EntityType>HmAircraftsAtUserAirportQuery</EntityType>
+</ProjectionDataSource>

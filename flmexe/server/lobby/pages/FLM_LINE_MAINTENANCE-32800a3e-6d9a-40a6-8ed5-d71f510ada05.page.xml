@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IF RnD</Author>
+  <Keywords>FLM</Keywords>
+  <DescriptiveText>This is the starting Lobby in Aviation/Line Maintenance</DescriptiveText>
+  <LastModified>2025-08-19-23.23.30</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="a96e013f-7fe8-4471-9ed1-08495fbb29d2" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="37ccdb30-e4a8-4941-b66f-ee66f08bb671" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="1c2b6c66-ac42-438e-8934-4ba21c57aebe" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="0a5880da-02a2-4b49-a992-8687386ac0be" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="241ec9f4-1a4d-4c5e-b60e-6b8d27a1719f" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="79060574-828d-4562-8361-3404c488f3a8" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="2eec593b-2b7a-4d45-b74d-8b50168e0213" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="fdb5dd42-b47b-4973-84c1-2c90e0e3c2bc" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters/>
+  <PageTitle>Technician Lobby</PageTitle>
+  <PageId>32800a3e-6d9a-40a6-8ed5-d71f510ada05</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

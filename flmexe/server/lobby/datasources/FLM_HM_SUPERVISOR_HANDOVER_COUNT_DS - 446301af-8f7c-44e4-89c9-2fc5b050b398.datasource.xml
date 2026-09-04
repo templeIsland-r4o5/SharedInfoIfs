@@ -1,0 +1,34 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>25/02/2025, 14:17:46</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HM_SUPERVISOR_HANDOVER_COUNT_DS</Name>
+    <ID>446301af-8f7c-44e4-89c9-2fc5b050b398</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetHandoverTasksCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

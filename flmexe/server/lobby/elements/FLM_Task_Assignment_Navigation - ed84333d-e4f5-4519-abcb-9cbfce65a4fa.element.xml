@@ -1,0 +1,29 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Details of all the task assignments assigned to the user.</DescriptiveText>
+    <LastModified>1/8/25, 3:17:25 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLM</Component>
+    <Row>0</Row>
+    <Column>3</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Task_Assignment_Navigation</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Task_Assignment_Navigation</Name>
+    <ID>ed84333d-e4f5-4519-abcb-9cbfce65a4fa</ID>
+    <WebUrl>page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$&amp;initcontext=WpBarcode :'$WorkPackageBarcode$'
+</WebUrl>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>Task
+Assignment</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

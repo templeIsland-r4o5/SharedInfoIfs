@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Details of all the tasks assigned to the user's current shift.</DescriptiveText>
+    <LastModified>1/28/25, 2:39:00 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Assigned To Me Tasks</Title>
+    <Footer>in My Shift</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_CREW_LEAD_ASSIGNED_TO_ME</Name>
+    <ID>adb42759-53b5-4533-a84f-d4636d01ae13</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?searchcontext=Shift:CurrentShift&amp;$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$ and AssignedToMeStatus eq 'Yes' and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work' )</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>65c7f8b4-2b51-4e74-a1fd-6a3266ff3193</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

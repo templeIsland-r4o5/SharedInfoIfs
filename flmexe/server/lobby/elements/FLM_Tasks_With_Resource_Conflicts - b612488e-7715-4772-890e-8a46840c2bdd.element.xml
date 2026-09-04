@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display resource conflicts in task work assignments</DescriptiveText>
+    <LastModified>5/9/24, 2:58:58 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>3</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>RESOURCE CONFLICTS</Title>
+    <Footer>in Task Work Assignments</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Tasks_With_Resource_Conflicts</Name>
+    <ID>b612488e-7715-4772-890e-8a46840c2bdd</ID>
+    <WebUrl>page/FlmTaskWorkAssignment/WorkTaskAssignmentPage?$filter=ResourceAssignmentStatus eq 3</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>24fd7fbf-092e-474f-9e8e-e7c2926b6b3e</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>TaskSeq</Column>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

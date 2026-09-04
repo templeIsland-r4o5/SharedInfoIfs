@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+  <DescriptiveText>The second lobby designed for Hangar Maintenance Technicians to access all functionalities related to work packages.</DescriptiveText>
+  <LastModified>2025-05-15-14.28.52</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="476a696b-4a89-4164-b06e-555a1d57a460" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="3bd8405e-5268-49b7-b8a8-1abfea8614da" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="389af5e4-13b0-45b0-85ac-546bf75dabd2" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="6c2a5ca1-b0e3-472e-a96e-fb6189d79390" column="4" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="d3c165e5-d2fe-4534-adee-4054b434b9bf" column="6" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="67b534f0-cf7a-484c-ad78-07c261dea6aa" column="7" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="267d7b5c-5864-4231-bf10-15302b77af49" column="8" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="45e5d450-16fb-4e53-94ae-6a2106b49f48" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="ed84333d-e4f5-4519-abcb-9cbfce65a4fa" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="bd8a2528-9532-41bd-9596-5048bd9e8a7d" column="5" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="652c5a61-e6fc-4f11-821b-8bea01389f28" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="e03056c5-d118-418d-a94c-491d92c6f688" column="1" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="2b5669bf-fe2b-40db-ac6c-a58c86cafa17" column="2" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="b3079ff5-125d-4293-aba4-3c36bc273335" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters>
+    <Parameter>
+      <Name>Aircraft</Name>
+      <Description>Aircraft</Description>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageId</Name>
+      <Description>WorkPackageId</Description>
+      <DataType>Number</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageNumber</Name>
+      <Description>Work Package</Description>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>AircraftCode</Name>
+      <Description>Aircraft</Description>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageBarcode</Name>
+      <Description>WorkPackageBarcode</Description>
+      <DefaultValue/>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackage</Name>
+      <Description>WorkPackage</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+  </Parameters>
+  <PageTitle>Technician Work Package Overview</PageTitle>
+  <PageId>60c9811f-595a-4025-a820-69e01c6e31b3</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

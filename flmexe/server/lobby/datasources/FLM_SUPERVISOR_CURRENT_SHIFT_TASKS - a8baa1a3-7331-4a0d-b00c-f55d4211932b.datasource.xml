@@ -1,0 +1,42 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>2/18/25, 4:08:19 PM</LastModified>
+    <CopiedFrom>65c7f8b4-2b51-4e74-a1fd-6a3266ff3193</CopiedFrom>
+    <CopiedFromName>FLM_CREW_LEAD_ASSIGNED_TO_ME_TASKS</CopiedFromName>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_SUPERVISOR_CURRENT_SHIFT_TASKS</Name>
+    <ID>a8baa1a3-7331-4a0d-b00c-f55d4211932b</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetCurrentShiftTaskCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+            <Attributes>
+                <Column>Shift</Column>
+                <DataType>Text</DataType>
+                <Value>CURRENT_SHIFT</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

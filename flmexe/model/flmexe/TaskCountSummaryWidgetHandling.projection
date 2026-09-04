@@ -1,0 +1,102 @@
+projection TaskCountSummaryWidgetHandling;
+component FLMEXE;
+layer Core;
+description "API for IFS Home Task Count Summary Widget";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset WidgetTranslationSet for WidgetTranslation;
+
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query WidgetTranslation {
+   lu = none;
+   from = "dual";
+   attribute WidgetTitle Text;
+   attribute WidgetDescription Text;
+   attribute WidgetSettingsHeader Text;
+   attribute ConfigSectionName Text;
+   attribute ConfigDropDownLable Text;
+   attribute Completed Text;
+   attribute TotalCompletedTasks Text;
+   attribute Open Text;
+   attribute TotalOpenTasks Text;
+   attribute TotalTasksCount Text;
+   attribute TotalPercentageCompleted Text;
+   attribute TaskType Text;
+   attribute NoWorkPackagesDataAvailable Text;
+   attribute TasksDataNotAvailable Text;
+   attribute FailedToLoadTasksData Text;
+   attribute AircraftKey Text;
+   attribute WorkPackageNameKey Text;
+   attribute Routine Text;
+   attribute NonRoutine Text;
+   attribute Total Text;
+   attribute NonRoutineAvgPerDay Text;
+   attribute NonSch Text;
+}
+
+query GetInWorkOrActiveAircraftWorkPackages {
+   lu = none;
+   from = "av_aircraft_work_package";
+   where = "state in('In Work', 'Active') and IS_HEAVY_MAINTENANCE = 1";
+
+   attribute WorkPackageName Text;
+   attribute AircraftId Text;
+   attribute Barcode Text;
+   attribute AircraftDesc Text {
+      fetch = "Aircraft_API.Get_Aircraft_Desc(Aircraft_Id)";
+   }
+}
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+function GetTaskCountSummary List<Structure(TaskCountSummaryStructure)> {
+   parameter AircraftId Text;
+   parameter Barcode Text;
+   parameter StartDate Timestamp;
+   parameter EndDate Timestamp;
+}
+
+function GetOpenAndClosedTaskCount List<Structure(OpenCompletedTaskCountStructure)> {
+   parameter AircraftId Text;
+   parameter Barcode Text;
+   parameter StartDate Timestamp;
+   parameter EndDate Timestamp;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure TaskCountSummaryStructure {
+   attribute TaskType Text;
+   attribute Completed Number;
+   attribute TotalCompletedTasks Number;
+   attribute Open Number;
+   attribute TotalOpenTasks Number;
+   attribute TotalTasksCount Number;
+   attribute TotalPercentageCompleted Number;
+   attribute AvgPerDayForTotalCompletedTasks Number;
+   attribute AvgPerDayForTotalTasks Number;
+   attribute NonScheduledTasksCount Number;
+}
+
+structure OpenCompletedTaskCountStructure {
+   attribute TaskType Text;
+   attribute CompletedCount Number;
+   attribute OpenCount Number;
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

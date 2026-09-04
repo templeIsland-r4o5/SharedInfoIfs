@@ -1,0 +1,339 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250121  SSIVLK  AD-16141, Modified the card, commands & list based on the assignments of a user.
+--  250108  WIHALK  AD-15922, Added Validation to check already InWork work Packages.
+--  241217  NIRTLK  AD-15694, Commented RecordWorkCommand.
+--  301024  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagram
+--  240912  SSIVLK  AD-14301, Modified the visibility condition of defer command
+--  240724  WIHALK  AD-14020, Passed the deffer parameters to the FaultDeferralMainPage assistant
+--  240724  VAALLK  AD-11951, Modified StartTask command to call UpdateTaskStart
+--  240710  WEDILK  AD-13615, Add Barcode to the MyWorkTaskList
+--  240318  waislk  AD-12478, Enabled multiline for date fields in the MyWorkTaskListCard
+--  240130  DUWJLK  AD-10942, Modfied Defer command content when showing a warning
+--  240117  majslk  AD-10940, Modified Defer command to show warning
+--  231130  LAHNLK  AD-11185, disabled defer command when the deferral request status is rejected
+--  231108  maillk  AD-9566, Add UnstartTask command
+--  231102  majslk  AD-9568, Modified code to support My Work UI Enhancements.
+--  220901  MAILLK  AD-7984, Hide Sync Related Fields in UI.
+--  220901  SRCHLK  AD-7985, Hiding material availability field in the UI
+--  220728  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220303  SUPKLK  AD-6653, Request Status label renamed to Synchronization Status
+--  211008  majslk  AD-3807, Added RequestStateCd to MyWorkTaskListCard.
+--  210329  siydlk  AD-1157, Added StartTask command to MyWorkTaskListCard.
+--  210319  siydlk  AD-1146, Added UnassignTaskCommand to MyWorkTaskListCard.
+--  210309  Jihalk  LMM2020R1-1567, Added SchedStartDateTime for the order by condition.
+--  210217  Jihalk  LMM2020R1-1567, Set orderby condition to MyWorkTaskList.
+--  210208  Jihalk  LMM2020R1-1567, Created.
+-----------------------------------------------------------------------------
+client FlmMyWorks;
+component FLMEXE;
+layer Core;
+projection FlmMyWorksHandling;
+description "This client is used to develop My Work Page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmRecordWork;
+include fragment FlmResourceToolEquipmentTab;
+include fragment FlmTaskAssignments;
+include fragment FlmPanelTasks;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+entry MyWorkPageNavEntry parent FlmexeNavigator.FlmNav  at index 200 {
+   label = "My Work";
+   page MyWorksPage;
+}
+
+page MyWorksPage using TaskAssignmentEntitySet {
+   label = "My Work";
+   list MyTaskAssignmentsList {
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command StartCommand for TaskAssignmentEntity {
+   label = "Start";
+   mode = SingleRecord;
+   variable HasExistingInWorkWP Boolean;
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if[HasExistingInWorkWP = false] {
+         call GetTimestamp(Site) into StartTime;
+         if [AvExeTaskRef.Objstate in("RELEASED")] {
+            call UpdateTaskStart(TaskSeq);
+            call StartAssignment(TaskSeq, ExecutionInstanceSeq, StartTime, Site);
+         }
+         else {
+            call StartAssignment(TaskSeq, ExecutionInstanceSeq, StartTime, Site);
+         }
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to start another one.");
+      }
+   }
+}
+
+command FinishCommand for TaskAssignmentEntity {
+   label = "Finish";
+   mode = SingleRecord;
+   variable RecordWorkStartTime Timestamp;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      copy this into RecordWorkInfo;
+      call GetTimestamp(Site) into RecordWorkStartTime;
+      set RecordWorkInfo.RecordWorkStartTime = RecordWorkStartTime;
+      set RecordWorkInfo.FaultId = AvExeTaskRef.FaultId;
+      set RecordWorkInfo.AircraftWpId = WorkPackageId;
+      set RecordWorkInfo.FlightId = AvFlightRef.FlightId;
+      set RecordWorkInfo.Objstate = TaskStatus;
+      set RecordWorkInfo.KeyRef = keyref;
+      set RecordWorkInfo.LuName = luname;
+      set RecordWorkInfo.AssignmentStatus = TaskAssignmentStatus;
+      set RecordWorkInfo.ScheduledHours = LaborScheduledHours;
+      set RecordWorkInfo.Source = "Finish";
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RecordWorkAssignmentCommand for TaskAssignmentEntity {
+   label = "Record Work";
+   mode = SingleRecord;
+   variable RecordWorkStartTime Timestamp;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      copy this into RecordWorkInfo;
+      call GetTimestamp(Site) into RecordWorkStartTime;
+      set RecordWorkInfo.RecordWorkStartTime = RecordWorkStartTime;
+      set RecordWorkInfo.FaultId = AvExeTaskRef.FaultId;
+      set RecordWorkInfo.AircraftWpId = WorkPackageId;
+      set RecordWorkInfo.FlightId = AvFlightRef.FlightId;
+      set RecordWorkInfo.Objstate = TaskStatus;
+      set RecordWorkInfo.KeyRef = keyref;
+      set RecordWorkInfo.LuName = luname;
+      set RecordWorkInfo.AssignmentStatus = TaskAssignmentStatus;
+      set RecordWorkInfo.ScheduledHours = LaborScheduledHours;
+      set RecordWorkInfo.Source = "RecordWork";
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command PauseAssignmentCommand for TaskAssignmentEntity {
+   label = "Pause";
+   mode = SingleRecord;
+   execute {
+      call PauseAssignment(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+command ContinueAssignmentCommand for TaskAssignmentEntity {
+   label = "Continue";
+   mode = SingleRecord;
+   execute {
+      call ContinueAssignment(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list MyTaskAssignmentsList for TaskAssignmentEntity {
+   orderby = ExecutionInstanceStatusOrder;
+
+   card MyWorkTaskListCard;
+   initialview = CardView;
+   label = "${Aircraft}";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   command StartCommand {
+      visible = [ExecutionInstanceStatus = "Assigned"];
+   }
+   command RecordWorkAssignmentCommand {
+      visible = [TaskStatus != "Completed" and(ExecutionInstanceStatus = "Assigned" or(ExecutionInstanceStatus = "Work Started" and IsClockedIn = true))];
+   }
+   command FinishCommand {
+      visible = [TaskStatus != "Completed" and(ExecutionInstanceStatus = "Assigned" or(ExecutionInstanceStatus = "Work Started" and IsClockedIn = true))];
+   }
+   command PauseAssignmentCommand {
+      visible = [ExecutionInstanceStatus = "Work Started" and IsClockedIn = true];
+   }
+   command ContinueAssignmentCommand {
+      visible = [ExecutionInstanceStatus = "Work Started" and IsClockedIn = false];
+   }
+}
+
+
+card MyWorkTaskListCard for TaskAssignmentEntity {
+   label = "${Aircraft}";
+
+   field ResourceDemand {
+      editable = [false];
+      size = Small;
+   }
+   badge ExecutionInstanceStatus {
+      emphasis Complementary5 = [ExecutionInstanceStatus = "Assigned"];
+      emphasis Complementary9 = [ExecutionInstanceStatus = "Completed"];
+      emphasis Complementary6 = [ExecutionInstanceStatus = "Work Started"];
+      editable = [false];
+      size = Small;
+   }
+   field TaskDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+   field Barcode {
+      editable = [false];
+      size = Small;
+   }
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+      size = Small;
+   }
+   field AvFlightRef.LegNo {
+      label = "Flight";
+      size = Small;
+   }
+   field AvFlightRef.ArrivalGate {
+      label = "Gate";
+      size = Small;
+   }
+   field Remark {
+      label = "Assignment Role";
+      editable = [false];
+      size = Small;
+   }
+   field LaborScheduledHours {
+      label = "Scheduled Hours";
+      editable = [false];
+      size = Small;
+   }
+
+   field SchedStart {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEnd {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

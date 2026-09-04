@@ -1,0 +1,28 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Details of all the tasks assigned to the user.</DescriptiveText>
+    <LastModified>1/28/25, 2:42:57 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Tasks</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_CREW_LEAD_TASKS</Name>
+    <ID>9016ebb1-e999-4d5b-af09-42e679bc9fe0</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?$filter=Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$ and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work' )&amp;initcontext=WpBarcode :'$WorkPackageBarcode$'</WebUrl>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>TASKS</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontStyle>Normal</FontStyle>
+    <FontSize>14.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

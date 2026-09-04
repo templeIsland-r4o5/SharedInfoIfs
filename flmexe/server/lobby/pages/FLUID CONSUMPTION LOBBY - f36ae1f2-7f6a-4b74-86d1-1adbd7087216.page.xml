@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>Fluid Consumptions, FLM</Keywords>
+  <DescriptiveText>Lobby page designed for Maintenance Maintenance Controllers</DescriptiveText>
+  <LastModified>2022-01-12-08.51.45</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="029bfb17-fa21-493a-8c15-a35fb7b5e287" column="0" row="0" columnspan="2" rowspan="2"/>
+        </Elements>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources>
+    <DataSource id="548cab0c-0cb5-4d4e-a76c-badbb9dce919"/>
+  </DataSources>
+  <Parameters/>
+  <PageTitle>FLUID CONSUMPTION LOBBY</PageTitle>
+  <PageId>f36ae1f2-7f6a-4b74-86d1-1adbd7087216</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

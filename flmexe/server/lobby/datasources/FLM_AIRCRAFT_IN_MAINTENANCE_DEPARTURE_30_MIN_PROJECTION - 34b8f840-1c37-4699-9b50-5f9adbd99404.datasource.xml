@@ -1,0 +1,35 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of aircraft in maintenance departure in 30 minutes</DescriptiveText>
+    <LastModified>17/04/2024, 23:40:41</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_AIRCRAFT_IN_MAINTENANCE_DEPARTURE_30_MIN_PROJECTION</Name>
+    <ID>34b8f840-1c37-4699-9b50-5f9adbd99404</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>FlightTurnStatus</Column>
+            <Name>Flight Turn Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>DepartureTime</Column>
+            <Name>Departure Time</Name>
+            <DataType>DateTime</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>AircraftInMaintenanceDeparture30MinQuerySet</EntitySet>
+    <EntityType>AircraftInMaintenanceDeparture30MinQuery</EntityType>
+</ProjectionDataSource>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+  <DescriptiveText>Lobby page designed for Maintenance Supervisors to highlight key information </DescriptiveText>
+  <LastModified>2025-08-19-12.56.13</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="86906772-ed86-491e-8b8a-d64aafcb7828" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="b612488e-7715-4772-890e-8a46840c2bdd" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="e4e2aa4d-3a0c-4bea-8d70-779439eaeae0" column="0" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="dda65ebe-6890-4979-b7be-5337829222b1" column="1" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="799cc93a-361a-403c-acef-6626ee40e09d" column="4" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="666178a8-975c-46bd-b4d4-1a55e6c12dc2" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="cdea1f6e-cd83-4206-bef0-b4fc49386188" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="3e1d40c7-ded2-43ca-a5a5-52fc1ff52c80" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="598473f6-8b43-451b-a73c-78d8e23f2ebf" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="6dcd6ce1-c42c-4eaf-979c-d6e66ef2bd55" column="4" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="a79bfd87-3802-4d98-a8a9-b157a6440448" column="0" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements/>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters>
+    <Parameter>
+      <Name>duration</Name>
+      <Description>Availability Check (In Minutes)</Description>
+      <DefaultValue>30</DefaultValue>
+      <DataType>Number</DataType>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+  </Parameters>
+  <PageTitle>LINE WORK MANAGEMENT</PageTitle>
+  <PageId>d222b6cd-42e3-4f77-8b06-a891a635b6d4</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

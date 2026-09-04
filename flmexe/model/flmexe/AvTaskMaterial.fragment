@@ -1,0 +1,804 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     AvTaskMaterial
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15380, Updated MaterialOperationsManualPeggingCommand navigation path to use renamed page FlmManualPeggingAvMaterialLine.
+--  251117  DISGLK  AVMXSOL-16394, Remove the word 'Aviation' on Maintenance Material Requisition Lines Page
+--  251104  BADHLK  AVMXSOL-14143, Enable delete button in the AMMRL page
+--  251026  SahVlk  SCDEV-58774, Modified MaterialOperationsInterchangePartCommand to disable when connected purchase requisition is partially authorized/change order created for purchase order supply code.
+--  251008  BADHLK  AVMXSOL-15042,Added PickList commands to enable pick list in the AMMRL page
+--  251002  Ardmlk  AVMXSOL-14461, Added label to WorkTypes field.
+--  251001  Herilk  AVMXSOL-15011, Added back MaterialOperationsIssuemanuallyCommand.
+--  251010  SahVlk  SCDEV-55180, Modified MaterialOperationsInterchangePartCommand enable conditions to enable the command for purchase order supply code borrow orders.
+--  251002  Ardmlk  AVMXSOL-14461, Added label to WorkTypes field.
+--  250828  Herilk  AVMXSOL-15011, Added back MaterialOperationsIssuemanuallyCommand.
+--  250828  SahVlk  SCDEV-54621, Added attributes PlanQty to list AvMatReqAllList and set to non-editable for parts with Supply Code 'Purchase Order' when interchangeability is applied.
+--  250815  ApKulk  SCDEV-54445, Modified MaterialOperationsInterchangePartCommand adding condition PeggedQty.
+--  250815  ApKulk  SCDEV-54445, Modified MaterialOperationsInterchangePartCommand adding condition IsClosed.
+--  250807  ARRULK  SCDEV-46072, Overidden Delivery, SenderType in AvMatReqDetailList and AvMatReqAllList.
+--  250721  ARRULK  SCDEV-46072, Overidden SupplyCode in AvMatReqDetailList and AvMatReqAllList.
+-----------------------------------------------------------------------------
+
+fragment AvTaskMaterial;
+component FLMEXE;
+layer Core;
+description "Contains common reusable client code and projection logic for materials which resembles Part data";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment CreatePickList;
+include fragment AvCreatePickList;
+include fragment MaintMaterialReqLine;
+include fragment FlmParts;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+command AddRemovePartCommand for MaintMaterialReqLine {
+   label = "Add Part";
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.TaskSeq = TaskSeq;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      set PartsInfo.WpId = AvExeTaskRef.WorkPackageId;
+      assistant AddRemovePartAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditPartCommand for MaintMaterialReqLine {
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   --visible only when Material line is NOT issued
+   visible = [Qty = 0];
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.TaskSeq = TaskSeq;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      set PartsInfo.WpId = AvExeTaskRef.WorkPackageId;
+      set PartsInfo.OperationType = "EDIT";
+      set PartsInfo.MaintMaterialOrderNo = MaintMaterialOrderNo;
+      set PartsInfo.LineItemNo = LineItemNo;
+      set PartsInfo.InstalledTaskPartId = AvInstalledTaskPartId;
+      set PartsInfo.AssemblyTypeCode = parent.AssemblyTypeCode;
+      set PartsInfo.AircraftId = parent.AircraftId;
+      set PartsInfo.ClassCode = AvExeTaskRef.ClassCode;
+      set PartsInfo.UIFormattedPGSensitivity = PartGroupSensitivity;
+      set PartsInfo.Note = Note;
+      assistant AddEditPartAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command AlternativePartCommand for MaintMaterialReqLine {
+   label = "Get Interchangeable Parts";
+   mode = SingleRecord;
+   execute {
+      assistant AltPartAssistant(MaintMaterialOrderNo, LineItemNo, PartNo, TaskSeq) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+
+command SaveAltPartsCommand for AltPartsParentVirtual {
+   label = "Save Interchangeable Parts";
+   execute {
+      call SaveAltParts(Objkey);
+      exit OK;
+   }
+}
+
+@Override
+command MaterialOperationsInterchangePartCommand {
+   label = "Add/Change Interchangeable Parts";
+   enabled = [InterchangePartsExist and PlanQty > 0 and(SupplyCode = "InventOrder" or(SupplyCode = "PurchaseOrder" and PurchaseMethod in("Regular", "Borrow") and parent.Objstate != "Completed" and SupplySourceRefType != "PurchaseOrder" and not(SupplySourceRefState in("Closed", "Authorized", "Partially Authorized", "Change Order Created")))) and IsClosed = false and PeggedQty = 0];
+}
+
+
+@Override
+command MaterialAutoIssueCommand {
+   bulkexecute {
+      set Type = 2;
+      call GetMaterialLineList(Selection) into MaterialLineStructVar;
+      ifall[MaterialLineStructVar.ReceiptAndIssueSerialTracking = "TRUE" and MaterialLineStructVar.SerailsToIdentify > 0 and MaterialLineStructVar.InvSerialTrackDb = "NOT SERIAL TRACKING"] {
+         assistant IdentifySerialsInMultipleLocAssistant("WORK_TASK", MaterialLineStructVar.TaskSeq, null, MaterialLineStructVar.LineItemNo, null, null, MaterialLineStructVar.RequisitionSite, MaterialLineStructVar.PartNo, MaterialLineStructVar.SerailsToIdentify) into(PartTrackingSessionIdVar) {
+            when OK {
+               set PartTrackingSessionId = PartTrackingSessionIdVar;
+               call HandleAutoReserveAndIssueMaterial(MaterialLineStructVar.WoNo, MaterialLineStructVar.MaintMaterialOrderNo, MaterialLineStructVar.LineItemNo, Type, MaterialLineStructVar.RequisitionSite, PartTrackingSessionId);
+               call AddReturnLineOnIssue(TaskSeq, PartNo, MaintMaterialOrderNoS, LineItemNo);
+               exit OK;
+            }
+            when CANCEL {
+               error("Part ${MaterialLineStructVar.PartNo} is not configured to use unique serial number identification.'");
+               exit CANCEL;
+            }
+         }
+      }
+      else {
+         set PartTrackingSessionId = null;
+         bulkcall HandleAutoReserveAndIssueMaterial(WoNo, MaintMaterialOrderNo, LineItemNo, Type, RequisitionSite, PartTrackingSessionId);
+         bulkcall AddReturnLineOnIssue(TaskSeq, PartNo, MaintMaterialOrderNoS, LineItemNo);
+      }
+   }
+}
+
+@Override
+command  MaterialOperationsIssuemanuallyCommand {
+   execute {
+      set VarQtyLeft1 = "#{PlanQty - Qty}";
+      if[VarQtyLeft1 < 0] {
+         set VarQtyLeft1 = 0;
+      }
+      call GetMaintMatSpareDelVals(MaintMaterialOrderNo, LineItemNo, VarQtyLeft1) into ManuReserveStructVar;
+      assistant ManualIssueAssistant.MaintMatSpareDeliveryAssistant(ManuReserveStructVar) {
+         when OK {
+            call IssueMaintMaterialLine();
+            call AddReturnLineOnIssue(TaskSeq, PartNo, MaintMaterialOrderNoS, LineItemNo);
+         }
+         when CANCEL {
+            call IssueMaintMaterialLine();
+         }
+      }
+   }
+}
+
+
+@Override
+command MaterialOperationsUnissueCommand {
+   execute {
+      assistant WorkTaskUnissueMaterialAssistant.Assistant(TaskSeq) {
+         when OK {
+            call UpdateInstallPartSerBatNo(TaskSeq, InstallTaskPartRef.TaskPartId, MaintMaterialOrderNo, LineItemNo);
+            exit;
+         }
+      }
+   }
+}
+
+@Override
+command MaterialAutoReserveCommand {
+   bulkexecute {
+      set Type = 1;
+      set PartTrackingSessionId = null;
+      bulkcall HandleAutoReserveAndIssueMaterial(WoNo, MaintMaterialOrderNo, LineItemNo, Type, RequisitionSite, PartTrackingSessionId);
+      bulkcall UpdateInstallPartSerBatNo(TaskSeq, InstallTaskPartRef.TaskPartId, MaintMaterialOrderNo, LineItemNo);
+   }
+}
+
+@Override
+command MaterialOperationsReservemanuallyCommand {
+   execute {
+      set VarQtyLeft = "#{PlanQty - Qty - QtyAssigned}";
+      if[VarQtyLeft < 0] {
+         set VarQtyLeft = 0;
+      }
+      call GetManualReserveVals(MaintMaterialOrderNo, LineItemNo, VarQtyLeft) into ManuReserveStructVar;
+      assistant ManualReservationAssistant(ManuReserveStructVar) {
+         when OK {
+            call UpdateInstallPartSerBatNo(TaskSeq, InstallTaskPartRef.TaskPartId, MaintMaterialOrderNo, LineItemNo);
+            exit OK;
+         }
+      }
+   }
+}
+
+@Override
+command MaterialOperationsUnreserveCommand {
+   execute {
+      call GetMaintMatDealLocVals(MaintMaterialOrderNo, LineItemNo) into MaintMatDealLocVar;
+      assistant MaintMatDealocateSpareAssistant(MaintMatDealLocVar) {
+         when OK {
+            call UpdateInstallPartSerBatNo(TaskSeq, InstallTaskPartRef.TaskPartId, MaintMaterialOrderNo, LineItemNo);
+            exit OK;
+         }
+         when CANCEL {
+            exit CANCEL;
+         }
+      }
+   }
+}
+
+@Override
+command MaterialOperationsUnreserveAllCommand {
+   bulkexecute {
+      confirm("All the reserved quantities in the selected lines will be unreserved completely. Do you want to continue?") {
+         when OK {
+            bulkcall AutoUnreserveAll(MaintMaterialOrderNo, LineItemNo);
+            bulkcall UpdateInstallPartSerBatNo(TaskSeq, InstallTaskPartRef.TaskPartId, MaintMaterialOrderNo, LineItemNo);
+         }
+         when CANCEL {
+            exit CANCEL;
+         }
+      }
+   }
+}
+
+@Override
+command MaterialOperationsManualPeggingCommand {
+   label = "Manual Pegging";
+   mode = SelectedRecords;
+   enabled = [true];
+
+   bulkexecute {
+      bulknavigate "page/FlmManualPeggingAvMaterialLine/Form?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo] and LineItemNo eq $[LineItemNo]";
+   }
+}
+
+command MaintenanceMaterialRequisitionCommand for MaintMaterialReqLine {
+   label = "Maintenance Material Requisition";
+   mode = SelectedRecords;
+   enabled = [true];
+
+   bulkexecute {
+      bulknavigate "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+}
+
+
+command WorkTaskCommand for MaintMaterialReqLine {
+   label = "Task Details";
+   mode = SelectedRecords;
+   enabled = [true];
+   bulkexecute {
+      bulknavigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+
+command PurchaseRequisitionCommand for MaintMaterialReqLine {
+   label = "Purchase Requisition";
+   mode = SelectedRecords;
+   enabled = [SupplySourceRef1 != null and SupplySourceRefType != null and SupplySourceRefType = "PurchaseRequisition"];
+
+   bulkexecute {
+      bulknavigate "page/PurchaseRequisitions/List?$filter=RequisitionNo eq $[SupplySourceRef1]";
+   }
+}
+
+command RemoveMaterialCommand for MaintMaterialReqLine {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [true];
+   execute {
+      call RemoveMaterial(MaintMaterialOrderNo, LineItemNo);
+   }
+}
+
+command CreatePickListCommand for MaintMaterialReqLine {
+   label = "New Pick List";
+   mode = SelectedRecords;
+   enabled = [MaintMaterialOrderNo != null and HasMatWithNoPickList = "TRUE" and MaintMatReqLinObjState = "Released"];
+   variable PickListStructVar {
+      type = Structure(PickListStruct);
+   }
+   execute {
+      call GetPickListValues(WoNo, MaintMaterialOrderNo) into PickListStructVar;
+      dialog CreatePickListDialog(PickListStructVar) {
+         when OK {
+            exit OK;
+         }
+         when CANCEL {
+            exit CANCEL;
+         }
+      }
+   }
+}
+command ViewPickListCommand for MaintMaterialReqLine {
+   label = "View Pick List";
+   mode = SingleRecord;
+   enabled = [MaintMaterialOrderNo != null and HasPickList = "TRUE" and MaintMatReqLinObjState = "Released"];
+   variable PickListSourceRefVar Text;
+   variable Source Text;
+   execute {
+      set Source = "MaintenanceMaterialOrder";
+      call GetAvPickListSourceRef(MaintMaterialOrderNo) into PickListSourceRefVar;
+      navigate "${PickListSourceRefVar}";
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+@Override
+selector WorkPackageSelector for AvAircraftWorkPackage {
+   label = "";
+   static AircraftId;
+}
+----------------------------------- LISTS -----------------------------------
+list AvMatReqDetailList clone MainMatReqDetailList {
+   orderby = TaskPlanLineSeq;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field SerialNumber;
+   field BatchNumber;
+   field PromisedReceiptDate {
+      label = "ETA";
+   }
+   lov MaintMatOrderNoRef with ReferenceMaintMaterialRequisitionExtSelector using MaintMatRequisitionFunction {
+      details = "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+
+   field SupplyCode {
+      validate command {
+         execute {
+            super;
+            if [SupplyCode = "ShipmentOrder"] {
+               set Delivery = "Normal";
+            }
+         }
+      }
+   }
+
+   field Delivery {
+      when [SupplyCode = "DistributionOrder" or SupplyCode = "ShipmentOrder" or SupplyCode = "PurchaseOrder"] use subset DistOrdNormal;
+   }
+
+   field SenderType {
+      validate command {
+         execute {
+
+            super;
+            set Delivery = "Normal";
+         }
+      }
+   }
+   field OrderState {
+      columnexclude = [true];
+   }
+   field TaskPlanLineSeq {
+      columnexclude = [true];
+   }
+   @DynamicComponentDependency PURCH
+   field PurchaseOrderExists {
+      label = "Purchase Order Exists";
+      size = Small;
+      editable = [false];
+   }
+   badge OrderStatus {
+      emphasis Warning = [OrderStatus = "Open"];
+      emphasis Ok = [OrderStatus = "Available"];
+      emphasis Primary = [OrderStatus = "On Order"];
+      emphasis Ok = [OrderStatus = "Issued"];
+      emphasis Complementary7 = [OrderStatus = "Remote"];
+      emphasis Complementary7 = [OrderStatus = "Processing"];
+      emphasis StateObsolete = [OrderStatus = "Unissued"];
+   }
+
+   fieldorder = PlanQty, PartNo, SerialNumber, BatchNumber, MaintMatOrderNoRef, LineItemNo, OrderStatus, PromisedReceiptDate, Qty, QtyAssigned, PeggedQty,
+   DateRequired, QtyReturned, CreatedBy, ModifiedBy, Note, QuantityAvailable, QtyShort, Owner, PartOwnership, Uom;
+
+   @DynamicComponentDependency DISCOM
+   @DynamicComponentDependency PURCH
+   @DynamicComponentDependency WO
+   @DynamicComponentDependency ORDER
+   exclude SerialNoRef, OrderState, TaskObjectId, TaskObjectSite, AlternatePartsExist, ChangeReason, AltPartChangeReasonRef.ChangeReasonDesc, ChangesLineItemNo, LineClosed, ConditionCodeRef,
+   RwoCopyPrepostDb, CurrentInventoryCost, Delivery, RentalTaskResSeq, SpareContractRef, InventoryPartRef.DimQuality, RwoErrDescr, Discount, DiscountedPrice, DiscountedPriceCurr, ServiceTypeRef,
+   IssuedCostAmount, RwoLotBatchNoRef, RwoOrgCodeRef, Markup, NoPartDescription, FbuyUnitPrice, RwoMchCodeRef, RwoMchContractRef, PlaceInFacility, TaskPlanLineSeq, Cost, PlannedCostAmount, PriceListNoRef, PriceEffectiveDate,
+   PriceSource, PriceSourceId, BuyUnitMeasRef, PurchaseMethod, QtyChanged, ConsumedQty, QuantityOnHand, Rental, RepairPartNo, ReqGenerated, CatalogNoRef, CatalogContractRef, SalesPriceAmount, PriceAmountCurr,
+   SenderId, SenderType, SerialPart, HasStructure, SuperObjectRef, SuperObjectSiteRef, SupplyCode, SupplySite, SupplySourceRef1, SupplySourceRef2, SupplySourceRef3, SupplySourceRef4, SupplySourceRefType,
+   TransportTaskExists, InventoryPartRef.TypeDesignation, ListPrice, ListPriceCurr, TaskSeq, SwapPart, PartType, InventoryPartAvailabilityPlaCommand, SupplierperPartCommand, CommandGroup3CmdGroup, CommandGroup2CmdGroup, CommandGroup5CmdGroup, ViewTransportTaskForLinesCommand;
+
+   command AddRemovePartCommand {
+      label = "";
+      mode = Global;
+      icon = "new";
+   }
+
+   command RemoveMaterialCommand {
+      enabled = [(Qty = 0) and(InstallTaskPartRef.InstalledUser = null) and(RemovedUser = null)];
+      label = "";
+      icon = "delete";
+   }
+
+   command EditPartCommand;
+}
+
+
+list AltPartList for AltPartsVirtual {
+   label = "Interchangeable Parts";
+   toolbar {
+      enabled = [false];
+   }
+   field PartNumber;
+   field Manufacturer;
+   field PartName;
+   field InventoryClassCode;
+   field IsSelectedPart;
+}
+
+list AvMatReqAllList clone MainMatReqDetailList {
+   orderby = TaskSeq, TaskPlanLineSeq;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+      delete {
+         enabled = [not(ChangesLineItemNo = null and PlanQty > 0)];
+      }
+   }
+   field RequisitionSite {
+      size = Small;
+   }
+   field TaskSeq {
+      lovswitch {
+         when [true] {
+            lov AvExeTaskRef with AvExeTaskSelector {
+               label = "Task No";
+               details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+            }
+         }
+      }
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Task Barcode";
+   }
+   field AvExeTaskRef.Description {
+      label = "Task Description";
+   }
+   field IntDestinationId {
+      label = "Internal Destination ID";
+   }
+   field IntDestinationDesc {
+      label = "Internal Destination Description";
+   }
+   badge OrderStatus {
+      editable = [false];
+      emphasis Warning = [OrderStatus = "Open"];
+      emphasis Ok = [OrderStatus = "Available"];
+      emphasis Primary = [OrderStatus = "On Order"];
+      emphasis Ok = [OrderStatus = "Issued"];
+      emphasis Complementary7 = [OrderStatus = "Remote"];
+      emphasis Complementary7 = [OrderStatus = "Processing"];
+      emphasis StateObsolete = [OrderStatus = "Unissued"];
+   }
+   lov MaintMatOrderNoRef with ReferenceMaintMaterialRequisitionExtSelector using MaintMatRequisitionFunction {
+      details = "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+   field AircraftWorkPackageId {
+      label = "Work Package No";
+      editable = [false];
+      lovswitch {
+         when [AvWorkPackageRef.IsHeavyMaintenance = true] {
+            lov AvWorkPackageRef with WorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[AvWorkPackageRef.Barcode]";
+            }
+         }
+         when [AvWorkPackageRef.IsHeavyMaintenance = false] {
+            lov AvWorkPackageRef with WorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+            }
+         }
+      }
+   }
+   field AvWorkPackageRef.LocationCode {
+      label = "Work Location";
+   }
+   field AvWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+   }
+   field AvWorkPackageRef.Barcode {
+      label = "Work Package Barcode";
+   }
+   badge AvWorkPackageRef.Objstate {
+      label = "Work Package Status";
+      editable = [false];
+      emphasis StateCreated = [AvWorkPackageRef.Objstate = "Active"];
+      emphasis StatePlanned = [AvWorkPackageRef.Objstate = "Committed"];
+      emphasis StateInProgress = [AvWorkPackageRef.Objstate = "InWork"];
+      emphasis StateCompleted = [AvWorkPackageRef.Objstate = "Completed"];
+      emphasis StateClosed = [AvWorkPackageRef.Objstate = "Canceled"];
+   }
+   field WorkTypes {
+      label = "Work Type";
+      editable = [false];
+      multiline = true;
+   }
+   field AircraftRef.AircraftDesc {
+      label = "Aircraft";
+   }
+   field ConditionCodeRef.Description {
+      label = "Condition Code Description";
+   }
+   @DynamicComponentDependency ORDER
+   field SalesPartDescription;
+   field ConditionCodeRef;
+   lov RwoMchContractRef with ReferenceUserAllowedSiteLovSelector {
+      columnexclude = [true];
+   }
+   lov RwoMchCodeRef with ReferenceEquipmentObjectUivSelector {
+      columnexclude = [true];
+   }
+   lov RwoLotBatchNoRef with ReferenceInventoryPartInStockLov4Selector {
+      columnexclude = [true];
+   }
+   field RwoErrDescr {
+      columnexclude = [true];
+   }
+   lov SuperObjectSiteRef with ReferenceUserAllowedSiteLovSelector {
+      columnexclude = [true];
+   }
+   lov SuperObjectRef with ReferenceMaintenanceObjectLovSelector {
+      columnexclude = [true];
+   }
+   lov RwoOrgCodeRef with ReferenceOrganizationUivSelector {
+      columnexclude = [true];
+   }
+   field TaskObjectId {
+      columnexclude = [true];
+   }
+   field TaskObjectSite {
+      columnexclude = [true];
+   }
+   field FbuyUnitPrice {
+      columnexclude = [true];
+   }
+   field SwapPart {
+      columnexclude = [true];
+   }
+   field NoPartDescription {
+      columnexclude = [true];
+   }
+   field QtyReturned {
+      columnvisible = [true];
+   }
+   field OrderState {
+      columnexclude = [true];
+   }
+   @DynamicComponentDependency PURCH
+   field PurchaseOrderExists {
+      label = "Purchase Order Exists";
+      size = Small;
+      editable = [false];
+   }
+   field PlanQty {
+      editable = [InterchangePartsExist = false or SupplyCode != "PurchaseOrder"];
+      validate command {
+         variable OriginalPlanQty;
+         execute {
+            if [ChangesLineItemNo = null] {
+               set OriginalPlanQty = original.PlanQty;
+               set PlanQty = OriginalPlanQty;
+               error("Planned required quantity cannot be modified from the Material Requisition pages");
+               exit CANCEL;
+            }
+         }
+      }
+   }
+
+   field SupplyCode {
+      validate command {
+         execute {
+            super;
+            if [SupplyCode = "ShipmentOrder"] {
+               set Delivery = "Normal";
+            }
+         }
+      }
+   }
+
+   field Delivery {
+      when [SupplyCode = "DistributionOrder" or SupplyCode = "ShipmentOrder" or SupplyCode = "PurchaseOrder"] use subset DistOrdNormal;
+   }
+
+   field SenderType {
+      validate command {
+         execute {
+
+            super;
+            set Delivery = "Normal";
+         }
+      }
+   }
+
+   fieldorder = MaintMatOrderNoRef, RequisitionSite, AvWorkPackageRef.Barcode, AircraftWorkPackageId, AvWorkPackageRef.Objstate, AvWorkPackageRef.LocationCode, AircraftRef.AircraftDesc,
+   AvExeTaskRef.Barcode, TaskSeq, AvExeTaskRef.Description, AvWorkPackageRef.WorkPackageName, WorkTypes, IntDestinationId, IntDestinationDesc, OrderStatus, LineItemNo,
+   PartNo, SerialNoRef, PlanQty, DateRequired, PromisedReceiptDate, SenderType, SenderId, SupplySite, SpareContractRef, SupplyCode, PurchaseMethod, ServiceTypeRef, Delivery, TaskPlanLineSeq, PeggedQty, ConsumedQty,
+   Uom, BuyUnitMeas, Qty, QtyShort, QuantityOnHand, QuantityAvailable, QtyAssigned, QtyReturned, ConditionCodeRef, ConditionCodeRef.Description, PartOwnership, Owner, SerialPart, HasStructure,
+   AlternatePartsExist, Rental, RentalTaskResSeq, InventoryPartRef.DimQuality, CatalogContract, CatalogNo, SalesPartDescription, PriceListNo, PriceSource, PriceSourceId, ListPrice, ListPriceCurr,
+   Discount, SalesPriceAmount, PriceAmountCurr, CurrentInventoryCost, Cost, IssuedCostAmount, Markup, SupplySourceRef1, SupplySourceRef2, SupplySourceRef3, SupplySourceRef4, SupplySourceRefType,
+   RepairPartNo, QtyChanged, ChangesLineItemNo, ChangeReason, AltPartChangeReasonRef.ChangeReasonDesc, IsClosed, TransportTaskExists, PriceEffectiveDate;
+   @DynamicComponentDependency PURCH
+   exclude MaterialOperationsPrintBarcodesCommand;
+   commandgroup MaintMaterialReqLineViewOtherCmdGroup {
+      commandgroup MaintMaterialReqLineViewOtherGroup {
+         label = "View";
+         command WorkTaskCommand;
+         command PurchaseRequisitionCommand;
+         @DynamicComponentDependency PURCH
+         command PurchaseOrderCommand;
+      }
+   }
+   commandgroup CommandGroupCmd1Group {
+      command MaintenanceMaterialRequisitionCommand;
+   }
+   commandgroup CommandGroupPickListCmdGroup {
+      command CreatePickListCommand;
+      command ViewPickListCommand;
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group ParentPart for AltPartsParentVirtual {
+   label = "Material Details";
+   field MaintMaterialOrderNo;
+   field LineItemNo;
+   field TaskSeq;
+   field PartNumber;
+}
+-------------------------------- ASSISTANTS ---------------------------------
+
+assistant AltPartAssistant using AltPartsParentVirtualSet {
+   label = "Interchangeable Parts";
+   savemode = OnLostFocus;
+   input(MaintMaterialOrderNo, LineItemNo, PartNumber, TaskSeq);
+
+   singlestep {
+      group ParentPart;
+      list AltPartList(AltPartsArray);
+   }
+   command Cancel;
+   command SaveAltPartsCommand;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AltPartsParentVirtualSet for AltPartsParentVirtual;
+entityset AltPartsVirtualSet for AltPartsVirtual;
+entityset MaintMaterialReqLineSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity MaintMaterialReqLine {
+   from = "maint_material_req_line_av_uiv";
+   keys = LineItemNo, MaintMaterialOrderNo;
+   ludependencies = MaintMaterialRequisition, AvExeTaskPart, MaintMaterialReqLine;
+   exclude attributes = ObjectState;
+   attribute AircraftId Number;
+   attribute AircraftWorkPackageId Number;
+   @DynamicComponentDependency PURCH
+   attribute PurchaseOrderExists Boolean("TRUE", "FALSE") {
+      fetch = "CASE WHEN EXISTS (SELECT 1 FROM purchase_order_line_part pol WHERE pol.part_no = MAINT_MATERIAL_REQ_LINE_AV_UIV.part_no AND pol.contract = MAINT_MATERIAL_REQ_LINE_AV_UIV.spare_contract) THEN 'TRUE' ELSE 'FALSE' END";
+      label = "Purchase Order Exists";
+      editable = [false];
+   }
+   attribute SerialNumber Text {
+      label = "Serial Number";
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Resvd_Issd_Part_Ser_Bat_No('SER', task_seq, maint_material_order_no, line_item_no, qty, qty_assigned)";
+   }
+   attribute BatchNumber Text {
+      label = "Batch Number";
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Resvd_Issd_Part_Ser_Bat_No(NULL, task_seq, maint_material_order_no, line_item_no, qty, qty_assigned)";
+   }
+
+   attribute AvInstalledTaskPartId Number {
+      fetch = "Av_Exe_Task_Part_API.Get_Tsk_Part_Id_By_Mmrl_Keys(task_seq, maint_material_order_no, line_item_no)";
+   }
+   attribute IntDestinationId Text {
+      fetch = "Maint_Material_Requisition_API.Get_Int_Destination_Id(maint_material_order_no)";
+   }
+   attribute IntDestinationDesc Text {
+      fetch = "Internal_Destination_API.Get_Description(spare_contract,Maint_Material_Requisition_API.Get_Int_Destination_Id(maint_material_order_no))";
+   }
+   attribute WorkTypes Text {
+      fetch = "Av_Work_Package_Work_Type_API.Get_Work_Types_For_Workpackage(aircraft_work_package_id)";
+   }
+   attribute FlightId Number {
+      fetch = "Av_Flight_API.Get_Flight_Id_By_Wp_Id(aircraft_work_package_id)";
+   }
+   attribute OrderStatus Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Order_Status(maint_material_order_no, line_item_no)";
+   }
+   attribute RemovedUser Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Removed_User(maint_material_order_no, line_item_no)";
+   }
+   attribute PartGroupSensitivity Text {
+      fetch = "Av_Exe_Task_Part_Sens_API.Get_Task_Part_Sensitivities(task_seq,Av_Exe_Task_Part_API.Get_Tsk_Part_Id_By_Mmrl_Keys(task_seq, maint_material_order_no, line_item_no))";
+   }
+   attribute CreatedBy Text;
+   attribute ModifiedBy Text;
+   attribute Note Text;
+   attribute HasMatWithNoPickList Text {
+      fetch = "Maint_Material_Req_Line_API.Has_Materials_With_No_Picklist(maint_material_order_no)";
+   }
+   attribute HasPickList Text {
+      fetch = "Maint_Mat_Plist_Util_API.Has_Pick_List(maint_material_order_no,line_item_no,wo_no)";
+      label = "Has Pick List";
+      maxlength = 5;
+      editable = [false];
+   }
+   attribute MaintMatReqLinObjState Text {
+      fetch = "Maint_Material_Requisition_API.Get_Objstate(maint_material_order_no)";
+   }
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference InstallTaskPartRef(MaintMaterialOrderNo, LineItemNo) to AvExeTaskPart(MaintMaterialOrderNo, LineItemNo);
+}
+--------------------------------- VIRTUALS ----------------------------------
+virtual AltPartsParentVirtual {
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+   attribute TaskSeq Number;
+   attribute PartNumber Text;
+   array AltPartsArray() to AltPartsVirtual();
+}
+
+virtual AltPartsVirtual {
+   attribute PartNumber Text;
+   attribute Manufacturer Text;
+   attribute PartName Text;
+   attribute InventoryClassCode Text;
+   attribute IsSelectedPart Text;
+}
+
+---------------------------------- ACTIONS ----------------------------------
+action SaveAltParts {
+   initialcheck none;
+   parameter Objkey Text;
+}
+
+action AddReturnLineOnIssue {
+   initialcheck none;
+   ludependencies = JtTaskReturn;
+   parameter TaskSeq Number;
+   parameter PartNo Text;
+   parameter MtrlOrderNo Number;
+   parameter LineItemNo Number;
+}
+
+action UpdateInstallPartSerBatNo {
+   initialcheck none;
+   ludependencies = MaintMaterialReqLine;
+   parameter TaskSeq Number;
+   parameter InsTaskPartId Number;
+   parameter MtrlOrderNo Number;
+   parameter LineItemNo Number;
+}
+
+action RemoveMaterial {
+   initialcheck none;
+   ludependencies = MaintMaterialReqLine, AvExeTaskPart, AvFaultPart;
+   parameter MaintMaterialOrderNo Number;
+   parameter LineItemNo           Number;
+}

@@ -1,0 +1,674 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmTaskDetailHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250612  KAPALK  AD-18371, Added a procedure to remove panels related to zones and zones
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  241226  WIHALK  AD-14749, Added CheckDeferNr to validate Defer Non Routines.
+--  241211  SSIVLK  AD-15684, Added procedure to Start Assignmnet
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+--  240724  VAALLK  AD-11951, Modified UpdateTaskStart, Update_Task_Unstart___ 
+--  240715  RWELLK  AD-13037, Added aSource parameeter to the select reference URL.
+--  240625  RWELLK  AD-13037, Modify Get Select Reference URL function.
+--  240622  RWELLK  AD-13037, Added Get Select Reference URL function.
+--  240117  majslk  AD-10940, Implemented Show_Warning___ method
+--  231204  ROSDLK  AD-11190, Added resubmission deferral request workflow after rejecting a deferral request.
+--  231127  LAHNLK  AD-11185, Modified Request_Deferral___ to support AvDeferralRequest entity
+--  231108  maillk  AD-9566, Added implementation of Update_Task_Unstart___
+--  230828  BHSILK  AD-10359, Added Update_Task_Start___ procedure
+--  221130  LAWALK  AD-9113, Updated the body of Request_Deferral___ procedure.
+--  221125  LAWALK  AD-9113, Added Request_Deferral___ procedure for modify the fault with deferral status.
+--  221104  RWELLK  AD-9028, changed variable name in Get_Find_Inventory_Url___ function.
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  221005  RWELLK  AD-8649, Added Error Messages to the Get_Find_Inventory_Url___ function.
+--  221005  RWELLK  AD-8649, Added Get_Find_Inventory_Url___ function.
+--  220726  dildlk  AD-8056, Added Remove_Part___
+--  220525  kawjlk  AD-6558, Modified Add_Measurement___ methord measurement_domain_type_ = 'Text' to measurement_domain_type_ = 'TEXT' to avoid text type Measurement value is not updated issue.
+--  220505  negulk  AD-2145, Modified Delete_Task_Skill___ to validate that the last labor skill is not allowed to be removed 
+--  211208  LaDelk  AD-4694, Moved Get_Resource_Id___ and Get_Part_Serial___ to FlmResourceToolEquipCommonObjects fragment.
+--  211201  ladelk  AD-5167, Modified format of scheduled hours in resource tools..
+--  211115  ladelk  AD-4693, Added CRUD_Default___ for Av_Resource_Tool_Equipment_Rec, Get_Resource_Id___ and Get_Part_Serial___ to support tool requirements tab.
+--  210816  lahnlk  AD-3239, Modified Delete_Task_Tool___ 
+--  210813  KAWJLK  AD-3239, Modified Add_Task_Skill___, Add_Task_Tool___, Modify_Task_Skill___, Delete_Task_Tool___ methods.
+--  210812  SUPKLK  AD-3284, Modified Delete_Task_Skill___ to delete referenced fault skill after removing task skill
+--  210607  kawjlk  AD-1281, Added Delete_Part_Req___.
+--  210604  kawjlk  AD-1198, Added Delete_Measurement___.
+--  210604  nignlk  AD-1210, Added Delete_Task_Skill___.
+--  210602  lahnlk  AD-1138, added Delete_Task_Tool___
+--  210602  SUPKLK  AD-1275, Implemented procedure Add_Measurement___
+--  210430  lahnlk  AD-1271, added Modify_Task_Skill___
+--  210420  KAWJLK  AD-1128, Added Clear_Fault_Def_Main_Virtual___
+--  210329  siydlk  AD-1157, Added Add_Actual_Date_Time___.
+--  210329  lahnlk  AD-1282, Overridden  CRUD_Default___ , modified Add_Task_Tool___
+--  210323  siydlk  LMM2020R1-1588, Added Add_Task_Skill___ method and overridden CRUD_Default___.
+--  210319  lahnlk  AD-1282, added Get_Default_Tool_Spec___ , Add_Task_Tool___ methods
+--  210302  siydlk  LMM2020R1-1600, Added Add_Task_Skill___ method.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@Override
+PROCEDURE CRUD_Default___ (
+   rec_ IN OUT Add_Task_Tool_Virtual_Rec )
+IS
+BEGIN
+   rec_.sched_duration := '00:00';   
+   super(rec_);    
+END CRUD_Default___;
+
+@Override
+PROCEDURE CRUD_Default___ (
+   rec_ IN OUT Av_Resource_Tool_Equipment_Rec )
+IS
+BEGIN
+   rec_.source_ref_type := Tool_Source_API.DB_TASK;
+   rec_.schedule_time := '00:00';
+   super(rec_);    
+END CRUD_Default___;
+
+@Override
+PROCEDURE CRUD_Create___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT av_resource_tool_equipment_key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   sched_duration_   VARCHAR2(10);
+   converted_value_  NUMBER;
+BEGIN
+   sched_duration_ := Client_SYS.Get_Item_Value('SCHEDULE_TIME', attr_);
+   converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');   
+   Client_SYS.Add_To_Attr('SCHED_DURATION', converted_value_, attr_);
+   super(etag_, key_, attr_, info_, action_); 
+END;
+
+@Override
+PROCEDURE CRUD_Update___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT av_resource_tool_equipment_key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   sched_duration_   VARCHAR2(10);
+   converted_value_  NUMBER;
+BEGIN
+   IF Client_SYS.Item_Exist('SCHEDULE_TIME',attr_) THEN
+      sched_duration_ := Client_SYS.Get_Item_Value('SCHEDULE_TIME', attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');   
+      Client_SYS.Add_To_Attr('SCHED_DURATION', converted_value_, attr_);
+   END IF;
+   super(etag_, key_,attr_, info_, action_);
+END CRUD_Update___;
+
+FUNCTION Validate_Hours (
+   hours_per_person_ IN VARCHAR2,
+   time_var_name_    IN VARCHAR2)RETURN NUMBER
+IS
+   duration_  NUMBER;   
+BEGIN
+   duration_ := Adcom_Util_API.Validate_Format_Hours(hours_per_person_) ;
+   IF duration_ IS NULL  THEN
+      Error_SYS.Record_General(lu_name_, 'ERRINVALID: Enter :P1 in the HH:MM format.', time_var_name_);
+   END IF;
+   RETURN duration_;
+END Validate_Hours;
+
+FUNCTION Get_Default_Tool_Spec___ (
+   part_number_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   tool_spec_code_  av_tool_specification_tab.Tool_Specification_Code%TYPE;
+   tool_spec_count_ NUMBER;
+   CURSOR get_tool_spec_part IS
+      SELECT Tool_Specification_Code 
+      FROM   av_tool_specification_part_tab 
+      WHERE  part_number_id = part_number_id_;
+   
+   CURSOR get_tool_spec(tool_spec_code_ VARCHAR2) IS
+      SELECT Tool_Specification_Code 
+      FROM   av_tool_specification_tab 
+      WHERE  Tool_Specification_Code = tool_spec_code_;
+BEGIN
+   tool_spec_count_ := 0;
+   FOR tool_spec_part_ IN get_tool_spec_part LOOP
+      IF tool_spec_count_ > 1 THEN
+         RETURN NULL;
+      END IF;
+      OPEN get_tool_spec(tool_spec_part_.Tool_Specification_Code);
+      FETCH get_tool_spec INTO tool_spec_code_; 
+      CLOSE get_tool_spec;
+      IF tool_spec_code_ IS NOT NULL THEN
+         tool_spec_count_ := tool_spec_count_+1;
+      END IF;
+   END LOOP;
+   RETURN tool_spec_code_;
+END Get_Default_Tool_Spec___;
+
+
+PROCEDURE Add_Task_Tool___ (
+   task_seq_                IN NUMBER,
+   tool_specification_code_ IN VARCHAR2,
+   part_no_id_              IN NUMBER,
+   sched_duration_          IN VARCHAR2)
+IS
+   info_                   VARCHAR2(200);
+   objid_                  VARCHAR2(200);
+   objversion_             VARCHAR2(200);
+   attr_                   VARCHAR2(32000);
+   converted_value_        VARCHAR2(32000);
+   aircraft_wp_id_         NUMBER;
+   fault_id_               NUMBER;
+   fault_tool_id_var_      VARCHAR2(32000);
+   fault_tool_id_          NUMBER;
+   
+   CURSOR get_fault_data IS
+      SELECT aircraft_wp_id, fault_id
+      FROM av_exe_task
+      WHERE task_seq = task_seq_;
+BEGIN 
+   OPEN get_fault_data;
+   FETCH get_fault_data INTO aircraft_wp_id_,fault_id_;
+   CLOSE get_fault_data;
+   
+   Client_SYS.Clear_Attr(attr_);
+   IF (fault_id_ IS NOT NULL) THEN
+      
+      Client_SYS.Add_To_Attr('FAULT_ID',               fault_id_,               attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NUMBER_ID',             part_no_id_,         attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHEDULED_HOURS',         converted_value_,        attr_);
+      Av_Fault_Tool_API.New__(info_, objid_,objversion_,attr_,'DO');
+      
+      fault_tool_id_var_ := Client_SYS.Get_Item_Value('FAULT_TOOL_ID', attr_);
+      fault_tool_id_     := Client_SYS.Attr_Value_To_Number(fault_tool_id_var_);
+      
+      Client_SYS.Clear_Attr(attr_); 
+      Client_SYS.Add_To_Attr('TASK_SEQ',                task_seq_,                attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NO_ID',             part_no_id_,             attr_);
+      Client_SYS.Add_To_Attr('FAULT_TOOL_ID',          fault_tool_id_,          attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHED_DURATION',         converted_value_,        attr_);
+      Av_Exe_Task_Tool_API.New__(info_, objid_,objversion_,attr_,'DO');      
+      
+   ELSE
+      Client_SYS.Add_To_Attr('TASK_SEQ',                task_seq_,                attr_);
+      Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',tool_specification_code_,attr_);
+      Client_SYS.Add_To_Attr('PART_NO_ID',             part_no_id_,             attr_);
+      converted_value_ := Validate_Hours(sched_duration_, 'Scheduled Hours');
+      Client_SYS.Add_To_Attr('SCHED_DURATION',         converted_value_,        attr_);
+      Av_Exe_Task_Tool_API.New__(info_, objid_,objversion_,attr_,'DO'); 
+   END IF;
+   
+END Add_Task_Tool___;
+
+FUNCTION Add_Actual_Date_Time___ RETURN DATE
+IS
+   CURSOR get_sys_date IS
+      SELECT  Time_Util_API.Get_Sysdate_In_Utc 
+      FROM    dual;
+   current_date_  TIMESTAMP;
+BEGIN
+   OPEN get_sys_date;
+   FETCH get_sys_date INTO current_date_;
+   CLOSE get_sys_date; 
+   RETURN current_date_;
+END Add_Actual_Date_Time___;
+
+PROCEDURE Clear_Fault_Def_Main_Virtual___
+IS
+BEGIN
+	DELETE FROM ${PROJECTION}_FAULT_DEF_MAIN_VIRTUAL_VRT;
+   
+END Clear_Fault_Def_Main_Virtual___;
+
+PROCEDURE Delete_Measurement___ (
+   measurement_id_ IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_Measurement_API.Remove(measurement_id_);
+END Delete_Measurement___;
+
+PROCEDURE Delete_Task_Tool___ (
+   task_tool_id_ IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_Tool_API.Remove(task_tool_id_);
+END Delete_Task_Tool___;
+
+PROCEDURE Add_Measurement___ (
+   task_seq_                IN NUMBER,
+   measurement_domain_type_ IN VARCHAR2,
+   measurement_type_code_   IN VARCHAR2,
+   meas_type_value_code_    IN VARCHAR2,
+   measurement_qty_         IN NUMBER,
+   measurement_date_time_   IN DATE,
+   measurement_text_        IN VARCHAR2,
+   measurement_boolean_     IN BOOLEAN,
+   task_site_               IN VARCHAR2)
+IS
+   info_                    VARCHAR2(200);
+   objid_                   VARCHAR2(200);
+   objversion_              VARCHAR2(200);
+   attr_                    VARCHAR2(32000);
+   measurement_boolean_txt_ VARCHAR2(20);
+BEGIN
+   Client_SYS.Add_To_Attr('TASK_SEQ', task_seq_, attr_);
+   Client_SYS.Add_To_Attr('MEASUREMENT_TYPE_CODE', measurement_type_code_, attr_);
+   Client_SYS.Add_To_Attr('IS_TASK_DEF_DB', 'FALSE', attr_);
+   IF(measurement_domain_type_ = 'CH') THEN
+      Client_SYS.Add_To_Attr('MEAS_TYPE_VALUE_CODE', meas_type_value_code_, attr_);
+   ELSIF (measurement_domain_type_ = 'ME') THEN
+      Client_SYS.Add_To_Attr('MEASUREMENT_QTY', measurement_qty_, attr_);
+   ELSIF (measurement_domain_type_ = 'CME') THEN
+      Client_SYS.Add_To_Attr('MEASUREMENT_DATE_TIME', measurement_date_time_, attr_);
+   ELSIF (measurement_domain_type_ = 'TEXT') THEN
+      Client_SYS.Add_To_Attr('MEASUREMENT_TEXT', measurement_text_, attr_);
+   ELSIF (measurement_domain_type_ = 'CHK') THEN
+      IF measurement_boolean_ = TRUE THEN
+         measurement_boolean_txt_ := 'TRUE';
+      ELSIF measurement_boolean_ = FALSE THEN
+         measurement_boolean_txt_ := 'FALSE';
+      END IF;
+      Client_SYS.Add_To_Attr('MEASUREMENT_BOOLEAN_DB', measurement_boolean_txt_, attr_);
+   END IF;
+   
+   Av_Exe_Task_Measurement_API.New__(info_, objid_,objversion_,attr_,'DO');
+END Add_Measurement___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Remove_Part___ (   
+   task_part_id_ IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_Part_Util_API.Remove_Part(task_part_id_);
+END Remove_Part___;
+
+FUNCTION Get_Find_Inventory_Url___ (
+   external_page_path_ IN VARCHAR2,
+   search_type_        IN VARCHAR2,
+   aircraft_reg_code_  IN VARCHAR2,
+   iata_code_          IN VARCHAR2,
+   task_name_ref_      IN VARCHAR2) RETURN VARCHAR2
+IS
+   system_url_ FND_SETTING_TAB.value%TYPE := Fnd_Setting_API.Get_Value('SYSTEM_URL');
+   url_        VARCHAR2(1000);
+BEGIN
+   IF system_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYSYSTEMURL: You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.');
+   END IF;  
+   
+   url_:= system_url_ || external_page_path_ || '?aSearchType=' || UTL_URL.ESCAPE(search_type_) || chr(38) ||'aircraftTailNumber=' || UTL_URL.ESCAPE(aircraft_reg_code_) || chr(38) ||'supplyLocationCode=' || UTL_URL.ESCAPE(iata_code_) || chr(38) || 'taskReference=' || UTL_URL.ESCAPE(task_name_ref_);
+   RETURN url_;
+END Get_Find_Inventory_Url___;
+
+FUNCTION Get_Select_Reference_Url___ (
+   external_page_path_ IN VARCHAR2,
+   a_task_id_          IN VARCHAR2,
+   a_type_             IN VARCHAR2,
+   a_source_           IN VARCHAR2) RETURN VARCHAR2
+IS
+   system_url_ FND_SETTING_TAB.value%TYPE := Fnd_Setting_API.Get_Value('SYSTEM_URL');
+   url_        VARCHAR2(1000);
+BEGIN
+   IF system_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYSYSTEMURL: You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.');
+   END IF;
+   
+   url_:= system_url_ || external_page_path_ || '?aTaskId=' || UTL_URL.ESCAPE(a_task_id_) || chr(38) ||'aType=' || UTL_URL.ESCAPE(a_type_) || chr(38) ||'aSource=' || UTL_URL.ESCAPE(a_source_);
+   RETURN url_;
+END Get_Select_Reference_Url___;
+
+PROCEDURE Request_Deferral___ (
+   fault_id_ IN NUMBER)
+IS
+   attr_        VARCHAR2(32000);
+   info_        VARCHAR2(400);
+   objid_       VARCHAR2(100);
+   objversion_  VARCHAR2(100);
+   
+   CURSOR get_deferral_request IS
+      SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+      FROM   av_deferral_request_tab def_req
+      WHERE  def_req.fault_id = fault_id_;
+BEGIN
+   OPEN get_deferral_request;
+   FETCH get_deferral_request INTO objid_, objversion_;
+   IF (get_deferral_request%FOUND)THEN
+      CLOSE get_deferral_request;
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+      Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_AUTHORIZATION', '', attr_);
+      Client_SYS.Add_To_Attr('REJECTION_REASON', '', attr_);
+      Client_SYS.Add_To_Attr('REAUTHORIZATION_REASON', '', attr_);
+      Av_Deferral_Request_API.Modify__(info_,objid_,objversion_,attr_, 'DO');
+   ELSE
+      CLOSE get_deferral_request;
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('FAULT_ID', fault_id_ , attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+      Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+      Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+      Av_Deferral_Request_API.New__(info_,objid_,objversion_,attr_, 'DO');
+      
+   END IF;
+END Request_Deferral___;
+
+PROCEDURE Update_Task_Start___ (
+   task_seq_ IN NUMBER,
+   site_     IN VARCHAR2)
+IS
+BEGIN 
+   Av_Exe_Task_API.Start_Task(task_seq_);
+END Update_Task_Start___;
+
+
+PROCEDURE Update_Task_Unstart___ (
+   task_seq_ IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_API.Release_Task(task_seq_);
+END Update_Task_Unstart___;
+
+
+PROCEDURE Resubmit_Deferral___ (
+   fault_id_               IN NUMBER,
+   reauthorization_reason_ IN VARCHAR2)
+IS
+   attr_        VARCHAR2(32000);
+   info_        VARCHAR2(400);
+   objid_       VARCHAR2(100);
+   objversion_  VARCHAR2(100);
+   
+   CURSOR get_deferral_request IS
+   SELECT rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')    
+   FROM   av_deferral_request_tab def_req
+   WHERE  def_req.fault_id = fault_id_;
+   
+BEGIN
+   OPEN get_deferral_request;
+   FETCH get_deferral_request INTO objid_, objversion_;
+   CLOSE get_deferral_request;
+   
+   Client_SYS.Add_To_Attr('DEFERRAL_REQUEST_STATUS', Deferral_Status_API.Decode(Deferral_Status_API.DB_PENDING), attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_REQ_DATE_UTC', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+   Client_SYS.Add_To_Attr('REQUESTED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+   Client_SYS.Add_To_Attr('REAUTHORIZATION_REASON', reauthorization_reason_, attr_);
+   Av_Deferral_Request_API.Modify__(info_,objid_,objversion_,attr_, 'DO');
+   
+END Resubmit_Deferral___;
+
+
+FUNCTION Show_Warning___ (
+   task_seq_       IN NUMBER,
+   aircraft_wp_id_ IN NUMBER) RETURN VARCHAR2
+IS   
+BEGIN
+   RETURN Flmexe_Util_API.Show_Defer_Warning(task_seq_, aircraft_wp_id_);
+END Show_Warning___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Check_Defer_Nr___(
+   fault_id_ IN NUMBER)RETURN BOOLEAN
+IS     
+BEGIN
+   RETURN Av_Fault_API.Check_Defer_Non_Routine(fault_id_);
+END Check_Defer_Nr___;
+
+@IgnoreUnitTest PLSQLInSQL
+PROCEDURE Delete_Zone___ (
+   zone_id_     IN NUMBER,
+   task_seq_    IN NUMBER,
+   ac_zone_seq_ IN NUMBER)
+IS
+   CURSOR get_panels_related_to_zone IS 
+      SELECT tp.task_seq,tp.ac_panel_seq, tp.panel_req_id
+      FROM av_exe_task_panel_tab tp
+      JOIN av_aircraft_panel_tab ap
+      ON ap.ac_panel_seq = tp.ac_panel_seq
+      JOIN av_aircraft_zone_tab az
+      ON az.ac_zone_seq = ap.ac_zone_seq
+      WHERE tp.task_seq = task_seq_
+      AND ap.ac_zone_seq = ac_zone_seq_;
+   
+BEGIN
+   
+   FOR rec_ IN get_panels_related_to_zone LOOP 
+      Av_Exe_Task_Panel_API.Remove(task_seq_,rec_.ac_panel_seq,rec_.panel_req_id);   
+   END LOOP;
+   
+   Av_Exe_Task_Zone_API.Remove(zone_id_,task_seq_,ac_zone_seq_);
+   
+END Delete_Zone___;
+
+PROCEDURE Complete_Critical_Item___ (
+   critical_item_id_ IN NUMBER)
+IS
+BEGIN
+	Av_Critical_Item_API.Complete_Critical_Item(critical_item_id_);
+END Complete_Critical_Item___;
+
+PROCEDURE Refresh___
+IS
+BEGIN
+	NULL;
+END Refresh___;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Update___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT av_installed_parts_key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   task_part_id_               NUMBER;
+   installed_part_no_id_       NUMBER;
+   installed_quantity_         NUMBER;
+   quantity_                   VARCHAR2(40);
+   part_no_                    VARCHAR2(40);
+   installed_serial_no_        VARCHAR2(40);
+   installed_batch_no_         VARCHAR2(40);
+   installed_part_no_          VARCHAR2(40);
+   rmvd_attr_                  VARCHAR2(32000);
+   issued_quantity_            NUMBER;
+   maint_material_order_no_    NUMBER;
+   line_item_no_               NUMBER;
+   old_assy_conf_slot_pos_id_  NUMBER;
+   old_conf_slot_pos_id_       NUMBER;
+   new_assy_conf_slot_pos_id_  NUMBER;
+   new_conf_slot_pos_id_       NUMBER;
+   inst_assemby_slot_pos_id_   NUMBER;
+   inst_config_slot_pos_id_    NUMBER;
+   inst_part_group_id_         NUMBER;
+   inst_task_seq_              NUMBER;
+   rmvd_task_part_id_          NUMBER;
+   part_objid_                 VARCHAR2(200);
+   part_objversion_            VARCHAR2(200);
+   inv_class_code_             VARCHAR2(10);
+   quantity_match_             VARCHAR2(100);
+    
+   CURSOR get_batch_number(part_no_ VARCHAR2, serial_no_ VARCHAR2) IS
+      SELECT lot_batch_no
+      FROM part_serial_catalog
+      WHERE part_no = part_no_
+      AND serial_no = serial_no_;
+      
+   CURSOR get_part_number_id is   
+      SELECT part_number_id
+      FROM av_part_number_tab 
+      WHERE part_number = installed_part_no_;
+   
+   CURSOR get_inst_task_part_info (task_part_id_ IN NUMBER)IS
+      SELECT task_seq, config_slot_position_id, assmbly_config_slot_pos_id, part_group_id
+      FROM   av_exe_task_part_tab
+      WHERE  task_part_id = task_part_id_;
+      
+   CURSOR get_rmv_task_part_info(rmvd_task_part_id_ IN NUMBER)IS
+      SELECT config_slot_position_id, assmbly_config_slot_pos_id, rowid, TO_CHAR(rowversion,'YYYYMMDDHH24MISS')
+      FROM   av_exe_task_part_tab
+      WHERE  task_part_id = rmvd_task_part_id_;
+   
+BEGIN
+   task_part_id_               := key_.task_part_id;
+   installed_part_no_id_       := Av_Exe_Task_Part_API.Get_Installed_Part_No_Id(task_part_id_);
+   part_no_                    := Av_Part_Number_API.Get_Part_Number(installed_part_no_id_);
+   new_assy_conf_slot_pos_id_  := Client_SYS.Get_Item_Value('ASSMBLY_CONFIG_SLOT_POS_ID', attr_);
+   new_conf_slot_pos_id_       := Client_SYS.Get_Item_Value('CONFIG_SLOT_POSITION_ID', attr_);
+   maint_material_order_no_    := Av_Exe_Task_Part_API.Get_Maint_Material_Order_No (task_part_id_);
+   line_item_no_               := Av_Exe_Task_Part_API.Get_Line_Item_No(task_part_id_);
+   inv_class_code_             := Av_Part_Number_API.Get_Inventory_Class_Code(installed_part_no_id_);
+
+   
+   IF Client_SYS.Item_Exist('INSTALLED_SERIAL_NO', attr_) THEN
+      installed_serial_no_ := Client_SYS.Get_Item_Value('INSTALLED_SERIAL_NO', attr_);
+      IF installed_serial_no_ IS NOT NULL THEN
+         OPEN get_batch_number(part_no_, installed_serial_no_);
+         FETCH get_batch_number INTO installed_batch_no_;
+         CLOSE get_batch_number;
+      END IF;
+      Client_SYS.Add_To_Attr('INSTALLED_BATCH_NO', installed_batch_no_, attr_);
+   END IF;
+   IF Client_SYS.Item_Exist('QUANTITY', attr_) THEN 
+      issued_quantity_ := Maint_Material_Req_Line_API.Get_Qty (maint_material_order_no_ , line_item_no_);
+      quantity_  := Client_SYS.Get_Item_Value('QUANTITY', attr_);
+      quantity_match_ := REGEXP_SUBSTR(quantity_, '^\d+');
+         IF quantity_match_ IS NOT NULL THEN
+            installed_quantity_ := TO_NUMBER(quantity_match_);
+         ELSE
+            installed_quantity_ := Av_Exe_Task_Part_API.Get_Installed_Quantity(task_part_id_);
+         END IF;
+      
+      IF installed_quantity_ < 1 THEN
+         Error_SYS.Record_General(lu_name_, 'ERROREMPTYQTY:  Quantity must be greater than zero.');
+      ELSIF issued_quantity_ > 0 AND installed_quantity_ > issued_quantity_ THEN
+         Error_SYS.Record_General(lu_name_, 'ERROREMPTYQTY: Quantity cannot exceed the issued amount.');
+      ELSE
+         Client_SYS.Add_To_Attr('INSTALLED_QUANTITY', installed_quantity_, attr_);
+      END IF;
+   END IF;
+   
+   IF Client_SYS.Item_Exist('INSTALLED_PART_NO', attr_) THEN    
+      installed_part_no_  := Client_SYS.Get_Item_Value('INSTALLED_PART_NO', attr_);
+      
+      OPEN get_part_number_id;
+      FETCH get_part_number_id INTO installed_part_no_id_;
+      CLOSE get_part_number_id;
+      
+     Client_SYS.Clear_Attr(attr_);
+     Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID', installed_part_no_id_, attr_);
+   END IF;
+ 
+   OPEN  get_inst_task_part_info(task_part_id_);
+   FETCH get_inst_task_part_info  INTO inst_task_seq_,inst_config_slot_pos_id_, inst_assemby_slot_pos_id_, inst_part_group_id_;
+   CLOSE get_inst_task_part_info;
+   
+   rmvd_task_part_id_:= Av_Exe_Task_Part_API.Get_Rmvd_Task_Part_Id(task_part_id_,inst_task_seq_, inst_config_slot_pos_id_, inst_assemby_slot_pos_id_, inst_part_group_id_);
+   
+   OPEN  get_rmv_task_part_info(rmvd_task_part_id_);
+   FETCH get_rmv_task_part_info INTO old_conf_slot_pos_id_,old_assy_conf_slot_pos_id_, part_objid_, part_objversion_;
+   CLOSE get_rmv_task_part_info;
+ 
+   Client_SYS.Clear_Attr(rmvd_attr_);
+      
+   IF old_assy_conf_slot_pos_id_ <> new_assy_conf_slot_pos_id_ THEN
+      Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID', new_assy_conf_slot_pos_id_, rmvd_attr_);
+   END IF;
+      
+   IF old_conf_slot_pos_id_ <> new_conf_slot_pos_id_  THEN
+      Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID', new_conf_slot_pos_id_, rmvd_attr_);
+   END IF;
+      
+   IF rmvd_attr_ IS NOT NULL THEN   
+      Av_Exe_Task_Part_API.Modify__(info_, part_objid_, part_objversion_, rmvd_attr_, 'DO');
+   END IF;  
+   super(etag_, key_,attr_, info_, action_);
+END CRUD_Update___;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Update___ (
+   etag_   IN OUT VARCHAR2,
+   key_    IN OUT av_removed_parts_key,
+   attr_   IN OUT VARCHAR2,
+   info_   OUT VARCHAR2,
+   action_ IN  VARCHAR2 )
+IS
+   task_part_id_          NUMBER;
+   task_return_line_seq_  NUMBER;
+   removed_part_no_id_    NUMBER;
+   removed_part_no_       VARCHAR2(40);
+   removed_serial_no_     VARCHAR2(40);
+   removed_batch_no_      VARCHAR2(40);
+   serial_tracking_code_  VARCHAR2(20);
+   lot_tracking_code_     VARCHAR2(20);
+   return_attr_           VARCHAR2(32000);
+BEGIN
+   task_part_id_ := key_.task_part_id;
+   task_return_line_seq_ := Av_Exe_Task_Part_API.Get_Task_Return_Line_Seq(task_part_id_);
+   Client_SYS.Clear_Attr(return_attr_);
+   
+   IF task_return_line_seq_ IS NOT NULL THEN
+      IF Client_SYS.Item_Exist('REMOVED_PART_NO_ID', attr_) THEN     
+         removed_part_no_id_  := Client_SYS.Get_Item_Value('REMOVED_PART_NO_ID', attr_);
+         removed_part_no_ := Av_Part_Number_API.Get_Part_Number(removed_part_no_id_);
+      END IF;
+      IF removed_part_no_ IS NULL THEN
+         removed_part_no_id_ := Av_Exe_Task_Part_API.Get_Removed_Part_No_Id(task_part_id_);
+         removed_part_no_ := Av_Part_Number_API.Get_Part_Number(removed_part_no_id_);
+      END IF;
+      IF Client_SYS.Item_Exist('REMOVED_SERIAL_NO', attr_) THEN     
+         removed_serial_no_  := Client_SYS.Get_Item_Value('REMOVED_SERIAL_NO', attr_);
+         serial_tracking_code_ := UPPER(Part_Catalog_API.Get_Serial_Tracking_Code(removed_part_no_));
+         IF serial_tracking_code_ = Part_Serial_Tracking_API.DB_SERIAL_TRACKING THEN 
+            Client_SYS.Add_To_Attr('SERIAL_NO', removed_serial_no_, return_attr_);
+         END IF;
+      END IF;
+      IF Client_SYS.Item_Exist('REMOVED_BATCH_NO', attr_) THEN     
+         removed_batch_no_  := Client_SYS.Get_Item_Value('REMOVED_BATCH_NO', attr_);
+         lot_tracking_code_ := UPPER(Part_Catalog_API.Get_Lot_Tracking_Code(removed_part_no_));
+         IF lot_tracking_code_ = Part_Lot_Tracking_API.DB_LOT_TRACKING THEN
+            Client_SYS.Add_To_Attr('LOT_BATCH_NO', removed_batch_no_, return_attr_);
+         END IF;
+      END IF;
+      
+      Jt_Task_Return_API.Update_Returns_Line(task_return_line_seq_, return_attr_);
+   END IF;
+   super(etag_, key_,attr_, info_, action_);
+END CRUD_Update___;
+
+PROCEDURE Update_Removed_Serial_Number___ (
+   removed_serial_no_ IN VARCHAR2,
+   task_part_id_ IN VARCHAR2)
+IS
+   rmvd_task_part_id_          NUMBER;
+   inst_assemby_slot_pos_id_   NUMBER;
+   inst_config_slot_pos_id_    NUMBER;
+   inst_part_group_id_         NUMBER;
+   inst_task_seq_              NUMBER;
+   
+    CURSOR get_inst_task_part_info (task_part_id_ IN NUMBER)IS
+      SELECT task_seq, config_slot_position_id, assmbly_config_slot_pos_id, part_group_id
+      FROM   av_exe_task_part_tab
+      WHERE  task_part_id = task_part_id_;
+  
+BEGIN   
+   OPEN  get_inst_task_part_info(task_part_id_);
+   FETCH get_inst_task_part_info  INTO inst_task_seq_,inst_config_slot_pos_id_, inst_assemby_slot_pos_id_, inst_part_group_id_;
+   CLOSE get_inst_task_part_info;
+   
+   rmvd_task_part_id_:= Av_Exe_Task_Part_API.Get_Rmvd_Task_Part_Id(task_part_id_,inst_task_seq_, inst_config_slot_pos_id_, inst_assemby_slot_pos_id_, inst_part_group_id_);
+   
+   Av_Exe_Task_Part_API.Update_Removed_Serial_No(removed_serial_no_,rmvd_task_part_id_);
+    
+END Update_Removed_Serial_Number___;

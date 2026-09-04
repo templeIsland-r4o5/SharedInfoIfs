@@ -1,0 +1,94 @@
+projection FlmPartTagReportArchiveHandling;
+component FLMEXE;
+layer Core;
+description "Projection for Part Tag Report Archive page";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvPartTagReportSet for AvPartTagReport;
+entityset ArchiveDocumentSet for ArchiveDocuments;
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvPartTagReport {
+   keys = PartTagSeq;
+
+   attribute PartTagSeq   Number;
+   attribute TaskSeq Number {
+      fetch = "Jt_Task_Return_API.Get_Task_Seq(task_return_line_seq)";
+   }
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(Jt_Task_Return_API.Get_Task_Seq(task_return_line_seq))";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Exe_Task_API.Get_Aircraft(Av_Exe_Task_API.Get_Aircraft_Id(Jt_Task_Return_API.Get_Task_Seq(task_return_line_seq)))";
+   }
+   attribute ReportDescription Text {
+      fetch = "Av_Part_Tag_Report_API.Get_Description(task_return_line_seq,part_tag_type)";
+   }
+
+   reference ArchiveRef(ResultKey)                  to Archive(ResultKey);
+   reference JtTaskReturnRef(TaskReturnLineSeq)     to JtTaskReturn(TaskReturnLineSeq);
+   reference AvExeTaskRef(TaskSeq)                  to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query ArchiveDocuments {
+   from = "pdf_archive";
+   keys = ResultKey, Id;
+   attribute ResultKey     Number;
+   attribute Id            Text;
+   attribute ReportTitle   Text {
+      fetch = "ARCHIVE_API.Get_Report_Title(result_key)";
+   }
+   attribute LangCode      Text;
+   attribute Pdf           Stream
+      {
+      fileinfo {
+         filename FileNameExt;
+         mimetype MimetypePdf;
+         attachment = [false];
+
+      }
+   }
+   attribute PrintJobId    Number;
+   attribute PdfSize       Number;
+   attribute FileName      Text;
+   attribute FileNameExt     Text {
+      fetch = "DECODE(LENGTH(FILE_NAME),NULL,DBMS_RANDOM.STRING('X', 10)||'.pdf',FILE_NAME)";
+   }
+   attribute Notes         Text;
+   attribute MimetypePdf   Text {
+      fetch = "Pdf_Archive_API.Get_Mime_type(result_key,id)";
+   }
+   attribute TimeZone Text {
+      fetch = "ARCHIVE_API.Get_Time_Zone(result_key)";
+   }
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetPartTagPrintJobId Structure(PrintJobStructure) {
+   parameter ResultKey Number;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+structure PrintJobStructure {
+   attribute Id Text;
+   attribute PrintId Text;
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

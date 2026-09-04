@@ -1,0 +1,96 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmHangarMaintenanceLobby
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250225  ROERLK  AD-16488, Added unit test for Get_Handover_Tasks_Count___.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+UNITTEST "Get_Handover_Tasks_Count___ should return the handover tasks count when the work package Id is provided" FOR
+   FUNCTION Get_Handover_Tasks_Count___ (
+      work_package_id_ IN     NUMBER) RETURN NUMBER;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Av_Flm_Parameter_API
+   FUNCTION Get_Parameter_Value (
+      parameter_id_ IN     VARCHAR2 )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN 'SHFT';
+   END Get_Parameter_Value;
+
+   @MockTable av_exe_task
+   VALUES
+      | task_seq | objstate | aircraft_wp_id |
+      | 1        | 'WORKSTARTED'         | 1              |
+      | 2        | 'WORKSTARTED'         | 1              |
+      | 3        | 'WORKSTARTED'         | 1              |
+   END VALUES;
+
+   @MockTable jt_execution_instance_tab
+   VALUES
+      | task_seq | incompletion_cause | rowstate | changed_date |
+      | 1        | 'TOOL'             | 'COMPLETED'       | sysdate + (1/24)     |
+      | 1        | 'SHFT'             | 'COMPLETED'       | sysdate + (1/24)*2   |
+      | 2        | 'PART'             | 'COMPLETED'       | sysdate + (1/24)     |
+      | 2        | 'SHFT'             | 'COMPLETED'       | sysdate + (1/24)*2   |
+      | 3        | 'SKILL'            | 'COMPLETED'       | sysdate + (1/24)     |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   NUMBER;
+   expected_ NUMBER;
+BEGIN
+   FOR
+      | expected_ | work_package_id_ |
+      | 2         | 1                |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Handover_Tasks_Count___(work_package_id_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+
+UNITTEST "Mpc_Tasks_Count___ should return the count of MPCOPEN and MPCCLOSE tasks with valid states for given work package id" FOR
+   FUNCTION Mpc_Tasks_Count___ (
+      work_package_id_ IN     NUMBER) RETURN NUMBER;
+USING
+   @MockTable av_exe_task
+   VALUES
+      | task_seq | subclass_code |class_code| state      | aircraft_wp_id |
+      | 1        | 'MPCOPEN'     |'MPC'     | 'Active'   | 1              |
+      | 2        | 'MPCCLOSE'    |'MPC'     | 'In Work'  | 1              |
+      | 3        | 'MPCCLOSE'    |'MPC'     | 'Completed'| 1              | -- should be excluded
+      | 4        | NULL          |'ADHOC'   |'Active'    | 1              | -- should be excluded
+      | 5        | 'MPCOPEN'     |'MPC'     | 'Active'   | 2              |
+      | 6        | 'MPCCLOSE'    |'MPC'     | 'Completed'| 2              | -- excluded due to state
+      | 7        | 'MPCCLOSE'    |'MPC'     | 'In Work'  | 2              |
+      | 8        | 'MPCCLOSE'    |'MPC'     | 'Active'   | 3              | -- different WP
+      | 9        | 'MPCOPEN'     |'MPC'     | 'Completed'| 3              | -- excluded due to state
+   END VALUES;
+
+IS
+   return_   NUMBER;
+   expected_ NUMBER;
+BEGIN
+   FOR
+      | expected_ | work_package_id_ |
+      | 2         | 1                | -- task 1 & 2
+      | 2         | 2                | -- task 5 & 7
+      | 1         | 3                | -- task 8
+      | 0         | 4                | -- no rows at all
+   LOOP
+      return_ := Mpc_Tasks_Count___(work_package_id_);
+      ASSERT return_ = expected_ MESSAGE 'Expected ' || expected_ || ' but returned ' || return_;
+   END LOOP;
+END UNITTEST;

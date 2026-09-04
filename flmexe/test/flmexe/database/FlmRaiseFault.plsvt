@@ -1,0 +1,296 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmRaiseFault
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241126  SATGLK  AD-14725, Created
+-----------------------------------------------------------------------------
+
+layer Core;
+
+UNITTEST "Get_Measurement_Type_Code_For_Fault___ should return objids of measurements when parent objkey is passed" FOR
+   FUNCTION Get_Measurement_Type_Code_For_Fault___ (
+      parent_objkey_ IN     VARCHAR2) RETURN Objid_Arr;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockTable av_measurement_type
+   VALUES
+      | objid | measurement_type_code |
+      | '1'   | 'MC01'                |
+      | '2'   | 'MC02'                |
+      | '3'   | 'MC02'                |
+   END VALUES;
+
+   @MockTable PROJECTION_measurement_virtual_vrt
+   VALUES
+      | parent_objkey | measurement_type_code |
+      |   'O1'        | 'MC01'                |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   Objid_Arr;
+   expected_ Objid_Arr;
+   expected1_ Objid_Arr := Objid_Arr('2', '3');
+BEGIN
+   FOR
+      | expected_ | parent_objkey_ |
+      | expected1_| 'O1'           |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Measurement_Type_Code_For_Fault___(parent_objkey_);
+      --Insert your assertions here
+
+      FOR i_ IN 1 .. expected_.count LOOP
+         ASSERT return_(i_) = expected_(i_) MESSAGE 'Expected '||expected_(i_)||' but returned '||return_(i_);
+      END LOOP;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Fetch_Defaults___ should return default values when source and foundOnId are passed" FOR
+   FUNCTION Fetch_Defaults___ (
+      source_         IN     VARCHAR2,
+      aircraft_wp_id_ IN     NUMBER,
+      found_on_id_    IN     NUMBER,
+      aircraft_id_    IN     NUMBER)  RETURN Fetch_Default_Struct_Rec;
+USING
+   --Insert your mock directives and mock return variables here
+   current_user_                     VARCHAR2(100);
+   current_user_airport_time_zone_   VARCHAR2(1000);
+   sched_hours_                      VARCHAR2(100);
+   found_on_date_                    DATE;
+   test_case_                        VARCHAR2(100);
+   fault_source_code_                VARCHAR2(100);
+   raise_fault_option_               VARCHAR2(100);
+   fault_severity_code_              VARCHAR2(100);
+   found_source_                     VARCHAR2(100);
+   parm_value_                       VARCHAR2(100);
+
+   @MockPackage Fnd_Session_API
+   FUNCTION Get_Fnd_User RETURN VARCHAR2
+   IS
+   BEGIN
+      RETURN current_user_;
+   END Get_Fnd_User;
+
+   @MockPackage Av_Airport_For_User_API
+   FUNCTION Get_User_Time_Zone  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN current_user_airport_time_zone_;
+   END Get_User_Time_Zone;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Fetch_Default_Sched_Hours  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN sched_hours_;
+   END Fetch_Default_Sched_Hours;
+
+   @MockPackage Time_Util_API
+   FUNCTION Get_Sysdate_In_Utc  RETURN  DATE
+   IS
+   BEGIN
+      RETURN found_on_date_;
+   END Get_Sysdate_In_Utc;
+
+   @Mock
+   FUNCTION Get_Sub_System_Id_By_Task_Seq___ (
+      task_seq_ IN     NUMBER) RETURN NUMBER
+   IS
+      sub_system_id_   NUMBER;
+   BEGIN
+      IF (task_seq_ IS NOT NULL) THEN
+         IF (task_seq_ = 1 ) THEN
+            sub_system_id_ := 36;
+         END IF;
+      END IF;
+      RETURN sub_system_id_;
+   END Get_Sub_System_Id_By_Task_Seq___;
+
+   @MockTable resource_lov
+   VALUES
+      | resource_seq | resource_type_db | used_in_maintenance_db | resource_id |
+      | 1            | 'PERSON_GROUP'   | 'TRUE'                 | 'LBR'       |
+      | 2            | 'EQUIPMENT_GROUP'| 'FALSE'                | 'Tool'      |
+   END VALUES;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Get_Mx_Parm_Value (
+      parm_name_ IN     VARCHAR2 )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN parm_value_;
+   END Get_Mx_Parm_Value;
+
+   @MockPackage Av_Aircraft_Work_Package_API
+   FUNCTION Get_Aircraft_Id (
+      aircraft_work_package_id_ IN     NUMBER )  RETURN  NUMBER
+   IS
+   BEGIN
+      RETURN 2;
+   END Get_Aircraft_Id;
+
+   @MockPackage Adcom_Util_API
+   FUNCTION Fetch_Def_Fault_Source_Code  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN fault_source_code_;
+   END Fetch_Def_Fault_Source_Code;
+IS
+   --Insert your test variables here
+   output_     Fetch_Default_Struct_Rec;
+   expected_   Fetch_Default_Struct_Rec;
+   expected1_  Fetch_Default_Struct_Rec;
+   expected2_  Fetch_Default_Struct_Rec;
+   expected3_  Fetch_Default_Struct_Rec;
+   expected4_  Fetch_Default_Struct_Rec;
+   expected5_  Fetch_Default_Struct_Rec;
+
+BEGIN
+   expected1_.found_source := 'Task';
+   expected1_.fault_source_code := 'MECH';
+   expected1_.raise_fault_option := 'NonRoutine';
+   expected1_.fault_severity_code := 'UNKNOWN';
+   expected1_.current_user := 'IFSAPP';
+   expected1_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected1_.sched_hours := '1';
+   expected1_.found_on_date := sysdate;
+   expected1_.sub_system_id := 36;
+   expected1_.resource_seq := NULL;
+   expected1_.aircraft_id := 2;
+
+   expected2_.found_source := 'WorkPackage';
+   expected2_.fault_source_code := 'MECH';
+   expected2_.raise_fault_option := 'LogbookFault';
+   expected2_.fault_severity_code := 'UNKNOWN';
+   expected2_.current_user := 'IFSAPP';
+   expected2_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected2_.sched_hours := '2';
+   expected2_.found_on_date := sysdate;
+   expected2_.sub_system_id := 36;
+   expected2_.resource_seq := NULL;
+   expected2_.aircraft_id := 1;
+
+   expected3_.found_source := 'WorkPackage';
+   expected3_.fault_source_code := 'MECH';
+   expected3_.raise_fault_option := 'LogbookFault';
+   expected3_.fault_severity_code := 'UNKNOWN';
+   expected3_.current_user := 'IFSAPP';
+   expected3_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected3_.sched_hours := '3';
+   expected3_.found_on_date := sysdate;
+   expected3_.sub_system_id := 36;
+   expected3_.resource_seq := 1;
+   expected3_.aircraft_id := 1;
+
+   expected4_.found_source := 'WorkPackage';
+   expected4_.fault_source_code := 'MECH';
+   expected4_.raise_fault_option := 'NonRoutine';
+   expected4_.fault_severity_code := 'UNKNOWN';
+   expected4_.current_user := 'IFSAPP';
+   expected4_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected4_.sched_hours := '2';
+   expected4_.found_on_date := sysdate;
+   expected4_.sub_system_id := 36;
+   expected4_.resource_seq := NULL;
+   expected4_.aircraft_id := 1;
+
+   expected5_.found_source := 'WorkPackage';
+   expected5_.fault_source_code := 'MECH';
+   expected5_.raise_fault_option := 'NonRoutine';
+   expected5_.fault_severity_code := 'UNKNOWN';
+   expected5_.current_user := 'IFSAPP';
+   expected5_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected5_.sched_hours := '3';
+   expected5_.found_on_date := sysdate;
+   expected5_.sub_system_id := 36;
+   expected5_.resource_seq := 1;
+   expected5_.aircraft_id := 1;
+
+   expected6_.found_source := 'WorkPackage';
+   expected6_.fault_source_code := 'MECH';
+   expected6_.raise_fault_option := 'NonRoutine';
+   expected6_.fault_severity_code := 'UNKNOWN';
+   expected6_.current_user := 'IFSAPP';
+   expected6_.current_user_airport_time_zone := 'America/Fortaleza';
+   expected6_.sched_hours := '3';
+   expected6_.found_on_date := sysdate;
+   expected6_.sub_system_id := 36;
+   expected6_.resource_seq := 1;
+   expected6_.aircraft_id := 1;
+
+   FOR
+      | current_user_ | current_user_airport_time_zone_| sched_hours_ | found_on_date_ | found_source_     |fault_source_code_|raise_fault_option_|fault_severity_code_|  source_    | aircraft_wp_id_ | found_on_id_ |aircraft_id_ | parm_value_| expected_  | test_case_ |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '1'    |   sysdate      |   'Task'          |      'MECH'      |   'NonRoutine'    |     'UNKNOWN'      |  'TASK'     |       1         |     1        | NULL        |NULL        | expected1_ | 'test_1'   |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '2'    |   sysdate      |  'WorkPackage'    |      'MECH'      |   'LogbookFault'  |     'UNKNOWN'      |  'LOBBY'    |       2         |     1        |1            |'MECH'      | expected2_ | 'test_2'   |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '3'    |   sysdate      |  'WorkPackage'    |      'MECH'      |   'LogbookFault'  |     'UNKNOWN'      |  'FLIGHT'   |       3         |     1        |1            |'LBR'       | expected3_ | 'test_3'   |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '2'    |   sysdate      |  'WorkPackage'    |      'MECH'      |   'NonRoutine'    |     'UNKNOWN'      |  'HMLOBBY'  |       2         |     1        |1            |'MECH'      | expected4_ | 'test_4'   |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '3'    |   sysdate      |  'WorkPackage'    |      'MECH'      |   'NonRoutine'    |     'UNKNOWN'      |  'HMSLOBBY' |       3         |     1        |1            |'LBR'       | expected5_ | 'test_5'   |
+      |  'IFSAPP'     |       'America/Fortaleza'      |       '3'    |   sysdate      |  'WorkPackage'    |      'MECH'      |   'NonRoutine'    |     'UNKNOWN'      |  'HMCLLOBBY'|       3         |     1        |1            |'LBR'       | expected6_ | 'test_6'   |
+
+   LOOP
+      --Insert your test code here
+      output_ := Fetch_Defaults___(source_, aircraft_wp_id_, found_on_id_, aircraft_id_);
+      --Insert your assertions here
+
+      ASSERT output_.found_source = expected_.found_source MESSAGE test_case_ || ':'  ||'Expected '|| expected_.found_source ||' but returned '||output_.found_source;
+      ASSERT output_.fault_source_code = expected_.fault_source_code MESSAGE test_case_ || ':'  ||'Expected '|| expected_.fault_source_code ||' but returned '||output_.fault_source_code;
+      ASSERT output_.raise_fault_option = expected_.raise_fault_option MESSAGE test_case_ || ':'  ||'Expected '|| expected_.raise_fault_option ||' but returned '||output_.raise_fault_option;
+      ASSERT output_.fault_severity_code = expected_.fault_severity_code MESSAGE test_case_ || ':'  ||'Expected '|| expected_.fault_severity_code ||' but returned '||output_.fault_severity_code;
+      ASSERT output_.current_user = expected_.current_user MESSAGE test_case_ || ':'  ||'Expected '|| expected_.current_user ||' but returned '||output_.current_user;
+      ASSERT output_.current_user_airport_time_zone = expected_.current_user_airport_time_zone MESSAGE test_case_ || ':'  ||'Expected '|| expected_.current_user_airport_time_zone ||' but returned '||output_.current_user_airport_time_zone;
+      ASSERT output_.sched_hours = expected_.sched_hours MESSAGE test_case_ || ':'  ||'Expected '|| expected_.sched_hours ||' but returned '||output_.sched_hours;
+      ASSERT output_.found_on_date = expected_.found_on_date MESSAGE test_case_ || ':'  ||'Expected '|| expected_.found_on_date ||' but returned '||output_.found_on_date;
+      ASSERT output_.sub_system_id = expected_.sub_system_id MESSAGE test_case_ || ':'  ||'Expected '|| expected_.sub_system_id ||' but returned '||output_.sub_system_id;
+
+      IF(expected_.resource_seq IS NULL) THEN
+         ASSERT output_.resource_seq IS NULL MESSAGE test_case_ || ':'  ||'Expected NULL but returned ' ||output_.resource_seq;
+      ELSE
+         ASSERT output_.resource_seq = expected_.resource_seq MESSAGE test_case_ || ':'  ||'Expected '|| expected_.resource_seq ||' but returned '||output_.resource_seq;
+      END IF;
+
+      ASSERT output_.aircraft_id = expected_.aircraft_id MESSAGE test_case_ || ':'  ||'Expected '|| expected_.aircraft_id ||' but returned '||output_.aircraft_id;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Validate_And_Format_Hours___ should return the numeric hours value when duration is passed in hh:mm" FOR
+   FUNCTION Validate_And_Format_Hours___ (
+      hours_         IN     VARCHAR2,
+      time_var_name_ IN     VARCHAR2) RETURN NUMBER;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockTable dual
+   VALUES
+      |dummy|
+      |'x'  |
+   END VALUES;
+IS
+   --Insert your test variables here
+   scenario_  NUMBER;
+   return_    NUMBER;
+   expected_  NUMBER;
+BEGIN
+   FOR
+      |scenario_| expected_ | hours_ | time_var_name_    |
+      |1        | 2         | '02:00'| 'Scheduled Hours' |
+      |2        | NULL      | '00:00'| 'Scheduled Hours' |
+      |3        | NULL      | '33333'| 'Scheduled Hours' |
+      LOOP
+      IF scenario_ = 1 THEN
+      --Insert your test code here
+      return_ := Validate_And_Format_Hours___(hours_, time_var_name_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   ELSIF scenario_ = 2   THEN
+      return_ := Validate_And_Format_Hours___(hours_, time_var_name_);
+      ASSERT expected_ IS NULL MESSAGE 'Expected NULL but returned not NULL';
+   ELSE
+      ASSERT FAIL '%ERRINVALID%' EXECUTE return_ := Validate_And_Format_Hours___(hours_, time_var_name_);
+   END IF;
+END LOOP;
+END UNITTEST;

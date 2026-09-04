@@ -1,0 +1,28 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmFluidServiceDefHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  211130  rjoslk  AD-4123, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+PROCEDURE Move_Up___ (
+   key_ IN Av_Fluid_Service_Def_Rec_Key)
+IS
+BEGIN
+	Av_Fluid_Service_Def_Rec_API.Change_Record_Order(key_.assembly_type_code, key_.fluid_service_def_id, key_.fluid_service_def_rec_id, TRUE);
+END Move_Up___;
+
+
+PROCEDURE Move_Down___ (
+   key_ IN Av_Fluid_Service_Def_Rec_Key)
+IS
+BEGIN
+   Av_Fluid_Service_Def_Rec_API.Change_Record_Order(key_.assembly_type_code, key_.fluid_service_def_id, key_.fluid_service_def_rec_id, FALSE);
+END Move_Down___;

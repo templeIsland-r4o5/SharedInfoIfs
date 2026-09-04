@@ -1,0 +1,47 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <LastModified>4/7/25, 2:08:00 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_SUPERVISOR_CREW_TASKS_SUMMARY_DS</Name>
+    <ID>87b02563-2ad3-49dc-be1f-9bca9cc1eb5b</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Crew</Column>
+            <Name>Crew</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>ActiveTasks</Column>
+            <Name>Active Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>InWorkTasks</Column>
+            <Name>In Work Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>CompletedTasks</Column>
+            <Name>Completed Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>CrewCode</Column>
+            <Name>Crew Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TotalTasks</Column>
+            <Name>Total Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmSupervisorAirportLobbyHandling</Projection>
+    <EntitySet>SupervisorCrewTaskSummaryQuerySet</EntitySet>
+    <EntityType>SupervisorCrewTaskSummaryQuery</EntityType>
+    <Filter>WorkPackageId eq $WorkPackageId$</Filter>
+    <Parameters/>
+</ProjectionDataSource>

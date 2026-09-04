@@ -1,0 +1,1325 @@
+-------------------------------------------------------
+File Type: IFS Foundation Language File
+Type version: 10.00
+-------------------------------------------------------
+Module: FLMEXE
+Layer: Core
+Main Type: CONFIGCLIENT
+Sub Type: All
+Content: 
+-------------------------------------------------------
+CS:029bfb17-fa21-493a-8c15-a35fb7b5e287^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Assembly Type Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Assembly Type Code+DisplayName^Assembly^
+	CE:
+	CS:ColumnMapping+Record Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Record Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+Record Status Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Record Status Code+DisplayName^Record Status Code^
+	CE:
+	CS:ColumnMapping+Record Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Record Status+DisplayName^Status^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Oil Consumption Record Counts against the Statuses defined in 'Fluid Consumption Status Types' page.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^FLUID CONSUMPTION RECORDS^
+	CE:
+CE:
+CS:038088fa-c923-4667-81b8-97d0948ed859^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Active Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Active Tasks+DisplayName^Active Tasks^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed Tasks^
+	CE:
+	CS:ColumnMapping+Crew Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew Code+DisplayName^Crew Code^
+	CE:
+	CS:ColumnMapping+Crew+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew+DisplayName^Crew^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^In Work Tasks^
+	CE:
+	CS:ColumnMapping+Total Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Total Tasks+DisplayName^Total Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Summary of the tasks assigned to the crews of the user. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^CREW TASKS SUMMARY^
+	CE:
+CE:
+CS:04a3ae84-23bb-480f-bc7b-e56857ceb298^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Lobby page designed for Maintenance Supervisors to highlight key information^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^LINE WORK MANAGEMENT^
+	CE:
+	CS:Param_duration+Description^CONFIGCLIENT^Text^N^N
+		A:Param_duration+Description^Time Range (+/-) for Availability Check (in Minutes)^
+	CE:
+CE:
+CS:0997512a-8514-4c15-a62a-b2b38141cd6b^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Raise Non\&10\Routine^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Navigate to the activity of raising a non-routine. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Raise NR^
+	CE:
+CE:
+CS:0a5880da-02a2-4b49-a992-8687386ac0be^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Raise Fault^
+	CE:
+CE:
+CS:0a61c71d-f451-4ab9-9afa-1014aebe17b0^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^MY ASSIGNMENT BOARD^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Kanban View of all the details of all the task assignments assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY ASSIGNMENT BOARD^
+	CE:
+CE:
+CS:0a9a3fdf-b5e3-4325-ab78-09f1c6ff00e5^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Starting lobby designed for Hangar Maintenance Crew Leads to access all functionalities.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Hangar Maintenance Crew Lead^
+	CE:
+CE:
+CS:0b8bfa7a-c2bb-4dcd-bdce-424b9c9cf1fd^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display parts requested by the Hangar Supervisor^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Parts^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Part Requests^
+	CE:
+CE:
+CS:0bb1aa6b-0011-4e1d-9b38-3a4d885c280f^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Days Since Start+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days Since Start+DisplayName^Days Since Start^
+	CE:
+	CS:ColumnMapping+Days To Finish+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days To Finish+DisplayName^Days To Finish^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The progress of the Hangar Maintenance Work Package that is currently work in progress.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Work Package Progress^
+	CE:
+CE:
+CS:0c093692-e2f5-4ea3-af10-2d7fff890d98^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the unassigned tasks in the user's next shift.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in My Next Shift^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Unassigned^
+	CE:
+CE:
+CS:0d9dcedf-89d3-48af-b7e3-1b8d612a67ca^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Planned Work^
+	CE:
+CE:
+CS:101ec434-a27c-4a19-863e-f0bf77e5183c^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft ^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Barcode+DisplayName^Barcode^
+	CE:
+	CS:ColumnMapping+Icon 1+DisplayName^CONFIGCLIENT^Text^N^N
+	CE:
+	CS:ColumnMapping+Is Sens Exist+DisplayName^CONFIGCLIENT^Text^N^N
+	CE:
+	CS:ColumnMapping+Material Availability+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Material Availability+DisplayName^Material Availability^
+	CE:
+	CS:ColumnMapping+Remark+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Remark+DisplayName^Assignment Role^
+	CE:
+	CS:ColumnMapping+Sched Start+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Sched Start+DisplayName^Scheduled Start^
+	CE:
+	CS:ColumnMapping+Task Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Name+DisplayName^Task Name^
+	CE:
+	CS:ColumnMapping+Task Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Status+DisplayName^Task Status^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the task assignments assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY ASSIGNMENTS^
+	CE:
+CE:
+CS:138620b8-4da8-4616-b9d0-f0a0f894d252^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of aircraft in maintenance to depart within 30 minutes^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^to depart within 30 minutes^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^AIRCRAFTS IN MAINTENANCE^
+	CE:
+CE:
+CS:13b4ce78-c6da-45ff-a2c7-a7a49050d902^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Inbound^
+	CE:
+CE:
+CS:1a6fd1d7-4e88-4d4c-97f8-df35d398c0b8^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display counts of available technicians within the time range of user provided from lobby parameter. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^AVAILABLE TECHNICIANS^
+	CE:
+CE:
+CS:1c2b6c66-ac42-438e-8934-4ba21c57aebe^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Planned Work^
+	CE:
+CE:
+CS:241ec9f4-1a4d-4c5e-b60e-6b8d27a1719f^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^In Maintenance^
+	CE:
+CE:
+CS:2a0331d2-db15-4d15-96e1-25e0e72c2059^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft ^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Location+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Location+DisplayName^Location^
+	CE:
+	CS:ColumnMapping+Start Date In Airport Tz+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Start Date In Airport Tz+DisplayName^Start Date^
+	CE:
+	CS:ColumnMapping+Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Status+DisplayName^Status^
+	CE:
+	CS:ColumnMapping+Work Package Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Barcode+DisplayName^Barcode^
+	CE:
+	CS:ColumnMapping+Work Package Id+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Id+DisplayName^Work Package Id^
+	CE:
+	CS:ColumnMapping+Work Package Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Name+DisplayName^Work Package Name^
+	CE:
+	CS:ColumnMapping+Work Package+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package+DisplayName^Work Package^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the aircraft currently located at the airport hangar. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Aircraft at My Airport Hangar^
+	CE:
+CE:
+CS:2b5669bf-fe2b-40db-ac6c-a58c86cafa17^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Days Since Start+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days Since Start+DisplayName^Days Since Start^
+	CE:
+	CS:ColumnMapping+Days To Finish+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days To Finish+DisplayName^Days To Finish^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The progress of the Hangar Maintenance Work Package that is currently work in progress.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Work Package Progress^
+	CE:
+CE:
+CS:2eec593b-2b7a-4d45-b74d-8b50168e0213^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Inbound^
+	CE:
+CE:
+CS:2fad02dc-ef40-4b1c-b48c-2c7bb245588c^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Displays the count of tasks stopped due to shift change (handover assignments) and allows the user to navigate to a detailed list of handover tasks.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^         Handover^
+	CE:
+CE:
+CS:32800a3e-6d9a-40a6-8ed5-d71f510ada05^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^This is the starting Lobby in Aviation/Line Maintenance^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Technician Lobby^
+	CE:
+CE:
+CS:34c50d2f-5aea-443c-bbed-6427cc896706^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of the non-routines found during the completed tasks. ^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Raised^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Non Routines^
+	CE:
+CE:
+CS:37ccdb30-e4a8-4941-b66f-ee66f08bb671^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Open Faults^
+	CE:
+CE:
+CS:3e1d40c7-ded2-43ca-a5a5-52fc1ff52c80^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of unassigned turns.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^UNASSIGNED TURNS^
+	CE:
+CE:
+CS:45e5d450-16fb-4e53-94ae-6a2106b49f48^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^MY ASSIGNMENT BOARD^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Kanban View of all the details of all the task assignments assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY ASSIGNMENT BOARD^
+	CE:
+CE:
+CS:4616f2d9-8e8b-411b-820b-8789f5f90c9c^CONFIGCLIENT^Global Data^N^N
+	CS:11ba3f5a-5c29-43f8-a7bf-ddbb1992d0ba+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:11ba3f5a-5c29-43f8-a7bf-ddbb1992d0ba+LinkTitle^Aircraft Currently in Maintenance^
+	CE:
+	CS:35b227ba-f1db-49dc-a569-b1300523edba+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:35b227ba-f1db-49dc-a569-b1300523edba+LinkTitle^Aircraft Departing in Next Hour^
+	CE:
+	CS:7262f289-6ace-49c1-a86f-7e1dc3ce6427+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:7262f289-6ace-49c1-a86f-7e1dc3ce6427+LinkTitle^Tasks Assigned to Resource Group^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display the summary of Maintenance Supervisor information.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^SUMMARY^
+	CE:
+	CS:da99602b-ddab-4af9-a8da-24d4404d575c+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:da99602b-ddab-4af9-a8da-24d4404d575c+LinkTitle^Aircraft Arriving in Next Hour^
+	CE:
+	CS:e4944355-51e6-47ec-8e6d-36ee1ff8722c+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:e4944355-51e6-47ec-8e6d-36ee1ff8722c+LinkTitle^Turns Assigned to Resource Group^
+	CE:
+	CS:e71413a8-3bb9-4225-b1d8-ed18a6b415b3+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:e71413a8-3bb9-4225-b1d8-ed18a6b415b3+LinkTitle^My Station Turns^
+	CE:
+CE:
+CS:476a696b-4a89-4164-b06e-555a1d57a460^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Assigned Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Assigned Tasks+DisplayName^Assigned ^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed ^
+	CE:
+	CS:ColumnMapping+Crew Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew Code+DisplayName^Crew Code^
+	CE:
+	CS:ColumnMapping+Crew+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew+DisplayName^Crew^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^Work Started^
+	CE:
+	CS:ColumnMapping+Pending Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Pending Tasks+DisplayName^Pending^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of the crew to which the user is assigned.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^CREW ASSIGNMENT SUMMARY ^
+	CE:
+CE:
+CS:4da866af-03ef-49a4-aa0d-bca8775431a2^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the tasks assigned to the user's next shift.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Assigned To Me^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Next Shift^
+	CE:
+CE:
+CS:51157ab3-0f3c-41c9-8a86-7159251686fc^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of pending deferral requests^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^requests^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^PENDING DEFERRAL^
+	CE:
+CE:
+CS:54ef6d93-db71-4e3d-bef0-6caceba7c01b^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Open Faults^
+	CE:
+CE:
+CS:5851ea24-cd26-4941-a7ab-70395c0fd783^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft ^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Assignment Role+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Assignment Role+DisplayName^Assignment Role^
+	CE:
+	CS:ColumnMapping+Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Barcode+DisplayName^Barcode^
+	CE:
+	CS:ColumnMapping+Material Availability+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Material Availability+DisplayName^Material Availability^
+	CE:
+	CS:ColumnMapping+Sched Start Airport Timezone+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Sched Start Airport Timezone+DisplayName^Scheduled Start^
+	CE:
+	CS:ColumnMapping+Task Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Name+DisplayName^Task Name^
+	CE:
+	CS:ColumnMapping+Task Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Status+DisplayName^Task Status^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the task assignments assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY ASSIGNMENTS^
+	CE:
+CE:
+CS:5940de04-d192-4936-937f-3e048c120d49^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the unassigned tasks in the user's current shift.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in My Shift^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Unassigned Tasks^
+	CE:
+CE:
+CS:598473f6-8b43-451b-a73c-78d8e23f2ebf^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of unassigned tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^UNASSIGNED TASKS^
+	CE:
+CE:
+CS:5f25a97a-ab1d-49ac-9752-f1eeaefe4b81^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display resource conflicts in task work assignments^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in Task Work Assignments^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^RESOURCE CONFLICTS^
+	CE:
+CE:
+CS:6033f272-cafc-46e4-b241-baebc6b1d4c7^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Active Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Active Tasks+DisplayName^Active Tasks^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed Tasks^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^In Work Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Number of tasks that are currently active, in-work, and completed. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^TASK COUNT BY STATUS^
+	CE:
+CE:
+CS:6077dcdb-e248-4f6a-9c39-b69f4e59ccd2^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Days Since Start+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days Since Start+DisplayName^Days Since Start^
+	CE:
+	CS:ColumnMapping+Days To Finish+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Days To Finish+DisplayName^Days To Finish^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The progress of the Hangar Maintenance Work Package that is currently work in progress. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^WORK PACKAGE PROGRESS^
+	CE:
+CE:
+CS:60c9811f-595a-4025-a820-69e01c6e31b3^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The second lobby designed for Hangar Maintenance Technicians to access all functionalities related to work packages.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Technician Work Package Overview^
+	CE:
+	CS:Param_Aircraft+Description^CONFIGCLIENT^Text^N^N
+		A:Param_Aircraft+Description^Aircraft^
+	CE:
+	CS:Param_AircraftCode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_AircraftCode+Description^Aircraft^
+	CE:
+	CS:Param_WorkPackage+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackage+Description^WorkPackage^
+	CE:
+	CS:Param_WorkPackageBarcode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageBarcode+Description^WorkPackageBarcode^
+	CE:
+	CS:Param_WorkPackageId+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageId+Description^WorkPackageId^
+	CE:
+	CS:Param_WorkPackageNumber+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageNumber+Description^Work Package^
+	CE:
+CE:
+CS:61887bb3-f4f4-42ac-af9f-f9545e263498^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of the non-routines found during the completed tasks. ^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Raised^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Non Routines^
+	CE:
+CE:
+CS:61d0fe82-2e4f-4079-986f-529e3fcb3bcc^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Master Open and Close Panel^
+	CE:
+CE:
+CS:6324861b-54fb-47cf-bbe4-84e85366c693^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of unassigned tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^UNASSIGNED TASKS^
+	CE:
+CE:
+CS:65695c58-fe9d-4b09-81ec-82d5224811cd^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Displays the count of tasks stopped due to shift change (handover assignments) and allows the user to navigate to a detailed list of handover tasks.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Handover^
+	CE:
+CE:
+CS:666178a8-975c-46bd-b4d4-1a55e6c12dc2^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of aircraft in maintenance to depart within 30 minutes^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^scheduled to leave in the next 30 minutes^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^IN-MAINTENANCE AIRCRAFT^
+	CE:
+CE:
+CS:67b534f0-cf7a-484c-ad78-07c261dea6aa^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the task assignments assigned to the user's next shift.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Assigned To Me^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Next Shift^
+	CE:
+CE:
+CS:69f99ca6-4d23-46b8-992f-7df34f9358a3^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Handover Details and Reporting^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Navigate to Handover Details and Reporting page^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^HANDOVER DETAILS AND REPORTING^
+	CE:
+CE:
+CS:6ada4650-01ca-42b3-83aa-e43b4710e1d3^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Fault^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Faults to be Deferred^
+	CE:
+CE:
+CS:6c2a5ca1-b0e3-472e-a96e-fb6189d79390^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the non-routines raised in the current work package.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Raised^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Non Routines^
+	CE:
+CE:
+CS:6dcd6ce1-c42c-4eaf-979c-d6e66ef2bd55^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display parts requested by the Line Supervisor^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Parts^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Part Requests^
+	CE:
+CE:
+CS:6e1fa426-20f9-4611-9960-4c18be2b633c^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^MY ASSIGNMENT\&10\ BOARD ^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Kanban View of all the tasks assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY ASSIGNMENT BOARD ^
+	CE:
+CE:
+CS:782c5415-8f2f-4e7c-82f8-4c40dd22a5ec^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the tasks scheduled to start during the user\2019s current shift. ^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Shift^
+	CE:
+CE:
+CS:79060574-828d-4562-8361-3404c488f3a8^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^On Station^
+	CE:
+CE:
+CS:799cc93a-361a-403c-acef-6626ee40e09d^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Handover Details and Reporting^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Navigate to Handover Details and Reporting page^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^HANDOVER DETAILS AND REPORTING^
+	CE:
+CE:
+CS:7c5e04d1-b1e9-4510-a981-1b808702f7be^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Active Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Active Tasks+DisplayName^Active Tasks^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed Tasks^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^In Work Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Number of tasks that are currently active, in-work, and completed.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Task Count By Status^
+	CE:
+CE:
+CS:825ea048-87c2-455f-807e-ed6ef203631d^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The second lobby designed for Hangar Maintenance Crew Leads to access all functionalities related to work packages.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Crew Lead Work Package Overview^
+	CE:
+	CS:Param_Aircraft+Description^CONFIGCLIENT^Text^N^N
+		A:Param_Aircraft+Description^Aircraft^
+	CE:
+	CS:Param_AircraftCode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_AircraftCode+Description^Aircraft^
+	CE:
+	CS:Param_Barcode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_Barcode+Description^Work package barcode^
+	CE:
+	CS:Param_WorkPackage+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackage+Description^WorkPackage^
+	CE:
+	CS:Param_WorkPackageBarcode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageBarcode+Description^WorkPackage^
+	CE:
+	CS:Param_WorkPackageId+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageId+Description^Work package id ^
+	CE:
+CE:
+CS:86906772-ed86-491e-8b8a-d64aafcb7828^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display resource conflicts in turn work assignments^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in Turn Work Assignments^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^RESOURCE CONFLICTS^
+	CE:
+CE:
+CS:88095027-a9ac-47cf-acd4-1c6f80d10ba1^CONFIGCLIENT^Global Data^N^N
+	CS:076d38ff-e527-4033-986f-db0ff8f01ad1+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:076d38ff-e527-4033-986f-db0ff8f01ad1+LinkTitle^My Station Turns^
+	CE:
+	CS:2d5d0eb3-fc81-4407-8559-16bad4420f39+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:2d5d0eb3-fc81-4407-8559-16bad4420f39+LinkTitle^Assign Technicians to Aircraft Turns^
+	CE:
+	CS:565aaf22-655d-41b1-afcc-56e1499ff302+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:565aaf22-655d-41b1-afcc-56e1499ff302+LinkTitle^Assign Technicians to Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display quick links of Maintenance Supervisor pages^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^QUICK LINKS^
+	CE:
+CE:
+CS:88a66226-afd1-49a3-b5a4-0c5da09dc8cb^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Location+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Location+DisplayName^Location^
+	CE:
+	CS:ColumnMapping+Start Date In Airport Tz+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Start Date In Airport Tz+DisplayName^Start Date ^
+	CE:
+	CS:ColumnMapping+Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Status+DisplayName^Status^
+	CE:
+	CS:ColumnMapping+Work Package Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Barcode+DisplayName^Barcode^
+	CE:
+	CS:ColumnMapping+Work Package Id+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Id+DisplayName^Work Package Id^
+	CE:
+	CS:ColumnMapping+Work Package Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Name+DisplayName^Work Package Name^
+	CE:
+	CS:ColumnMapping+Work Package+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package+DisplayName^Work Package^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the aircraft currently located at the airport hangar.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^AIRCRAFT AT MY AIRPORT HANGAR^
+	CE:
+CE:
+CS:8b4f9361-2f22-40bf-a48f-49b0e4b381d1^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Starting lobby designed for Hangar Maintenance Technicians to access all functionalities.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Hangar Maintenance Technician^
+	CE:
+	CS:Param_AircraftCode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_AircraftCode+Description^Aircraftcode^
+	CE:
+	CS:Param_WorkPackageBarcode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageBarcode+Description^Workpackagebarcode^
+	CE:
+CE:
+CS:8c1fa035-7cff-4ece-b6e2-5871612d8630^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display parts requested by the Hangar Crew Lead^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Parts^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Part Requests^
+	CE:
+CE:
+CS:9016ebb1-e999-4d5b-af09-42e679bc9fe0^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^TASKS^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the tasks assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Tasks^
+	CE:
+CE:
+CS:90249a8a-7ccc-400e-9fe7-37609353c254^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+Task Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Status+DisplayName^TaskStatus^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Progress of the currently active tasks displayed in a pie chart.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Task Progress^
+	CE:
+CE:
+CS:94ef0aae-b8b9-4a6e-bc98-cfed798488ae^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display resource conflicts in turn work assignments^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in Turn Work Assignments^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^RESOURCE CONFLICTS^
+	CE:
+CE:
+CS:95a7f598-0cae-4e44-ae93-9df74489a45c^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^This is the starting Lobby for Maintenance Operation Controller in Aviation/Line Maintenance^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Maintenance Operations Controller Lobby^
+	CE:
+CE:
+CS:9c09eecf-ff04-4689-a865-77b164b82937^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the tasks of the work package that is currently work in progress. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Tasks^
+	CE:
+CE:
+CS:9c1aa177-7a65-4340-a30f-faa27dccc1c2^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^MY SHIFT BOARD^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Kanban View of all the tasks that are ongoing during the current shift of the logged-in supervisor. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^MY SHIFT BOARD^
+	CE:
+CE:
+CS:a79bfd87-3802-4d98-a8a9-b157a6440448^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+Fault Date+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Fault Date+DisplayName^FaultDate^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display deferred and closed faults count within 5 days^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^FAULT DEFFERED/CLOSED AT MY STATION IN THE LAST 5 DAYS^
+	CE:
+	CS:YAxisTitle^CONFIGCLIENT^Text^N^N
+		A:YAxisTitle^Faults Deferred/Closed^
+	CE:
+CE:
+CS:a8fd196f-650c-499b-a4b0-658829f9085a^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of unassigned turns.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^UNASSIGNED TURNS^
+	CE:
+CE:
+CS:a96e013f-7fe8-4471-9ed1-08495fbb29d2^CONFIGCLIENT^Global Data^N^N
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Work^
+	CE:
+CE:
+CS:ab0e40a1-c345-4b7b-b0d2-f2fcb59bb3e8^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Active Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Active Tasks+DisplayName^Active Tasks^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed Tasks^
+	CE:
+	CS:ColumnMapping+Crew Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew Code+DisplayName^Crew Code^
+	CE:
+	CS:ColumnMapping+Crew+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Crew+DisplayName^Crew^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^In Work Tasks^
+	CE:
+	CS:ColumnMapping+Total Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Total Tasks+DisplayName^Total Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Summary of the tasks assigned to the crew of the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^CREW TASKS SUMMARY^
+	CE:
+CE:
+CS:adb42759-53b5-4533-a84f-d4636d01ae13^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the tasks assigned to the user's current shift.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in My Shift^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Assigned To Me Tasks^
+	CE:
+CE:
+CS:adf84855-1030-4fbc-81c8-1b1c27b3861b^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Handover Details and Reporting^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Navigate to Handover Details and Reporting page^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^HANDOVER DETAILS AND REPORTING^
+	CE:
+CE:
+CS:b3079ff5-125d-4293-aba4-3c36bc273335^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+TaskStatus+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+TaskStatus+DisplayName^TaskStatus^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Progress of the currently active tasks displayed in a pie chart.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Task Progress^
+	CE:
+CE:
+CS:b612488e-7715-4772-890e-8a46840c2bdd^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display resource conflicts in task work assignments^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^in Task Work Assignments^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^RESOURCE CONFLICTS^
+	CE:
+CE:
+CS:bd8a2528-9532-41bd-9596-5048bd9e8a7d^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Raise Non Routine^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Navigate to the activity of raising a non-routine.^
+	CE:
+CE:
+CS:bf21dec8-0334-4923-995d-092b80a6ee30^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display count of pending deferral requests^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^requests^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^PENDING DEFERRAL^
+	CE:
+CE:
+CS:c1c6aede-d6cd-41da-bf7b-c7767cc2deea^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Location+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Location+DisplayName^Location^
+	CE:
+	CS:ColumnMapping+Start Date In Airport Tz+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Start Date In Airport Tz+DisplayName^Start Date^
+	CE:
+	CS:ColumnMapping+Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Status+DisplayName^Status^
+	CE:
+	CS:ColumnMapping+Work Package Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Barcode+DisplayName^Barcode^
+	CE:
+	CS:ColumnMapping+Work Package Id+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Id+DisplayName^Work Package Id^
+	CE:
+	CS:ColumnMapping+Work Package Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Name+DisplayName^Work Package Name^
+	CE:
+	CS:ColumnMapping+Work Package+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package+DisplayName^Work Package^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of all the aircraft currently located at the airport hangar.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^AIRCRAFT AT MY AIRPORT HANGAR^
+	CE:
+CE:
+CS:c34b39a9-2a38-4466-9ba5-62f97e013836^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Starting lobby designed for Hangar Maintenance Supervisors to access all functionalities.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Hangar Maintenance Supervisor^
+	CE:
+CE:
+CS:c444c92a-6745-482a-b1df-5f3f87d892e7^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+Faultdate+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Faultdate+DisplayName^Faultdate^
+	CE:
+	CS:ColumnMapping+Type+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Type+DisplayName^Type^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display deferred and closed faults count within 5 days^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^FAULT DEFFERED/CLOSED ON STATION FOR PAST 5 DAYS^
+	CE:
+	CS:YAxisTitle^CONFIGCLIENT^Text^N^N
+		A:YAxisTitle^Faults Deferred/Closed^
+	CE:
+CE:
+CS:c819df99-dbb2-418e-ae13-bdbbd6dc45ba^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^On Station^
+	CE:
+CE:
+CS:c894acb6-caa1-4c76-883f-907712bc7097^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^The second lobby designed for Hangar Maintenance Supervisors to access all functionalities related to work packages.^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^Supervisor Work Package Overview^
+	CE:
+	CS:Param_Aircraft+Description^CONFIGCLIENT^Text^N^N
+		A:Param_Aircraft+Description^Aircraft^
+	CE:
+	CS:Param_AircraftCode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_AircraftCode+Description^Aircraft^
+	CE:
+	CS:Param_COMPANY_ID+Description^CONFIGCLIENT^Text^N^N
+		A:Param_COMPANY_ID+Description^Company_id^
+	CE:
+	CS:Param_REVIEW_PERIOD+Description^CONFIGCLIENT^Text^N^N
+		A:Param_REVIEW_PERIOD+Description^Review_period^
+	CE:
+	CS:Param_WorkPackage+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackage+Description^Workpackage^
+	CE:
+	CS:Param_WorkPackageBarcode+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageBarcode+Description^Workpackagebarcode^
+	CE:
+	CS:Param_WorkPackageId+Description^CONFIGCLIENT^Text^N^N
+		A:Param_WorkPackageId+Description^Workpackageid^
+	CE:
+CE:
+CS:cba0ae78-adb8-49bf-815e-cf30368ecf5e^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Tasks^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Master Open and Close Panel^
+	CE:
+CE:
+CS:cdea1f6e-cd83-4206-bef0-b4fc49386188^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display the count of available technicians in the future within the given time parameter^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Display the count of available technicians in the future within the given time parameter^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^AVAILABLE TECHNICIANS^
+	CE:
+CE:
+CS:d222b6cd-42e3-4f77-8b06-a891a635b6d4^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Lobby page designed for Maintenance Supervisors to highlight key information ^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^LINE WORK MANAGEMENT^
+	CE:
+	CS:Param_duration+Description^CONFIGCLIENT^Text^N^N
+		A:Param_duration+Description^Availability Check (In Minutes)^
+	CE:
+CE:
+CS:d3c165e5-d2fe-4534-adee-4054b434b9bf^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Displays the count of assignments stopped due to shift change (handover assignments) and allows the user to navigate to a detailed list of handover assignments.^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Assignments^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^        Handover^
+	CE:
+CE:
+CS:dd377e16-e3a5-4206-b47a-a3d32230182e^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Count+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Count+DisplayName^Count^
+	CE:
+	CS:ColumnMapping+Task Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Task Status+DisplayName^TaskStatus^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Progress of the currently active tasks displayed in a pie chart. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Task Progress^
+	CE:
+CE:
+CS:dda65ebe-6890-4979-b7be-5337829222b1^CONFIGCLIENT^Global Data^N^N
+	CS:54d911a2-3f87-4864-9365-96b555b917ba+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:54d911a2-3f87-4864-9365-96b555b917ba+LinkTitle^My Station Turns^
+	CE:
+	CS:8f7b2c42-d0dc-4718-a3e3-1d44a711a89f+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:8f7b2c42-d0dc-4718-a3e3-1d44a711a89f+LinkTitle^Aircraft Departing in Next Hour^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display the summary of Maintenance Supervisor information^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^SUMMARY^
+	CE:
+	CS:ad274074-b18e-49d4-9aaa-dcd355ed8bf5+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:ad274074-b18e-49d4-9aaa-dcd355ed8bf5+LinkTitle^Aircraft Arriving in Next Hour^
+	CE:
+	CS:ae8e3ae4-3c73-4358-8576-461eeb9de030+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:ae8e3ae4-3c73-4358-8576-461eeb9de030+LinkTitle^Tasks Assigned to Resource Group^
+	CE:
+	CS:afb9ff11-216f-4c47-ba86-40f7b4e2e99e+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:afb9ff11-216f-4c47-ba86-40f7b4e2e99e+LinkTitle^Turns Assigned to Resource Group^
+	CE:
+	CS:dfce37b7-d049-41da-8d1d-525d87fafe3b+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:dfce37b7-d049-41da-8d1d-525d87fafe3b+LinkTitle^In-Maintenance Aircraft^
+	CE:
+CE:
+CS:e03056c5-d118-418d-a94c-491d92c6f688^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Active Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Active Tasks+DisplayName^Active Tasks^
+	CE:
+	CS:ColumnMapping+Completed Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Completed Tasks+DisplayName^Completed Tasks^
+	CE:
+	CS:ColumnMapping+In Work Tasks+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+In Work Tasks+DisplayName^In Work Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Number of tasks that are currently active, in-work, and completed.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Task Count By Status^
+	CE:
+CE:
+CS:e0e75ca3-7cfe-4ccf-a15c-7abe08dca219^CONFIGCLIENT^Global Data^N^N
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Aircraft^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^In Maintenance^
+	CE:
+CE:
+CS:e3347045-e10c-4bfe-981f-319d79d041fa^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^Raise Non\&10\Routine^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^Raise NR^
+	CE:
+CE:
+CS:e35f17ed-d382-4337-8205-a32d24b4ca55^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display parts requested by the Hangar Technician^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Parts^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Part Requests^
+	CE:
+CE:
+CS:e44e7304-a4ed-4fa9-8bfb-535f02e4bfec^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Location+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Location+DisplayName^Location^
+	CE:
+	CS:ColumnMapping+Start Date In Airport Tz+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Start Date In Airport Tz+DisplayName^Start Date^
+	CE:
+	CS:ColumnMapping+Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Status+DisplayName^Status^
+	CE:
+	CS:ColumnMapping+Work Package Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Barcode+DisplayName^Work Package Barcode^
+	CE:
+	CS:ColumnMapping+Work Package Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Name+DisplayName^Work Package Name^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of the Hangar Maintenance work package that is currently work in progress. ^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^HANGAR MAINTENANCE WORK PACKAGE^
+	CE:
+CE:
+CS:e4e2aa4d-3a0c-4bea-8d70-779439eaeae0^CONFIGCLIENT^Global Data^N^N
+	CS:0793671c-ddfc-4365-98e3-e6bfb95fcce0+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:0793671c-ddfc-4365-98e3-e6bfb95fcce0+LinkTitle^My Station Turns^
+	CE:
+	CS:5882aa29-3074-4296-886e-beac125bafe3+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:5882aa29-3074-4296-886e-beac125bafe3+LinkTitle^Assign Technicians to Aircraft Turns^
+	CE:
+	CS:6c47d4c6-49ff-4678-baeb-e59c4989df3b+LinkTitle^CONFIGCLIENT^Text^N^N
+		A:6c47d4c6-49ff-4678-baeb-e59c4989df3b+LinkTitle^Assign Technicians to Tasks^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display quick links of Maintenance Supervisor pages^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^QUICK LINKS^
+	CE:
+CE:
+CS:e777321c-bfb1-41a3-8f5b-7cb2a13ca76a^CONFIGCLIENT^Global Data^N^N
+	CS:ColumnMapping+Aircraft Code+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft Code+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Aircraft+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Aircraft+DisplayName^Aircraft^
+	CE:
+	CS:ColumnMapping+Location+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Location+DisplayName^Location^
+	CE:
+	CS:ColumnMapping+Status+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Status+DisplayName^Status^
+	CE:
+	CS:ColumnMapping+Work Package Barcode+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Barcode+DisplayName^Work Package Barcode^
+	CE:
+	CS:ColumnMapping+Work Package Name+DisplayName^CONFIGCLIENT^Text^N^N
+		A:ColumnMapping+Work Package Name+DisplayName^Work Package Name^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Details of the Hangar Maintenance work package that is currently work in progress.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^HANGAR MAINTENANCE WORK PACKAGE^
+	CE:
+CE:
+CS:f36ae1f2-7f6a-4b74-86d1-1adbd7087216^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Lobby page designed for Maintenance Maintenance Controllers^
+	CE:
+	CS:PageTitle^CONFIGCLIENT^Text^N^N
+		A:PageTitle^FLUID CONSUMPTION LOBBY^
+	CE:
+CE:
+CS:fc1a1229-d79c-46a1-a514-54880743c1d0^CONFIGCLIENT^Global Data^N^N
+	CS:BodyText^CONFIGCLIENT^Text^N^N
+		A:BodyText^MY ASSIGNMENT \&10\BOARD^
+	CE:
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Kanban View of all the task assignments assigned to the user.^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My_Assignment_Navigation^
+	CE:
+CE:
+CS:fdb5dd42-b47b-4973-84c1-2c90e0e3c2bc^CONFIGCLIENT^Global Data^N^N
+	CS:DescriptiveText^CONFIGCLIENT^Text^N^N
+		A:DescriptiveText^Display parts requested by the Line Technician^
+	CE:
+	CS:Footer^CONFIGCLIENT^Text^N^N
+		A:Footer^Parts^
+	CE:
+	CS:Title^CONFIGCLIENT^Text^N^N
+		A:Title^My Part Requests^
+	CE:
+CE:

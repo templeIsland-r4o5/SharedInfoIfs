@@ -1,0 +1,104 @@
+--------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+-- 250704  SSIVLK  AD-18641, Created
+-- 250815  CPEILK  SCDEV-56404, Added return source Ref columns to exclude attributes section.
+-------------------------------------------------------------------------------------
+
+fragment AvTurnReturn;
+component FLMEXE;
+layer Core;
+description "Put some useful description here ...";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment JtTaskReturn;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+list ReturnLineList clone JtTaskReturnList {
+   orderby = TaskSeq;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field TaskSeq {
+      columnexclude = [true];
+   }
+   field Barcode {
+      label = "Task ID";
+   }
+   field TaskName {
+      label = "Task Name";
+      size = Large;
+      multiline = true;
+   }
+   field InventoryPartTaskReturnLovRef {
+      label = "Part Number";
+   }
+   field SerialNo {
+      label = "Serial Number";
+   }
+   field LotBatchNoRef {
+      label = "Batch Number";
+   }
+   field RemovalReasonRef.RemovalReasonDesc {
+      label = "Removal Reason";
+   }
+   lov PartTagReportArchiveRef with AvPartTagReportSelector {
+      label = "Part Tag Report";
+      details = "page/FlmPartTagReportArchive/PartTags?$filter=ResultKey eq $[LatestPartTagResultKey]";
+   }
+   field PartAvailabilityControl {
+      visible = [IsReturnCompleted];
+   }
+   field PartSerialCatalogRef.OperationalCondition {
+      visible = [RemovalTaskPartRef.RemovedUser != null];
+   }
+   field PartSerialCatalogRef.Objstate {
+      label = "Current Location";
+      visible = [IsReturnCompleted];
+   }
+
+   exclude ConfigurationIdRef, ConditionCodeRef, CondCodeDescription, OwnerName, DimensionQuality, InventoryPartRef.TypeDesignation, InventoryValue, TotalValue, AcquisitionValue, PrintTagReportCommand;
+
+   fieldorder = Barcode, TaskName, TaskReturnLineSeq, PartTagReportArchiveRef, SiteRef, InventoryPartTaskReturnLovRef, PartDescription, SerialNo, LotBatchNoRef, RemovalReasonRef.RemovalReasonDesc, PartSerialCatalogRef.OperationalCondition, PartSerialCatalogRef.Objstate, PartAvailabilityControl, PartOwnership, Owner, QtyToReturn, QuantityToReturn, QtyReturned, UnitOfMeasure, MtrlOrderNoRef, MtrlOrderLineNoRef, RepairPart;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity JtTaskReturn {
+   from = "Return_Line_Wp_Uiv";
+   keys = AircraftWpId, TaskSeq, TaskReturnLineSeq {
+      where = "AIRCRAFT_WP_ID = :AircraftWPId";
+   }
+
+   exclude attributes = ObjectState, ReturnSourceRef1, ReturnSourceRef2, ReturnSourceRef3, ReturnSourceRef4, ReturnSourceRefType;
+   attribute TaskSeq Number;
+   attribute AircraftWpId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute TaskName Text;
+   attribute Barcode Text;
+   attribute RemovalReasonCode Text;
+   attribute PartAvailabilityControl Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Inv_Part_Avail_Ctrl(serial_no,site,part_no,lot_batch_no)";
+   }
+   attribute LatestPartTagResultKey Number {
+      fetch = "Av_Part_Tag_Report_API.Get_Latest_Part_Tag_Result_Key(task_return_line_seq)";
+   }
+   attribute IsReturnCompleted Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Util_API.Is_Return_Completed(task_return_line_seq)";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   reference PartTagReportArchiveRef(LatestPartTagResultKey) to AvPartTagReport(ResultKey);
+   reference RemovalTaskPartRef(TaskReturnLineSeq) to AvExeTaskPart(TaskReturnLineSeq);
+   reference RemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+}

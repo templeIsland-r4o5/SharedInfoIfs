@@ -1,0 +1,22 @@
+<Text>
+    <Author>IFS Application owner</Author>
+    <LastModified>11/20/24, 10:28:51 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Raise_Fault</Name>
+    <ID>0a5880da-02a2-4b49-a992-8687386ac0be</ID>
+    <WebUrl>assistant/FlmAircraftTurnsDetails/RaiseFaultAssistant?$action=SetDefaultValues{DefSource:'LOBBY'}</WebUrl>
+    <BodyText>Raise Fault</BodyText>
+    <FontWeight>Normal</FontWeight>
+    <FontStyle>Normal</FontStyle>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

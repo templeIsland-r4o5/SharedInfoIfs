@@ -1,0 +1,155 @@
+client FlmPartTagReportArchive;
+component FLMEXE;
+layer Core;
+projection FlmPartTagReportArchiveHandling;
+description "Client for Part Tag Report Archive page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry HangarPartTagRepNav parent FlmexeNavigator.HangarMaintenanceExecution at index 2000 {
+      label = "Part Tag Report Archive";
+      page PartTags;
+   }
+   entry LinePartTagRepNav parent MxCoreNavigator.PartControllerNav at index 120 {
+      label = "Part Tag Report Archive";
+      page PartTags;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page PartTags using AvPartTagReportSet {
+   label = "Part Tag Report Archive";
+   list ParTagReportList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command ViewPartTagCommand for AvPartTagReport {
+   label = "View Part Tag";
+   mode = SingleRecord;
+   variable PrintJobInfo Structure(PrintJobStructure);
+   variable PrintId Number;
+   variable PdfId Text;
+   execute {
+      call GetPartTagPrintJobId(ResultKey) into PrintJobInfo;
+      set PrintId = PrintJobInfo.PrintId;
+      set PdfId = PrintJobInfo.Id;
+      if[PrintId = null] {
+         alert("PDF not found");
+      }
+      else {
+         download "ArchiveDocumentSet(ResultKey=$[ResultKey],Id='${PdfId}')/Pdf";
+      }
+   }
+}
+
+command PrintReportCommand for AvPartTagReport {
+   label = "Print";
+   mode = SingleRecord;
+   execute {
+      printdialog ResultKey;
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list ParTagReportList for AvPartTagReport {
+   orderby = PartTagSeq desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ResultKey {
+      label = "Part Tag Report";
+      size = Small;
+   }
+   field ReportDescription {
+      size = Large;
+   }
+   field ArchiveRef.Printed {
+      size = Small;
+   }
+   field JtTaskReturnRef.PartNo {
+      label = "Part Number";
+   }
+   field JtTaskReturnRef.SerialNo {
+      label = "Serial Number";
+   }
+   field JtTaskReturnRef.LotBatchNo {
+      label = "Batch Number";
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Removed Task ID";
+      size = Small;
+   }
+   field AvExeTaskRef.Description {
+      label = "Removed Task Description";
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package ID";
+      size = Small;
+   }
+   field Aircraft {
+      label = "Aircraft";
+   }
+   field AvAircraftWorkPackageRef.LocationCode {
+      label = "Work Location";
+      size = Medium;
+   }
+   field ArchiveRef.ExecTime {
+      label = "Created Date";
+   }
+   field ArchiveRef.Sender {
+      label = "Created By";
+      contactwidget {
+         enabled = [true];
+         source = User;
+      }
+   }
+   field Remark {
+      label = "Comments/Remarks";
+      size = Large;
+   }
+
+   command ViewPartTagCommand;
+   command PrintReportCommand;
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

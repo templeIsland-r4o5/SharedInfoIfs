@@ -1,0 +1,62 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Hangar Maintenance</Keywords>
+    <LastModified>8/21/25, 10:55:48 AM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HM_CREW_LEAD_ASSIGNMENTS_DS</Name>
+    <ID>75105eac-3395-4dde-9d3c-d467da18bcac</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Barcode</Column>
+            <Name>Barcode</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskName</Column>
+            <Name>Task Name</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Remark</Column>
+            <Name>Assignment Role</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskStatus</Column>
+            <Name>Task Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>MaterialAvailability</Column>
+            <Name>Material Availability</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>AircraftCode</Column>
+            <Name>Aircraft Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>SchedStartAirportTimezone</Column>
+            <Name>Sched Start Airport Timezone</Name>
+            <DataType>DateTime</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>IsSensExist</Column>
+            <Name>Is Sens Exist</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <EntitySet>UserTaskAssignmentsQuerySet</EntitySet>
+    <EntityType>UserTaskAssignmentsQuery</EntityType>
+    <OrderBy>SchedStartAirportTimezone</OrderBy>
+</ProjectionDataSource>

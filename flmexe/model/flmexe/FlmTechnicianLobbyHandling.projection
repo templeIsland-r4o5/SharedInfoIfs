@@ -1,0 +1,53 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  -----------------------------------------------------------------------------------
+--  240417  WAISLK  AD-12567, Created and added AvFlightSet, MyWorkSet and MyWork query.
+-------------------------------------------------------------------------------------------------------
+projection FlmTechnicianLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Use this API to get data for technician lobby";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmAircraftTurnsLobbyData;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFlightSet for AvFlight;
+entityset MyWorkSet for MyWork;
+entityset MyPartRequestSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query MyWork {
+   from = "jt_task_resource_demand_av_uiv";
+   lu = JtTaskResource;
+   where = "airport_id IN (SELECT au.airport_id
+                         FROM av_airport_for_user au
+                         WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User())) AND assigned_resource_id=Fnd_Session_API.Get_Fnd_User()";
+
+   attribute TaskCount  Number {
+      fetch = "count(1)";
+   }
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

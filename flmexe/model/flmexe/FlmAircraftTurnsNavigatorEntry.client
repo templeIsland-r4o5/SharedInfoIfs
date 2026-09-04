@@ -1,0 +1,62 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  221108  rosdlk  AD-8697, Created FlmAircraftTurnsNavigatorEntry to keep Technician's nav entries separately.
+---------------------------------------------------------------------------------
+
+client FlmAircraftTurnsNavigatorEntry;
+component FLMEXE;
+layer Core;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry MyAircraftTurnsCardEntry parent FlmexeNavigator.FlmNav at index 100 {
+   label = "My Aircraft Turns";
+   internal "page/FlmMyAircraftTurns/MyAircraftTurnsCardPage";
+}
+
+entry FlmRaiseFaultNav parent FlmexeNavigator.FlmNav at index 300 {
+   label = "Raise Fault";
+   internal "assistant/FlmAircraftTurnsDetails/RaiseFaultAssistant?$action=SetDefaultValues{DefSource:'LOBBY'}";
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

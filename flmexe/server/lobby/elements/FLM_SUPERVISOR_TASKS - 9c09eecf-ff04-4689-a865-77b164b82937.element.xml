@@ -1,0 +1,27 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <DescriptiveText>Details of all the tasks of the work package that is currently work in progress. </DescriptiveText>
+    <LastModified>2/18/25, 3:56:09 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Tasks</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_SUPERVISOR_TASKS</Name>
+    <ID>9c09eecf-ff04-4689-a865-77b164b82937</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?$filter=Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$ and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work' )&amp;initcontext=WpBarcode :'$WorkPackageBarcode$'</WebUrl>    
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>Tasks</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

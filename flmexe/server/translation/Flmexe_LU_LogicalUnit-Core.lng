@@ -1,0 +1,16 @@
+-------------------------------------------------------
+File Type: IFS Foundation Language File
+Type version: 10.00
+-------------------------------------------------------
+Module: FLMEXE
+Layer: Core
+Main Type: LU
+Sub Type: Logical Unit
+Content: 
+-------------------------------------------------------
+CS:FlmexeInstallation^LU^Logical Unit^N^N
+	A:Prompt^Flmexe Installation^
+CE:
+CS:FlmexeUtil^LU^Logical Unit^N^N
+	A:Prompt^Flmexe Util^
+CE:

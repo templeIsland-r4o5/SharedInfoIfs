@@ -1,0 +1,25 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Navigate to the activity of raising a non-routine.</DescriptiveText>
+    <LastModified>11/28/24, 11:28:09 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>5</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>Raise_Non_Routine</Name>
+    <ID>bd8a2528-9532-41bd-9596-5048bd9e8a7d</ID>
+    <WebUrl>assistant/FlmTaskDetail/RaiseFaultAssistant?$action=SetDefaultValues{DefSource:'HMLOBBY',DefWorkPackageId:'$WorkPackageId$'}</WebUrl>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>Raise Non Routine</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

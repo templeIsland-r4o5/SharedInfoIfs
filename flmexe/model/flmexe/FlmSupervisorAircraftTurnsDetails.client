@@ -1,0 +1,402 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250108  SSIVLK  AD-16258, Added Lov filter for Assigned To column
+--  250101  SILILK  AD-16105, Add the AircraftRegCode field for tooltip association.
+--  241227  SILILK  AD-16105, Add the tooltip for Grantt View.
+--  241121  DUWJLK  AD-15253, Made neccessaray changes to replace CompetencyId from resourceSeq.
+--  241021  WIJCLK  AD-14459, Add new fields called Work Package Scheduled Start,Work Package Scheduled End,Duration and change the Work Package field name to the Work Package(WP) and change the visibility of the departure time for the Turn when the outbound Flight is at Cancel status.
+--  240104  PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201  PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  231127  PSUALK  AD-9572, Modified aircraft to pick aircraft registration code and the assembly type name with filter.
+--  230710  majslk  AD-9585, Modified code to support time zone changes
+--  220103  vifelk  AD-4114, Added orderby to AvFlightDetailsSelector.
+--  211216  vifelk  AD-4114, Modified the AvResourceGantt.
+--  211127  Rjoslk  AD-4120, Added resource assignment status.
+--  211115  vifelk  AD-4114, Added orderby to the AvResourceGantt.
+--  211104  vifelk  AD-4114, Created MyAircraftTurnsCardPage page.
+-----------------------------------------------------------------------------
+
+client FlmSupervisorAircraftTurnsDetails;
+component FLMEXE;
+layer Core;
+projection FlmSupervisorAircraftTurnsDetailsHandling;
+description "This includes the definition of Turn Work Assignments";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry WorkMngNavEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2150 {
+   label = "Turn Work Assignments";
+   page TurnWorkAssignmentsPage;
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page TurnWorkAssignmentsPage using MyAircraftTurnQuerySet {
+   label = "Turn Work Assignments";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   selector AvFlightDetailsSelector;
+   group AvFlightWorkGroup bind AvFlightDetailsSelector;
+   list ResourceList(ResourceAssignmentSet);
+   ganttchart AvResourceGantt(ResourcesArray) using ResourceGanttSet;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+selector AvFlightDetailsSelector for MyAircraftTurnQuery {
+   label = "${AvAirportRef.IataCode} - ${AircraftRef.RegCode} - (${AircraftTypeName})";
+   orderby = ResourceAssignmentStatus asc;
+   field TurnDisplayName;
+   badge ResAssignDisplayStatus {
+      showlabel = false;
+      emphasis Complementary9 = [ResourceAssignmentStatus = 4];
+      emphasis Warning = [ResourceAssignmentStatus = 3];
+      emphasis Complementary1 = [ResourceAssignmentStatus = 2];
+      emphasis False = [ResourceAssignmentStatus = 1];
+   }
+}
+
+selector AirportForUserSelector for ResourceGroupUsers {
+   label = "";
+   static PersonId;
+   static Description;
+}
+
+selector ResourceSelector for ResourceLov {
+   label = "";
+   static ResourceId;
+   static Description;
+}
+---------------------------------- GROUPS -----------------------------------
+group AvFlightWorkGroup for MyAircraftTurnQuery {
+   label = "Aircraft Turn Details";
+   static Aircraft;
+   field AvAirportRef.IataCode {
+      label = "Airport";
+   }
+   field FlightArrival {
+      label = "Arrival Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field FlightDeparture {
+      label = "Departure Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+   }
+   field AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+   }
+   field WorkTypes {
+      label = "Work Type";
+      size = Medium;
+      multiline = true;
+   }
+   field LocationCodeRef.LocationCode {
+      label = "Maintenance Location";
+   }
+   field ConvertedDuration {
+      label = "Duration";
+      size = Medium;
+   }
+   field AvAircraftWorkPackageRef.SchedStartDateTime {
+      label = "Work Package Scheduled Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+
+   field AvAircraftWorkPackageRef.SchedEndDateTime {
+      label = "Work Package Scheduled End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field NoOfAssignedTasks {
+      size = Small;
+      visible = [false];
+   }
+   field TotalHours {
+      size = Small;
+      visible = [false];
+   }
+   static AircraftTypeName {
+      label = "Assembly Type Name";
+      visible = [false];
+   }
+   static AircraftRef.RegCode {
+      label = "Aircraft Registration Code";
+      visible = [false];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list ResourceList for AvTurnLabourAssignment {
+   label = "Work Assignments";
+
+   lov ResourceLovRef with ResourceSelector {
+      label = "Required Skill";
+      editable = [true];
+      size = Large;
+      hidekey = [true];
+      searchable = true;
+      search = ResourceLovRef.ResourceId;
+      description = ResourceLovRef.ResourceId;
+      required = [true];
+
+      validate command {
+         execute {
+            call GetDefaultTurnAssignTimeRange(FlightId) into DefTimeRange;
+            set Duration = DefTimeRange.Duration;
+            set StartTime = DefTimeRange.StartDate;
+            set EndTime = DefTimeRange.EndDate;
+            set DurationHHMM = DefTimeRange.DurationHhmm;
+
+         }
+      }
+   }
+   field DurationHHMM {
+      label = "Duration (HH:MM)";
+      validate command {
+         execute {
+            call ValidateDuration(DurationHHMM) into Validate;
+            if[Validate = false] {
+               set DurationHHMM = "00:00";
+               error("Duration must be entered in the hh:mm format.");
+            }
+            call GetTurnAssignmentTimeRange(FlightId, DurationHHMM) into TimeRange;
+            set StartTime = TimeRange.StartDate;
+            set EndTime = TimeRange.EndDate;
+            set Duration = TimeRange.Duration;
+
+         }
+      }
+   }
+   lov AirportUserRef with AirportForUserSelector {
+      label = "Assigned To";
+      searchable = true;
+      search = AirportUserRef.PersonId;
+      description = AirportUserRef.Description;
+      hidekey = [true];
+      size = Large;
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = AssignedUser;
+      }
+      validate command {
+         execute {
+            if [AssignedUser != null] {
+               if [StartTime = null] {
+                  call GetTurnAssignmentTimeRange(FlightId, DurationHHMM) into TimeRange;
+                  set StartTime = TimeRange.StartDate;
+                  set EndTime = TimeRange.EndDate;
+               }
+            }
+            if [AssignedUser != null and StartTime != null and EndTime != null] {
+               call GetResourceAvailability(TurnLabourAssignmentId, AssignedUser, Site, StartTime, EndTime, AirportUserRef.Company) into Avail;
+               if[Avail = 0] {
+                  confirm("Resource is not available for the selected time period. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+               if[Avail = -1] {
+                  confirm("The Assignment conflicted with an existing assignment. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field StartTime {
+      displaytimezone = AvFlightRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      validate command {
+         execute {
+            if[EndTime != null] {
+               call GetTimeDifference(StartTime, EndTime) into TimeDiff1;
+               set Duration = TimeDiff1.Duration;
+               set DurationHHMM = TimeDiff1.DurationHhmm;
+            }
+            if[AssignedUser != null] {
+               call GetResourceAvailability(TurnLabourAssignmentId, AssignedUser, Site, StartTime, EndTime, AirportUserRef.Company) into Avail1;
+               if[Avail1 = 0] {
+                  confirm("Resource is not available for the selected time period. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+               if[Avail1 = -1] {
+                  confirm("The Assignment conflicted with an existing assignment. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field EndTime {
+      displaytimezone = AvFlightRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      validate command {
+         execute {
+            if [StartTime != null] {
+               call GetTimeDifference(StartTime, EndTime) into TimeDiff2;
+               set Duration = TimeDiff2.Duration;
+               set DurationHHMM = TimeDiff2.DurationHhmm;
+            }
+            if[AssignedUser != null] {
+               call GetResourceAvailability(TurnLabourAssignmentId, AssignedUser, Site, StartTime, EndTime, AirportUserRef.Company) into Available;
+               if[Available = 0] {
+                  confirm("Resource is not available for the selected time period. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+               if[Available = -1] {
+                  confirm("The Assignment conflicted with an existing assignment. Do you wish to proceed?") {
+                     when OK {
+                        exit;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+ganttchart AvResourceGantt for ResourceGantt {
+   label = "Resources";
+
+   orderby = RowRank asc;
+   rowheight = medium;
+   zoomlevels(Month, Week, Day, Hour, Minute) {
+      defaults = Day;
+   }
+   timerange = GetTimeRange(FlightId);
+   datagrid {
+      ganttcolumn ResourceId {
+         label = "Resource ID";
+      }
+      ganttcolumn Description {
+         label = "Description";
+      }
+      ganttcolumn ResourceSkillId {
+         label = "Skills";
+      }
+      ganttcolumn IsAvailable {
+         label = "Resource Availability";
+      }
+   }
+   ganttchartitem AvResourceShiftItem(ResourceShiftArray);
+}
+
+ganttchartitem AvResourceShiftItem for ResourceGanttAssign {
+   rowid = "${GanttRow}";
+   itemid = "${TurnLabourAssignmentId}";
+   tooltip {
+      field AircraftRegCode {
+         label = "Aircraft";
+      }
+      field StartTime {
+         label = "Start Time";
+      }
+      field EndTime {
+         label = "End Time";
+      }
+   }
+   starttime StartTime;
+   endtime EndTime;
+   ganttfield GanttItemDescription {
+      visible = [Type != "schedule"];
+   }
+   ganttfield AircraftRegCode {
+      visible = [false];
+   }
+   exclusive = [true];
+   move command {
+      enabled = [Type != "schedule" and(FlightId = parent.FlightId)];
+      execute {
+         call AssignUserToSkill(FlightId, ResourceSeq, StartTime, EndTime, GanttRow) into AssignedUser;
+         success("The skill assigned to ${AssignedUser}");
+      }
+   }
+   ganttchartitemstyle ScheduledTurnGanttStyle = [Type = "schedule"];
+   ganttchartitemstyle UnassignedSkillsGanttStyle = [Type = "resource_id"];
+   ganttchartitemstyle ResourceInsideTurnGanttStyle = [Type = "resource" and(FlightId = parent.FlightId)];
+   ganttchartitemstyle ResourceOutsideTurnGanttStyle = [Type = "resource" and(FlightId != parent.FlightId)];
+}
+
+ganttchartitemstyle ScheduledTurnGanttStyle {
+   label = "Shift";
+   emphasis = DatavizBlue9;
+   shape = bracket;
+   toggle = [true];
+}
+
+ganttchartitemstyle UnassignedSkillsGanttStyle {
+   label = "Shift";
+   emphasis = DatavizRed9;
+   shape = default;
+   toggle = [true];
+}
+
+ganttchartitemstyle ResourceInsideTurnGanttStyle {
+   label = "Shift";
+   emphasis = DatavizGreen9;
+   shape = default;
+   toggle = [true];
+}
+
+ganttchartitemstyle ResourceOutsideTurnGanttStyle {
+   label = "Shift";
+   emphasis = DatavizBlue6;
+   shape = default;
+   toggle = [true];
+}
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

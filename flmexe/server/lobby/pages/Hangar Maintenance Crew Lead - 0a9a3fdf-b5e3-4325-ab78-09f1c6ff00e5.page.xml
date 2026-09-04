@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+  <DescriptiveText>Starting lobby designed for Hangar Maintenance Crew Leads to access all functionalities.</DescriptiveText>
+  <LastModified>2025-08-20-10.15.24</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="88a66226-afd1-49a3-b5a4-0c5da09dc8cb" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="5851ea24-cd26-4941-a7ab-70395c0fd783" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="8c1fa035-7cff-4ece-b6e2-5871612d8630" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="0a61c71d-f451-4ab9-9afa-1014aebe17b0" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters/>
+  <PageTitle>Hangar Maintenance Crew Lead</PageTitle>
+  <PageId>0a9a3fdf-b5e3-4325-ab78-09f1c6ff00e5</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

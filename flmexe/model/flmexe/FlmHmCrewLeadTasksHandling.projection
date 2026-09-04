@@ -1,0 +1,85 @@
+projection FlmHmCrewLeadTasksHandling;
+component FLMEXE;
+layer Core;
+description "Manage Task Assignments for Hangar Maintenance Crew Lead";
+category Users;
+include fragment FlmTasks;
+include fragment FlmTaskAssignments;
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+include fragment FlmHandoverDetails;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvExeTask {
+   where = "(Av_Aircraft_Work_Package_API.Get_Is_Heavy_Maintenance(aircraft_wp_id)) = 1 AND (Av_Maintenance_Location_API.Get_Airport_Id(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))) IN (SELECT au.airport_id
+        FROM   av_airport_for_user au
+        WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User()))";
+   attribute IsNonRoutine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+}
+
+@Override
+entity AvFault {
+   timestamptzref = "server";
+   attribute HmContractId Text {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Id(task_seq)";
+   }
+   attribute HmContractLineNo Number {
+      fetch = "Av_Exe_Task_API.Get_Hm_Contract_Line_No(task_seq)";
+   }
+}
+------------------------------- ENUMERATIONS --------------------------------
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetDefaultSearchContext Structure(PageSearchContextStructure);
+-------------------------------- STRUCTURES ---------------------------------
+structure PageSearchContextStructure {
+   attribute Shift Enumeration(ShiftType);
+}
+structure TaskAssignmentsStructure {
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute AircraftId Number;
+   attribute Aircraft Text;
+}
+
+structure TaskSupervisionStructure {
+   timestamptzref = "site(Site)";
+
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute SkillDemand Text;
+   attribute UserResource Text;
+   attribute Remark Text;
+   attribute ExecutionInstanceStatus Text;
+   attribute SchedStart Timestamp;
+   attribute SchedEnd Timestamp;
+   attribute LaborScheduledHours Text;
+   attribute AssignmentStart Timestamp;
+   attribute AssignmentFinish Timestamp;
+   attribute IncompletionCause Text;
+   attribute ActionTaken Text;
+   attribute ActualHours Text;
+   attribute ExecutionInstanceSeq Number;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute Site Text;
+
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,36 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmLineWorkManagementLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  240509  AD-12570, Created and Added Available_Technicians_Count___
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Available_Technicians_Count___ (
+   page_parameter_ IN NUMBER) RETURN NUMBER
+IS
+CURSOR get_available_technicians IS
+      SELECT COUNT (*) 
+      FROM AVAILABLE_RESOURCE_LOBBY_VIEW 
+      WHERE Av_Turn_Labour_Assignment_API.Get_Available_Res_For_Duration(
+         RESOURCE_ID,
+         Av_Airport_API.Get_Site(Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User)),
+         Site_API.Get_Company(Av_Airport_API.Get_Site(Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User))),
+         page_parameter_)=1;
+   available_technicians_count_ NUMBER := 0; 
+BEGIN
+   IF page_parameter_ IS NOT NULL THEN 
+      OPEN get_available_technicians;
+      FETCH get_available_technicians INTO available_technicians_count_;
+      CLOSE get_available_technicians;
+   END IF;
+RETURN available_technicians_count_;
+
+END Available_Technicians_Count___;

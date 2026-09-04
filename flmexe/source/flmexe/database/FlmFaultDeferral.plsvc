@@ -1,0 +1,305 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmFaultDeferral
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241017  WEDILK  AD-14537, Change to use av_exe_task/jt_task_tab after changing AvExeTask with based on JtTask
+--  240502  PSUALK  AD-12551, Fixing Hash Content validation  Error on defer fault
+--  240228  VAALLK  AD-12267, Modified Update_Deferral_Details___ procedure to set deferral details
+--  240212  VAALLK  AD-11372, Updated Defer_Finish___ to set action_user from the virtual rec
+--  240103  MAILLK  AD-11799, Updated the Defer_Finish___ logic to store the Prev_Aircraft_Wp_Id in AvExeTask record.
+--  231129  LAWALK  AD-11187, Updated the deferral information.
+--  230824  ROSDLK  AD-10254, Added esignature security remediation related defer fault changes.
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230404  KAWJLK  AD-7387, Added Update_User___
+--  221201  SEVHLK  AD-8999, Removed code snippets related to AvDeferralClass, AvDeferralReference, AvDeferralRefStatus and AvFaultDeferralRequest entities
+--  221115  RWELLK  AD-8701, Removed code snipits related to Deferral References and Requests.
+--  220818  SRCHLK  AD-8467, Adding a new function to get sysdate
+--  220711  VAALLK  AD-7909, Modified Defer_Finish___ to start the work package before the fault gets deferred in the stanadlone mode.
+--  220711  VAALLK  AD-7909, Modified Defer_Finish___ to save the deferral authorization.
+--  211209  himklk  AD-4736, Modified Defer_Finish___ prodecure to create and send a task action when a fault is deferred.
+--  210422  KAWJLK  AD-1672, Added  Defer_Finish___
+--  210407  KAWJLK  AD-1601, Added Get_Fault_Status___, Get_Deferral_Request_Id___, Get_Deferral_Reference_Id___, Get_Deferral_Req_Reason_Code___
+--  210323  LAHNLK  AD-1585, Created. added Fault_Deferral_Request___
+--  210408  LAHNLK  AD-1583, Added Get_Conflicting_Deferrals___
+--  210408  LAHNLK  AD-1569, Added Get_Upcoming_Flights_Count___
+--  210323  LAHNLK  AD-1585, Created. added Fault_Deferral_Request___ 
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+FUNCTION Get_Upcoming_Flights_Count___ (
+   aircraft_id_ IN NUMBER) RETURN NUMBER
+IS
+   count_ NUMBER;
+   CURSOR get_flights IS
+      SELECT count(flight_id)
+      FROM av_flight
+      WHERE aircraft_id = aircraft_id_
+      AND shed_departure_date_time > Time_Util_API.Get_Sysdate_In_Utc;
+BEGIN
+	OPEN get_flights;
+   FETCH get_flights INTO count_;
+   CLOSE get_flights;
+   RETURN count_;
+END Get_Upcoming_Flights_Count___;
+
+
+FUNCTION Get_Conflicting_Deferrals___ (
+   deferral_reference_id_ IN NUMBER,
+   aircraft_id_ IN NUMBER) RETURN Conflicting_Deferral_Struct_Arr
+IS
+   conflicting_defs_  Conflicting_Deferral_Struct_Arr := Conflicting_Deferral_Struct_Arr();
+   fault_rec_         Av_Fault_Tab%ROWTYPE;
+   i_                 NUMBER := 1;
+   due_date_          TIMESTAMP;
+   deferral_ref_name_ VARCHAR2(200);
+   
+   CURSOR get_conflict_def_ref_list_ IS
+      SELECT Conflicting_Defer_Ref_Id
+      FROM   Av_Conflicting_Def_Ref_tab 
+      WHERE  Deferral_Ref_Id = deferral_reference_id_;
+      
+   CURSOR get_fault_deferral_list_(def_ref_id_ NUMBER) IS
+      SELECT DISTINCT Fault_Id
+      FROM   Av_Fault_Deferral_tab 
+      WHERE  Deferral_Reference_Id = def_ref_id_;
+      
+   CURSOR get_fault_(fault_id_  NUMBER) IS
+      SELECT *
+      FROM   Av_Fault_tab 
+      WHERE  fault_id = fault_id_
+      AND rowstate = 'Deferred'
+      AND Aircraft_Id = aircraft_id_;
+      
+BEGIN
+   FOR conflict_def_ref_ IN get_conflict_def_ref_list_ LOOP   
+     FOR fault_id_ IN get_fault_deferral_list_(conflict_def_ref_.Conflicting_Defer_Ref_Id) LOOP
+         OPEN get_fault_(fault_id_.Fault_Id);
+         FETCH get_fault_ INTO fault_rec_;
+         IF get_fault_%FOUND THEN
+            CLOSE get_fault_;
+            conflicting_defs_.extend();
+            conflicting_defs_(i_).fault_id := fault_rec_.fault_id;
+            conflicting_defs_(i_).barcode := fault_rec_.barcode;
+            conflicting_defs_(i_).description := fault_rec_.description;
+            conflicting_defs_(i_).deferral_reference := deferral_ref_name_;
+            due_date_ := Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_rec_.fault_id);
+            conflicting_defs_(i_).due_date := due_date_;
+            i_ := i_ + 1;
+         ELSE
+            CLOSE get_fault_;
+         END IF;
+      END LOOP;
+   END LOOP;
+   RETURN conflicting_defs_;
+END Get_Conflicting_Deferrals___;
+
+FUNCTION Get_Fault_Status___ (
+   from_ IN VARCHAR2,
+   fault_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   fault_status_  VARCHAR2(500);
+BEGIN
+   IF from_ = 'MAIN' THEN
+      fault_status_ :=Av_Fault_API.Get_Objstate(fault_id_); 
+   ELSE
+     fault_status_ := 'Deferred';
+   END IF;
+	
+   RETURN fault_status_;
+END Get_Fault_Status___;
+
+PROCEDURE Defer_Finish___ (
+   key_ IN Fault_Def_Main_Virtual_Key,
+   bind_signature_id_ IN VARCHAR2)
+IS
+   def_ref_main_vrt_rec_ Fault_Def_Main_Virtual_Rec;
+   info_                   VARCHAR2(200);
+   objid_                  VARCHAR2(200);
+   objversion_             VARCHAR2(200);
+   task_objid_             VARCHAR2(200);
+   task_objversion_        VARCHAR2(200);
+   action_info_            VARCHAR2(200);
+   action_objid_           VARCHAR2(200);
+   action_objversion_      VARCHAR2(200);
+   attr_                   VARCHAR2(32000);
+   fault_severity_cd_      VARCHAR2(200);
+   deferral_class_code_    VARCHAR2(100);
+   existing_action_ord_    NUMBER;
+   action_ord_             NUMBER;
+   fault_action_id_var_    VARCHAR2(32000);
+   fault_action_id_        NUMBER;
+   task_seq_               NUMBER;
+   wp_status_              VARCHAR2(20);
+   e_sig_permission_       VARCHAR2(20);
+   
+   CURSOR get_max_action_ord_(fault_id_ NUMBER) IS
+      SELECT MAX(action_ord)
+      FROM AV_FAULT_ACTION_TAB
+      WHERE FAULT_ID = fault_id_;
+      
+   CURSOR get_task_details_(fault_id_ NUMBER) IS
+      SELECT objid, objversion
+      FROM av_exe_task
+      WHERE fault_id = fault_id_;
+      
+   CURSOR get_task_seq(fault_id_ NUMBER)IS 
+      SELECT task_seq
+      FROM av_exe_task
+      WHERE fault_id = fault_id_;
+      
+   CURSOR get_max_task_action_ord(task_seq_ NUMBER) IS
+      SELECT MAX(action_ord)
+      FROM AV_EXE_TASK_ACTION_TAB
+      WHERE task_seq = task_seq_;
+      
+   CURSOR get_e_sig_user IS
+      SELECT permission 
+      FROM av_e_sig_user_permission_tab
+      WHERE identity = Fnd_Session_API.Get_Fnd_User();
+
+BEGIN
+   OPEN get_e_sig_user;
+   FETCH get_e_sig_user INTO e_sig_permission_;
+   CLOSE get_e_sig_user;
+   
+   IF ((e_sig_permission_ IS NULL OR e_sig_permission_ = 'Yes')AND bind_signature_id_ IS NULL) THEN
+      Error_SYS.Record_General(lu_name_, 'ESIGWERROR: Failed to record electronic signature. Review changes and try again.');
+   END IF;
+   
+   action_ord_ := 1;
+   Client_SYS.Clear_Attr(attr_);
+   def_ref_main_vrt_rec_ := Get_Record___(key_); 
+   OPEN get_max_action_ord_(def_ref_main_vrt_rec_.Fault_Id);
+   FETCH get_max_action_ord_ INTO existing_action_ord_;
+   IF existing_action_ord_  IS NOT NULL THEN
+      action_ord_ := (existing_action_ord_ + 1 );
+   END IF;
+   CLOSE get_max_action_ord_;
+   Client_SYS.Add_To_Attr('FAULT_ID', def_ref_main_vrt_rec_.Fault_Id, attr_);
+   Client_SYS.Add_To_Attr('ACTION_USER', def_ref_main_vrt_rec_.Action_User, attr_);
+   Client_SYS.Add_To_Attr('ACTION_DESC', def_ref_main_vrt_rec_.Action_Desc, attr_);
+   Client_SYS.Add_To_Attr('IS_CORRECTIVE', 'True', attr_);
+   Client_SYS.Add_To_Attr('ACTION_DATE', def_ref_main_vrt_rec_.Action_Date, attr_);
+   Client_SYS.Add_To_Attr('ACTION_ORD', action_ord_, attr_);
+   Av_Fault_Action_API.New__(action_info_, action_objid_, action_objversion_, attr_, 'DO');
+   
+   fault_action_id_var_ := Client_SYS.Get_Item_Value('FAULT_ACTION_ID', attr_);
+   fault_action_id_     := Client_SYS.Attr_Value_To_Number(fault_action_id_var_);
+   
+   OPEN  get_task_seq(def_ref_main_vrt_rec_.Fault_Id);
+   FETCH get_task_seq INTO task_seq_;
+   CLOSE get_task_seq;
+   
+   OPEN  get_max_task_action_ord(task_seq_);
+   FETCH get_max_task_action_ord INTO existing_action_ord_;
+   IF existing_action_ord_  IS NOT NULL THEN
+      action_ord_ := (existing_action_ord_ + 1 );
+   END IF;
+   CLOSE get_max_task_action_ord;
+   
+   IF(task_seq_ IS NOT NULL) THEN 
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('TASK_SEQ',        task_seq_,                          attr_);
+      Client_SYS.Add_To_Attr('ACTION_USER',     def_ref_main_vrt_rec_.Action_User,  attr_);
+      Client_SYS.Add_To_Attr('ACTION_DESC',     def_ref_main_vrt_rec_.Action_Desc,  attr_);
+      Client_SYS.Add_To_Attr('ACTION_DATE',     def_ref_main_vrt_rec_.Action_Date,                            attr_);
+      Client_SYS.Add_To_Attr('ACTION_ORD',      action_ord_,                        attr_);
+      Client_SYS.Add_To_Attr('ACTION_TYPE',     'Deferred' ,                        attr_);
+      Client_SYS.Add_To_Attr('FAULT_ACTION_ID', fault_action_id_ ,                  attr_);
+      Client_SYS.Add_To_Attr('BIND_SIGNATURE_ID', bind_signature_id_, attr_);
+      Av_Exe_Task_Action_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   END IF;
+   
+   Client_SYS.Clear_Attr(attr_);
+	Client_SYS.Add_To_Attr('DEFERRAL_DT', Time_Util_API.Get_Sysdate_In_Utc, attr_);
+   Client_SYS.Add_To_Attr('FAULT_SEVERITY_CD', fault_severity_cd_, attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_CLASS_CODE', deferral_class_code_, attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_REFERENCE_ID', def_ref_main_vrt_rec_.Deferral_Reference_Id, attr_);
+   Client_SYS.Add_To_Attr('FAULT_ID', def_ref_main_vrt_rec_.Fault_Id, attr_);
+   Client_SYS.Add_To_Attr('IS_AVAILABLE', 1,  attr_);
+   Client_SYS.Add_To_Attr('NOTE', def_ref_main_vrt_rec_.Note,  attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_REQ_REASON_CODE', def_ref_main_vrt_rec_.Deferral_Req_Reason_Code,  attr_);
+   Client_SYS.Add_To_Attr('DEFERRAL_AUTHORIZATION', def_ref_main_vrt_rec_.Deferral_Authorization,  attr_);
+   Client_SYS.Add_To_Attr('BIND_SIGNATURE_ID', bind_signature_id_, attr_);
+   IF(task_seq_ IS NOT NULL) THEN 
+      Client_SYS.Add_To_Attr('TASK_SEQ', task_seq_, attr_);
+   END IF;
+   Av_Fault_Deferral_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   
+   wp_status_ := Av_Aircraft_Work_Package_API.Get_Objstate(def_ref_main_vrt_rec_.Aircraft_Wp_Id);
+  
+   --Start the work package before the fault gets deferred in the standalone mode
+      IF wp_status_ IN ('Active', 'Committed') THEN
+         Av_Aircraft_Work_Package_API.Start_WP(def_ref_main_vrt_rec_.Aircraft_Wp_Id, 'InWork');
+      END IF;
+   
+   Client_SYS.Clear_Attr(attr_);
+   OPEN get_task_details_(def_ref_main_vrt_rec_.Fault_Id);
+   FETCH get_task_details_ INTO task_objid_, task_objversion_;
+   CLOSE get_task_details_;
+   
+   -- Defer the fault if the work package has started
+   wp_status_ := Av_Aircraft_Work_Package_API.Get_Objstate(def_ref_main_vrt_rec_.Aircraft_Wp_Id);
+      IF wp_status_ = 'InWork' THEN
+         Client_SYS.Add_To_Attr('PREV_AIRCRAFT_WP_ID', def_ref_main_vrt_rec_.Aircraft_Wp_Id, attr_);
+         Av_Exe_Task_API.Modify__(info_, task_objid_, task_objversion_, attr_, 'DO');    
+         Av_Exe_Task_API.Defer__(info_, task_objid_, task_objversion_, attr_, 'DO');
+      ELSE
+         Error_SYS.Record_General('AvFaultDeferral', 'MXWPSTARTERROR: Work Package not started. WP status: - :P1', wp_status_);
+      END IF;
+   
+END Defer_Finish___;
+
+FUNCTION Get_Sys_Date___ RETURN DATE
+IS
+BEGIN
+	RETURN Time_Util_API.Get_Sysdate_In_Utc;
+END Get_Sys_Date___;
+
+PROCEDURE Update_Deferral_Details___ (
+   key_ IN Fault_Def_Main_Virtual_Key,
+   fault_status_ IN VARCHAR2,
+   action_desc_ IN VARCHAR2,
+   deferral_authorization_ IN VARCHAR2,
+   deferral_req_reason_code_ IN VARCHAR2,
+   note_ IN VARCHAR2)
+IS
+   sign_by_ VARCHAR2(200) := Fnd_Session_API.Get_Fnd_User();
+   parent_rec_             Fault_Def_Main_Virtual_Rec;
+   parent_new_rec_         Fault_Def_Main_Virtual_Rec;
+BEGIN
+   parent_rec_          := Get_Record___(key_);
+   parent_new_rec_      := parent_rec_;
+  
+   IF fault_status_ = 'Deferred' THEN
+      parent_new_rec_.action_user  := sign_by_;
+      parent_new_rec_.action_date  := Time_Util_API.Get_Sysdate_In_Utc;
+      parent_new_rec_.fault_status := fault_status_;
+      parent_new_rec_.action_desc  := action_desc_;
+      parent_new_rec_.deferral_authorization := deferral_authorization_;
+      parent_new_rec_.deferral_req_reason_code := deferral_req_reason_code_;
+      parent_new_rec_.note := note_;
+   END IF;
+   
+   IF fault_status_ = 'Open' THEN
+      parent_new_rec_.fault_status  := fault_status_;
+   END IF;
+   
+   CRUD_Update___(parent_rec_, parent_new_rec_); 
+   
+END Update_Deferral_Details___;
+
+
+FUNCTION Get_Mx_Fault_Status___ (
+   alt_id_ IN VARCHAR2) RETURN VARCHAR2
+IS
+BEGIN
+	RETURN av_fault_api.Get_Mx_Rowstate_By_Alt_Id(alt_id_);
+END Get_Mx_Fault_Status___;

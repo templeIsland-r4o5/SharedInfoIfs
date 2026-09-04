@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Details of the non-routines found during the completed tasks. </DescriptiveText>
+    <Locked>true</Locked>
+    <LastModified>3/14/25, 2:13:25 PM</LastModified>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>4</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Non Routines</Title>
+    <Footer>Raised</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Crew_Lead_NR_Count</Name>
+    <ID>61887bb3-f4f4-42ac-af9f-f9545e263498</ID>
+    <WebUrl>page/FlmNonRoutinesOfWorkPackage/NonRoutinesOfWorkPackage?$filter=WorkPackageBarcode eq $WorkPackageBarcode$&amp;initcontext=PageSource:'HMLOBBY'</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>8e832537-30b8-4586-92a7-65cce6bcc45c</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

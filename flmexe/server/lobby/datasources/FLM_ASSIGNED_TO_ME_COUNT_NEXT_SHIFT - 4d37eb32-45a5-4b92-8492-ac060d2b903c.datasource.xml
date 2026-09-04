@@ -1,0 +1,33 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/8/25, 3:18:01 PM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_ASSIGNED_TO_ME_COUNT_NEXT_SHIFT</Name>
+    <ID>4d37eb32-45a5-4b92-8492-ac060d2b903c</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetACountByNextShift</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

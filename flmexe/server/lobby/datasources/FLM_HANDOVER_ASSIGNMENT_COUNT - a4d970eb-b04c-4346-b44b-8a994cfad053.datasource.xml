@@ -1,0 +1,34 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/30/25, 8:36:15 PM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HANDOVER_ASSIGNMENT_COUNT</Name>
+    <ID>a4d970eb-b04c-4346-b44b-8a994cfad053</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetHandoverAssignmentCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+    <Filter></Filter>
+</ProjectionDataSource>

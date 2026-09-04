@@ -1,0 +1,195 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmRecordWork
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250120  ALNILK  AD-16446, Created. Added unit test for Has_Started_Execution_Instances___
+-----------------------------------------------------------------------------
+
+layer Core;
+
+UNITTEST "Has_Started_Execution_Instances___ should return true when there are started assignments" FOR
+   FUNCTION Has_Started_Execution_Instances___ (
+      task_seq_               IN     NUMBER,
+      execution_instance_seq_ IN     NUMBER) RETURN BOOLEAN;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockTable jt_execution_instance_tab
+   VALUES
+      | task_seq    | rowstate            | execution_instance_seq |
+      | 1           | 'ASSIGNED'          | 1                      |
+      | 1           | 'WORKSTARTED'       | 2                      |
+      | 1           | 'WORKSTARTED'       | 3                      |
+      | 1           | 'ASSIGNED'          | 4                      |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   BOOLEAN;
+   expected_ BOOLEAN;
+BEGIN
+   FOR
+      | expected_ | task_seq_    | execution_instance_seq_ |
+      | TRUE      | 1            | 1                       |
+   LOOP
+      --Insert your test code here
+      return_ := Has_Started_Execution_Instances___(task_seq_, execution_instance_seq_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Get_Save_Action_Confirm_Msg___ should return save action confirmation message when actual and remaining hours" FOR
+   FUNCTION Get_Save_Action_Confirm_Msg___ (
+      actual_hours_         IN     VARCHAR2,
+      remaining_hours_      IN     VARCHAR2,
+      is_job_stop_executed_ IN     BOOLEAN) RETURN VARCHAR2;
+USING
+
+IS
+   return_   VARCHAR2(2000);
+   expected_ VARCHAR2(2000);
+BEGIN
+   FOR
+      | expected_                                                 | actual_hours_ | remaining_hours_ | is_job_stop_executed_ |
+      | 'Save Actual Hours as 00:10 and Remaining Hours as 00:13?'| '00:10'       | '00:13'          | TRUE                  |
+      | 'Save Actual Hours as 00:10?'                             | '00:10'       | '00:00'          | FALSE                 |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Save_Action_Confirm_Msg___(actual_hours_, remaining_hours_, is_job_stop_executed_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Get_Serial_No___ should return objids of PartSerialCatalog when part_no_, serial_no_ and task_seq_ are passed" FOR
+   FUNCTION Get_Serial_No___ (
+      part_no_   IN     VARCHAR2,
+      serial_no_ IN     VARCHAR2,
+      task_seq_  IN     NUMBER) RETURN Objid_Arr;
+USING
+   @MockPackage Work_Task_API
+   FUNCTION Get_Site (
+      task_seq_ IN     NUMBER )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      IF task_seq_ = 123 THEN
+         RETURN '1';
+      END IF;
+   END Get_Site;
+   --Insert your mock directives and mock return variables here
+   @MockTable part_serial_catalog
+   VALUES
+      | objid | part_no | serial_no | objstate      | operational_condition |
+      | '1'   | 'ABC'   | 'SN01'    | 'Issued'      | 'Operational'         |
+      | '2'   | 'ABC'   | 'SN02'    | 'Issued'      | 'Operational'         |
+      | '3'   | 'ABC'   | 'SN03'    | 'InInventory' | 'NonOperational'      |
+      | '4'   | 'ABC'   | 'SN04'    | 'InInventory' | 'Operational'         |
+      | '5'   | 'ABC'   | 'SN05'    | 'InInventory' | 'Operational'         |
+      | '6'   | 'DEF'   | 'SN001'   | 'Issued'      | 'Operational'         |
+      | '7'   | 'DEF'   | 'SN002'   | 'InInventory' | 'Operational'         |
+      | '8'   | 'DEF'   | 'SN003'   | 'InInventory' | 'NonOperational'      |
+      | '9'   | 'DEF'   | 'SN004'   | 'InInventory' | 'NonOperational'      |
+      | '10'  | 'DEF'   | 'SN005'   | 'InInventory' | 'Operational'         |
+   END VALUES;
+
+   @MockTable inventory_part_in_stock
+   VALUES
+      | objid | part_no | serial_no | contract |
+      | '1'   | 'ABC'   | 'SN01'    | '1'      |
+      | '2'   | 'ABC'   | 'SN02'    | '1'      |
+      | '3'   | 'ABC'   | 'SN03'    | '1'      |
+      | '4'   | 'ABC'   | 'SN04'    | '1'      |
+      | '5'   | 'ABC'   | 'SN05'    | '1'      |
+      | '6'   | 'DEF'   | 'SN001'   | '1'      |
+      | '7'   | 'DEF'   | 'SN002'   | '1'      |
+      | '8'   | 'DEF'   | 'SN003'   | '1'      |
+      | '9'   | 'DEF'   | 'SN004'   | '1'      |
+      | '10'  | 'DEF'   | 'SN005'   | '1'      |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_    Objid_Arr;
+   expected_  Objid_Arr;
+   expected1_ Objid_Arr := Objid_Arr('1', '4', '5');
+   expected2_ Objid_Arr := Objid_Arr('6', '7', '10');
+BEGIN
+   FOR
+      | expected_ | part_no_ | serial_no_ | task_seq_ |
+      | expected1_| 'ABC'    |  'SN01'    | 123       |
+      | expected2_| 'DEF'    |  'SN001'   | 123       |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Serial_No___(part_no_, serial_no_, task_seq_);
+      --Insert your assertions here
+      FOR i_ IN 1 .. expected_.count LOOP
+         ASSERT return_(i_) = expected_(i_) MESSAGE 'Expected '||expected_(i_)||' but returned '||return_(i_);
+      END LOOP;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Get_Batch_No___ should return objids of LotBatchMaster when part_no_ and task_seq_ are passed" FOR
+   FUNCTION Get_Batch_No___ (
+      part_no_  IN     VARCHAR2,
+      task_seq_ IN     NUMBER) RETURN Objid_Arr;
+USING
+   @MockPackage Work_Task_API
+   FUNCTION Get_Site (
+      task_seq_ IN     NUMBER )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      IF task_seq_ = 123 THEN
+         RETURN '1';
+      END IF;
+   END Get_Site;
+   --Insert your mock directives and mock return variables here
+   @MockTable lot_batch_master
+   VALUES
+      | objid | part_no | lot_batch_no |
+      | '1'   | 'ABC'   | 'BN01'       |
+      | '2'   | 'ABC'   | 'BN02'       |
+      | '3'   | 'ABC'   | 'BN03'       |
+      | '4'   | 'DEF'   | 'BN001'      |
+      | '5'   | 'DEF'   | 'BN002'      |
+      | '6'   | 'DEF'   | 'BN003'      |
+   END VALUES;
+
+   @MockTable inventory_part_in_stock
+   VALUES
+      | objid | part_no | lot_batch_no | contract | availability_control_id |
+      | '1'   | 'ABC'   | 'BN01'       | '1'      | ''                      |
+      | '2'   | 'ABC'   | 'BN01'       | '1'      | 'RFI'                   |
+      | '3'   | 'ABC'   | 'BN02'       | '1'      | 'RFI'                   |
+      | '4'   | 'ABC'   | 'BN03'       | '1'      | ''                      |
+      | '5'   | 'ABC'   | 'BN03'       | '1'      | 'RFI'                   |
+      | '6'   | 'DEF'   | 'BN001'      | '1'      | 'RFI'                   |
+      | '7'   | 'DEF'   | 'BN002'      | '1'      | 'RFI'                   |
+      | '8'   | 'Def'   | 'BN003'      | '1'      | ''                      |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_    Objid_Arr;
+   expected_  Objid_Arr;
+   expected1_ Objid_Arr := Objid_Arr('2','1','3');
+   expected2_ Objid_Arr := Objid_Arr('5','4');
+BEGIN
+   FOR
+      | expected_ | part_no_ | task_seq_ |
+      | expected1_| 'ABC'    | 123       |
+      | expected2_| 'DEF'    | 123       |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Batch_No___(part_no_, task_seq_);
+      --Insert your assertions here
+      FOR i_ IN 1 .. expected_.count LOOP
+         ASSERT return_(i_) = expected_(i_) MESSAGE 'Expected '||expected_(i_)||' but returned '||return_(i_);
+      END LOOP;
+   END LOOP;
+END UNITTEST;
+

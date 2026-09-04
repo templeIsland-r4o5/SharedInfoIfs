@@ -1,0 +1,26 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmAssemblyFluidConsumptionHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  211206  vifelk  AD-4132, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+PROCEDURE Review_Fluid_Record___ (
+   fluid_service_id_ IN NUMBER,
+   fld_service_det_id_ IN NUMBER,
+   review_comment_ IN VARCHAR2)
+IS
+   attr_                      VARCHAR2(32000); 
+BEGIN
+   Client_SYS.Add_To_Attr('REVIEW_COMMENT',review_comment_, attr_);
+   Client_SYS.Add_To_Attr('REVIEWED_BY',Fnd_Session_API.Get_Fnd_User, attr_);
+   Client_SYS.Add_To_Attr('REVIEWED_DATE',Time_Util_API.Get_Sysdate_In_Utc, attr_);
+   Av_Hist_Fld_Service_Det_API.Modify(fluid_service_id_,fld_service_det_id_,attr_);
+END Review_Fluid_Record___;

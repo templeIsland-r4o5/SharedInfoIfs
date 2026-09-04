@@ -1,0 +1,2194 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250820  SSIVLK  AD-19199, Introduced cancel button in part installtion tab
+--  250711  SSIVLK  AD-19194, Introduced Part Search button
+--  250602  BACHLK  AD-18262, Added Cap Exceeded banner.
+--  250602  DNMALK  AMDEV-22449, Commented Use of HmContractNo since Attribute not in Core.
+--  250529  SSIVLK  AD-18620, Restructured the AggMmFaultPartInstallationList
+--  250527  SRLALK  AD-18264, Implemented NonRoutinesAprrovalGroup
+--  250228  SSIVLK  AD-14847, added iscertified to visibility
+--  250220  DUWJLK  AD-14798, Removed labour skill related data to remove skill tab.
+--  241226  WIHALK  AD-14749, Added Validation to Defer Non Routines.
+--  241216  SRLALK  AD- 15565 Reduce character limit to 200 in Description field in Raise Fault and Edit Fault
+--  241206  WIHALK  AD-14739, Added Corrective task button in Non routine fault page.
+--  241112  WEDILK  AD-14795, Introduce new fragment and leverage JtTaskStep to populate Task/Fault Step records
+--  241121  SILILK  AD-14805, Added Assignment tab for showing assignments with ReadOnly Format.
+--  240905  CAARLK  AD-14182, Added conditions to visibility of the RequestDeferral command.
+--  240826  SSIVLK  AD-14021, Added condition to visibility of the Deferral Information Group.
+--  240722  RWELLK  AD-13779, Make logbook reference optional
+--  240710  WEDILK  AD-13614, Modified Fault details with Barcode
+--  240715  RWELLK  AD-13037, Added aSource parameeter to the select reference URL.
+--  240714  RWELLK  AD-12997, Done the Modifications related to edit fault MEX and CAMMO integration.
+--  240628  RAFALK  AD-13039, Added deferral request details to Task and Fault Details pages.
+--  240626  RWELLK  AD-13037, Enhance the deferal request command.
+--  240622  RWELLK  AD-13037, Added deferal request command.
+--  240610  RWELLK  AD-12981, Changed Edit fault logics.
+--  240605  LAWALK  AD-12742, Added nested table for CMS warning details.
+--  240605  SABOLK  AD-12931, Modified OpenFaultsList and DeferredFaultsListInStandalone to discern color difference between cms warning and assigned to wp statuses.
+--  240530  KAWJLK  AD-12743, Updated a CMS warning banner text
+--  240529  LAWALK  AD-12740, Added configuration warning banners in fault details page.
+--  240513  SABOLK  AD-12727, Added CMS warnings exist badge for part installations/part removals.
+--  240219  VAALLK  AD-11917, Added config slot mandatory badge for part installations/part removals.
+--  240219  VAALLK  AD-11917, Arranged ordering in child entity tabs.
+--  240209  LAWALK  AD-11364, Added aggregated removed parts tab in Fault Details
+--  240127  ROSDLK  AD-11363, Added aggregated installed parts tab in Fault Details
+--  240208  LAHNLK  AD-11378, added HasPreviousMaintenance to indicate when there are previous recorded maintenance against the fault in mx
+--  240206  VAALLK  AD-11376, Added step, type in FaultActionsList
+--  240111  VAALLK  AD-11368, Added aggregated actions tab in Fault Details
+--  240111  VAALLK  AD-11360, Added Fault Search command in Fault Details.
+--  240111  VAALLK  AD-11361, Updated measured_date on MeasurementsList to be a timestamp
+--  240111  LAHNLK  AD-11367, Added aggregated skills tab in Fault Details
+--  240108  majslk  AD-10938, Implemented surfacing is mandatory config slot in add and view parts
+--  240105  LAHNLK  AD-11365, Added aggregated tools tab in Fault Details
+--  240105  LAWALK  AD-11362, Added Steps tab in Fault Details
+--  231218  VAALLK  AD-11361, Added Measurements tab in Fault Details
+--  231204  ROSDLK  AD-11190, Added resubmission deferral request workflow after rejecting a deferral request.
+--  231129  LAWALK  AD-11188, Added deferral request rejection related implementation.
+--  231127  ROSDLK  AD-11186, Added deferral request approve command and record auth no changes.
+--  231127  LAHNLK  AD-11185, Modified command RequestDeferral,group DeferralInfoGroup to support AvDeferralRequest entity
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230428  ROSDLK  AD-9808, Order the fault actions by ActionOrd field.
+--  230328  SEVHLK  AD-9659, Added Removed Date to part removal list, Installed Date to part installation list and Assigned date time to tool list
+--  230307  SEVHLK  AD-9615, Added a condition for the visibility of find inventory button
+--  221205  ROSDLK  AD-9045, Set visibility to show RequestDeferral command only for Open faults and initiate deferral only for faults in requested state.
+--  221203  ROSDLK  AD-9099, Fetch iatacode from turn details page to fault details page and added FindInventory command.
+--  221201  SEVHLK  AD-8999, Removed code snippets related to AvDeferralClass, AvDeferralReference, AvDeferralRefStatus and AvFaultDeferralRequest entities
+--  221130  LAWALK  AD-9113, Updated RequestDeferral command.
+--  221125  LAWALK  AD-9113, Added RequestDeferral command to Fault Details page.
+--  221122  SUPKLK  AD-8948, Restricted Fault details related CRUD operations to MM_MAINT_OPERATIONS_CONTROLLER role
+--  221102  rosdlk  AD-8697, Modified InitiateDeferral command visibility check.
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  221022  LAHNLK  AD-8695, added command InitiateDeferral
+--  220901  MAILLK  AD-7984, Hide Sync Related Fields in UI.
+--  220815  JIWELK  AD-8440, Added a new lov to AvFaultDetails group, addded a new selector AvFaultSourceNewSelector
+--  220819  KAWJLK  AD-8414, Modified AvFaulttWorkGroup AvAircraftWorkPackageRef.SchedEndDateTime.
+--  220728  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220718  DILDLK  AD-8097, Added AddParts command, RemoveRemovalPartCommand and RemoveInstallPartCommand
+--  220719  JIWELK  AD-7980, Change visibility of some fields in DeferralInfoGroup in the FLM standalone mode
+--  220714  SPATLK  AD-8074, Updated Skill selecter and remove skill status.
+--  220711  DUWJLK  AD-7995, removed required = [true] command from AvPhaseOfFlightCodeRef lov and FaultCode field in FaultDetailsGroup
+--  220511  LAHNLK  AD-6764, set some fields mandatory in fault details page
+--  220315  ROSDLK  AD-7114, Set user's identity as the action user.
+--  220303  SUPKLK  AD-6653, Correlation Id and Request Status labels renamed to Correlation ID and Synchronization Status
+--  220210  SUPKLK  AD-6653, Correlation Id and Request Status labels renamed to Correlation ID and Synchronization Status
+--  220125  LaDelk  AD-6395, Modified EditResourceToolCommand and RemoveResourceToolCommand to avoid being enabled for signed tools.
+--  220107  RWELLK  AD-5733, Added AssemblyPosition to FaultPartReqList, FaultPartRemovalList and FaultPartInstallationList lists.
+--  220104  LaDelk  AD-4695, Modified visibility of tools tabs depending on USE_MAINTENIX_TOOL_REGISTRY property in mx configurations.
+--  211216  LaDelk  AD-4694, Added resource tool requirements tab.
+--  211126  WAISLK  AD-4643, Added Assembly Type to ReferenceAvPartNumberSelector.
+--  211118  ASIGLK  AD-5002, AddTaskPartRequestCommand parameter AircraftTypeCode change to AssemblyTypeCode.
+--  211025  majslk  AD-3915, Added RequestStateCd, RequestCorrelationId to FaultPartReqList
+--  211018  majslk  AD-3915, Added enable condition to AddFaultPartRequestCommand
+--  211001  DHASLK  AD-4461, Add missing fields: Request State Code and Request Correlation Id
+--  210802  SUPKLK  AD-2422, Modified NewReferenceCompetencySelector to display only CompetencyId and CompetencyDescription
+--  210730  SEVHLK  AD-2216, Modified the call to PartRequestAssistant.
+--  210726  bhsilk  AD-2390, Refactored some attribute names in avfault
+--  210702  LAHNLK  AD-2270, Done min0r changes
+--  210701  himklk  AD-2278, Added multiline =true to fields which can contain long text.
+--  210630  majslk  AD-2198, Added markdown text to fault details page.
+--  210617  LAHNLK  AD-1278, modified, removed entry FaultDetailNavEntry
+--  210618  sevhlk  AD-2011, Modified the availability status attribute.
+--  210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+--  210611  sevhlk  AD-1168, Added ModifyFaultSkillAssistant, EditFaultSkill command, SaveModifiedFaultSkill comand and ModifySkillGroup.
+--  210607  sevhlk  AD-1258, Added AddFaultPartRequestCommand.
+--  210604  himklk  AD-1195, added DeleteFaultSkillsCommand.
+--  210602  lahnlk  AD-1151, added RemoveToolCommand
+--  210429  lahnlk  AD-1245, Overidden AvPartNumberSelector and AvPartNumberLovList, added AddFaultToolCommand,FaultToolGroup,AddFaultToolAssistant
+--  210323  majslk  AD-1036, Added LogbookReference to FaultDetailsGroup.
+--  210311  Jihalk  LMM2020R1-1715, Added ConvertSchedTime and ConvertAccTime fields.
+--  210309  Jihalk  LMM2020R1-1715, Added ConvertedHours field to FaultSkillsList.
+--  210308  tprelk  LMM2020R1-1581, Added workpackage details and removed installedpart query.
+--  210304  tprelk  LMM2020R1-1583, Added Part Request Tab .
+--  210303  Jihalk  LMM2020R1-1715, Remove size from LovCompetencyRef.
+--  210301  Jihalk  LMM2020R1-1715, Added AddFaultSkillAssistant.
+--  210225  siydlk  LMM2020R1-1591, Modified the position of Required Hours and Skill fields in FaultSkillsList.
+--  210223  asselk  LMM2020R1-1718, Added Part Removals list.
+--  210218  Jihalk  LMM2020R1-1586, Added AvExeFaultActionList.
+--  210218  siydlk  LMM2020R1-1591, Added Skill list.
+--  210218  asselk  LMM2020R1-1581, Projection name changed added tool list.
+--  210210  asselk  LMM2020R1-1581, Created.
+-----------------------------------------------------------------------------
+client FlmFaultDetail;
+component FLMEXE;
+layer Core;
+projection FlmFaultDetailHandling;
+description "Fault Details Client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmParts;
+include fragment FlmResourceToolEquipmentTab;
+include fragment FlmTaskAssignments;
+include fragment FlmJtTaskStep;
+include fragment AvTaskReturns;
+include fragment AvTaskMaterial;
+include fragment AvCriticalItem;
+@DynamicComponentDependency ADCON
+include fragment HeavyMaintenanceInfo;
+include fragment FlmTaskTool;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+
+-------------------------------- MAIN PAGES ---------------------------------
+page FaultDetails using AvFaultDetailSet {
+   label = "Fault Details";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   initcontext FetchFlightInfo;
+
+   selector TaskSelector;
+
+   markdowntext {
+      visible = [RequestStateCd = "Failed"];
+
+      text = "Raise fault synchronization error: ${RequestErrorMessage}";
+
+      emphasis Danger = [RequestStateCd = "Failed"];
+   }
+
+   markdowntext {
+      visible = [RequestStateCd = "Sent"];
+
+      text = "Raise fault synchronization is currently in progress";
+
+      emphasis Complementary7 = [RequestStateCd = "Sent"];
+   }
+
+   markdowntext {
+      visible = [AvExeTaskRef.RequestStateCd = "Sent"];
+      text = "Part changes have not been validated.";
+      emphasis Complementary7 = [true];
+   }
+
+   markdowntext {
+      visible = [AvExeTaskRef.RequestStateCd = "Failed"];
+      text = "Configuration warnings have been identified for some part changes in this fault.";
+      emphasis Alert = [true];
+   }
+
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval and not(HmNonRoutineApprovalRef.ProceedAtRisk) and HmNonRoutineApprovalRef.ApprovalStatus != "Approved" and IsExecutionBlockedByCap];
+      text = "Free CAP limit exceeded. Commercial approval is required before proceeding.";
+      emphasis Complementary6 = [true];
+   }
+
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and HmNonRoutineApprovalRef.NeedCommercialApproval and not(HmNonRoutineApprovalRef.ProceedAtRisk) and HmNonRoutineApprovalRef.ApprovalStatus != "Approved" and not IsExecutionBlockedByCap];
+      text = "Free CAP limit is exceeded. Commercial approval is required. However, you are allowed to proceed based on the current system configurations.";
+      emphasis Complementary6 = [true];
+   }
+
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and HmNonRoutineApprovalRef.NeedCommercialApproval and HmNonRoutineApprovalRef.ProceedAtRisk and HmNonRoutineApprovalRef.ApprovalStatus != "Approved"];
+      text = "Free CAP limit is exceeded. Commercial approval is required. However, you are allowed to proceed as 'proceed at risk' is authorized.";
+      emphasis Complementary6 = [true];
+   }
+
+   group FaultDetailsGroup;
+   group AvFaulttWorkGroup;
+   @DynamicComponentDependency ADCON
+   group AvTaskContractGroup;
+   group DeferralInfoGroup;
+   group ActionGroup;
+   @DynamicComponentDependency ADCON
+   group NonRoutinesAprrovalGroup;
+
+   tabs {
+      tab {
+         label = "Assignments";
+         list AssignmentsList(JtTaskResourceArray) bind TaskSelector;
+      }
+      tab {
+         label = "Material";
+         list AvMatReqDetailList(MaintMaterialRequisitionArray);
+      }
+      tab {
+         label = "Part Removals";
+         list AggMmFaultPartRemovalList(AggFaultRemovePartArray);
+         list FaultPartWarningsList(FaultPartRemovalWarningArray) bind AggMmFaultPartRemovalList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Part Installations";
+         list AggMmFaultPartInstallationList(AggFaultInstPartArray);
+         list FaultPartWarningsList(FaultPartInstallWarningArray) bind AggMmFaultPartInstallationList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Returns";
+         list AvTaskReturnList(AvTaskReturnArray);
+      }
+      tab {
+         label = "Tools";
+         list ToolDemandsList(TaskToolDemandQueryArray);
+      }
+      tab {
+         label = "Actions Taken";
+         list FaultActionsList(FaultActionsArray);
+      }
+      tab {
+         label = "Measurements";
+         list MeasurementsList(MeasurementArray);
+      }
+      tab {
+         label = "Steps";
+         list JtTaskStepList(JtTaskStepArray) {
+            label = "";
+         }
+         list JtTaskStepSignOffList(JtTaskStepSignOffArray) bind JtTaskStepList {
+            label = "STEP SIGN-OFF";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Critical Items";
+         list CriticalItemsList(CriticalItemsArray) bind TaskSelector;
+      }
+   }
+
+   command ModifyFault;
+   command RequestDeferral;
+   command AddPartsCommand;
+   command AddToolsCommand;
+   commandgroup PartSearch {
+      commandgroup PartsSearch {
+         label = "Part Search";
+         command AviationParts;
+         command AviationInventories;
+      }
+   }
+   command EvaluateNonRoutineCommand;
+   command InitiateDeferral;
+   command RejectDeferralCommand;
+   command ApproveDeferralCommand;
+   command FaultSearchCommand;
+   command CorrectiveTaskCommand;
+}
+
+
+initcontext FetchFlightInfo {
+   parameter IataCode Text;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command ModifyFault for AvFault {
+   label = "Edit Fault";
+   enabled = [Objstate != "Closed" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and TaskControlAuthorityEnabled = "Yes"];
+   mode = Global;
+   variable ModifyFaultInfo Structure(ModifyFaultInfoStructure);
+   execute {
+      copy this into ModifyFaultInfo;
+      set ModifyFaultInfo.AircraftAltId = AircraftRef.AltId;
+      assistant ModifyFaultAssistant(ModifyFaultInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveModifiedFault for ModifyFaultVirtual {
+   label = "OK";
+   enabled = [AircraftId != null and SubSystemId != null and FaultSourceCode != null and Description != null and(LogbookTypeCode != null or IsNonRoutine = true) and(LogbookReference != null or IsNonRoutine = true) and FaultSeverityCode != null and FoundOnDate != null and FoundByUser != null];
+   execute {
+      call ValidateFoundOnDate(FoundOnDate, WorkPackageId);
+      call ModifyFaultService(FaultId, SubSystemId, LogbookReference, Description, LogbookTypeCode, FailureTypeCode, FaultSeverityCode, FaultSourceCode, FaultCode, PhaseOfFlightCode, AircraftAltId, AvAircraftSubSystemRef.AltId, FaultAltId, ExternalId, FoundOnDate, FoundByUser, LongDescription, PriorityId, EtopsSignificant, FlightSafetyImpact);
+   }
+}
+
+command InitiateDeferral for AvFault {
+   label = "Initiate Deferral";
+   visible = [IsFlmStandalone = false and Objstate = "Open" and IsMocRoleExist = true and AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+
+   variable InitiateDeferralUrl Text;
+   variable ExternalPageUrl Text;
+
+   execute {
+      set ExternalPageUrl = "/lmocweb/phone-up-deferral/index.html";
+      call GetInitiateDeferralUrl(ExternalPageUrl, AircraftRef.RegCode, Description, LogbookReference, FoundByUser, FaultSourceCode, FoundOnFlightRef.LegNo, PhaseOfFlightCode, RecordId) into InitiateDeferralUrl;
+      navigate "${InitiateDeferralUrl}";
+      call ClickInitiateDeferral(FaultId);
+   }
+}
+
+command FindInventory for AvFault {
+   label = "Find Inventory";
+   visible = [IsFlmStandalone = false and Objstate != "Closed" and IsCertified = "PENDING"];
+
+   variable FindInventoryURL Text;
+   variable ExternalPagePath Text;
+   variable SearchType Text;
+   variable FaultNameRef Text;
+   variable IataCode Text;
+
+   execute {
+      set ExternalPagePath = "/maintenix/web/inventory/InventorySearchByType.jsp";
+      set SearchType = "INSTALLABLEINVENTORY";
+      set FaultNameRef = "Mobile Maintenance Fault Record ID ${RecordId}";
+      set IataCode = initcontext.IataCode;
+      call GetFindInventoryUrl(ExternalPagePath, SearchType, AircraftRegCode, IataCode, FaultNameRef) into FindInventoryURL;
+      navigate "${FindInventoryURL}";
+   }
+
+}
+
+command  SaveFaultTool for AddFaultToolVirtual {
+   label = "OK";
+   execute {
+      call AddFaultTool(FaultId, ToolSpecificationCode, PartNoId, SchedDuration);
+   }
+}
+
+command RemoveAggToolCommand for AggFaultToolQuery {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [Status = "Pending" and AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+   execute {
+
+      confirm("Do you want to remove the tool requirement?") {
+         when OK {
+            call DeleteFaultTool(AggregateId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveResourceTool for AddResourceToolVirtual {
+   label = "OK";
+   execute {
+      call AddResourceTool(FaultId);
+   }
+}
+
+command SaveModifiedResourceTool for ModifyResourceToolVirtual {
+   label = "OK";
+
+   execute {
+      call ModifyResourceTool();
+   }
+}
+
+command RequestDeferral for AvFault {
+   visible = [IsCertified = "PENDING" and TaskObjstate != "WORKSTARTED" and(AvDeferralRequestRef = null or AvDeferralRequestRef.DeferralRequestStatus = "Rejected" or AvDeferralRequestRef.DeferralRequestStatus = "Pending" or AvDeferralRequestRef.MocRequired = false)];
+   label = "Request Deferral";
+   enabled = [UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and Objstate = "Open"];
+   variable SelectReferenceURL Text;
+   variable ExternalPagePath Text;
+   variable AType Text;
+   variable ASource Text;
+   variable ATaskSeq Text;
+   variable IsDeferAllowed Boolean;
+   execute {
+      if[IsNonRoutine = true] {
+         call CheckDeferNonRoutine(FaultId) into IsDeferAllowed;
+         if[IsDeferAllowed = true] {
+            set ExternalPagePath = "/lmocweb/select-reference/index.html";
+            set AType = "DEFERRAL";
+            set ASource = "MM";
+            set ATaskSeq = ExternalId;
+            call GetSelectReferenceUrl(ExternalPagePath, ATaskSeq, AType, ASource) into SelectReferenceURL;
+            navigate "${SelectReferenceURL}";
+         }
+         else {
+            alert("Add the Logbook Reference to defer the Non-Routine");
+         }
+      }
+      else {
+         set ExternalPagePath = "/lmocweb/select-reference/index.html";
+         set AType = "DEFERRAL";
+         set ASource = "MM";
+         set ATaskSeq = ExternalId;
+         call GetSelectReferenceUrl(ExternalPagePath, ATaskSeq, AType, ASource) into SelectReferenceURL;
+         navigate "${SelectReferenceURL}";
+      }
+   }
+}
+
+command ApproveDeferralCommand for AvFault {
+   label = "Approve";
+   enabled = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"  and IsMocRoleExist = true and AvDeferralRequestRef.IsDefInitiated = true];
+   mode = SingleRecord;
+   execute {
+      assistant ApproveDeferralAssistant(FaultId) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveAuthNo for ApproveDeferralVirtual {
+   label = "OK";
+   enabled = [DeferralAuthorization != null];
+
+   execute {
+      call ApproveDeferral(FaultId, DeferralAuthorization);
+   }
+}
+
+command RejectDeferralCommand for AvFault {
+   label = "Reject";
+   enabled = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"  and IsMocRoleExist = true];
+   mode = SingleRecord;
+   execute {
+      assistant RejectDeferralAssistant(FaultId) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveRejectionReason for RejectDeferralVirtual {
+   label = "OK";
+   enabled = [RejectionReason != null];
+
+   execute {
+      call RejectDeferral(FaultId, RejectionReason);
+   }
+}
+
+command FaultSearchCommand {
+   label = "Fault Search";
+
+   execute {
+      if[UserRole = "MM_MAINT_OPERATIONS_CONTROLLER"] {
+         navigate "page/FlmMaintenanceOperationControl/FlmFaultSearch?$filter=(AircraftTypeCode eq $[AircraftRef.AircraftTypeCode]) and (RegCode eq $[AircraftRef.RegCode])";
+      }
+      else {
+         navigate "page/FlmFaultSearch/FlmFaultSearch?$filter=(AircraftTypeCode eq $[AircraftRef.AircraftTypeCode]) and (RegCode eq $[AircraftRef.RegCode])";
+      }
+   }
+}
+
+command CorrectiveTaskCommand {
+   label = "Corrective Task";
+   visible = [IsNonRoutine = true and Objstate != "Deferred"];
+   execute {
+      navigate "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[AvExeTaskRef.TaskSeq]";
+   }
+}
+
+command EvaluateNonRoutineCommand for AvFault {
+   label = "Evaluate";
+   visible = [not IsRoutine and not Evaluated and Objstate != "Closed"];
+   execute {
+      confirm("Mark this as evaluated?") {
+         when OK {
+            call EvaluateNonRoutineService(FaultId, AltId);
+            exit OK;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command CompleteCriticalItem for AvCriticalItem {
+   label = "Complete";
+   emphasis Complementary9 = [true];
+   mode = SingleRecord;
+   enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and Objstate != "Completed"];
+   execute {
+      confirm("Do you want to complete the Critical Item [${CriticalItem}]?") {
+         when OK {
+            call CompleteCriticalItem(CriticalItemId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RefreshCriticalItem for AvCriticalItem {
+   execute {
+      call Refresh();
+   }
+}
+command AviationParts {
+   execute {
+      navigate "/page/MxPartDefinitionSearch/PartDefinition";
+   }
+}
+command AviationInventories {
+   label = "Rotable Inventories";
+   execute {
+      navigate "page/MxInventorySearch/AviationInventorySearch";
+   }
+}
+command AddPartsCommand for AvFault {
+   label = "Add/Remove Part";
+   enabled = [Objstate != "Closed" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and IsCertified = "PENDING"];
+   visible = [Objstate != "Closed" and IsCertified = "PENDING"];
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.TaskSeq = TaskSeq;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      set PartsInfo.WpId = WorkPackageId;
+      assistant AddRemovePartAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+command OldAddPartsCommand for AvFault {
+   label = "Add Part(Old)";
+   enabled = [Objstate != "Closed" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and IsCertified = "PENDING"];
+   visible = [Objstate != "Closed" and IsCertified = "PENDING"];
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.TaskSeq = null;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      assistant PartsAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command AddToolsCommand for AvFault {
+   label = "Add Tools/Equipment";
+   enabled = [Objstate != "Closed" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and IsCertified = "PENDING" and TaskSeq != null];
+   mode = Global;
+   variable AddToolInfo Structure(AddToolInfo);
+
+   execute {
+      copy this into AddToolInfo;
+      set AddToolInfo.Site = TaskSite;
+      set AddToolInfo.Source = "ADD";
+      assistant AddToolAssistant(AddToolInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+selector TaskSelector for AvFault {
+   label = "${Barcode}";
+   static Barcode {
+      label = "Barcode";
+   }
+}
+
+selector AircraftSubSystemNewSelector for AvAircraftSubSystem {
+   label = "${SubSystemCode} - ${SubSystemName}";
+   static SubSystemCode;
+   static SubSystemName;
+}
+selector AvLogbookTypeNewSelector for AvLogbookType {
+   label = "${LogbookTypeCode} - ${LogbookTypeDesc}";
+   static LogbookTypeCode;
+   static LogbookTypeDesc;
+}
+selector AvPhaseOfFlightNewSelector for AvPhaseOfFlight {
+   label = "${PhaseOfFlightCode} - ${PhaseOfFlightDesc}";
+   static PhaseOfFlightCode;
+   static PhaseOfFlightDesc;
+}
+selector AvFailureTypeNewSelector for AvFailureType {
+   label = "${FailureTypeCode} - ${FailureTypeDesc}";
+   static FailureTypeCode;
+   static FailureTypeDesc;
+}
+selector AvFaultSeverityNewSelector for AvFaultSeverity {
+   label = "${FaultSeverityCode} - ${FaultSeverityDesc}";
+   static FaultSeverityCode;
+   static FaultSeverityDesc;
+}
+selector AvFaultSourceNewSelector for AvFaultSource {
+   label = "${FaultSourceCode} - ${FaultSourceDesc}";
+   static FaultSourceCode;
+   static FaultSourceDesc;
+}
+
+@Override
+selector AvPartNumberSelector for AvPartNumber {
+   orderby = PartNumber;
+   label = "";
+   static PartNumber;
+   static Manufacturer;
+   static PartName;
+   exclude PartNumberId;
+}
+
+selector AvToolSpecificationNewSelector for AvToolSpecification {
+   label = "";
+   orderby = ToolSpecificationCode;
+   static ToolSpecificationCode;
+   static ToolSpecificationName;
+   static InventoryClassCode;
+}
+
+selector FoundOnTaskSelector for AvExeTask {
+   label = "";
+   static Barcode;
+   static Description {
+      label = "Name";
+   }
+}
+
+selector FoundOnWorkPackageSelector for AvAircraftWorkPackage {
+   label = "";
+   static Barcode {
+      label = "Work Package Barcode";
+   }
+   static WorkPackageName;
+}
+
+selector ReferenceAvAirportForUserSelector for FndUser {
+   label = "";
+   orderby = Description;
+   static Description;
+   static Identity;
+}
+---------------------------------- GROUPS -----------------------------------
+
+group FaultDetailsGroup for AvFault {
+   label = "Details";
+   field Description {
+      size = Large;
+      label = "Name";
+      multiline = true;
+      editable = [Objstate != "Closed"];
+      required = [true];
+      maxlength = 200;
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   badge Objstate {
+      label = "Status";
+      style = TextOnly;
+      size = Medium;
+      emphasis Complementary7 = [Objstate = "Open"];
+      emphasis Ok = [Objstate = "Closed"];
+      emphasis Info = [Objstate = "Deferred"];
+   }
+   field Aircraft {
+      size = Medium;
+   }
+   field Barcode {
+      label = "Barcode";
+      size = Medium;
+   }
+   lov AvAircraftSubSystemRef with AircraftSubSystemNewSelector using GetAircraftSubSystemList(AssemblyTypeCode) {
+      hidekey = [true];
+      label = "Failed System";
+      description = AvAircraftSubSystemRef.SubSystemCode;
+      editable = [Objstate != "Closed"];
+      required = [true];
+      size = Medium;
+   }
+      // navigation will change once the work package details page is implemented
+   field TaskSeq {
+      label = "Found During";
+      visible = [IsNonRoutine and SourceConnectionLuName = "AvExeTask"];
+      size = Medium;
+      lovswitch {
+         when [FoundDuringTaskStatus != "Removed"] {
+            lov AvExeTaskRef with FoundOnTaskSelector {
+               hidekey = [true];
+               description = "${FoundOnTaskRef.Barcode} - ${FoundOnTaskRef.Description}";
+               details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[FoundOnId]";
+            }
+         }
+         when [FoundDuringTaskStatus = "Removed"] {
+            lov AvExeTaskRef with FoundOnTaskSelector {
+               hidekey = [true];
+               description = "${FoundOnTaskRef.Barcode} - ${FoundOnTaskRef.Description}";
+               details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FoundDuringFaultId]";
+            }
+         }
+      }
+   }
+   // navigation will add once the work package details page for base maintenance is implemented
+   field WorkPackageId {
+      label = "Found During";
+      visible = [IsNonRoutine and SourceConnectionLuName = "WorkPackage"];
+      size = Medium;
+      lovswitch {
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = 1] {
+            lov AvAircraftWorkPackageRef with FoundOnWorkPackageSelector {
+               hidekey = [true];
+               description = "${FoundOnWorkPackageRef.Barcode} - ${FoundOnWorkPackageRef.WorkPackageName}";
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[FoundOnWorkPackageRef.Barcode]";
+            }
+         }
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = 0] {
+            lov AvAircraftWorkPackageRef with FoundOnWorkPackageSelector {
+               hidekey = [true];
+               description = "${FoundOnWorkPackageRef.Barcode} - ${FoundOnWorkPackageRef.WorkPackageName}";
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=WorkPackageId eq $[AvExeTaskRef.AircraftWpId]";
+            }
+         }
+      }
+   }
+   field LogbookReference {
+      label = "Logbook Reference";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+      required = [true];
+   }
+   lov AvLogbookTypeCodeRef with AvLogbookTypeNewSelector {
+      label = "Logbook Type";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+   }
+   lov AvFaultSourceCodeRef with AvFaultSourceNewSelector {
+      label = "Fault Source";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+   }
+   lov AvFailureTypeCodeRef with AvFailureTypeNewSelector {
+      label = "Failure Type";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+   }
+   field Evaluated {
+      size = Medium;
+   }
+   field EvaluatedBy {
+      size = Medium;
+   }
+   lov AvFaultSeverityCodeRef with AvFaultSeverityNewSelector {
+      label = "Fault Severity";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+   }
+   badge FlightSafetyImpact {
+      label = "Flight Safety Impact";
+      style = TextOnly;
+      emphasis Info = [HasFlightSafetyImpact = true];
+      emphasis Neutral = [HasFlightSafetyImpact = false];
+      size = Medium;
+   }
+   field FoundByUserContactWidget {
+      label = "Found By";
+      visible = [true];
+      contactwidget {
+         enabled = [true];
+         source = User;
+      }
+   }
+   field FoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      size = Medium;
+   }
+   field FaultCode {
+      label = "Fault Code";
+      editable = [Objstate != "Closed"];
+      size = Medium;
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   badge IsAssignToWP {
+      label = "Assigned To WP";
+      style = TextOnly;
+      emphasis Info = [IsAssignToWP = true];
+      emphasis Neutral = [IsAssignToWP = false];
+      size = Medium;
+   }
+   field LatestJobStopReason {
+      visible = [Objstate != "Closed" or(Objstate = "Closed" and IsJobstopDetailsVisible = true)];
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      visible = [Objstate != "Closed" or(Objstate = "Closed" and IsJobstopDetailsVisible = true)];
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   field FoundOnDesc {
+      label = "Found During Flight";
+      editable = [false];
+      visible = [(FoundOnType = "FLIGHT" or FoundOnType = "LOBBY" or FoundOnType = "WSL") and not IsNonRoutine];
+      size = Medium;
+   }
+   lov AvPhaseOfFlightCodeRef with AvPhaseOfFlightNewSelector {
+      label = "Phase of Flight";
+      size = Medium;
+      editable = [Objstate != "Closed"];
+      visible = [IsNonRoutine = false];
+   }
+   badge HasPreviousMaintenance {
+      label = "Previous Maintenance";
+      style = TextOnly;
+      size = Medium;
+      emphasis Complementary7 = [HasPreviousMaintenance = true];
+   }
+   badge RequestStateCd {
+      label = "Synchronization Status";
+      visible = [false];
+      style = TextOnly;
+      size = Small;
+      editable = [false];
+      emphasis Ok = [RequestStateCd = "Succeeded"];
+      emphasis Complementary7 = [RequestStateCd = "Sent"];
+      emphasis Alert = [RequestStateCd = "Failed"];
+   }
+   field RequestCorrelationId {
+      label = "Correlation ID";
+      visible = [false];
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [Objstate != "Closed"];
+      size = Large;
+      multiline = true;
+   }
+
+   static CriticalItemCount {
+      label = "Active Critical Items";
+   }
+}
+group AvFaulttWorkGroup for AvFault {
+   label = "Work Package Details";
+   visible = [AvAircraftWorkPackageRef.AircraftWorkPackageId != null];
+
+   field AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      size = Medium;
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      editable = [false];
+      size = Small;
+   }
+   field ActualStartDateTime {
+      type = Time;
+      label = "Actual Start Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      visible = [AvAircraftWorkPackageRef.Objstate = "InWork"];
+      size = Medium;
+   }
+   field SchedEndDateTime {
+      label = "Estimated End Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      visible = [AvAircraftWorkPackageRef.Objstate = "InWork"];
+      size = Medium;
+   }
+}
+group DeferralInfoGroup for AvFault {
+   label = "Deferral Information";
+   visible = [AvDeferralRequestRef.DeferralReferenceName != null];
+   badge AvDeferralRequestRef.DeferralRequestStatus {
+      label = "Deferral Request Status";
+      visible = [AvDeferralRequestRef.MocRequired != false];
+      style = TextOnly;
+      emphasis Complementary7 = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+      emphasis True = [AvDeferralRequestRef.DeferralRequestStatus = "Approved"];
+      emphasis Alert = [AvDeferralRequestRef.DeferralRequestStatus = "Rejected"];
+   }
+   badge AvDeferralRequestRef.MocRequired {
+      label = "Requires MOC Authorization";
+      style = TextOnly;
+      emphasis True = [AvDeferralRequestRef.MocRequired = false];
+      emphasis Alert = [AvDeferralRequestRef.MocRequired = true];
+   }
+   field AvDeferralRequestRef.DeferralReferenceName {
+      label = "Selected Reference";
+      visible = [AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved") or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralClassCode {
+      label = "Deferral Type";
+      visible = [AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved") or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralAuthorization {
+      label = "Deferral Authorization No";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.MocRequired != false) and(AvDeferralRequestRef.DeferralRequestStatus = "Approved")];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralReqReasonCode {
+      label = "Deferral Reason";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved")) or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.Note {
+      label = "Deferral Note";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved")) or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+      multiline = true;
+   }
+}
+group ActionGroup for AvFault {
+   label = "Last Action Taken";
+   visible = [LastFaultActionId != null];
+   field LastFaultUser {
+      label = "User";
+      editable = [false];
+   }
+   field LastFaultDate {
+      label = "Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field Action {
+      editable = [false];
+      size = FullWidth;
+      label = "Action Taken";
+      multiline = true;
+   }
+}
+
+group FaultToolGroup for AddFaultToolVirtual {
+   lov AvPartNumberRef with AvPartNumberSelector using GetPartNumber(PartNoId) {
+      label = "Part Number";
+      size = Medium;
+      searchable = true;
+      search = AvPartNumberRef.PartNumber, AvPartNumberRef.PartName;
+      description = AvPartNumberRef.PartNumber;
+      hidekey = [true];
+      validate command {
+         execute {
+            call GetDefaultToolSpec(PartNoId) into ToolSpecificationCode;
+         }
+      }
+   }
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+   }
+
+   lov AvToolSpecificationRef with AvToolSpecificationNewSelector  using GetToolSpec(PartNoId) {
+      label = "Specification";
+   }
+   field AvToolSpecificationRef.ToolSpecificationName {
+      label = "Specification Name";
+   }
+   field SchedDuration {
+      label = "Scheduled Hours (HH:MM)";
+      format = decimal;
+      required = [true];
+   }
+}
+
+@DynamicComponentDependency TOOLEQ
+group AddResourceToolGroup for AddResourceToolVirtual {
+   lov ResourceGroupIdRef with ReferenceResourceGroupMaintLovSelector using GetResourceEquipmentGroups {
+      search = ResourceId, Description;
+      preview = ResourceGroupMaintLovCard;
+      validate command {
+         execute {
+            if [ResourceId != null] {
+               set ResourceId = null;
+            }
+            if [PartNo != null] {
+               set PartNo = null;
+            }
+            if [SerialNo != null] {
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+
+   lov ResourceIdRef with ReferenceResourceToolEquipJoinLovSelector using GetResources(ResourceGroupSeq) {
+      description = ResourceIdRef.Description;
+      search = ResourceId, Description;
+      editable = [ResourceGroupSeq != null];
+      validate command {
+         variable PartSerialVar Structure(PartSerialStructure);
+
+         execute {
+            if [ResourceId != null] {
+               call GetPartSerial(ResourceSeq) into PartSerialVar;
+               copy PartSerialVar into this;
+            }
+            else {
+               set ResourceSeq = null;
+               set PartNo = null;
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+   field PartNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipGroupParts(ResourceGroupSeq) {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipParts {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field SerialNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipGroupSerials(ResourceGroupSeq) {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipSerials {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field SchedDuration;
+}
+
+@DynamicComponentDependency TOOLEQ
+group ModifyResourceToolGroup for ModifyResourceToolVirtual {
+   field ResourceGroupId;
+   lov ResourceIdRef with ReferenceResourceToolEquipJoinLovSelector using GetResources(ResourceGroupSeq) {
+      description = ResourceIdRef.Description;
+      search = ResourceId, Description;
+      editable = [ResourceGroupSeq != null];
+      validate command {
+         variable PartSerialVar Structure(PartSerialStructure);
+
+         execute {
+            if [ResourceId != null] {
+               call GetPartSerial(ResourceSeq) into PartSerialVar;
+               copy PartSerialVar into this;
+            }
+            else {
+               set ResourceSeq = null;
+               set PartNo = null;
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+   field PartNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipGroupParts(ResourceGroupSeq) {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipParts {
+               search = PartNo, Description;
+               description = PartCatalogRef.Description;
+               validate command {
+                  execute {
+                     if [SerialNo != null] {
+                        set SerialNo = null;
+                     }
+                     if [ResourceId != null] {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field SerialNo {
+      lovswitch {
+         when [ResourceGroupSeq != null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipGroupSerials(ResourceGroupSeq) {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+         when [ResourceGroupSeq = null] {
+            lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipSerials {
+               editable = [ResourceSeq = null];
+               validate command {
+                  execute {
+                     if [PartNo != null and SerialNo != null] {
+                        call GetResourceId(PartNo, SerialNo) into ResourceId;
+                     }
+                     else {
+                        set ResourceId = null;
+                        set ResourceSeq = null;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+   field SchedDuration;
+}
+
+group ModifyFaultGroup for AvFault {
+   label = "Fault Registration";
+   static Aircraft {
+      label = "Aircraft";
+      size = FullWidth;
+   }
+   field Description {
+      label = "Name";
+      editable = [true];
+      multiline = true;
+      size = FullWidth;
+      required = [true];
+      maxlength = 200;
+   }
+   lov AvAircraftSubSystemRef with AircraftSubSystemNewSelector using GetAircraftSubSystemList(AssemblyTypeCode) {
+      hidekey = [true];
+      label = "Failed System";
+      description = AvAircraftSubSystemRef.SubSystemCode;
+      required = [true];
+      size = Large;
+      searchable = true;
+      search = AvAircraftSubSystemRef.SubSystemCode, AvAircraftSubSystemRef.SubSystemName;
+      validate command {
+         variable SensitivityResponse Structure(SensitivityResponseStructure);
+         execute {
+            if [AvAircraftSubSystemRef != null and AircraftRef.AltId != null] {
+               call GetFailedSystemSensitivity(AvAircraftSubSystemRef.AltId, AircraftRef.AltId) into SensitivityResponse;
+               if [SensitivityResponse.UIFormattedSensitivities != null] {
+                  set SensitivityForFailedSys = SensitivityResponse.UIFormattedSensitivities;
+               }
+               else {
+                  set SensitivityForFailedSys = null;
+               }
+            }
+            else {
+               set SensitivityForFailedSys = null;
+            }
+
+         }
+      }
+   }
+
+   lov AvFaultSeverityCodeRef with AvFaultSeverityNewSelector {
+      label = "Fault Severity";
+      required = [true];
+      editable = [AvDeferralRequestRef = null];
+      size = Large;
+   }
+   field LogbookReference {
+      label = "Logbook Reference";
+      size = Large;
+      maxlength = 80;
+      required = [not IsNonRoutine];
+   }
+   lov AvLogbookTypeCodeRef with AvLogbookTypeNewSelector {
+      label = "Logbook Type";
+      size = Large;
+      required = [not IsNonRoutine];
+   }
+   lov AvFaultSourceCodeRef with AvFaultSourceNewSelector {
+      label = "Fault Source";
+      size = Large;
+      required = [true];
+   }
+   field FoundOnDate {
+      label = "Found on";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Large;
+      required = [true];
+   }
+   lov AvAirportForUserRef with ReferenceAvAirportForUserSelector using GetAirportUserList {
+      label = "Found By";
+      hidekey = [true];
+      searchable = true;
+      required = [true];
+      search = AvAirportForUserRef.Identity;
+      size = Large;
+   }
+   lov AvPhaseOfFlightCodeRef with AvPhaseOfFlightNewSelector {
+      label = "Phase of Flight";
+      visible = [not IsNonRoutine];
+      size = Large;
+   }
+   field FaultCode {
+      label = "Fault Code";
+      maxlength = 80;
+      size = Large;
+   }
+   field LongDescription {
+      label = "Description";
+      multiline = true;
+      size = FullWidth;
+      maxlength = 500;
+   }
+}
+
+group FaultDetailGroup for AvFault {
+   label = "Fault Details";
+   lov AvFailureTypeCodeRef with AvFailureTypeNewSelector {
+      label = "Failure Type";
+      size = Large;
+   }
+   lov PriorityLovRef with ReferenceMaintenancePrioritySelector {
+      label = "Priority";
+      size = Large;
+   }
+   field FlightSafetyImpact {
+      label = "Flight Safety Impact";
+      editable = [true];
+      size = Large;
+      required = [true];
+   }
+   field EtopsSignificant {
+      label = "ETOPS Significant";
+      editable = [true];
+      size = Large;
+      required = [true];
+   }
+}
+
+group ApproveDetailsGroup for ApproveDeferralVirtual {
+   label = "";
+   field DeferralAuthorization {
+      label = "Authorization Number";
+      size = Medium;
+      required = [true];
+      maxlength = 30;
+   }
+}
+
+group RejectionReasonGroup for RejectDeferralVirtual {
+   label = "";
+   field RejectionReason {
+      label = "Rejection Reason";
+      multiline = true;
+      size = FullWidth;
+      required = [true];
+      maxlength = 500;
+   }
+}
+
+group ResubmitDeferralGroup for ResubmitDeferralRequestVirtual {
+   label = "";
+   field ReauthorizationReason {
+      label = "Resubmission Reason";
+      multiline = true;
+      size = FullWidth;
+      required = [true];
+      maxlength = 500;
+   }
+}
+
+@DynamicComponentDependency ADCON
+group NonRoutinesAprrovalGroup for AvFault {
+   label = "Non Routine Commercial Approval";
+   collapsed = [true];
+   visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvExeTaskRef.HmContractLineNo != null];
+
+   field HmNonRoutineApprovalRef.NeedCommercialApproval;
+   field HmNonRoutineApprovalRef.ProceedAtRisk;
+   badge HmNonRoutineApprovalRef.ApprovalStatus {
+      label = "NR Approval Status";
+      emphasis Primary = [HmNonRoutineApprovalRef.ApprovalStatus = "NotStarted"];
+      emphasis Complementary6 = [HmNonRoutineApprovalRef.ApprovalStatus = "AwaitingApproval"];
+      emphasis Success = [HmNonRoutineApprovalRef.ApprovalStatus = "Approved"];
+      emphasis False = [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+@Override
+list AssignmentsList for JtTaskResourceDemandQuery {
+   exclude  PlannedHours, AllocatedHours, AllocatedStart, AllocatedFinish, FixedStart, WorkStart, AssignedResourceId;
+   command AddAssignmentCommand {
+      enabled = [false];
+   }
+}
+
+list MeasurementsList for MeasurementsQuery {
+   orderby = Status desc, MeasuredDate desc;
+   field Measurement {
+      label = "Measurement";
+   }
+   field Quantity {
+      label = "Value";
+   }
+   badge Status {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Ok = [Status = "Signed"];
+      emphasis Alert = [Status = "Pending"];
+   }
+   field MeasuredDate {
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field MeasuredUser {
+      label = "Signed By";
+   }
+}
+
+list AvExeFaultActionList for AvFaultAction {
+   orderby = ActionOrd desc;
+   label = "";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field ActionDesc {
+      label = "Action Taken";
+      size = FullWidth;
+      multiline = true;
+   }
+   field ActionDate {
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field ActionUser {
+      label = "Signed By";
+      size = Medium;
+   }
+}
+
+list FaultActionsList for FaultActionsQuery {
+   orderby = ActionDate desc;
+
+   field ActionDescription {
+      label = "Action Taken";
+      size = FullWidth;
+      multiline = true;
+   }
+   field StepOrder {
+      label = "Step";
+      size = Small;
+   }
+   field ActionType {
+      label = "Type";
+      size = Medium;
+   }
+   field ActionDate {
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field ActionUser {
+      label = "Signed By";
+      size = Medium;
+   }
+}
+
+list CriticalItemsList for AvCriticalItem {
+   label = "Critical Items";
+   orderby = Objstate, UpdatedDateTime desc;
+   crudactions {
+      new {
+         enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and parent.Objstate in("Open")];
+      }
+      delete {
+         enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and Objstate != "Completed"];
+      }
+      edit {
+         enabled = [parent.IsHangarSupervisor or parent.IsHangarCrewLead and Objstate != "Completed"];
+      }
+      after command RefreshCriticalItem;
+   }
+
+   field CriticalItem {
+      label = "Critical Item";
+      editable = [Objstate != "Completed"];
+      size = Large;
+      multiline = true;
+      validate command {
+         execute {
+            set TaskBarcode = AvExeTaskRef.Barcode;
+            set TaskName = AvExeTaskRef.Description;
+            set TaskSeq = AvExeTaskRef.TaskSeq;
+            set AircraftWpId = AvExeTaskRef.AircraftWpId;
+         }
+      }
+   }
+
+   lov AvCriticalItemTypeRef with AvCriticalItemTypeSelector using GetCriticalItemTypeCode {
+      label = "Critical Item Type";
+      editable = [Objstate != "Completed"];
+      size = Medium;
+      description = AvCriticalItemTypeRef.Description;
+   }
+
+   lov AvCriticalItemSeverityRef with AvCriticalItemSeveritySelector using GetCriticalItemSeverityCode {
+      label = "Critical Item Severity";
+      editable = [Objstate != "Completed"];
+      size = Medium;
+      description = AvCriticalItemSeverityRef.Description;
+   }
+
+   static UpdatedUser {
+      label = "Updated By";
+   }
+
+   field UpdatedDateTime {
+      label = "Updated Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+
+   badge Objstate {
+      label = "Status";
+      emphasis StatePreliminary = [Objstate = "Active"];
+      emphasis Complementary9 = [Objstate = "Completed"];
+      size = Small;
+   }
+
+   command CompleteCriticalItem {
+      mode = SingleRecord;
+   }
+}
+
+list FaultPartRemovalList for FaultRemovedParts {
+   orderby = PartGroupCode;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field PartGroupCode {
+      label = "Part Group Code";
+   }
+   field PartGroupName {
+      label = "Part Group Name";
+      size = Large;
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [AvPartGroupRef.IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field AssmblSlotPositionRef.ConfigSlotPositionCode {
+      label = "Assembly Position";
+      size = Small;
+   }
+
+   field ConfigSlotPositionCode {
+      label = "Position";
+   }
+   badge RemovedConfigSlot {
+      visible = [(RemovedPartNo != null or RemovedQuantity != null) and RemovedConfigSlot = "Mandatory"];
+      label = "Config Slot";
+      size = FullWidth;
+      style = TextOnly;
+      emphasis Info = [RemovedConfigSlot = "Mandatory"];
+   }
+   field RemovedPartNo {
+      label = "Part Number";
+   }
+   field RemovedSerialNo {
+      label = "Serial No/Batch No";
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+   }
+   field RemovalReason {
+      label = "Reason for Removal";
+   }
+   badge RemovalStates {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [RemovalStates = "Pending"];
+      emphasis Ok = [RemovalStates = "Signed"];
+   }
+   field RemovedDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field RemovedUser {
+      label = "Signed By";
+      size = Small;
+   }
+   command RemoveRemovalPartCommand {
+      enabled = [RemovalStates = "Pending" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      label = "";
+      icon = "delete";
+   }
+}
+
+list FaultPartInstallationList for FaultInstalledParts {
+   orderby = PartGroupCode;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   field PartGroupCode;
+   field PartGroupName {
+      size = Large;
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [AvPartGroupRef.IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field AssmblSlotPositionRef.ConfigSlotPositionCode {
+      label = "Assembly Position";
+      size = Small;
+   }
+
+   field ConfigSlotPositionCode {
+      label = "Position";
+   }
+   badge InstalledConfigSlot {
+      visible = [(InstalledPartNo != null or InstalledQuantity != null) and InstalledConfigSlot = "Mandatory"];
+      label = "Config Slot";
+      size = FullWidth;
+      style = TextOnly;
+      emphasis Info = [InstalledConfigSlot = "Mandatory"];
+   }
+   field InstalledPartNo {
+      label = "Part Number";
+   }
+   field InstalledSerialNo {
+      label = "Serial No/Batch No";
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+   }
+   badge InstallStates {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [InstallStates = "Pending"];
+      emphasis Ok = [InstallStates = "Signed"];
+   }
+   field InstalledDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field InstalledUser {
+      label = "Signed By";
+   }
+
+   command RemoveInstallPartCommand {
+      enabled = [InstallStates = "Pending" and UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      label = "";
+      icon = "delete";
+   }
+
+}
+
+list AggMmFaultPartInstallationList for AggFaultInstPartQuery {
+   label = "";
+   orderby = Status desc, SignedDate desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   badge Status {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Warning = [Status = "Pending"];
+      emphasis Ok = [Status = "Signed"];
+      emphasis Neutral = [Status = "Cancelled"];
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      columnexclude = [parent.IsInsPartSensExist = false];
+   }
+   badge IsPartWarningsExist {
+      label = "Configuration Warning";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [IsPartWarningsExist = true];
+      emphasis Ok = [IsPartWarningsExist = false];
+   }
+   field SchedulingAction {
+      label = "Scheduling Action";
+   }
+   field PartGroupCode;
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+      size = Large;
+   }
+   field AvPartNumberRef.PartNumber {
+      label = "Part Number";
+   }
+   field InstalledSerialNo {
+      label = "Serial Number";
+   }
+   field InstalledBatchNo {
+      label = "Batch Number";
+   }
+   field ConfigSlotPositionRef.ConfigSlotCode {
+      label = "Config Slot";
+   }
+   field AssemblyPosition {
+      label = "Assembly Position";
+      size = Small;
+   }
+   field Position {
+      label = "Position";
+   }
+   field Assembly {
+      visible = [IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field Quantity {
+      label = "Quantity";
+   }
+   badge ConfigIsMandatory {
+      visible = [(PartNumber != null or InstalledQuantity != null) and ConfigIsMandatory = "Yes"];
+      label = "Mandatory Slot";
+      size = Small;
+      style = TextOnly;
+      emphasis Info = [ConfigIsMandatory = "Yes"];
+   }
+   field SignedDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SignedUser {
+      label = "Signed By";
+   }
+   field CreatedBy {
+      label = "Created By";
+   }
+   field CancelledBy {
+      label = "Cancelled By";
+   }
+   command CancelPartCommand {
+      label = "Cancel";
+      enabled = [Status = "Pending" and TaskControlAuthorityEnabled = "Yes"];
+   }
+
+}
+
+@Override
+list AvPartNumberLovList for AvPartNumber {
+   label = "";
+   static PartNumberId {
+      searchable = false;
+      columnvisible = [false];
+   }
+   static Manufacturer;
+   static PartNumber;
+   static PartName;
+   static InventoryClassCode;
+}
+list AggMmFaultPartRemovalList for AggFaultRemovePartQuery {
+   label = "";
+   orderby = Status desc, SignedDate desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   badge Status {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Warning = [Status = "Pending"];
+      emphasis Ok = [Status = "Signed"];
+      emphasis StateCanceled = [Status = "Cancelled"];
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      columnexclude = [parent.IsRemPartSensExist = false];
+   }
+   badge IsPartWarningsExist {
+      label = "Configuration Warning";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [IsPartWarningsExist = true];
+      emphasis Ok = [IsPartWarningsExist = false];
+   }
+   field RemovedReason {
+      label = "Removal Reason";
+   }
+   field PartGroupCode;
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+      size = Large;
+   }
+   field AvPartNumberRef.PartNumber {
+      label = "Part Number";
+   }
+   field RemovedSerialNo {
+      label = "Serial Number";
+   }
+   field RemovedBatchNo {
+      label = "Batch Number";
+   }
+   field ConfigSlotPositionRef.ConfigSlotCode {
+      label = "Config Slot";
+   }
+   field AssemblyPosition {
+      label = "Assembly Position";
+      size = Medium;
+   }
+   field Position {
+      label = "Position";
+   }
+   field Assembly {
+      visible = [IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+      size = Small;
+   }
+   field PartSerialCatalogRef.OperationalCondition {
+      label = "Operational Condition";
+      size = Medium;
+      columnvisible = [SignedUser != null];
+   }
+   badge ConfigIsMandatory {
+      visible = [(PartNumber != null or Quantity != null) and ConfigIsMandatory = "Yes"];
+      label = "Mandatory Slot";
+      size = Medium;
+      style = TextOnly;
+      emphasis Info = [ConfigIsMandatory = "Yes"];
+   }
+   field SignedDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvFaultRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SignedUser {
+      label = "Signed By";
+   }
+   field CreatedBy {
+      label = "Created By";
+   }
+   field CancelledBy;
+
+   command CreateAggRemReturnLineCommand;
+   command CancelRemovelCommand;
+}
+
+list FaultPartWarningsList for AvExeTaskPartWarning {
+   label = "Fault Part Warnings";
+   field Code {
+      label = "Warning Code";
+      size = Medium;
+   }
+   field Warning {
+      label = "Warning Details";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+@Override
+list ToolDemandsList for ToolDemandQuery {
+   command AddTaskToolCommand {
+      enabled = [false];
+   }
+   command AddToolsCommand {
+      label = "";
+      icon = "new";
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+assistant ModifyFaultAssistant using ModifyFaultVirtualSet {
+   label = "Edit Fault";
+   savemode = OnLostFocus;
+   input this;
+   singlestep {
+      markdowntext {
+         visible = [SensitivityForFailedSys != null and AvAircraftSubSystemRef != null];
+         text = "${SensitivityForFailedSys} Sensitive - Refer to MPM for Details.";
+         emphasis Warning = [true];
+      }
+      group ModifyFaultGroup;
+      group FaultDetailGroup;
+   }
+   command SaveModifiedFault;
+   command Cancel;
+}
+
+assistant AddFaultToolAssistant using AddFaultToolVirtualSet {
+   label = "Add Tool";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group FaultToolGroup;
+   }
+   command SaveFaultTool;
+   command Cancel;
+}
+
+@DynamicComponentDependency TOOLEQ
+assistant AddResourceToolAssistant using AddResourceToolVirtualSet {
+   label = "Add Tool";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group AddResourceToolGroup;
+   }
+   command SaveResourceTool;
+   command Cancel;
+}
+
+@DynamicComponentDependency TOOLEQ
+assistant ModifyResourceToolAssistant using ModifyResourceToolVirtualSet {
+   label = "Modify Tool";
+   savemode = OnLostFocus;
+   input this;
+   singlestep {
+      group ModifyResourceToolGroup;
+   }
+   command SaveModifiedResourceTool;
+   command Cancel;
+}
+
+assistant ApproveDeferralAssistant using ApproveDeferralVirtualSet {
+   label = "Enter Authorization Number";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group ApproveDetailsGroup;
+   }
+   command SaveAuthNo;
+   command Cancel;
+}
+
+assistant RejectDeferralAssistant using RejectDeferralVirtualSet {
+   label = "Enter Rejection Reason";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group RejectionReasonGroup;
+   }
+   command SaveRejectionReason;
+   command Cancel;
+}
+
+assistant ResubmissionDeferralAssistant using ResubmitDeferralRequestVirtualSet {
+   label = "Resubmission Reason";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group ResubmitDeferralGroup;
+   }
+   command SaveResubmitReason;
+   command Cancel;
+}
+
+-------------------------------- SINGLETONS ---------------------------------
+command RemoveRemovalPartCommand for FaultRemovedParts {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [true];
+   execute {
+      confirm("Do you want to remove the part removal requirement?") {
+         when OK {
+            call RemovePart(FaultPartId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+
+   }
+
+}
+
+command RemoveInstallPartCommand for FaultInstalledParts {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [true];
+   execute {
+      confirm("Do you want to remove the part installation requirement?") {
+         when OK {
+            call RemovePart(FaultPartId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RemoveAggInstPartCommand for AggFaultInstPartQuery {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [Status = "Pending" and AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+   execute {
+      confirm("Do you want to remove the part installation requirement?") {
+         when OK {
+            call RemovePart(AggregateId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveResubmitReason for ResubmitDeferralRequestVirtual {
+   label = "OK";
+   enabled = [ReauthorizationReason != null];
+   execute {
+      call ResubmitDeferral(FaultId, ReauthorizationReason);
+      success("Deferral request resubmitted.");
+      exit OK;
+   }
+}
+
+command RemoveAggRemovalPartCommand for AggFaultRemovePartQuery {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [Status = "Pending" and AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER"];
+   execute {
+      confirm("Do you want to remove the part removal requirement?") {
+         when OK {
+            call RemovePart(AggregateId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+
+   }
+
+}
+
+command CreateAggRemReturnLineCommand for AggFaultRemovePartQuery {
+   enabled = [TaskReturnLineSeq = null and parent.Objstate = "Open" and RemovedReasonCode != "ACCESS" and Status != "Cancelled"];
+   label = "Create Return Line";
+   mode = SingleRecord;
+   execute {
+      call CreateReturnLine(TaskPartId, TaskSeq, AvPartNumberRef.PartNumber, Quantity, RemovedSerialNo, RemovedBatchNo);
+   }
+}
+
+command CancelPartCommand for AggFaultInstPartQuery {
+   label = "";
+   mode = SingleRecord;
+   variable InstallPartsInfo Structure(InstallPartsInfoStructure);
+
+   execute {
+      if [MaintMaterialReqRef.Qty > 0] {
+
+         copy this into InstallPartsInfo;
+         set InstallPartsInfo.InstalledPartNo = AvPartNumberRef.PartNumber;
+         set InstallPartsInfo.PartName = AvPartNumberRef.PartName;
+
+         assistant CancelPartAssistant(InstallPartsInfo) {
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         call CancelParts(TaskPartId);
+
+      }
+      if[AvFaultRef.ClassCode = "CORR" and Sensitivities != null] {
+         call SaveOverallTaskSensitivity(parent.AircraftRef.AltId, parent.FaultId, parent.EtopsSignificant, parent.AvAircraftSubSystemRef.AltId, TaskPartId);
+      }
+   }
+}
+
+command CancelRemovelCommand for AggFaultRemovePartQuery {
+   enabled = [Status = "Pending" and AvFaultRef.TaskObjstate in("RELEASED", "WORKSTARTED") and TaskControlAuthorityEnabled = "Yes" and TaskSeq != null];
+   label = "Cancel";
+   mode = SingleRecord;
+   execute {
+      call CancelPart(TaskPartId);
+      if[AvFaultRef.ClassCode = "CORR" and Sensitivities != null] {
+         call SaveOverallTaskSensitivity(parent.AircraftRef.AltId, parent.FaultId, parent.EtopsSignificant, parent.AvAircraftSubSystemRef.AltId, TaskPartId);
+      }
+   }
+}
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

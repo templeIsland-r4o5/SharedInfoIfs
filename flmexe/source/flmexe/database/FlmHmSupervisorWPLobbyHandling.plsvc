@@ -1,0 +1,26 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmSupervisorWPLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241128  BACHLK  AD-14733, Added Raised_Non_Routines_Count___ function.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Raised_Non_Routines_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   raised_non_routines_count_ NUMBER := 0;
+   
+BEGIN
+    IF work_package_id_ IS NOT NULL THEN 
+      raised_non_routines_count_ := Av_Aircraft_Work_Package_API.Get_Non_Routine_Count_By_Wp_Id(work_package_id_);
+   END IF;
+   RETURN raised_non_routines_count_;
+END Raised_Non_Routines_Count___;

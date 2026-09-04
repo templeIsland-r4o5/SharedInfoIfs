@@ -1,0 +1,24 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/25/24, 8:53:37 AM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_UNASSIGNED_TASKS_PROJECTION</Name>
+    <ID>5f1d9667-d125-4c3c-a22c-6c0d77607574</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>TaskSeq</Column>
+            <Name>Task Seq</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>FlmTaskResourceSet</EntitySet>
+    <EntityType>FlmTaskResource</EntityType>
+    <Filter>ResourceAssignmentStatus eq 1 or ResourceAssignmentStatus eq 2</Filter>
+</ProjectionDataSource>

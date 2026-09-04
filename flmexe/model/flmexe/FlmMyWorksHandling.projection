@@ -1,0 +1,122 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250121  SSIVLK  AD-16141, Migrated to TaskAssignmentEntity based on JtTask Resource
+--  240724  VAALLK  AD-11951, Added UpdateTaskStart action
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  240117  majslk  AD-10940, Added ShowWarning method
+--  231130  LAHNLK  AD-11185, added AvDeferralRequestRef in to avExeTask entity
+--  231108  maillk  AD-9566, Added UpdateTaskUnstart action and CurrentUser, HasSignedTaskChildRecords attributes to the overridden entity AvExeTask
+--  231102  majslk  AD-9568, Modified code to support My Work UI Enhancements.
+--  220728  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220629  SPATLK  AD-8008, Added new attribute to AvExeTask override entity to fetch turn status by TaskID and Updated filter to fetch only Tasks that are only related to NOT released Aircrafts.
+--  211122  chdslk  AD-3954, Chanded where clause to check assignee from Task Labour.
+--  210329  siydlk  AD-1157, Added AddActualDateTime action.
+--  210319  siydlk  AD-1146, Added UnassignTask action.
+--  210218  Jihalk  LMM2020R1-1567, Modified AvExeTask where condition.
+--  210208  Jihalk  LMM2020R1-1567, Created.
+-----------------------------------------------------------------------------
+projection FlmMyWorksHandling;
+component FLMEXE;
+layer Core;
+description "This projection is used to develop My Work Page";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmRecordWork;
+include fragment FlmResourceToolEquipmentTab;
+include fragment FlmTaskAssignments;
+include fragment FlmPanelTasks;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvExeTaskMeasurementSet for AvExeTaskMeasurement;
+entityset AvExeTaskActionSet for AvExeTaskAction;
+entityset AvExeTaskToolSet for AvExeTaskTool;
+entityset TaskAssignmentEntitySet for TaskAssignmentEntity;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity TaskAssignmentEntity {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   where = "airport_id IN (SELECT au.airport_id
+                         FROM av_airport_for_user au
+                         WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User())) AND assigned_resource_id=Fnd_Session_API.Get_Fnd_User()";
+
+
+   attribute ExecutionInstanceStatusOrder Number {
+      fetch = "DECODE(Execution_Instance_Status,'Work Started',1,'Assigned',2,'Completed',3, 'Cancelled',4)";
+   }
+   attribute SignedBy Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute TaskAssignmentStatus Text {
+      fetch = "DECODE(Execution_Instance_Status,'Assigned','ASSIGNED','Work Started','WORKSTARTED','Completed','COMPLETED', 'Cancelled','CANCELLED')";
+   }
+   attribute IsClockedIn Boolean("TRUE", "FALSE") {
+      fetch = "Jt_Task_Clocking_API.Is_Clocked_In(task_seq, execution_instance_seq)";
+   }
+   attribute Location Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Location_Code(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(Task_Seq)";
+   }
+
+   reference AvAssemblyRef(AircraftId) to GetAvAssemblyByAircraft(AircraftId);
+   reference AvFlightRef(WorkPackageId) to AvFlight(WorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+}
+
+@Override
+entity AvExeTaskPartWarning {
+   ludependencies = AvExeTaskPart;
+   reference AvExeTaskPartRef(TaskPartId) to AvExeTaskPart(TaskPartId);
+}
+
+@Override
+entity AvAircraftWorkPackage {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+
+   attribute SchedStartDateTimeUtc Timestamp {
+      fetch = "sched_start_date_time";
+   }
+}
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+query GetAvAssemblyByAircraft {
+   from = "aircraft ar join Av_Assembly ass on ass.Assembly_Type_Code = ar.Assembly_Type_Code";
+
+   keys = AircraftId;
+
+   attribute AircraftId Number;
+   attribute AssemblyTypeCode Text;
+   attribute AssemblyTypeName Text;
+   attribute AssemblyTypeClassCode Text;
+   attribute AircraftTypeImage Binary;
+
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+action UpdateTaskStart {
+   initialcheck none;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTask, AvAircraftWorkPackage;
+}
+--------------------------------- FUNCTIONS ---------------------------------
+
+-------------------------------- STRUCTURES ---------------------------------
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

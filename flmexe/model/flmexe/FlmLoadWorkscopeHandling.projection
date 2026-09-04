@@ -1,0 +1,207 @@
+--------------------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  ---------------------------------------------------------------
+-- 2022-12-08  DUWJLK  AD-9055, Added changes to support Task Step in WSL
+-- 2022-12-02  BHSILK  AD-9054, Added changes to support task measurement in WSL
+-- 2022-12-01  majslk  AD-9053, Added changes to support task fault parts in WSL
+-- 2022-11-18  WAISLK  AD-8941, Added changes to support task fault labour in WSL
+-- 2022-11-02  BHSILK  AD-8986, Changes to support task fault tools
+-- 2022-11-01  waislk  AD-8834, Added PAvWPWorkType entity, added PAvWPWorkTypeArray to AvFileUpload entity
+-- 2022-08-09  DUWJLK  AD-8311, Overrided PAvFault entity and added array into AvFileUpload to filter fault
+-- 2222-08-09  majslk  AD-8387, Override PAvExeTask entity, added PAvExeTaskArray to AvFileUpload
+-- 2022-08-09  KAPALK  AD-8046, Added PAvAircraftWPErrorsArray
+-- 2022-07-25  SatGlk  AD-8045, Implemented view error functionality
+-- 2022-07-14  SatGlk  AD-8041, Implemented Upload Workscope page
+-- 2022-07-21  KAPALK  AD-8042, Added the virtuals
+--------------------------------------------------------------------------------------
+projection FlmLoadWorkscopeHandling;
+component FLMEXE;
+layer Core;
+description "Used to import work packages for planned maintenance that will be executed by Line Technicians";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment WorkScopeLoaderTabs;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFileUploadSet for AvFileUpload;
+entityset WorkscopeFileLoadVirtualSet for WorkscopeFileLoadVirtual;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvFileUpload {
+   attribute UserId Text {
+      label = "User ID";
+      fetch = "Ext_File_Load_API.Get_User_Id(load_file_id)";
+   }
+   attribute FailedRows Number {
+      fetch = "Av_File_Upload_API.Get_Failed_Lines_Count(load_file_id)";
+   }
+
+   where = "load_file_id IN (SELECT load_file_id FROM P_AV_AIRCRAFT_W_P WHERE is_heavy_maintenance = 0)";
+
+   array PAvAircraftWPArray(LoadFileId) to PAvAircraftWP(LoadFileId);
+   array PAvFaultArray(LoadFileId) to PAvFault(LoadFileId);
+   array PAvExeTaskArray(LoadFileId) to PAvExeTask(LoadFileId);
+   array PAvToolArray(LoadFileId) to PAvTool(LoadFileId);
+   array PAvLabourArray(LoadFileId) to PAvLabour(LoadFileId);
+   array PAvMeasurementArray(LoadFileId) to PAvMeasurement(LoadFileId);
+   array PAvPartArray(LoadFileId) to PAvPart(LoadFileId);
+   array PAvWPWorkTypeArray(LoadFileId) to PAvWPWorkType(LoadFileId);
+   array PAvActionArray(LoadFileId) to PAvAction(LoadFileId);
+   array PAvTaskStepArray(LoadFileId) to PAvTaskStep(LoadFileId);
+   array PAvStepSkillArray(LoadFileId) to PAvStepSkill(LoadFileId);
+   array PAvUnassignedTaskArray(LoadFileId) to PAvUnassigned(LoadFileId);
+   array PAvPanelRequirementArray(LoadFileId) to PAvPanelRequirement(LoadFileId);
+   array PAvPanelArray(LoadFileId) to PAvPanel(LoadFileId);
+   array PAvPanelSkillArray(LoadFileId) to PAvPanelSkill(LoadFileId);
+   array PAvZoneArray(LoadFileId) to PAvZone(LoadFileId);
+   array PAvWpHistoryArray(LoadFileId) to PAvWpHistory(LoadFileId);
+}
+
+@Override
+entity PAvAircraftWP {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Aircraft_W_P_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvAircraftWPErrorsArray(LoadFileId, RowNo) to PAvAircraftWPErrors(LoadFileId, RowNo);
+}
+@Override
+entity PAvWPWorkType {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_W_P_Work_Type_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   reference WorkTypeRef(WorkTypeCode) to AvWorkType(WorkTypeCode);
+   array PAvWPWorkTypeErrorsArray(LoadFileId, RowNo) to PAvWPWorkTypeErrors(LoadFileId, RowNo);
+}
+@Override
+entity PAvFault {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Fault_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+   array PAvFaultErrorArray(LoadFileId, RowNo) to PAvFaultErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvExeTask {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Exe_Task_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+   attribute Status Text {
+      fetch = "NVL(Av_Exe_Task_API.Finite_State_Decode__(status), status)";
+   }
+   array PAvExeTaskErrorsArray(LoadFileId, RowNo) to PAvExeTaskErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvTool {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Tool_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvToolErrorsArray(LoadFileId, RowNo) to PAvToolErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvLabour {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Labour_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvLabourErrorsArray(LoadFileId, RowNo) to PAvLabourErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvMeasurement {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Measurement_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvMeasurementErrorsArray(LoadFileId, RowNo) to PAvMeasurementErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvAction {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Action_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvActionErrorsArray(LoadFileId, RowNo) to PAvActionErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvPart {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Part_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvPartErrorsArray(LoadFileId, RowNo) to PAvPartErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvTaskStep {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Task_Step_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvTaskStepErrorsArray(LoadFileId, RowNo) to PAvTaskStepErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvStepSkill {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Step_Skill_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvStepSkillErrorsArray(LoadFileId, RowNo) to PAvStepSkillErrors(LoadFileId, RowNo);
+
+}
+
+@Override
+entity PAvUnassigned {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Unassigned_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvUnassignedErrorsArray(LoadFileId, RowNo) to PAvUnassignedErrors(LoadFileId, RowNo);
+
+}
+
+@Override
+entity PAvZone {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Zone_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvZoneErrorsArray(LoadFileId, RowNo) to PAvZoneErrors(LoadFileId, RowNo);
+}
+--------------------------------- VIRTUALS ----------------------------------
+virtual WorkscopeFileLoadVirtual {
+   attribute FileName Text;
+   attribute FileData Stream;
+   attribute LoadFileId Number;
+
+   action ImportFile Structure(ImportFileInfoStructure) {
+      ludependencies = AvFileUpload;
+   }
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+structure ImportFileInfoStructure {
+   attribute LoadFileId Number;
+   attribute Info Text;
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration LineStatus {
+   value = "SUCCESSFUL" {
+      identifier = "Successful";
+      label = "Successful";
+   }
+   value = "FAILED" {
+      identifier = "Failed";
+      label = "Failed";
+   }
+}

@@ -1,0 +1,33 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:32:59 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>On Station</Title>
+    <Footer>Aircraft</Footer>
+    <Background>#FF006996</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_OnStation</Name>
+    <ID>79060574-828d-4562-8361-3404c488f3a8</ID>
+    <WebUrl>page/FlmMyAircraftTurns/MyAircraftTurnsCardPage;$filter=FlightTurnStatus eq 'Arrived' or FlightTurnStatus eq 'InMaintenance' or FlightTurnStatus eq 'Released' </WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>0aa171a7-2a16-4518-98b8-47ed6a76ad8e</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

@@ -1,0 +1,96 @@
+client FlmCriticalItemType;
+component FLMEXE;
+layer Core;
+projection FlmCriticalItemTypeHandling;
+description "Client for Critical Item Type";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry CriticalItemTypeNavEntry parent MxCoreNavigator.CriticalItemsBasicData at index 1000 {
+      label = "Critical Item Types";
+      page CriticalItemType;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page CriticalItemType using CriticalItemTypeSet {
+   label = "Critical Item Types";
+   list CriticalItemTypeList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list CriticalItemTypeList for AvCriticalItemType {
+   orderby = CriticalItemTypeCode;
+   crudactions {
+      new {
+         enabled = [true];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   field CriticalItemTypeCode {
+      label = "Code";
+      size = Small;
+   }
+   field Description {
+      label = "Description";
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Validity";
+      emphasis StatePreliminary = [Objstate = "Active"];
+      emphasis Neutral = [Objstate = "Blocked"];
+      size = Small;
+   }
+
+   commandgroup DataValidityCmdGroup {
+      label = "Validity";
+      command SetActive {
+         label = "Set Active";
+      }
+      command SetBlocked {
+         label = "Block";
+      }
+   }
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

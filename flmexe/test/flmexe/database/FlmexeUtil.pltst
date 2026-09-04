@@ -1,0 +1,52 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmexeUtil
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date      Sign    History
+--  --------  ------  -----------------------------------------------------------------
+--  05012023  PSUALK  AD-11816, Task/Turn Validate Duration in HH:MI format.
+---------------------------------------------------------------------------------------
+
+layer Core;
+
+
+-------------------- LU SPECIFIC PUBLIC METHODS -----------------------------
+
+UNITTEST "Validate_Duration should pass when duration in HH:MI format" FOR
+   FUNCTION Validate_Duration(
+      duration_hhmm_ IN     VARCHAR2) RETURN BOOLEAN;
+USING
+   --Insert your mock directives and mock return variables here
+IS
+   --Insert your test variables here
+   return_   BOOLEAN;
+   expected_ BOOLEAN;
+BEGIN
+   FOR
+      | expected_ | duration_hhmm_ |
+      | TRUE      | ''             |
+      | TRUE      | NULL           |
+      | TRUE      | '00:10'        |
+      | TRUE      | '10:11'        |
+      | TRUE      | '100:11'       |
+      | TRUE      | '0:11'         |
+      | TRUE      | ':10'          |
+      | FALSE     | '10:110'       |
+      | FALSE     | '1a:30'        |
+      | FALSE     | '10:1a'        |
+      | FALSE     | 'aa:10'        |
+      | FALSE     | '10'           |
+
+   LOOP
+      --Insert your test code here
+      return_ := Validate_Duration(duration_hhmm_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+
+

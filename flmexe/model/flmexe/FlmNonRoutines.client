@@ -1,0 +1,113 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250211  NAJMLK  AVMXSOL-4786, Modified parent of navigator HangarTaskAssignmentsNav.
+--  241129  majslk  AD-14740, Added Non Routine client
+-----------------------------------------------------------------------------
+client FlmNonRoutines;
+component FLMEXE;
+layer Core;
+projection FlmNonRoutinesHandling;
+description "Non Routines client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment NonRoutines;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry HangarTaskAssignmentsNav parent FlmexeNavigator.HangarMaintenanceExecution at index 1050 {
+      label = "Non-Routine Overview";
+      page NonRoutines;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page NonRoutines using AvAircraftWorkPackageSet {
+   label = "Non-Routine Overview";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   initcontext PageInitContext;
+   selector WorkPackageSelector;
+   markdowntext {
+      visible = [SensitiveFaultCount = 1];
+      text = "1 non-routine may need attention due to sensitivities.";
+      emphasis Warning = [true];
+   }
+   markdowntext {
+      visible = [SensitiveFaultCount > 1];
+      text = "${SensitiveFaultCount} non-routines may require attention due to sensitivities.";
+      emphasis Warning = [true];
+   }
+   group AvWorkPackageGroup;
+   list NonRoutinesList(FaultArray) {
+      details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      searchcontext NonRoutinesCreatedByMeSearchContext {
+         defaults = GetDefaultValue();
+      }
+      filter = [IsCreatedByMe = true or IsCreatedByMe = searchcontext.NonRoutinesCreatedByMeSearchContext.IsCreatedByMe];
+   }
+}
+
+initcontext PageInitContext {
+   parameter Source Text;
+   init command {
+      execute {
+         set Source = "Navigator";
+      }
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+selector WorkPackageSelector for AvAircraftWorkPackage {
+   label = "${Barcode}";
+   orderby = Objstate desc, SchedEndDateTime asc;
+
+   static Barcode {
+      label = "Work Package Barcode";
+   }
+   static WorkPackageName;
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

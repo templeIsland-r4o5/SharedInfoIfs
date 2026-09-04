@@ -1,0 +1,144 @@
+client FlmToolEquipment;
+component FLMEXE;
+layer Core;
+projection FlmToolEquipmentHandling;
+description "Manage Tool Equipment in Flm";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolEquipmentBase;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 10 {
+      label = "Tool Inventory";
+      page Form;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page Form using ResourceToolEquipSet {
+   label = "Tool Inventory";
+   startupmode = search;
+   stateindicator ResourceStateIndicator;
+   selector ResourceToolEquipSelector1;
+   group ToolEquipmentGroup;
+   arrange {
+      group CalibrationInformationGroup;
+   }
+   arrange {
+      group PartInfoGroup;
+      group EquipmentObjectGroup;
+   }
+   arrange {
+      group AccountingOwnerGroup;
+      group MaintenanceResponsibilityGroup;
+   }
+   tabs {
+      tab {
+         label = "PM Program";
+         group PmProgramGroup;
+         group GbApplicabilityGroup;
+      }
+      tab {
+         label = "Work Orders";
+         @DynamicComponentDependency WO
+         list CustomerWorkOrderList(WorkOrderArray);
+      }
+      tab {
+
+         label = "Work Tasks";
+         @DynamicComponentDependency WO
+         list ToolEquipmenWorkTaskList(WorkTaskArray);
+      }
+      tab {
+         label = "Rental Events History";
+         @DynamicComponentDependency RENTAL
+         list RentalEventsHistoryList(RentalEventHistoryArray);
+      }
+      // Note: This tab is a dynamic tab in IEE dependent on EQUIP component. Please handle it accordingly.
+      tab {
+         label = "Testpoints/Parameters";
+         @DynamicComponentDependency EQUIP
+         list TestPointsList(TestPointArray);
+         @DynamicComponentDependency EQUIP
+         list ObjectParametersList(ParametersArray) bind TestPointsList {
+            copyoncruddefault(ResourceSeq) to(ResourceSeq);
+         }
+      }
+      tab {
+         label = "Check Out History";
+         list ToolEquipCheckOutHistList(ToolEquipCheckOutHistArray);
+         list ToolEquipTaskCheckOutHistList(ToolEquipTaskCheckOutHistArray) bind ToolEquipCheckOutHistList {
+            label = "Allocations";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Calibration History";
+         list ToolEquipCalibrationtHistList(ToolEquipCalibrationHistArray);
+      }
+   }
+   commandgroup CommandGroupCmdGroup {
+      command LotBatchCommand;
+      command PartSerialCommand;
+      command CriticalityAnalysisCommand;
+      command ConnectSerialObjectCommand;
+      command DisconnectSerialObjectCommand;
+   }
+   commandgroup DataValidityCmdGroup {
+      label = "Validity";
+      command SetActive;
+      command SetHidden;
+      command SetBlocked;
+   }
+   command ToolEquipmentCheckOutCommand;
+   command ToolAndEquipmentCheckInCommand;
+   @DynamicComponentDependency WO
+   commandgroup CommandGroup2CmdGroup {
+      commandgroup CommandGroupRegisterWork {
+         label = "Register Work";
+         command FaultReportCommand;
+         command ServiceRequestCommand;
+         command RetrospectiveWorkReportingSMCommand;
+         command RetrospectiveWorkReportingEAMCommand;
+      }
+   }
+
+   command RegisterCalibrationCommand;
+   command ToolUsageHistoryCommand;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

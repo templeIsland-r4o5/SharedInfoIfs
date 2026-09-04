@@ -1,0 +1,57 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250129  WIHALK  AD-17212- Added NonRoutinesCount method.
+--  250124  SABOLK  AD-16456, Added HmWpTaskProgressByStatusQuerySet.
+-----------------------------------------------------------------------------
+
+projection FlmHmCrewLeadLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Manage Hangar Maintenance Crew Lead Lobby.";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmHangarMaintenanceLobby;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset CrewTaskSummaryQuerySet for CrewLeadTaskSummaryQuery;
+entityset HmAircraftsAtUserAirportQuerySet for HmAircraftsAtUserAirportQuery;
+entityset UserTaskAssignmentsQuerySet for UserTaskAssignmentsQuery;
+entityset HmWpTaskProgressByStatusQuerySet for HmWpTaskProgressByStatusQuery;
+entityset MyPartRequestSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetAssignedToMeTaskCountByShift  Number {
+   parameter WorkPackageId Number;
+   parameter Shift Text;
+}
+
+function GetUnassignedTaskCountByShift Number {
+   parameter WorkPackageId Number;
+   parameter Shift Text;
+}
+
+function NonRoutinesCount Number {
+   parameter WorkPackageId Number;
+}
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,174 @@
+---------------------------------------------------------------------------------------------
+--  Module : flmexe
+--
+--  Purpose: Upgrade database objects for IFS/Forward / Line Maintenance Execution
+--           from version 24.2.0 to 25.1.0
+--
+--  File   : 2510.upg
+--
+--  IFS Developer Studio Template Version 2.6
+--
+--  Date     Sign    History
+--  ------   ------  ------------------------------------------------------------------------
+--  241024   roerlk  AD-15165 Removed Obsoleted Lobby Data sources and Elements
+--  240926   BDT     Created (by Build and Deployment Team)
+--  ------   ------  ------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+
+SET SERVEROUTPUT ON
+PROMPT START upgrading WITH 2510.upg
+
+---------------------------------------------------------------------------------------------
+------------------------------ Instructions for upg files -----------------------------------
+---------------------------------------------------------------------------------------------
+--
+--  Main section should contain all upgrade operations.
+--  Next section should contain removal of obsolete objects (any removal of data inside upg is prohibited!).
+--  Removal of backup tables and obsolete columns should be added to <component>Cl.sql script!
+--
+--  If possible, everything regarding one table should be placed in one section.
+--  If this is not possible, a proper comment about the reason should be added.
+--
+--  Each section should be started with a "-----" line and a empty line.
+--  This section should then start with a line like: "-- ***** Example_Tab Start *****"
+--  and end with a line like:                       "-- ***** Example_Tab End *****"
+--
+--  Don't forget UPPER/lower case !
+--
+--  Every part inside the section should start with a "PROMPT" line explaining what is done by the block.
+--
+--  If the PL/SQL block has DML instructions (INSERT,UPDATE,DELETE etc) there should always be a "COMMIT;" line after the block.
+--
+--  Remember ordinary coding standard rules !
+--
+--  Don't drop any Table/Column !
+--
+--  Don't forget performance when updating large table !
+--
+--  No unnecessary blank lines or comments !
+--
+--  If possible, use pure SQL commands
+--
+--  If possible, try to group several updates together in one statement.
+--
+--  Timestamps will be added automatically at the end of the project.
+--
+--  For more information refer to the "Upgrade Script Standards" and the "Performance" technical documents.
+--
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ CREATE NEW SEQUENCES -----------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+--------------- CREATE/ALTER TABLES/INDEXES AND DATA CORRECTIONS ------------------
+---------------------------------------------------------------------------------------------
+
+-- ***** FND_ROLE_TAB Start *****
+DECLARE   
+   TYPE array_t IS VARRAY(6) OF VARCHAR2(50);
+   role_array_ array_t := array_t('HANGAR_TECHNICIAN','HANGAR_SUPERVISOR');
+BEGIN
+   FOR i_ IN 1..role_array_.count LOOP
+      Security_SYS.Set_Role_Delivery_Type(role_array_(i_), 'IFS_MANAGED');
+   END LOOP;
+END;
+/
+-- ***** FND_ROLE_TAB End *****
+
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME OBSOLETE TABLES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE RPT TABLES/COLUMNS -----------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE TEMPORARY TABLES -------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE PACKAGES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE VIEWS ------------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE INDEXES/SEQUENCES ------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE LOBBY OBJECTS ----------------------------------
+---------------------------------------------------------------------------------------------
+
+-- ***** Removing Unused SQL Datasource and Lobby Element Related Objects Start *****
+
+EXEC Database_SYS.Log_Detail_Time_Stamp('FLMEXE','2510.upg','Timestamp_2');
+PROMPT REMOVING UNUSED FLMEXE LOBBY DATASOURCE AND ELEMENT RELATED LOBBY OBJECTS
+
+BEGIN
+   Database_SYS.Remove_Lobby_Data_Source('d259a761-7c77-4cde-bfea-97e838573216');
+   Database_SYS.Remove_Lobby_Data_Source('be066f86-ce45-4881-857b-92ed96c328fc');
+   Database_SYS.Remove_Lobby_Data_Source('7efc16ac-ba19-44d8-afca-2ed5d81379a1');
+   Database_SYS.Remove_Lobby_Data_Source('437dc273-ffc1-43d3-b3ab-d569c845b153');
+   Database_SYS.Remove_Lobby_Data_Source('8e51ed01-f78f-4ad5-b7c5-e505b061b89a');
+   Database_SYS.Remove_Lobby_Data_Source('8ea7288d-9330-4c68-8993-303c0905727b');
+   Database_SYS.Remove_Lobby_Data_Source('90259dcc-08d0-4193-a45c-7da10bea9b2d');
+   Database_SYS.Remove_Lobby_Data_Source('82a3e8f3-978d-4c61-a707-479255442595');
+   Database_SYS.Remove_Lobby_Data_Source('cc7a59f0-79c1-4243-8c2d-04b9473097e8');
+   Database_SYS.Remove_Lobby_Data_Source('b9464bf1-1065-4ada-974c-4b21feda02d5');
+   Database_SYS.Remove_Lobby_Data_Source('83b1886f-6e9b-4aa1-a80f-1c8475d6b61d');
+   Database_SYS.Remove_Lobby_Data_Source('548cab0c-0cb5-4d4e-a76c-badbb9dce919');
+   Database_SYS.Remove_Lobby_Data_Source('578ca3d1-dfbb-4f71-a929-cf9f52afc050');
+   Database_SYS.Remove_Lobby_Data_Source('aa04598f-aecf-4353-a78e-61e3e94ce15d');
+   Database_SYS.Remove_Lobby_Data_Source('c2a82526-6068-4b2f-b160-2197af507edd');
+   Database_SYS.Remove_Lobby_Data_Source('dc427288-f790-4009-a353-77cc305a69b9');
+   Database_SYS.Remove_Lobby_Data_Source('b01a2957-af6d-46b4-b1f0-fbce164547d1');
+   Database_SYS.Remove_Lobby_Data_Source('1212a763-6fa7-4b4b-9b90-d80faa7bf6f2');
+   Database_SYS.Remove_Lobby_Data_Source('a751a99a-4e42-432e-a047-dba9a9a76770');
+   Database_SYS.Remove_Lobby_Data_Source('179c2532-88fb-4f04-ba51-543ce5b0e9c7');
+   Database_SYS.Remove_Lobby_Data_Source('d511f40b-34ab-4dbe-9548-96e04c8fce22');
+   Database_SYS.Remove_Lobby_Data_Source('03ccd3bf-6926-4443-b561-598aab452a63');
+   Database_SYS.Remove_Lobby_Data_Source('7991e4e3-6c4f-4eb1-85b3-aa616a3c813d');
+   Database_SYS.Remove_Lobby_Data_Source('1a70ef53-374a-45f5-b4e5-bd9637b18f24');
+   Database_SYS.Remove_Lobby_Data_Source('924a0f05-fded-4398-890d-e1899d3541b9');
+   Database_SYS.Remove_Lobby_Data_Source('7f05e129-dfc0-47a6-a3f0-1e5b522c9cad');
+   Database_SYS.Remove_Lobby_Data_Source('c0303eb6-6695-4e39-b86f-c4eb090afa9e');
+
+   Database_SYS.Remove_Lobby_Element('51157ab3-0f3c-41c9-8a86-7159251686fc');
+   Database_SYS.Remove_Lobby_Element('e0e75ca3-7cfe-4ccf-a15c-7abe08dca219');
+   Database_SYS.Remove_Lobby_Element('13b4ce78-c6da-45ff-a2c7-a7a49050d902');
+   Database_SYS.Remove_Lobby_Element('c819df99-dbb2-418e-ae13-bdbbd6dc45ba');
+   Database_SYS.Remove_Lobby_Element('54ef6d93-db71-4e3d-bef0-6caceba7c01b');
+   Database_SYS.Remove_Lobby_Element('0d9dcedf-89d3-48af-b7e3-1b8d612a67ca');
+END;
+/
+-- ***** Removing Unused SQL Datasource and Lobby Element Related Objects End *****
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME INDEXES/CONSTRAINTS  ----------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+
+PROMPT Upgrade statements IN FILE 2510.upg ends here.
+
+-- Nothing is allowed to be placed below here
+---------------------------------------------------------------------------------------------

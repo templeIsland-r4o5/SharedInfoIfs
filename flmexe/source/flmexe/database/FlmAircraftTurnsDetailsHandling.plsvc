@@ -1,0 +1,744 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmAircraftTurnsDetailsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  241107  KANILK  AMDEV-17137, Replaced all occurrences of JT_TASK_TAB with WORK_TASK_TAB.
+--  241017  WEDILK  AD-14537, Change to use av_exe_task/jt_task_tab after changing AvExeTask with based on JtTask
+--  240724  VAALLK  AD-11951, Modified Update_Task_Start___ , Update_Task_Unstart___ 
+--  240205  RWELLK  AD-12057, Added conditional compilation and dependancy annotation to the Check_Closed_Fault_Ownership___ function.
+--  240123  LAWALK  AD-11649, Added Check_Closed_Fault_Ownership___ for check the ownership of the fault.
+--  231108  LAHNLK  AD-10778, modified Package_Open_Fault___,Get_Init_Data___
+--  231108  maillk  AD-9566, Added implementation of Update_Task_Unstart___
+--  230828  bhsilk  AD-10359, Added implementation of Update_Task_Start___
+--  230810  majslk  AD-9590, Modified code to support time zone changes in fluid servicing
+--  230804  majslk  AD-10387, Modified code to support time zone changes
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230601  majslk  AD-9575, Modified Raise Fault work flow
+--  221104  RWELLK  AD-9028, Updated variable name in Get_Find_Inventory_Url___
+--  221027  rosdlk  AD-8650, Updated argument name in Get_Find_Inventory_Url___
+--  220815  psualk  AD-8463, Fixing package a deferred faults with parts will gives error.
+--  220720  didlk   AD-8097, Added Copy_FaultParts_to_TaskPart___
+--  220613  bhsilk  AD-7873, Added Copy_Fault_Resource_Tool_Equip_To_Task___ to copy ifs fault tools to task tools and called in open and deferred fault packaging
+--  220602  majslk  AD-7000, Added Duration field in PackageFault.
+--  220527  psualk  AD-7526, Adding missing enabling standalone runtime check for package fault.
+--  220525  rosdlk  AD-1085, Removed the IS_RELEASE_TO_SERVICE attr from attr string when packaging to a new work package
+--  220517  bhsilk  AD-7650, added missing parentheses for location query
+--  220221  himklk  AD-6839, Modified Package_Open_Fault___. Changed if condition which checks the aircraft turn status.
+--  220113  majslk  AD-5956, Removed Modify_Task___ method.
+--  211223  sbanlk  AD-4125, Modified Get_Init_Data___ to retrieve inbound flight no, Modified CRUD_Default___ to set action user.
+--  211201  rjoslk  AD-4124, Added implementation for recording fluid uplifts.
+--  211122  chdslk  AD-3954, Moved assignee and related functionality from Task level to TaskLabour level.
+--  210809  lahnlk  AD-3257, added Copy_Faulttools_to_TaskTool___,Copy_Faultskills_to_Taskskill___ and call them in the Package_Open_Fault___
+--  210809  SatGlk  AD-3229, Modified Package_Open_Fault___ so that when a defered fault that had been previously packaged is packaged, a package fault API call is sent
+--  210420  sevhlk  AD-1196, Added the Clear_Release_Aircraft_Virtual___
+--  210329  siydlk  AD-1157, Created and added Add_Actual_Date_Time___.
+--  210325  KAWJLK  AD-1265, Created and added Package_Open_Fault___, check_wp_exist, get_location_code, get_task_obj_id, get_task_obj_version.
+--  221025  sevhlk  AD-8650, Added Get_Find_Inventory_Url___
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Add_Actual_Date_Time___ RETURN DATE
+IS
+   CURSOR get_sys_date IS
+      SELECT  Time_Util_API.Get_Sysdate_In_Utc 
+      FROM    dual;
+   current_date_  TIMESTAMP;
+BEGIN
+   OPEN get_sys_date;
+   FETCH get_sys_date INTO current_date_;
+   CLOSE get_sys_date; 
+   RETURN current_date_;
+END Add_Actual_Date_Time___;
+
+PROCEDURE Package_Open_Fault___ (
+   fault_id_                 IN NUMBER,
+   flight_id_                IN NUMBER,
+   aircraft_work_package_id_ IN NUMBER)
+IS
+   
+   departure_time_stamp_    DATE;
+   flight_turn_status_      VARCHAR2(100);
+   aircraft_id_             NUMBER;
+   sub_system_id_           NUMBER;
+   task_seq_                NUMBER;
+   new_work_package_id_     NUMBER;
+   new_task_seq_            NUMBER;
+   new_task_seq_var_        VARCHAR2(300);
+   new_work_package_id_var_ VARCHAR2(300);
+   sub_system_code_         VARCHAR2(300);
+   description_             VARCHAR2(300);
+   barcode_                 VARCHAR2(300);
+   task_code_               VARCHAR2(200);
+   fault_status_             VARCHAR2(200);
+   location_code_           VARCHAR2(200);
+   new_obj_id_              VARCHAR2(200);
+   new_objversion_          VARCHAR2(200);
+   arrival_airport_id_      NUMBER;
+   shed_arrival_date_time_  DATE;
+   info_                    VARCHAR2(200);
+   objid_                   VARCHAR2(200);
+   objversion_              VARCHAR2(200);
+   attr_                    VARCHAR2(32000);
+   wp_name_date_            VARCHAR2(200);
+   wp_new_name_             VARCHAR2(200);
+   task_rec_                Av_Exe_Task_API.Entity_Rec;
+   
+   CURSOR get_fault_data IS
+      SELECT f.aircraft_id, f.sub_system_id, f.description, f.barcode, f.fault_code, f.rowstate
+      FROM   av_fault_tab f
+      WHERE  f.fault_id = fault_id_;
+   
+   CURSOR get_flight_data IS
+      SELECT a.arrival_airport_id,a.shed_arrival_date_time
+      FROM   av_flight_tab a
+      WHERE  a.flight_id = flight_id_ AND a.aircraft_id = (SELECT f.aircraft_id
+                                                           FROM   av_fault_tab f
+                                                           WHERE  f.fault_id = fault_id_);
+   
+   CURSOR get_task_data IS 
+      SELECT   e.task_seq
+      FROM     av_exe_task e
+      WHERE    e.fault_id = fault_id_
+      ORDER BY objversion DESC 
+      FETCH first 1 ROW ONLY;
+   
+BEGIN
+   wp_name_date_       := to_char(sysdate,'DD/MM/YYYY');
+   wp_new_name_        := CONCAT('Packaged Fault ',wp_name_date_);
+   flight_turn_status_ := Av_Flight_API.Get_Turn_Status(flight_id_);
+   
+   OPEN get_fault_data;
+   FETCH get_fault_data INTO aircraft_id_,sub_system_id_,description_,barcode_, task_code_, fault_status_;
+   CLOSE get_fault_data;
+   
+   IF flight_turn_status_ ='Inbound' OR flight_turn_status_ ='Arrived' OR flight_turn_status_ ='InMaintenance' THEN
+      
+      OPEN get_flight_data;
+      FETCH get_flight_data INTO arrival_airport_id_, shed_arrival_date_time_;
+      CLOSE get_flight_data;
+      
+      departure_time_stamp_ := Av_Flight_API.Get_Departure_Timestamp(flight_id_);
+      sub_system_code_      := Av_Aircraft_Sub_System_API.Get_Sub_System_Code(sub_system_id_);
+      location_code_        := Av_Maintenance_Location_API.Get_Loc_Code_by_Airport_Id(arrival_airport_id_);
+      
+      IF Av_Aircraft_Work_Package_API.Is_Existing_Wp_Valid(aircraft_work_package_id_) THEN
+         --Package Fault when Work Package exists
+         IF fault_status_ = 'Open' THEN
+            OPEN  get_task_data;
+            FETCH get_task_data INTO task_seq_;
+            IF get_task_data%FOUND THEN
+               Av_Exe_Task_API.Get_Id_Version_By_Task_Id(new_obj_id_, new_objversion_, task_seq_);
+               
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID', aircraft_work_package_id_, attr_);
+               
+               Av_Exe_Task_API.Modify__(info_, new_obj_id_, new_objversion_, attr_, 'DO');
+               
+               IF (Mx_Config_API.Is_Maintenix_Connected) THEN
+                  IF NOT Mx_Data_Sync_Util_API.Is_Mx_Data_Sync_Receive_Mode() THEN 
+                     task_rec_.task_seq       := task_seq_;
+                     task_rec_.fault_id       := fault_id_;
+                     task_rec_.aircraft_wp_id := aircraft_work_package_id_;
+                     task_rec_.barcode        := barcode_;
+                     Av_Exe_Task_API.CopyChanges(task_rec_);
+                  END IF;
+               END IF;
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,task_seq_,FALSE);   
+               --Check whether there are any existing fault parts when packaging
+               Copy_FaultParts_to_TaskPart___(fault_id_,task_seq_,FALSE);
+               
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,task_seq_);
+            ELSE   
+               Client_SYS.Add_To_Attr('AIRCRAFT_ID',      aircraft_id_,              attr_);
+               Client_SYS.Add_To_Attr('FAULT_ID',         fault_id_,                 attr_);
+               Client_SYS.Add_To_Attr('CLASS_CODE',       Av_Exe_Task_API.TASK_CLASS_CORR, attr_);
+               Client_SYS.Add_To_Attr('DESCRIPTION',      description_,              attr_);
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID',   aircraft_work_package_id_, attr_);
+               Client_SYS.Add_To_Attr('BARCODE',          barcode_,                  attr_);
+               Client_SYS.Add_To_Attr('TASK_CODE',        task_code_,                attr_);
+               Client_SYS.Add_To_Attr('CONFIG_POSITION',  sub_system_code_,          attr_);
+               Av_Exe_Task_API.New__(info_, objid_, objversion_, attr_, 'DO');   
+               
+               new_task_seq_var_ := Client_SYS.Get_Item_Value('TASK_SEQ', attr_);
+               new_task_seq_     := Client_SYS.Attr_Value_To_Number(new_task_seq_var_);
+               Av_Exe_Task_API.Release_Task(new_task_seq_var_);
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,new_task_seq_,TRUE);
+               --Check whether there are any existing fault parts when packaging
+               Copy_FaultParts_to_TaskPart___(fault_id_,new_task_seq_,TRUE);
+               
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,new_task_seq_);
+            END IF;
+            CLOSE get_task_data;
+            
+         ELSIF fault_status_ = 'Deferred' THEN
+            OPEN get_task_data;
+            FETCH get_task_data INTO task_seq_;            
+            IF get_task_data%FOUND THEN
+               CLOSE get_task_data;
+               Av_Exe_Task_API.Get_Id_Version_By_Task_Id(new_obj_id_, new_objversion_, task_seq_);
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID', aircraft_work_package_id_, attr_);
+               Av_Exe_Task_API.Release__(info_, new_obj_id_, new_objversion_, attr_, 'DO');
+               Av_Exe_Task_API.Modify__(info_, new_obj_id_, new_objversion_, attr_, 'DO');
+               
+               IF (Mx_Config_API.Is_Maintenix_Connected) THEN
+                  IF NOT Mx_Data_Sync_Util_API.Is_Mx_Data_Sync_Receive_Mode() THEN 
+                     task_rec_.task_seq       := task_seq_;
+                     task_rec_.fault_id       := fault_id_;
+                     task_rec_.aircraft_wp_id := aircraft_work_package_id_;
+                     task_rec_.barcode        := barcode_;
+                     Av_Exe_Task_API.CopyChanges(task_rec_);
+                  END IF;
+               END IF;
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,task_seq_,FALSE);   
+               --Check whether there are any existing fault parts when packaging
+               Copy_FaultParts_to_TaskPart___(fault_id_,task_seq_,FALSE);
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,task_seq_);
+            ELSE
+               CLOSE get_task_data;
+               Client_SYS.Add_To_Attr('AIRCRAFT_ID',      aircraft_id_,              attr_);
+               Client_SYS.Add_To_Attr('FAULT_ID',         fault_id_,                 attr_);
+               Client_SYS.Add_To_Attr('CLASS_CODE',       Av_Exe_Task_API.TASK_CLASS_CORR, attr_);
+               Client_SYS.Add_To_Attr('DESCRIPTION',      description_,              attr_);
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID',   aircraft_work_package_id_, attr_);
+               Client_SYS.Add_To_Attr('BARCODE',          barcode_,                  attr_);
+               Client_SYS.Add_To_Attr('TASK_CODE',        task_code_,                attr_);
+               Client_SYS.Add_To_Attr('CONFIG_POSITION',  sub_system_code_,          attr_);
+               Av_Exe_Task_API.New__(info_, objid_, objversion_, attr_, 'DO');
+               
+               new_task_seq_var_ := Client_SYS.Get_Item_Value('TASK_SEQ', attr_);
+               new_task_seq_     := Client_SYS.Attr_Value_To_Number(new_task_seq_var_);  
+               Av_Exe_Task_API.Release_Task(new_task_seq_var_);
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,new_task_seq_,TRUE);
+               --Check whether there are any existing fault parts when packaging
+               Copy_FaultParts_to_TaskPart___(fault_id_,new_task_seq_,TRUE);
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,new_task_seq_);
+            END IF;           
+         END IF;         
+      ELSE
+         --Package Fault when no Work Package exists
+         --Create WP         
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('AIRCRAFT_ID',           aircraft_id_,   attr_);
+         Client_SYS.Add_To_Attr('LOCATION_CODE',         location_code_, attr_);        
+         Client_SYS.Add_To_Attr('WORK_PACKAGE_NAME',     wp_new_name_,   attr_);
+         Client_SYS.Add_To_Attr('IS_HISTORIC',           'False',        attr_);        
+         Client_SYS.Add_To_Attr('DURATION',              0,              attr_);
+         IF flight_turn_status_ = 'Inbound' OR flight_turn_status_ = 'Arrived' THEN     
+            Client_SYS.Add_To_Attr('SCHED_START_DATE_TIME', shed_arrival_date_time_, attr_);  
+         ELSE     
+            Client_SYS.Add_To_Attr('SCHED_START_DATE_TIME', Time_Util_API.Get_Sysdate_In_Utc,                 attr_);            
+         END IF;        
+         IF departure_time_stamp_ IS NOT NULL THEN 
+            Client_SYS.Add_To_Attr('SCHED_END_DATE_TIME',   shed_arrival_date_time_, attr_);
+         END IF;
+         IF departure_time_stamp_ IS NULL THEN          
+            IF flight_turn_status_ = 'Inbound' OR flight_turn_status_ = 'Arrived' THEN 
+               Client_SYS.Add_To_Attr('SCHED_END_DATE_TIME', shed_arrival_date_time_, attr_);
+            ELSE  
+               Client_SYS.Add_To_Attr('SCHED_END_DATE_TIME', Time_Util_API.Get_Sysdate_In_Utc,                 attr_);              
+            END IF;
+         END IF;   
+         Av_Aircraft_Work_Package_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+         --Create Task
+         new_work_package_id_var_ := Client_SYS.Get_Item_Value('AIRCRAFT_WORK_PACKAGE_ID', attr_);
+         new_work_package_id_     := Client_SYS.Attr_Value_To_Number(new_work_package_id_var_);
+         IF fault_status_ = 'Open' THEN
+            Client_SYS.Add_To_Attr('AIRCRAFT_ID',      aircraft_id_,              attr_);
+            Client_SYS.Add_To_Attr('FAULT_ID',         fault_id_,                 attr_);
+            Client_SYS.Add_To_Attr('CLASS_CODE',       Av_Exe_Task_API.TASK_CLASS_CORR, attr_);
+            Client_SYS.Add_To_Attr('DESCRIPTION',      description_,              attr_);
+            Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID',   new_work_package_id_,      attr_);
+            Client_SYS.Add_To_Attr('BARCODE',          barcode_,                  attr_);
+            Client_SYS.Add_To_Attr('TASK_CODE',        task_code_,                attr_);
+            Client_SYS.Add_To_Attr('CONFIG_POSITION',  sub_system_code_,          attr_);
+            Av_Exe_Task_API.New__(info_, objid_, objversion_, attr_, 'DO'); 
+            new_task_seq_var_ := Client_SYS.Get_Item_Value('TASK_SEQ', attr_);
+            new_task_seq_     := Client_SYS.Attr_Value_To_Number(new_task_seq_var_);
+            Av_Exe_Task_API.Release_Task(new_task_seq_var_);
+            -- Check whether there are any existing fault tools when packaging
+            Copy_FaultTools_to_TaskTool___(fault_id_,new_task_seq_,TRUE);
+            --Check whether there are any existing fault parts when packaging
+            Copy_FaultParts_to_TaskPart___(fault_id_,new_task_seq_,TRUE);
+            Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,new_task_seq_);
+         ELSIF fault_status_ = 'Deferred' THEN
+            OPEN  get_task_data;
+            FETCH get_task_data INTO task_seq_;
+            
+            IF get_task_data%FOUND THEN
+               CLOSE get_task_data;
+               Av_Exe_Task_API.Get_Id_Version_By_Task_Id(new_obj_id_, new_objversion_, task_seq_);
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID', new_work_package_id_, attr_);
+               Av_Exe_Task_API.Release__(info_, new_obj_id_, new_objversion_, attr_, 'DO');
+               Av_Exe_Task_API.Modify__(info_, new_obj_id_, new_objversion_, attr_, 'DO');
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,task_seq_,FALSE);
+               --Check whether there are any existing fault parts when packaging
+               Copy_FaultParts_to_TaskPart___(fault_id_,task_seq_,FALSE);
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,task_seq_);
+            ELSE
+               CLOSE get_task_data;
+               Client_SYS.Add_To_Attr('AIRCRAFT_ID',      aircraft_id_,              attr_);
+               Client_SYS.Add_To_Attr('FAULT_ID',         fault_id_,                 attr_);
+               Client_SYS.Add_To_Attr('CLASS_CODE',       Av_Exe_Task_API.TASK_CLASS_CORR, attr_);
+               Client_SYS.Add_To_Attr('DESCRIPTION',      description_,              attr_);
+               Client_SYS.Add_To_Attr('AIRCRAFT_WP_ID',   new_work_package_id_,      attr_);
+               Client_SYS.Add_To_Attr('BARCODE',          barcode_,                  attr_);
+               Client_SYS.Add_To_Attr('TASK_CODE',        task_code_,                attr_);
+               Client_SYS.Add_To_Attr('CONFIG_POSITION',  sub_system_code_,          attr_);
+               Av_Exe_Task_API.New__(info_, objid_, objversion_, attr_, 'DO'); 
+               new_task_seq_var_ := Client_SYS.Get_Item_Value('TASK_SEQ', attr_);
+               new_task_seq_     := Client_SYS.Attr_Value_To_Number(new_task_seq_var_);
+               Av_Exe_Task_API.Release_Task(new_task_seq_var_);
+               -- Check whether there are any existing fault tools when packaging
+               Copy_FaultTools_to_TaskTool___(fault_id_,new_task_seq_,TRUE);
+               Copy_FaultParts_to_TaskPart___(fault_id_,new_task_seq_,TRUE);
+               Copy_Fault_Resource_Tool_Equip_To_Task___(fault_id_,new_task_seq_);
+            END IF;            
+         END IF;
+      END IF;      
+   ELSE
+      Error_SYS.Record_General(lu_name_, 'WRONGTURN: Aircraft Turn Status should be Inbound, Arrived or InMaintenance');      
+   END IF;  
+END Package_Open_Fault___;
+
+PROCEDURE Clear_Release_Aircraft_Virtual___
+IS
+BEGIN
+	DELETE FROM ${PROJECTION}_Release_Aircraft_Virtual_VRT;
+END Clear_Release_Aircraft_Virtual___;
+
+PROCEDURE Copy_FaultTools_to_TaskTool___(
+   fault_id_    IN NUMBER,
+   task_seq_    IN NUMBER,
+   is_new_task_ IN BOOLEAN)
+IS
+   task_tool_exists_        NUMBER;
+   info_                    VARCHAR2(200);
+   objid_                   VARCHAR2(200);
+   objversion_              VARCHAR2(200);
+   attr_                    VARCHAR2(32000);
+   
+   CURSOR get_fault_tools_ IS
+      SELECT *
+      FROM   av_fault_tool_tab f
+      WHERE  f.fault_id = fault_id_;
+   
+   CURSOR get_task_tools_(task_seq_ IN NUMBER,fault_tool_id_ IN NUMBER) IS
+      SELECT 1
+      FROM   av_exe_task_tool_tab t
+      WHERE  t.task_seq = task_seq_ AND
+             t.fault_tool_id = fault_tool_id_;
+BEGIN
+   IF is_new_task_ THEN 
+      FOR fault_tool_ IN get_fault_tools_ LOOP
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',                task_seq_,                       attr_);
+         Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',fault_tool_.tool_specification_code,attr_);
+         Client_SYS.Add_To_Attr('PART_NO_ID',             fault_tool_.part_number_id,             attr_);
+         Client_SYS.Add_To_Attr('SERIAL_NO',              fault_tool_.serial_no,              attr_);
+         Client_SYS.Add_To_Attr('ASSIGNED_USER',          fault_tool_.assigned_user,          attr_);
+         Client_SYS.Add_To_Attr('SCHED_DURATION',         fault_tool_.scheduled_hours,         attr_);
+         Client_SYS.Add_To_Attr('ACTUAL_DURATION',        fault_tool_.actual_hours,        attr_);
+         Client_SYS.Add_To_Attr('MX_UNIQUE_KEY',          fault_tool_.mx_unique_key,          attr_);
+         Client_SYS.Add_To_Attr('FAULT_TOOL_ID',          fault_tool_.fault_tool_id,          attr_);
+         Av_Exe_Task_Tool_API.New__(info_, objid_, objversion_, attr_, 'DO'); 
+      END LOOP;
+   ELSE
+      FOR fault_tool_ IN get_fault_tools_ LOOP
+         OPEN get_task_tools_(task_seq_,fault_tool_.fault_tool_id );
+         FETCH get_task_tools_ INTO task_tool_exists_;
+         IF get_task_tools_%NOTFOUND THEN
+            CLOSE get_task_tools_;
+            Client_SYS.Clear_Attr(attr_);
+            Client_SYS.Add_To_Attr('TASK_SEQ',                task_seq_,                       attr_);
+            Client_SYS.Add_To_Attr('TOOL_SPECIFICATION_CODE',fault_tool_.tool_specification_code,attr_);
+            Client_SYS.Add_To_Attr('PART_NO_ID',             fault_tool_.part_number_id,             attr_);
+            Client_SYS.Add_To_Attr('SERIAL_NO',              fault_tool_.serial_no,              attr_);
+            Client_SYS.Add_To_Attr('ASSIGNED_USER',          fault_tool_.assigned_user,          attr_);
+            Client_SYS.Add_To_Attr('SCHED_DURATION',         fault_tool_.scheduled_hours,         attr_);
+            Client_SYS.Add_To_Attr('ACTUAL_DURATION',        fault_tool_.actual_hours,        attr_);
+            Client_SYS.Add_To_Attr('MX_UNIQUE_KEY',          fault_tool_.mx_unique_key,          attr_);
+            Client_SYS.Add_To_Attr('FAULT_TOOL_ID',          fault_tool_.fault_tool_id,          attr_);
+            Av_Exe_Task_Tool_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+         ELSE
+            CLOSE get_task_tools_;
+         END IF; 
+      END LOOP;
+   END IF;
+   
+	
+END Copy_FaultTools_to_TaskTool___;
+
+PROCEDURE Copy_Fault_Resource_Tool_Equip_To_Task___(
+   fault_id_ IN NUMBER,
+   task_seq_ IN NUMBER)
+IS
+   
+   
+BEGIN
+   
+   $IF Component_Tooleq_SYS.INSTALLED $THEN
+      Av_Resource_Tool_Equipment_API.Convert_Fault_Tools(fault_id_, task_seq_);
+   $ELSE
+      NULL;
+   $END   
+   
+END Copy_Fault_Resource_Tool_Equip_To_Task___;
+
+PROCEDURE Copy_FaultParts_to_TaskPart___(
+   fault_id_    IN NUMBER,
+   task_seq_    IN NUMBER,
+   is_new_task_ IN BOOLEAN)
+IS
+   task_part_exists_        NUMBER;
+   info_                    VARCHAR2(200);
+   objid_                   VARCHAR2(200);
+   objversion_              VARCHAR2(200);
+   attr_                    VARCHAR2(32000);
+   
+   CURSOR get_fault_parts IS
+      SELECT *
+      FROM   av_fault_part_tab f
+      WHERE  f.fault_id = fault_id_;
+   
+   CURSOR get_task_parts(task_seq_ IN NUMBER,fault_part_id_ IN NUMBER) IS
+      SELECT 1
+      FROM   av_exe_task_part_tab t
+      WHERE  t.task_seq = task_seq_ AND
+             t.fault_part_id = fault_part_id_;
+BEGIN
+   
+   IF is_new_task_ THEN           
+      FOR fault_part_ IN get_fault_parts LOOP            
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_PART_ID',             fault_part_.fault_part_id,             attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',                  task_seq_,                             attr_);
+         Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID',fault_part_.assmbly_config_slot_pos_id,attr_);
+         Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',   fault_part_.config_slot_position_id,   attr_);
+         Client_SYS.Add_To_Attr('PART_GROUP_ID',             fault_part_.part_group_id,             attr_);
+         Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',        fault_part_.removed_part_no_id,        attr_);
+         Client_SYS.Add_To_Attr('REMOVED_QUANTITY',          fault_part_.removed_quantity,          attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',      fault_part_.installed_part_no_id,      attr_);
+         Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',        fault_part_.installed_quantity,        attr_);
+         Av_Exe_Task_Part_API.New__(info_, objid_, objversion_, attr_, 'DO'); 
+      END LOOP;
+   ELSE
+      
+      FOR fault_part_ IN get_fault_parts LOOP
+         OPEN get_task_parts(task_seq_,fault_part_.fault_part_id );
+         FETCH get_task_parts INTO task_part_exists_;
+         IF get_task_parts%NOTFOUND THEN
+            CLOSE get_task_parts;
+            Client_SYS.Add_To_Attr('FAULT_PART_ID',             fault_part_.fault_part_id,             attr_);
+            Client_SYS.Add_To_Attr('TASK_SEQ',                  task_seq_,                              attr_);
+            Client_SYS.Add_To_Attr('ASSMBLY_CONFIG_SLOT_POS_ID',fault_part_.assmbly_config_slot_pos_id,attr_);
+            Client_SYS.Add_To_Attr('CONFIG_SLOT_POSITION_ID',   fault_part_.config_slot_position_id,   attr_);
+            Client_SYS.Add_To_Attr('PART_GROUP_ID',             fault_part_.part_group_id,             attr_);
+            Client_SYS.Add_To_Attr('REMOVED_PART_NO_ID',        fault_part_.removed_part_no_id,        attr_);
+            Client_SYS.Add_To_Attr('REMOVED_QUANTITY',          fault_part_.removed_quantity,          attr_);
+            Client_SYS.Add_To_Attr('INSTALLED_PART_NO_ID',      fault_part_.installed_part_no_id,      attr_);
+            Client_SYS.Add_To_Attr('INSTALLED_QUANTITY',        fault_part_.removed_quantity,          attr_);
+            
+            Av_Exe_Task_Part_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+         ELSE 
+            CLOSE get_task_parts;
+         END IF;
+      END LOOP;
+   END IF;
+	
+END Copy_FaultParts_to_TaskPart___;
+
+
+PROCEDURE Load_Service_Details___ (
+   assembly_type_code_   IN VARCHAR2,
+   fluid_service_def_id_ IN NUMBER,
+   aircraft_id_          IN NUMBER,
+   parent_objkey_        IN VARCHAR2)
+IS 
+   fld_service_det_vrt_rec_   Fluid_Service_Det_Virtual_Rec;
+   
+   CURSOR get_fluid_service_definitions IS
+      SELECT * 
+      FROM Av_Fluid_Service_Def_Rec
+      WHERE assembly_type_code = assembly_type_code_
+      AND fluid_service_def_id = fluid_service_def_id_;
+   CURSOR get_sub_assy_inventory_id (assembly_type_code_ IN VARCHAR2, config_slot_position_id_ IN NUMBER) IS
+      SELECT inventory_id
+      FROM av_sub_assy_inventory_tab
+      WHERE aircraft_id = aircraft_id_
+      AND assembly_type_code = assembly_type_code_
+      AND config_slot_position_id = config_slot_position_id_;
+BEGIN
+   Delete_Assist_Data(parent_objkey_);
+   FOR service_rec IN get_fluid_service_definitions LOOP
+      fld_service_det_vrt_rec_.assembly_type_code := service_rec.fluid_def_assembly_code;
+      fld_service_det_vrt_rec_.fluid_definition_id := service_rec.fluid_definition_id;
+      fld_service_det_vrt_rec_.config_slot_position_id := service_rec.config_slot_position_id;
+      IF (Av_Assembly_API.Get_Assembly_Type_Class_Code(fld_service_det_vrt_rec_.assembly_type_code) = 'ACFT') THEN
+         fld_service_det_vrt_rec_.inventory_id := Aircraft_API.Get_Inventory_Id(aircraft_id_);
+      ELSE
+         OPEN get_sub_assy_inventory_id(fld_service_det_vrt_rec_.assembly_type_code, fld_service_det_vrt_rec_.config_slot_position_id);
+         FETCH get_sub_assy_inventory_id INTO fld_service_det_vrt_rec_.inventory_id;
+         CLOSE get_sub_assy_inventory_id;
+      END IF;
+      fld_service_det_vrt_rec_.record_order := service_rec.record_order;
+      fld_service_det_vrt_rec_.objkey := sys_guid();
+      fld_service_det_vrt_rec_.parent_objkey := parent_objkey_;
+      IF (fld_service_det_vrt_rec_.inventory_id IS NOT NULL) THEN 
+         fld_service_det_vrt_rec_.inventory_desc :=  Av_Inventory_API.Get_Description(fld_service_det_vrt_rec_.inventory_id);
+         CRUD_Create___(fld_service_det_vrt_rec_);
+      END IF;
+   END LOOP;
+END Load_Service_Details___;
+
+FUNCTION Get_Init_Data___ (
+   aircraft_id_ IN NUMBER,
+   flight_id_   IN NUMBER) RETURN Fluid_Init_Struct_Rec
+IS
+   rec_           Fluid_Init_Struct_Rec;
+   fluid_def_id_  av_fluid_service_def_tab.fluid_service_def_id%TYPE;
+   def_count_     NUMBER;  
+   CURSOR get_service_fluid_definitions IS
+   SELECT fluid_service_def_id
+   FROM av_fluid_service_def
+   WHERE assembly_type_code = rec_.aircraft_type;
+BEGIN
+   rec_.aircraft_type := Aircraft_API.Get_Assembly_Type_Code(aircraft_id_);
+   rec_.reg_code := Aircraft_API.Get_Reg_Code(aircraft_id_);
+   rec_.arrival_time :=  Av_Flight_API.Get_Arrival_Timestamp(flight_id_);
+   rec_.departure_time := Av_Flight_API.Get_Departure_Timestamp(flight_id_);
+   rec_.uptake_location := Av_Airport_API.Get_Iata_Code(Av_Flight_API.Get_Arrival_Airport_Id(flight_id_));
+   rec_.flight_leg_no := Av_Flight_API.Get_Leg_No(flight_id_);
+   def_count_ :=0;   
+   FOR def_rec_ IN get_service_fluid_definitions LOOP
+      fluid_def_id_:= def_rec_.fluid_service_def_id;
+      def_count_ := def_count_ +1;
+      EXIT WHEN def_count_>1;
+   END LOOP;  
+   IF def_count_ = 1 THEN 
+      rec_.def_fluid_service_def:= fluid_def_id_;
+   END IF;
+   RETURN rec_;
+END Get_Init_Data___;
+
+
+FUNCTION Get_Fluid_Definitions_For_Aircraft_Type___ (
+   assembly_type_code_ IN VARCHAR2) RETURN Objid_Arr
+IS
+   collection_    Objid_Arr := Objid_Arr();
+   
+   CURSOR get_service_fluid_definitions IS
+   SELECT objid
+   FROM av_fluid_service_def
+   WHERE assembly_type_code = assembly_type_code_;
+BEGIN
+   FOR rec_ IN get_service_fluid_definitions LOOP
+      collection_.extend;
+      collection_(collection_.last) := rec_.objid;
+   END LOOP;
+   RETURN collection_;
+END Get_Fluid_Definitions_For_Aircraft_Type___;
+
+PROCEDURE Delete_Assist_Data (
+   objkey_ IN VARCHAR2)
+IS 
+   rec_        Fluid_Service_Det_Virtual_Rec;
+   parent_key_ Fluid_Service_Virtual_Key;   
+   CURSOR get_data IS
+      SELECT objkey 
+      FROM ${PROJECTION}_fluid_service_det_virtual_vrt
+      WHERE parent_objkey = objkey_;
+BEGIN
+   IF objkey_ IS NOT NULL THEN
+      parent_key_.Objkey := objkey_;
+      FOR old_rec_ IN get_data LOOP
+         rec_.objkey := old_rec_.objkey;
+         CRUD_Delete___(rec_);
+      END LOOP;
+   END IF;
+END Delete_Assist_Data;
+
+
+PROCEDURE Save_And_Finish___ (
+   key_ IN Fluid_Service_Virtual_Key)
+IS
+   fld_service_rec_     Fluid_Service_Virtual_Rec;
+   attr_                VARCHAR2(20000);
+   objid_               VARCHAR2(20000);
+   objversion_          VARCHAR2(20000);
+   info_                VARCHAR2(20000);
+   new_fld_service_id_  NUMBER;
+BEGIN
+   fld_service_rec_:= Get_Record___(key_);
+   Client_SYS.Clear_Attr(attr_);
+   Client_SYS.Set_Item_Value('FLIGHT_ID', fld_service_rec_.flight_id, attr_);
+   Client_SYS.Set_Item_Value('INVENTORY_ID', Aircraft_API.Get_Inventory_Id(fld_service_rec_.aircraft_id), attr_);
+   Client_SYS.Set_Item_Value('SERVICE_NAME', Av_Fluid_Service_Def_API.Get_Service_Name(fld_service_rec_.aircraft_type, fld_service_rec_.fluid_service_def_id), attr_);
+   Client_SYS.Set_Item_Value('RECORDED_DATE', fld_service_rec_.recorded_date , attr_);
+   Client_SYS.Set_Item_Value('RECORDED_BY', fld_service_rec_.recorded_by , attr_);
+   Client_SYS.Set_Item_Value('RECORD_COMMENT', fld_service_rec_.record_comment, attr_);
+   Client_SYS.Set_Item_Value('OPTIONAL_BOOL', Av_Fluid_Service_Def_API.Get_Optional_Bool(fld_service_rec_.aircraft_type, fld_service_rec_.fluid_service_def_id), attr_);
+   Av_Hist_Fluid_Service_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   new_fld_service_id_ := Client_SYS.Get_Item_Value('FLUID_SERVICE_ID', attr_);
+   FOR rec_ IN Get_Fluid_Service_Det_Virtual_Arr___ (key_) LOOP 
+      Client_SYS.Clear_Attr(attr_);
+      objversion_ := NULL;
+      objid_ := NULL;
+      info_ := NULL;
+      Client_SYS.Set_Item_Value('FLUID_SERVICE_ID', new_fld_service_id_, attr_);
+      Client_SYS.Set_Item_Value('ASSEMBLY_TYPE_CODE', rec_.assembly_type_code, attr_);
+      Client_SYS.Set_Item_Value('FLUID_DEFINITION_ID', rec_.fluid_definition_id, attr_);
+      Client_SYS.Set_Item_Value('CONFIG_SLOT_POSITION_ID', rec_.config_slot_position_id, attr_);
+      Client_SYS.Set_Item_Value('RECORD_ORDER', rec_.record_order, attr_);
+      Client_SYS.Set_Item_Value('INVENTORY_ID', rec_.inventory_id, attr_);
+      Client_SYS.Set_Item_Value('UPTAKE_AMOUNT', rec_.uptake_amount, attr_);
+      Av_Hist_Fld_Service_Det_API.New__(info_, objid_, objversion_, attr_, 'DO');
+   END LOOP; 
+   Av_Hist_Fluid_Service_API.Calculate_Rate(new_fld_service_id_);
+END Save_And_Finish___;
+
+@Override
+PROCEDURE CRUD_Default___ (
+   rec_ IN OUT Fluid_Service_Virtual_Rec )
+IS
+BEGIN
+   rec_.recorded_by := Fnd_Session_API.Get_Fnd_User;
+   rec_.recorded_date := Time_Util_API.Get_Sysdate_In_Utc;
+   rec_.aircraft_type := Aircraft_API.Get_Assembly_Type_Code(rec_.aircraft_id);
+   rec_.action_user_name :=Fnd_User_API.Get_Description(rec_.recorded_by);
+   super(rec_);
+END CRUD_Default___;
+
+
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Fluid_Service_Virtual_Rec )
+IS
+   fld_service_det_vrt_rec_   Fluid_Service_Det_Virtual_Rec; 
+   fld_service_def_count_     NUMBER;
+   CURSOR get_fluid_service_definitions IS
+      SELECT * 
+      FROM Av_Fluid_Service_Def_Rec
+      WHERE assembly_type_code = rec_.aircraft_type
+      AND fluid_service_def_id = rec_.fluid_service_def_id;
+   CURSOR get_sub_assy_inventory_id (assembly_type_code_ IN VARCHAR2, config_slot_position_id_ IN NUMBER) IS
+      SELECT inventory_id
+      FROM av_sub_assy_inventory_tab
+      WHERE aircraft_id = rec_.aircraft_id
+      AND assembly_type_code = assembly_type_code_
+      AND config_slot_position_id = config_slot_position_id_;
+   CURSOR get_fluid_service_definitions_count IS
+      SELECT COUNT(*) 
+      FROM Av_Fluid_Service_Def
+      WHERE assembly_type_code = rec_.aircraft_type
+      AND fluid_service_def_id = rec_.fluid_service_def_id;
+BEGIN
+   super(rec_);
+   OPEN get_fluid_service_definitions_count;
+   FETCH get_fluid_service_definitions_count INTO fld_service_def_count_;
+   CLOSE get_fluid_service_definitions_count;
+   IF fld_service_def_count_ = 1 THEN 
+      Delete_Assist_Data(rec_.objkey);
+      FOR service_rec IN get_fluid_service_definitions LOOP
+         fld_service_det_vrt_rec_.assembly_type_code := service_rec.fluid_def_assembly_code;
+         fld_service_det_vrt_rec_.fluid_definition_id := service_rec.fluid_definition_id;
+         fld_service_det_vrt_rec_.config_slot_position_id := service_rec.config_slot_position_id;
+         IF (Av_Assembly_API.Get_Assembly_Type_Class_Code(fld_service_det_vrt_rec_.assembly_type_code) = 'ACFT') THEN
+            fld_service_det_vrt_rec_.inventory_id := Aircraft_API.Get_Inventory_Id(rec_.aircraft_id);
+         ELSE
+            OPEN get_sub_assy_inventory_id(fld_service_det_vrt_rec_.assembly_type_code, fld_service_det_vrt_rec_.config_slot_position_id);
+            FETCH get_sub_assy_inventory_id INTO fld_service_det_vrt_rec_.inventory_id;
+            CLOSE get_sub_assy_inventory_id;
+         END IF;
+         fld_service_det_vrt_rec_.record_order := service_rec.record_order;
+         fld_service_det_vrt_rec_.objkey := sys_guid();
+         fld_service_det_vrt_rec_.parent_objkey := rec_.objkey;
+         IF (fld_service_det_vrt_rec_.inventory_id IS NOT NULL) THEN 
+            fld_service_det_vrt_rec_.inventory_desc :=  Av_Inventory_API.Get_Description(fld_service_det_vrt_rec_.inventory_id);
+            CRUD_Create___(fld_service_det_vrt_rec_);
+         END IF;
+      END LOOP;
+   END IF;
+END CRUD_Create___;
+
+FUNCTION Get_Find_Inventory_Url___ (
+   external_page_path_ IN VARCHAR2,
+   asearch_type_       IN VARCHAR2,
+   aircraft_reg_code_  IN VARCHAR2,
+   iata_code_          IN VARCHAR2,
+   task_name_ref_      IN VARCHAR2) RETURN VARCHAR2
+IS
+   system_url_ FND_SETTING_TAB.value%TYPE := Fnd_Setting_API.Get_Value('SYSTEM_URL');
+   url_        VARCHAR2(1000);
+BEGIN
+   IF system_url_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'ERROREMPTYSYSTEMURL: You cannot find inventory as the SYSTEM URL has not been defined with the system parameters. Contact your system administrator.');
+   END IF;
+   
+   url_:= system_url_ || external_page_path_ || '?aSearchType=' || UTL_URL.ESCAPE(asearch_type_) || chr(38) ||'aircraftTailNumber=' || UTL_URL.ESCAPE(aircraft_reg_code_) || chr(38) ||'supplyLocationCode=' || UTL_URL.ESCAPE(iata_code_)|| chr(38) || 'taskReference=' || UTL_URL.ESCAPE(task_name_ref_) ;
+   RETURN url_;
+END Get_Find_Inventory_Url___;
+
+
+PROCEDURE Update_Task_Start___ (
+   task_seq_ IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_API.Start_Task(task_seq_);
+END Update_Task_Start___;
+
+
+PROCEDURE Update_Task_Unstart___ (
+   task_seq_ IN NUMBER)
+IS
+BEGIN  
+   Av_Exe_Task_API.Release_Task(task_seq_); 
+END Update_Task_Unstart___; 
+
+FUNCTION Check_Closed_Fault_Ownership___ (
+   fault_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   mx_id_ VARCHAR2(1000);
+   CURSOR get_mx_fault_id IS
+   SELECT ID 
+   FROM ad_aircraft_fault_dm
+   WHERE external_key = 'F-'||fault_id_
+   AND rowstate = 'Closed';
+BEGIN
+	OPEN get_mx_fault_id;
+   FETCH get_mx_fault_id INTO mx_id_;
+   CLOSE get_mx_fault_id;
+   IF mx_id_ IS NOT NULL THEN 
+      RETURN 'MX';
+   ELSE
+      RETURN 'MM';
+   END IF;
+   
+END Check_Closed_Fault_Ownership___;
+
+FUNCTION Check_Inwork_Wp___ (
+   aircraft_id_ IN NUMBER,
+   location_    IN VARCHAR2) RETURN BOOLEAN
+IS
+BEGIN
+	RETURN Av_Aircraft_Work_Package_API.Check_In_Work_Work_Packages(aircraft_id_,location_);
+END Check_Inwork_Wp___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Repairable_Search_Context_Defaults___ RETURN Show_Only_Repairable_Structure_Rec
+IS
+   page_search_context_struct_      Show_Only_Repairable_Structure_Rec;
+BEGIN
+	page_search_context_struct_.is_repairable := false;
+   RETURN page_search_context_struct_;
+END Get_Repairable_Search_Context_Defaults___;

@@ -1,0 +1,48 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  240509  RAFALK  AD-12571, Created
+
+projection FlmFluidConsumptionLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Fluid Consumption Records projection";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvHistFluidSerStatusCount for AvHistFldServiceDet;
+
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query AvHistFldServiceDet {
+   from = "Av_Hist_Fluid_Ser_Status_Count";
+
+   attribute RecordStatusCode Text;
+   attribute RecordStatus Text;
+   attribute RecordCount Number;
+   attribute AssemblyTypeCode Text;
+}
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,403 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250324        KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250310        SSIVLK  AD-17776, Added visibility condition to AssignResourceCommand
+--  250307        SILILK  AD-17831, Added SchedStart, SchedEnd to Assignments List
+--  250307        SSIVLK  AD-17660, Added AddAssignmentCommand & changed delete command label
+--  250218        DUWJLK  AD-15667, Modified DeleteSkillCommand.
+--  241210        KAWJLK  AD-15697, Added JtTaskResourceLicenseList to view certificates.
+--  241202        NIRTLK  AD-14819, Modified the field 'AssignmentStatus' to 'Rowsate' in Assignments List
+--  241125        SSIVLK  AD-14802,Created DeleteSkillCommand.
+--  241125        KAWJLK  AD-15247, Added FlmTaskAssignments fragment and AssignmentsList
+--  240104        PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201        PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  231127        PSUALK  AD-9572, Modified aircraft to pick aircraft registration code and the assembly type name with filter.
+--  230710        majslk  AD-9585, Modified code to support time zone changes
+--  220901        SRCHLK  AD-7985, Hiding material availability field in the UI
+--  220728        PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220103        vifelk  AD-4114, Added orderby to AvExeTaskDetailsSelector.
+--  211216        Sbanlk   AD-AD-3953, Changed parameters for AssignUserToCompetency function.
+--  211127        Rjoslk  AD-4120, Added resource assignment status.
+--  211119        SBANLK  AD-3953, Ordered Gantt Chart by RowRank, Added GetTaskAssignmentTimeRange to get default time values.
+--  211105        SBANLK  AD-3953, Created.
+---------------------------------------------------------------------------------
+client FlmTaskWorkAssignment;
+component FLMEXE;
+layer Core;
+projection FlmTaskWorkAssignmentHandling;
+description "This includes the definition of Task Work Assignments";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmTaskAssignments;
+include fragment HangarCrewLovSelector;
+include fragment FlmHandoverDetails;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+entry WorkTaskAssignmentEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2140 {
+   label = "Task Work Assignments";
+   page WorkTaskAssignmentPage;
+}
+
+entry HandoverReportsEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2170 {
+   label = "Handover Details and Reporting";
+   internal "assistant/FlmTaskWorkAssignment/HandOverDetails?$action=SetDefaultValues{DefSource:'LMS_LOBBY',DefAircraftCode:null,DefWorkPackage:null,DefWorkPackageId:null,DefAircraftId:null}";
+}
+-------------------------------- MAIN PAGES ---------------------------------
+
+page WorkTaskAssignmentPage using AvExeTaskSet {
+   label = "Task Work Assignments";
+   stateindicator TaskIndicator;
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   selector AvExeTaskDetailsSelector;
+   group AvExeTaskGroup bind AvExeTaskDetailsSelector;
+   list AssignmentsList(JtTaskResourceDemandArray) bind AvExeTaskDetailsSelector;
+   list JtTaskResourceLicenseList(ResourceLicenceArray) bind AssignmentsList {
+      label = "Certificate";
+      display = Nested;
+   }
+   ganttchart ResourceGantt(ResourcesArray) using ResourceSet;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command DeleteSkillCommand for JtTaskResourceDemandQuery {
+   enabled = [not ExecutionInstanceStatus in("Completed", "Work Started")];
+   mode = Global;
+   variable IsMxLabourSkill Boolean;
+   execute {
+      call GetSkillCount(TaskSeq) into Skillcount;
+      call IsMxLabourDemand(TaskSeq, TaskResourceSeq) into IsMxLabourSkill;
+
+      if [Skillcount > 1 and not(IsMxLabourSkill)] {
+         messagebox("Delete Record", question, "Delete the labor requirement?") {
+            when YES {
+               call DeleteSkill(TaskSeq, TaskResourceSeq);
+            }
+            when NO {
+               exit;
+            }
+         }
+      }
+      else {
+         call DeleteSkill(TaskSeq, TaskResourceSeq);
+      }
+   }
+}
+
+command ProxyJobStop for JtTaskResourceDemandQuery {
+   label = "Proxy Job Stop";
+   mode = SingleRecord;
+   visible = [AssignedResourceId != CurrentUser and ExecutionInstanceStatus in("Assigned", "Work Started")];
+   execute {
+      confirm("Proxy Job Stop on behalf of ${UserResourceUsername}?") {
+         when OK {
+            call ProxyJobStop(TaskSeq, TaskResourceSeq, ExecutionInstanceSeq, ResourceGroupSeq, Remark, Rowstate, AssignmentStart, PlannedHours, Site);
+            exit OK;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command AssignResourceCommand for JtTaskResourceDemandQuery {
+   label = "Assign";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = null];
+   variable AssignmentRecord Structure(TaskAssignmentsStructure);
+   execute {
+      copy this into AssignmentRecord;
+      assistant TaskAssignmentAssistant(AssignmentRecord) {
+         when OK {
+            exit;
+         }
+      }
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+selector AvExeTaskDetailsSelector for AvTaskQuery {
+   label = "${Barcode}";
+   orderby = ResourceAssignmentStatus asc;
+   static Barcode {
+      label = "Barcode ID";
+
+   }
+   static TaskName;
+   static Priority;
+   static AvAirportRef.IataCode {
+      label = "Airport";
+   }
+   badge ResAssignDisplayStatus {
+      showlabel = false;
+      emphasis Complementary9 = [ResourceAssignmentStatus = 5];
+      emphasis StateInProgress = [ResourceAssignmentStatus = 4];
+      emphasis Warning = [ResourceAssignmentStatus = 3];
+      emphasis Complementary1 = [ResourceAssignmentStatus = 2];
+      emphasis False = [ResourceAssignmentStatus = 1];
+   }
+}
+
+selector AirportForUserNewSelector for ResourceConnection {
+   static PersonId;
+   static PersonName;
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group AvExeTaskGroup for AvTaskQuery {
+   label = "Task Details";
+   static Aircraft;
+   static Barcode;
+   static ClassCode {
+      label = "Class";
+   }
+   static SubclassCode {
+      label = "Subclass";
+   }
+   static TaskName {
+      size = Medium;
+      multiline = true;
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   static AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      size = Medium;
+   }
+   static AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+      size = Medium;
+   }
+   static WorkType {
+      label = "Work Type";
+      size = Medium;
+      multiline = true;
+   }
+   static AvAircraftWorkPackageRef.LocationCode {
+      label = "Maintenance Location";
+      size = Medium;
+   }
+   field ConvertedDuration {
+      label = "Duration";
+      size = Medium;
+   }
+   field AvAircraftWorkPackageRef.SchedStartDateTime {
+      label = "Work Package Scheduled Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AvAircraftWorkPackageRef.SchedEndDateTime {
+      label = "Work Package Scheduled End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   static AvAirportRef.IataCode {
+      label = "Airport";
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   static AircraftTypeName {
+      label = "Assembly Type Name";
+      visible = [false];
+   }
+   static AvAircraftRef.RegCode {
+      label = "Aircraft Registration Code";
+      visible = [false];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+@Override
+list AssignmentsList for JtTaskResourceDemandQuery {
+   field ResourceDemand;
+   field Remark;
+   field PlannedHoursFormat {
+      label = "Duration (HH:MM)";
+   }
+   field UserResourceUsername {
+      label = "Assigned To";
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = AssignedResourceId;
+      }
+   }
+   badge Rowstate {
+      emphasis Complementary2 = [Rowstate = "ASSIGNED"];
+   }
+   exclude PlannedHours, AllocatedHours, AllocatedStart, AllocatedFinish, AssignmentStart, AssignmentFinish, FixedStart, WorkStart, AssignedResourceId;
+
+   command AddAssignmentCommand {
+      enabled = [IsCompleted = "PENDING"];
+   }
+   command DeleteSkillCommand {
+      mode = SingleRecord;
+      label = "Delete Assignment";
+   }
+   command AssignResourceCommand;
+   command UnassignLaborResource;
+   command ProxyJobStop;
+}
+-------------------------------- GANTT CHART --------------------------------
+
+ganttchart ResourceGantt for ResourceGanttQuery {
+   label = "Resources";
+   orderby = RowRank;
+   rowheight = medium;
+   zoomlevels(Month, Week, Day, Hour, Minute) {
+      defaults = Day;
+   }
+   timerange = GetTimeRange(TaskSeq);
+   datagrid {
+      ganttcolumn ResourceId {
+         label = "Resource ID";
+      }
+      ganttcolumn Description {
+         label = "Description";
+      }
+      ganttcolumn SkillDemand {
+         label = "Skills";
+      }
+      ganttcolumn IsAvailable {
+         label = "Resource Availability";
+      }
+   }
+   ganttchartitem ResourceShiftItem(ResourceShiftArray);
+}
+
+ganttchartitem ResourceShiftItem for TaskCompetencyQuery {
+   rowid = "${GanttRow}";
+   ganttfield GanttItemLabel {
+      visible = [ResType != "schedule"];
+   }
+   tooltip {
+      field TaskSeq {
+         label = "Task ID";
+      }
+      field StartStamp {
+         label = "Start Time";
+      }
+      field EndStamp {
+         label = "End Time";
+      }
+   }
+   starttime StartStamp;
+   endtime EndStamp;
+   exclusive = [true];
+
+   move command {
+      enabled = [ResType != "schedule"  and(TaskSeq = parent.TaskSeq)];
+      execute {
+         call AssignUserToCompetency(GanttRow, StartStamp, EndStamp) into AssignedUser;
+         success("The skill assigned to ${AssignedUser}");
+      }
+   }
+   ganttchartitemstyle ScheduledTurnGanttStyle = [ResType = "schedule"];
+   ganttchartitemstyle UnassignedSkillsGanttStyle = [ResType = "competency"];
+   ganttchartitemstyle ResourceInsideTurnGanttStyle = [ResType = "resource" and(TaskSeq = parent.TaskSeq)];
+   ganttchartitemstyle ResourceOutsideTurnGanttStyle = [ResType = "resource" and(TaskSeq != parent.TaskSeq)];
+}
+
+ganttchartitemstyle ScheduledTurnGanttStyle {
+   label = "Schedule";
+   emphasis = DatavizBlue9;
+   shape = bracket;
+   toggle = [true];
+}
+
+ganttchartitemstyle UnassignedSkillsGanttStyle {
+   label = "Competency";
+   emphasis = DatavizRed9;
+   shape = default;
+   toggle = [true];
+}
+
+ganttchartitemstyle ResourceInsideTurnGanttStyle {
+   label = "Resource";
+   emphasis = DatavizGreen9;
+   shape = default;
+   toggle = [true];
+}
+ganttchartitemstyle ResourceOutsideTurnGanttStyle {
+   label = "Shift";
+   emphasis = DatavizBlue6;
+   shape = default;
+   toggle = [true];
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+stateindicator TaskIndicator for AvExeTask {
+   state "Active" {
+      completed = 30%;
+      emphasis StateCreated = [Objstate = "RELEASED"];
+   }
+   state "InWork" {
+      completed = 50%;
+      emphasis StateDefined = [Objstate = "WORKSTARTED"];
+   }
+   state "Completed" {
+      completed = 100%;
+      emphasis StateApproved = [Objstate = "FINISHED"];
+   }
+   state "Removed" {
+      completed = 0%;
+      emphasis StateObsolete = [Objstate = "REMOVED"];
+   }
+}
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------
+

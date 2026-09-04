@@ -1,0 +1,1619 @@
+fragment FlmHandoverDetails;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Handover Details and Reporting assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AircraftLovSelector;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+@Overtake
+selector WorkPackageSelector for AvAircraftWorkPackage {
+   label = "";
+   orderby = Barcode;
+   static Barcode {
+      label = "Work Package Barcode";
+   }
+   static WorkPackageName;
+}
+
+@Overtake
+selector AvExeTaskSelector for AvExeTask {
+   static Barcode;
+}
+
+assistant HandOverDetails using HandOverDetailsVirtualSet {
+   label = "Handover Details and Reporting";
+   savemode = OnLostFocus;
+   input this;
+   setup SetDefaultValues {
+      variable DefSource Text;
+      variable DefAircraftCode Text;
+      variable DefWorkPackage Text;
+      variable DefWorkPackageId Number;
+      execute {
+         set Source = "${DefSource}";
+         set WorkPackage = DefWorkPackage;
+         set AircraftRef = DefAircraftCode;
+         set WorkPackageId = DefWorkPackageId;
+      }
+   }
+   init command {
+      variable FetchedData Structure(GetShiftDetailsStructure);
+
+      execute {
+         call GetHandoverShiftDetails(WorkPackageId, Source) into FetchedData;
+         set StartTime = FetchedData.StartTime;
+         set EndTime = FetchedData.EndTime;
+         set AircraftId = FetchedData.AircraftId;
+         set WorkPackageStatus = FetchedData.WorkPackageStatus;
+         set CurrentUserAirportTimeZone = FetchedData.CurrentUserAirportTimeZone;
+         set CurrentUserAirportId = FetchedData.CurrentUserAirportId;
+         set HandoverTaskLabel = FetchedData.HandoverTaskLabel;
+         set BlockedTaskLabel = FetchedData.BlockedTaskLabel;
+
+         if [(Source = "HMSLOBBY" or Source = "HMCLOBBY") and(WorkPackageStatus != "In Work")] {
+            messagebox("Work Package Not In Work", warning, "This page can only display work packages that are **In Work**. To continue, select an **In Work** work package.") {
+               when OK {
+                  set WorkPackageId = null;
+                  set AircraftId = null;
+               }
+            }
+         }
+      }
+   }
+   singlestep {
+      group ShiftDetails;
+      list HandoverNotesList(HandoverNotesArray) {
+         collapsed = [true];
+         visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+         copyoncruddefault(WorkPackageId) to(AircraftWorkPackageId);
+      }
+      list InMaintenanceAircraftList(InMaintenanceAircraftsArray) {
+         label = "In-Maintenance Aircraft: Scheduled for Departure or Work Performed Within Time Range (${parent.InMaintAircraftCount})";
+         collapsed = [true];
+         visible = [Source != "HMSLOBBY" and Source != "HMCLOBBY"];
+         details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+      }
+      list TasksWithinRangeList(TasksWithinRangeArray) {
+         label = "Tasks and Faults Raised and Worked on Within the Time Range (${parent.InRangeTaskCount})";
+         collapsed = [true];
+         visible = [Source != "HMSLOBBY" and Source != "HMCLOBBY"];
+         details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      }
+      list HandoverTaskList(HandoverTaskArray) {
+         label = "${parent.HandoverTaskLabel} (${parent.HandoverTaskCount})";
+         collapsed = [true];
+         details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      }
+      list BlockedTaskList(BlockedTaskArray) {
+         label = "${parent.BlockedTaskLabel} (${parent.BlockedTaskCount})";
+         collapsed = [true];
+         details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      }
+      list DeferredFaultsList(DeferredFaultArray) {
+         label = "Deferred Faults Within the Time Range (${parent.DeferredFaultCount})";
+         collapsed = [true];
+         visible = [Source != "HMSLOBBY" and Source != "HMCLOBBY"];
+         details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      }
+      list CompletedTaskList(CompletedTaskArray) {
+         label = "Tasks Completed Within the Time Range (${parent.CompletedTaskCount})";
+         visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+         collapsed = [true];
+         details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      }
+      list NonRoutinesList(NonRoutineArray) {
+         label = "Non-Routines Raised Within the Time Range (${parent.NonRoutineCount})";
+         visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+         collapsed = [true];
+         details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      }
+   }
+   command PrintReport;
+   command CancelBack;
+}
+
+assistant AddHandoverNoteAssistant for HandoverNoteStructure {
+   label = "Handover Notes";
+   input(WorkPackageId);
+   init command {
+      execute {
+         call GetCurrentTime() into CreatedDate;
+         call GetCurrentUser() into CreatedBy;
+
+         set Priority = "Low";
+      }
+   }
+   singlestep {
+      group EditHandoverNoteGroup;
+   }
+   command SaveHandoverNote;
+   command Cancel;
+}
+
+dialog EditHandoverNoteDialog for HandoverNoteStructure {
+   label = "Handover Notes";
+   input this;
+   output(Priority, HandoverNote);
+
+   group EditHandoverNoteGroup;
+   command Ok {
+      label = "Save";
+      enabled = [Priority != null and HandoverNote != null];
+   }
+   command Cancel;
+}
+
+group EditHandoverNoteGroup for HandoverNoteStructure {
+
+   field PersonInfoRef.Name {
+      label = "Created By";
+      size = Medium;
+      editable = [false];
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = CreatedBy;
+      }
+   }
+   field CreatedDate {
+      label = "Created On";
+      size = Medium;
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field Priority;
+
+   field HandoverNote {
+      label = "Note";
+      size = FullWidth;
+      required = [true];
+      multiline = true;
+   }
+}
+
+
+group ShiftDetails for HandOverDetailsVirtual {
+   label = "Shift Details";
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+      size = Large;
+      hidekey = [true];
+      searchable = true;
+      search = AircraftRef.Aircraft;
+      description = AircraftRef.Aircraft;
+      required = [true];
+      validate command {
+         variable DefWpId Number;
+         variable ShiftStartEndStruct Structure(ShiftStartEndStructure);
+
+         execute {
+            if[AircraftRef.AircraftId != null] {
+               call GetDefaultWorkPackageId(AircraftRef.AircraftId)into DefWpId;
+               set WorkPackageId = DefWpId;
+               if [WorkPackageId != null] {
+                  call GetShiftStartEnd(WorkPackageId) into ShiftStartEndStruct;
+                  set StartTime = ShiftStartEndStruct.StartTime;
+                  set EndTime = ShiftStartEndStruct.EndTime;
+               }
+            }
+            else {
+               set WorkPackageId = null;
+               call UpdateAirToNull(Objkey);
+            }
+         }
+      }
+   }
+
+   lov AvAircraftWorkPackageRef with WorkPackageSelector using GetInWorkHeavyWpList(AircraftRef.AircraftId) {
+      label = "Work Package";
+      visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+      required = [true];
+      size = Large;
+      hidekey = [true];
+      description = AvAircraftWorkPackageRef.Barcode;
+      search = AvAircraftWorkPackageRef.Barcode, AvAircraftWorkPackageRef.WorkPackageName;
+      validate command {
+         variable ShiftStartEndStruct Structure(ShiftStartEndStructure);
+         execute {
+            if [WorkPackageId = null] {
+               call UpdateWpToNull(Objkey);
+            }
+            else {
+               call GetShiftStartEnd(WorkPackageId) into ShiftStartEndStruct;
+               set StartTime = ShiftStartEndStruct.StartTime;
+               set EndTime = ShiftStartEndStruct.EndTime;
+            }
+         }
+      }
+   }
+   field AvAircraftWorkPackageRef.WorkPackageName {
+      label = "Work Package Name";
+      visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+      size = Large;
+      editable = [false];
+   }
+   field AvAircraftWorkPackageRef.LocationCode {
+      label = "Work Package Location";
+      visible = [Source = "HMSLOBBY" or Source = "HMCLOBBY"];
+      size = Large;
+      editable = [false];
+   }
+   field StartTime {
+      label = "Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Large;
+      required = [true];
+      validate command {
+         execute {
+            if [(Source = "HMSLOBBY" or Source = "HMCLOBBY") and(StartTime < AvAircraftWorkPackageRef.ActualStartDateTime)] {
+               error("Start cannot be earlier than the work package start date.");
+               set StartTime = null;
+            }
+            if [StartTime > EndTime] {
+               error("Start must be earlier than End.");
+               set StartTime = null;
+            }
+            if [Source != "HMSLOBBY" and Source != "HMCLOBBY" and StartTime = null] {
+               set InMaintAircraftCount = 0;
+               set HandoverTaskCount = 0;
+               set BlockedTaskCount = 0;
+               set DeferredFaultCount = 0;
+               set InRangeTaskCount = 0;
+               call ClearLMLists();
+            }
+            if [(Source = "HMSLOBBY" or Source = "HMCLOBBY") and StartTime = null] {
+               set CompletedTaskCount = 0;
+               set NonRoutineCount = 0;
+               call ClearHMLists();
+            }
+         }
+      }
+   }
+   field EndTime {
+      label = "End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Large;
+      required = [true];
+      validate command {
+         variable CurrentTime Timestamp;
+         execute {
+            call GetCurrentTime() into CurrentTime;
+            if[EndTime > CurrentTime] {
+               error("End time cannot be a future value.");
+               set EndTime = null;
+            }
+            if [EndTime <= StartTime] {
+               error("End must be later than Start.");
+               set EndTime = null;
+            }
+            if [Source != "HMSLOBBY" and Source != "HMCLOBBY" and EndTime = null] {
+               set InMaintAircraftCount = 0;
+               set HandoverTaskCount = 0;
+               set BlockedTaskCount = 0;
+               set DeferredFaultCount = 0;
+               set InRangeTaskCount = 0;
+               call ClearLMLists();
+            }
+            if [(Source = "HMSLOBBY" or Source = "HMCLOBBY") and EndTime = null] {
+               set CompletedTaskCount = 0;
+               set NonRoutineCount = 0;
+               call ClearHMLists();
+            }
+         }
+      }
+   }
+}
+list InMaintenanceAircraftList for InMaintenanceAircraftsVirtual {
+   orderby = AvFlightRef.DeptSchedDepDateTime asc;
+   field FlightId {
+      columnexclude = [true];
+   }
+   field AvFlightRef.Aircraft;
+   badge AvFlightRef.FlightTurnStatus {
+      label = "Aircraft Turn Status";
+      size = Large;
+      style = TextOnly;
+      editable = [false];
+      emphasis Danger = [AvFlightRef.FlightTurnStatus = "InMaintenance"];
+   }
+   field AvFlightRef.ShedArrivalDateTime {
+      label = "Scheduled Arrival Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AvFlightRef.ActualArrivalDateTime {
+      label = "Actual Arrival Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AvFlightRef.ArrivalGate {
+      label = "Arrival Gate";
+   }
+   field AvFlightRef.DeptSchedDepDateTime {
+      label = "Scheduled Departure Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AvFlightRef.DeptFlightDepartureGate {
+      label = "Departure Gate";
+   }
+   field AvFlightRef.DeptLegNo {
+      label = "Outbound Flight";
+   }
+   field AvFlightRef.OutboundStation {
+      label = "Outbound Destination";
+   }
+}
+
+list HandoverNotesList for AvHandoverNote {
+   label = "Handover Notes";
+   orderby = CreatedDate desc;
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [parent.WorkPackageId != null and CreatedBy = CurrentUser and CreatedDate >= NoteEditableFromDate and CreatedDate <= CurrentDate];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field PersonInfoRef.Name {
+      label = "Created By";
+      size = Medium;
+      editable = [false];
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = CreatedBy;
+      }
+   }
+   field CreatedDate {
+      label = "Created On";
+      size = Medium;
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field Priority;
+
+   field HandoverNote {
+      label = "Note";
+      size = Large;
+      multiline = true;
+   }
+   command AddHandoverNote;
+   command EditHandoverNote;
+}
+
+list HandoverTaskList for HandoverTaskVirtual {
+   orderby = LatestJobStopDate desc;
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field Aircraft {
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+
+   }
+   badge AircraftTurnStatus {
+      label = "Latest Aircraft Turn Status";
+      size = Large;
+      style = TextOnly;
+      editable = [false];
+      emphasis Danger = [AircraftTurnStatus = "InMaintenance"];
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+   }
+   lov TaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+   }
+   badge TaskStatus {
+      label = "Status";
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge AvDeferralRequestRef.DeferralRequestStatus {
+      label = "Deferral Request Status";
+      style = TextOnly;
+      emphasis Complementary7 = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+      emphasis True = [AvDeferralRequestRef.DeferralRequestStatus = "Approved"];
+      emphasis Alert = [AvDeferralRequestRef.DeferralRequestStatus = "Rejected"];
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   field MaterialAvailUserStatus {
+      editable = [false];
+   }
+   field ScheduledHours {
+      editable = [false];
+      columnexclude = [parent.Source != "HMSLOBBY" and parent.Source != "HMCLOBBY"];
+
+   }
+   field PlannedStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field PlannedFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov CrewRef with  HangarCrewLovSelector {
+      editable = [false];
+      label = "Crew";
+   }
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+      columnexclude = [parent.Source != "HMSLOBBY" and parent.Source != "HMCLOBBY"];
+   }
+   field ActualStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActualFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+      hidekey = [true];
+   }
+   field AircraftWpRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      multiline = true;
+   }
+   badge WpStatus {
+      emphasis StateCreated = [WpStatus = "Active"];
+      emphasis StatePlanned = [WpStatus = "Committed"];
+      emphasis StateInProgress = [WpStatus = "In Work"];
+      emphasis StateCompleted = [WpStatus = "Completed"];
+      emphasis StateClosed = [WpStatus = "Canceled"];
+      editable = [false];
+   }
+   field ConfigPosition {
+      editable = [false];
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field Location {
+      editable = [false];
+   }
+   field AircraftWpRef.LocationCode {
+      label = "Work Package Location";
+      editable = [false];
+   }
+   field IsRoutine {
+      label = "Routine";
+      editable = [false];
+   }
+   field CrewName {
+      editable = [false];
+   }
+   field PriorityId {
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+}
+
+list BlockedTaskList for BlockedTaskVirtual {
+   orderby = LatestJobStopDate desc;
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field Aircraft {
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+   }
+   badge AircraftTurnStatus {
+      label = "Latest Aircraft Turn Status";
+      size = Large;
+      style = TextOnly;
+      editable = [false];
+      emphasis Danger = [AircraftTurnStatus = "InMaintenance"];
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+   }
+   lov TaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+   }
+   badge TaskStatus {
+      label = "Status";
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge AvDeferralRequestRef.DeferralRequestStatus {
+      label = "Deferral Request Status";
+      style = TextOnly;
+      emphasis Complementary7 = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+      emphasis True = [AvDeferralRequestRef.DeferralRequestStatus = "Approved"];
+      emphasis Alert = [AvDeferralRequestRef.DeferralRequestStatus = "Rejected"];
+      columnexclude = [parent.Source = "HMSLOBBY" or parent.Source = "HMCLOBBY"];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   field MaterialAvailUserStatus {
+      editable = [false];
+   }
+   field ScheduledHours {
+      editable = [false];
+      columnexclude = [parent.Source != "HMSLOBBY" and parent.Source != "HMCLOBBY"];
+   }
+   field PlannedStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field PlannedFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov CrewRef with  HangarCrewLovSelector {
+      editable = [false];
+      label = "Crew";
+   }
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+      columnexclude = [parent.Source != "HMSLOBBY" and parent.Source != "HMCLOBBY"];
+   }
+   field ActualStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActualFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+      hidekey = [true];
+   }
+   field AircraftWpRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      multiline = true;
+   }
+   badge WpStatus {
+      emphasis StateCreated = [WpStatus = "Active"];
+      emphasis StatePlanned = [WpStatus = "Committed"];
+      emphasis StateInProgress = [WpStatus = "In Work"];
+      emphasis StateCompleted = [WpStatus = "Completed"];
+      emphasis StateClosed = [WpStatus = "Canceled"];
+      editable = [false];
+   }
+   field ConfigPosition {
+      editable = [false];
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field Location {
+      editable = [false];
+   }
+   field AircraftWpRef.LocationCode {
+      label = "Work Package Location";
+      editable = [false];
+   }
+   field IsRoutine {
+      label = "Routine";
+      editable = [false];
+   }
+   field CrewName {
+      editable = [false];
+   }
+   field PriorityId {
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+}
+
+list CompletedTaskList for CompletedTaskVirtual {
+   orderby = ActualFinish desc;
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   lov TaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+   }
+   badge TaskStatus {
+      label = "Status";
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+
+   field MaterialAvailUserStatus {
+      editable = [false];
+   }
+   field ScheduledHours {
+      editable = [false];
+   }
+   field PlannedStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field PlannedFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov CrewRef with  HangarCrewLovSelector {
+      editable = [false];
+      label = "Crew";
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+   }
+   field ActualStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActualFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+      hidekey = [true];
+   }
+   field AircraftWpRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      multiline = true;
+   }
+   badge WpStatus {
+      emphasis StateCreated = [WpStatus = "Active"];
+      emphasis StatePlanned = [WpStatus = "Committed"];
+      emphasis StateInProgress = [WpStatus = "In Work"];
+      emphasis StateCompleted = [WpStatus = "Completed"];
+      emphasis StateClosed = [WpStatus = "Canceled"];
+      editable = [false];
+   }
+   field ConfigPosition {
+      editable = [false];
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field Location {
+      editable = [false];
+   }
+   field AircraftWpRef.LocationCode {
+      label = "Work Package Location";
+      editable = [false];
+   }
+   field IsRoutine {
+      label = "Routine";
+      editable = [false];
+   }
+   field CrewName {
+      editable = [false];
+   }
+   field PriorityId {
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+}
+
+list NonRoutinesList for NonRoutineVirtual {
+   orderby = FoundOnDate desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   lov FaultRef with ReferenceAvFaultSelector {
+      label = "Barcode";
+      details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Status";
+      style = TextOnly;
+      emphasis Complementary7 = [Objstate = "Open"];
+      emphasis Info = [Objstate = "Deferred"];
+      emphasis Ok = [Objstate = "Closed"];
+   }
+   field Evaluated;
+   field EvaluatedBy;
+
+   field FoundSource {
+      label = "Found During";
+   }
+   field AvAircraftSubSystemRef.SubSystemCode {
+      label = "Failed System";
+   }
+   field FaultSeverityCode {
+      label = "Fault Severity";
+   }
+   field FoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field FaultSourceCode {
+      label = "Fault Source";
+   }
+   field FoundByUser {
+      label = "Found By";
+   }
+
+   field LongDescription {
+      label = "Description";
+      multiline = true;
+   }
+   field Priority {
+      label = "Fault Priority";
+   }
+   badge FlightSafetyImpact {
+      label = "Flight Safety Impact";
+      style = TextOnly;
+      emphasis Info = [HasFlightSafetyImpact = true];
+      emphasis Neutral = [HasFlightSafetyImpact = false];
+      visible = [IsNonRoutine];
+   }
+   field FailureTypeCode {
+      label = "Failure Type";
+   }
+   field FaultCode;
+   field ActualStartDateTime {
+      label = "Actual Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEndDateTime {
+      label = "Estimated End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field Action {
+      label = "Action Taken";
+      multiline = true;
+   }
+   field AvDeferralRequestRef.DeferralAuthorization {
+      label = "Deferral Authorization No";
+   }
+   field AvDeferralRequestRef.DeferralReqReasonCode {
+      label = "Deferral Reason";
+   }
+   field AvDeferralRequestRef.Note {
+      label = "Deferral Note";
+      multiline = true;
+   }
+   field DeferralAction {
+      label = "Deferral Action";
+      multiline = true;
+   }
+   field LogbookReference {
+      label = "Logbook Reference";
+      size = Medium;
+   }
+   field LogbookTypeCode {
+      label = "Logbook Type";
+      size = Medium;
+   }
+}
+
+list TasksWithinRangeList for TasksWithinRangeVirtual {
+   orderby = ShedDepartureDateTime asc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      editable = [false];
+   }
+   badge AircraftTurnStatus {
+      label = "Latest Aircraft Turn Status";
+      style = TextOnly;
+      editable = [false];
+      emphasis Complementary7 = [AircraftTurnStatus = "Arrived"];
+      emphasis Complementary2 = [AircraftTurnStatus = "Inbound"];
+      emphasis Danger = [AircraftTurnStatus = "InMaintenance"];
+      emphasis True = [AircraftTurnStatus = "Released"];
+      emphasis Neutral = [AircraftTurnStatus = "Departed"];
+   }
+
+   lov TaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field Description {
+      label = "Name";
+      editable = [false];
+   }
+   badge TaskStatus {
+      label = "Status";
+      emphasis StatePreliminary = [TaskStatus = "Active"];
+      emphasis StateInProgress = [TaskStatus = "In Work"];
+      emphasis StateCompleted = [TaskStatus = "Completed"];
+      emphasis Alert = [TaskStatus = "Removed"];
+      emphasis Neutral = [TaskStatus = "Cancelled"];
+      editable = [false];
+   }
+   badge  AvDeferralRequestRef.DeferralRequestStatus {
+      label = "Deferral Request Status";
+      editable = [false];
+      emphasis Complementary7 = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+      emphasis True = [AvDeferralRequestRef.DeferralRequestStatus = "Approved"];
+      emphasis Alert = [AvDeferralRequestRef.DeferralRequestStatus = "Rejected"];
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field LatestJobStopReason {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopSkill {
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+
+   field MaterialAvailUserStatus {
+      editable = [false];
+   }
+
+   field PlannedStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field PlannedFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov CrewRef with  HangarCrewLovSelector {
+      editable = [false];
+      label = "Crew";
+   }
+   field ActualStart {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActualFinish {
+      displaytimezone = AircraftWpRef.MaintenanceLocationTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   lov WorkPackageRef with ReferenceHangarWorkPackageLovSelector {
+      label = "Work Package";
+      editable = [false];
+      hidekey = [true];
+   }
+   field AircraftWpRef.WorkPackageName {
+      label = "Work Package Name";
+      editable = [false];
+      multiline = true;
+   }
+   badge WpStatus {
+      emphasis StateCreated = [WpStatus = "Active"];
+      emphasis StatePlanned = [WpStatus = "Committed"];
+      emphasis StateInProgress = [WpStatus = "In Work"];
+      emphasis StateCompleted = [WpStatus = "Completed"];
+      emphasis StateClosed = [WpStatus = "Canceled"];
+      editable = [false];
+   }
+   field ConfigPosition {
+      editable = [false];
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field Location {
+      editable = [false];
+   }
+   field AircraftWpRef.LocationCode {
+      label = "Work Package Location";
+      editable = [false];
+   }
+   field IsRoutine {
+      label = "Routine";
+      editable = [false];
+   }
+   field CrewName {
+      editable = [false];
+   }
+   field PriorityId {
+      editable = [false];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      multiline = true;
+   }
+}
+
+
+list DeferredFaultsList for DeferredFaultsVirtual {
+   orderby = DueDate asc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   field Aircraft;
+   badge AircraftTurnStatus {
+      label = "Latest Aircraft Turn Status";
+      size = Large;
+      style = TextOnly;
+      editable = [false];
+      emphasis Danger = [AircraftTurnStatus = "InMaintenance"];
+   }
+   lov FaultRef with ReferenceAvFaultSelector {
+      label = "Barcode";
+      details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   field AvAircraftSubSystemRef.SubSystemCode {
+      label = "Failed System";
+   }
+   field DueDate {
+      label = "Due Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field LatestJobStopReason {
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      size = Medium;
+      multiline = true;
+   }
+   field AvDeferralRequestRef.DeferralAuthorization {
+      label = "Deferral Authorization No";
+   }
+   field AvDeferralRequestRef.DeferralReqReasonCode {
+      label = "Deferral Reason";
+   }
+   field AvDeferralRequestRef.Note {
+      label = "Deferral Note";
+      multiline = true;
+   }
+   field DeferralAction {
+      label = "Deferral Action";
+      multiline = true;
+   }
+   field LogbookTypeCode {
+      label = "Log Type";
+   }
+   field FoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   badge IsCmsWarningsExist {
+      label = "Configuration Warning";
+      style = TextOnly;
+      emphasis Alert = [IsCmsWarningsExist = true];
+      emphasis Ok = [IsCmsWarningsExist = false];
+   }
+   badge IsAssignToWP {
+      label = "Assigned to a WP";
+      style = TextOnly;
+      emphasis Info = [IsAssignToWP = true];
+      emphasis Neutral = [IsAssignToWP = false];
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+command PrintReport for HandOverDetailsVirtual {
+   label = "Print";
+   visible = [((Source != "HMSLOBBY" and Source != "HMCLOBBY") or(AircraftId != null and WorkPackageId != null)) and StartTime != null and EndTime != null];
+   variable ResultKeyVar {
+      type = Number;
+   }
+   execute {
+      call ExecuteReport() into ResultKeyVar;
+      if [ResultKeyVar != null] {
+         success("Report (Results Key: ${ResultKeyVar}) saved and archived. PDF will be generated after printing.");
+         printdialog ResultKeyVar;
+      }
+
+   }
+}
+
+command  CancelBack {
+   label = "Cancel";
+   execute {
+      navigate back;
+   }
+}
+
+command EditHandoverNote for AvHandoverNote {
+   icon = "edit";
+   label = "";
+   mode = SingleRecord;
+   enabled = [CreatedBy = CurrentUser and CreatedDate >= NoteEditableFromDate and CreatedDate <= CurrentDate];
+   variable HandoverNoteInfo Structure(HandoverNoteStructure);
+
+   execute {
+      copy this into HandoverNoteInfo;
+      dialog EditHandoverNoteDialog(HandoverNoteInfo) into(Priority, HandoverNote);
+   }
+}
+
+command AddHandoverNote for HandOverDetailsVirtual {
+   icon = "new";
+   label = "";
+   mode = Global;
+
+   enabled = [WorkPackageId != null];
+   variable HandoverNoteInfo Structure(HandoverNoteStructure);
+
+   execute {
+      copy this into HandoverNoteInfo;
+      assistant AddHandoverNoteAssistant(HandoverNoteInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveHandoverNote for HandoverNoteStructure {
+   label = "Save";
+   enabled = [Priority != null and HandoverNote != null];
+   execute {
+      call AddNewHandoverNote(WorkPackageId, HandoverNote, Priority, CreatedBy, CreatedDate);
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset HandOverDetailsVirtualSet for HandOverDetailsVirtual;
+
+@Override
+entity AvExeTask {
+   attribute Barcode Text {
+      lovcolumn = [true];
+   }
+   attribute LatestJobStopDate Timestamp {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Date(task_seq)";
+   }
+   attribute IsRoutine Boolean {
+      fetch = "DECODE(Av_Exe_Task_API.Get_Is_Routine(task_seq), 1, 'TRUE','FALSE')";
+   }
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(Aircraft_Id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(Aircraft_Id)))";
+      lovcolumn = [true];
+   }
+   reference TaskRef(Barcode) to AvExeTask(Barcode);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+}
+
+@Override
+entity AvFlight {
+   crud = Read;
+   from = "MY_AIRCRAFT_TURNS";
+   where = "flight_turn_status='InMaintenance'";
+   timestamptzref = "server";
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT(assembly_type_code, ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(aircraft_id)))";
+   }
+   attribute FlightTurnStatus Enumeration(TurnStatusEnum);
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute WorkPackageActualStart Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Actual_Start (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPpackageId Number;
+   attribute DeptSchedDepDateTime Timestamp;
+   attribute DeptFlightDepartureGate Text;
+   attribute DeptLegNo Text;
+   attribute OutboundStation Text;
+}
+
+@Override
+entity AvFault {
+   timestamptzref = "server";
+   crud = Create, Read, Update, Delete;
+
+   attribute Barcode Text;
+   attribute TaskSeq Number;
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(Aircraft_Id)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(Aircraft_Id)))";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute FoundSource Text {
+      fetch = "Av_Fault_API.Get_Found_Source(fault_id)";
+   }
+   attribute Priority Text {
+      fetch = "Av_Exe_Task_API.Get_Priority_Id(task_seq)";
+   }
+   attribute HasFlightSafetyImpact Boolean {
+      fetch = "DECODE(flight_safety_impact, 1, 'TRUE','FALSE')";
+      editable = [false];
+   }
+   attribute EvaluatedBy Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(Evaluated_By))";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute DeferralAction Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute SchedEndDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   attribute ActualStartDateTime Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   attribute DueDate Timestamp {
+      fetch = "Av_Fault_Deadline_API.Get_Act_Deadline_Date(fault_id)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute IsCmsWarningsExist Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Cms_Warnings_Exist(task_seq)";
+   }
+   attribute IsAssignToWP Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Wp_Assigned(fault_id)";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+   reference FaultRef(Barcode) to AvFault(Barcode);
+}
+
+@Override
+query AircraftLov {
+   where = "aircraft_id IN(select aircraft_Id FROM Av_aircraft_work_package WHERE objstate = 'InWork' AND av_maintenance_location_API.Get_Airport_Id(Location_Code) = Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User()) AND is_heavy_maintenance = 1)";
+}
+
+@Override
+entity AvHandoverNote {
+   timestamptzref = "server";
+   ludependencies = HandOverDetailsVirtual;
+   crud = Create, Read, Update, Delete;
+
+   attribute NoteId Number {
+      required = [false];
+   }
+   attribute AircraftWorkPackageId Number;
+   attribute CreatedBy Text;
+
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute CurrentDate Timestamp {
+      fetch = "Time_Util_API.Get_Sysdate_In_Utc()";
+   }
+   attribute NoteEditableFromDate Timestamp {
+      fetch = "Adcom_Util_API.Handover_Report_Period_Start";
+   }
+   attribute Priority Enumeration(HandoverNotePriority) {
+      default = "'LOW'";
+      required = [true];
+   }
+   reference AircraftWorkPackageRef(AircraftWorkPackageId) to HandOverDetailsVirtual(WorkPackageId);
+   reference PersonInfoRef(CreatedBy) to PersonInfo(PersonId);
+}
+
+virtual HandOverDetailsVirtual {
+   timestamptzref = "server";
+   attribute AircraftId Number;
+   attribute AircraftCode Text;
+   attribute WorkPackage Text;
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute CurrentUserAirportId Number;
+   attribute WorkPackageId Number;
+   attribute WorkPackageStatus Text;
+   attribute Source Text;
+   attribute HandoverTaskCount Number;
+   attribute BlockedTaskCount Number;
+   attribute InMaintAircraftCount Number;
+   attribute CompletedTaskCount Number;
+   attribute HandoverTaskLabel Text;
+   attribute BlockedTaskLabel Text;
+   attribute NonRoutineCount Number;
+   attribute InRangeTaskCount Number;
+   attribute DeferredFaultCount Number;
+
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   array HandoverNotesArray(WorkPackageId) to  AvHandoverNote(AircraftWorkPackageId);
+   array HandoverTaskArray() to HandoverTaskVirtual();
+   array BlockedTaskArray() to BlockedTaskVirtual();
+   array InMaintenanceAircraftsArray() to InMaintenanceAircraftsVirtual();
+   array CompletedTaskArray() to CompletedTaskVirtual();
+   array NonRoutineArray() to NonRoutineVirtual();
+   array TasksWithinRangeArray() to TasksWithinRangeVirtual();
+   array DeferredFaultArray() to DeferredFaultsVirtual();
+
+   action ExecuteReport Number {
+      initialcheck none;
+   }
+}
+
+virtual HandoverTaskVirtual using extended AvExeTask {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute AircraftTurnStatus Enumeration(TurnStatusEnum);
+
+}
+
+virtual BlockedTaskVirtual using extended AvExeTask {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute AircraftTurnStatus Enumeration(TurnStatusEnum);
+
+}
+
+virtual CompletedTaskVirtual using extended AvExeTask {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+}
+
+virtual InMaintenanceAircraftsVirtual {
+   timestamptzref = "server";
+   ludependencies = HandOverDetailsVirtual;
+   crud = Read;
+   attribute FlightId Number;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference AvFlightRef(FlightId) to AvFlight(FlightId);
+}
+
+virtual NonRoutineVirtual using extended AvFault {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+}
+virtual TasksWithinRangeVirtual using extended AvExeTask {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute AircraftTurnStatus Enumeration(TurnStatusEnum) {
+      fetch = "Av_Flight_API.Get_Turn_Status_for_Task(Task_Seq)";
+   }
+   attribute ShedDepartureDateTime Timestamp;
+   reference AircraftLovRef(AircraftId) to AircraftLov(AircraftId);
+   reference AvDeferralRequestRef(FaultId) to AvDeferralRequest(FaultId);
+
+}
+
+virtual DeferredFaultsVirtual using extended AvFault {
+   ludependencies = HandOverDetailsVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute AircraftTurnStatus Enumeration(TurnStatusEnum);
+}
+
+structure GetShiftDetailsStructure {
+   timestamptzref = "server";
+
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute AircraftId Number;
+   attribute WorkPackageStatus Text;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute CurrentUserAirportId Number;
+   attribute HandoverTaskLabel Text;
+   attribute BlockedTaskLabel Text;
+}
+structure ShiftStartEndStructure {
+   timestamptzref = "server";
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+}
+
+
+structure HandoverNoteStructure {
+   timestamptzref = "server";
+
+   attribute WorkPackageId Number;
+   attribute CurrentUser Text;
+   attribute CreatedBy Text;
+   attribute CreatedDate Timestamp;
+   attribute HandoverNote Text;
+   attribute Priority Enumeration(HandoverNotePriority) {
+      required = [true];
+   }
+   attribute CurrentUserAirportTimeZone Text;
+
+   reference PersonInfoRef(CreatedBy) to PersonInfo(PersonId);
+}
+
+
+function GetHandoverShiftDetails Structure(GetShiftDetailsStructure) {
+   timestamptzref = "server";
+   ludependencies = AvHandoverNote;
+   parameter WorkPackageId Number;
+   parameter Source Text;
+}
+
+function GetInWorkHeavyWpList List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "aircraft_work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND (objstate = 'InWork') AND is_heavy_maintenance = 1)";
+}
+
+function GetDefaultWorkPackageId Number {
+   parameter AircraftId Number;
+}
+
+function GetCurrentTime Timestamp {
+   timestamptzref = "server";
+}
+function GetShiftStartEnd Structure(ShiftStartEndStructure) {
+   timestamptzref = "server";
+   parameter WorkPackageId Number;
+}
+function GetCurrentUser Text {
+}
+
+action ClearLMLists {
+   initialcheck none;
+   ludependencies = InMaintenanceAircraftsVirtual, BlockedTaskVirtual, HandoverTaskVirtual, DeferredFaultsVirtual, TasksWithinRangeVirtual;
+}
+action ClearHMLists {
+   initialcheck none;
+   ludependencies = CompletedTaskVirtual, NonRoutineVirtual;
+}
+action UpdateWpToNull {
+   initialcheck none;
+   ludependencies = HandOverDetailsVirtual;
+   parameter Objkey Text;
+}
+action UpdateAirToNull {
+   initialcheck none;
+   ludependencies = HandOverDetailsVirtual;
+   parameter Objkey Text;
+}
+action AddNewHandoverNote {
+   initialcheck none;
+   ludependencies = AvHandoverNote;
+   parameter WorkPackageId Number;
+   parameter Note Text;
+   parameter Priority Text;
+   parameter CreatedBy Text;
+   parameter CreatedDate Timestamp;
+}
+------------------------------- ENUMERATIONS --------------------------------
+enumeration TurnStatusEnum {
+   value = "Inbound" {
+      identifier = "Inbound";
+      label = "Inbound";
+   }
+   value = "Arrived" {
+      identifier = "Arrived";
+      label = "Arrived";
+   }
+   value = "Departed" {
+      identifier = "Departed";
+      label = "Departed";
+   }
+   value = "InMaintenance" {
+      identifier = "InMaintenance";
+      label = "In Maintenance";
+   }
+   value = "Released" {
+      identifier = "Released";
+      label = "Released";
+   }
+   value = "NotApplicable" {
+      identifier = "NotApplicable";
+      label = "Not Applicable";
+   }
+}

@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Technician, FLM, My Part Requests</Keywords>
+    <DescriptiveText>Display parts requested by the Line Technician</DescriptiveText>
+    <LastModified>19/08/2025, 16:43:07</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>3</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>My Part Requests</Title>
+    <Footer>Parts</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_LM_TECH_MY_PART_REQ</Name>
+    <ID>fdb5dd42-b47b-4973-84c1-2c90e0e3c2bc</ID>
+    <WebUrl>page/FlmMyPartRequest/MyPartRequestPage</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>8c737274-3bff-42a0-a70e-a31390dc5560</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>OrderLineNo</Column>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

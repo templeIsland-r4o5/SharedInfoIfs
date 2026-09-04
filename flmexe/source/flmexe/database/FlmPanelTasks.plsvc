@@ -1,0 +1,38 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmPanelTasks
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250708  RAFALK  AD-18381, Added Can_Mpc_Close_Start___
+--  250708  WIJCLK  AD-18380, Implemented a function to verify whether all dependent panels required for the maintenance task are open.
+
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Validate_Panels_For_Task___ (
+   task_seq_ IN NUMBER) RETURN BOOLEAN
+IS
+BEGIN
+	RETURN Av_Exe_Task_Panel_Req_Util_API.Validate_Panels_For_Task(task_seq_);
+END Validate_Panels_For_Task___;
+
+FUNCTION Can_Mpc_Close_Start___ (
+   mpc_close_task_seq_ IN NUMBER) RETURN BOOLEAN
+IS
+   check_mpc_open_            BOOLEAN;
+   check_maintenance_tasks_   BOOLEAN;
+BEGIN
+   check_mpc_open_            := Av_Exe_Task_Panel_API.Is_All_Mpc_Open_Completed(mpc_close_task_seq_);
+   check_maintenance_tasks_   := Av_Exe_Task_Panel_API.Is_All_Mt_Completed(mpc_close_task_seq_);
+   
+   IF (check_mpc_open_ = FALSE OR check_maintenance_tasks_ = FALSE) THEN
+      RETURN FALSE;
+   ELSE
+      RETURN TRUE;
+   END IF;
+END Can_Mpc_Close_Start___;

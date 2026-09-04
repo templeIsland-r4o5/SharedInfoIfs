@@ -1,0 +1,5028 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250911  RAFALK  AD-21334, Modified EditStepSignOffCommand and RevokeStepSignOffCommand. Added EditPanelSignOffDialog
+--  250821  ISSHLK  AD-19892, Introduced IsExecutionBlockedByCap attribute to RecordWorkVirtual and RecordWorkInfoStructure. Added validations to RecordActionTakenCommand.
+--  250703  SABOLK  AD-18377, Modified RecordSignOffCommand to accommodate panel sign off functionality.
+--  250623  RAFALK  AD-18379, Implemented the panel sign-off functionality
+--  250613  RAFALK  AD-18376, Added panel sign off to task card
+--  250429  SSIVLK  AD-18855, Added signaturemappingattribute in RemovePartList
+--  250310  SSIVLK  AD-17814, Added Source condition in RecordActionGroup
+--  250228  SSIVLK  AD-14847, Task card enhancements regarding task completion and introduced record task inspection
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  250214  CAARLK  AD-14847, Modified TaskCertifyList and TaskCertifyVirtual.
+--  100225  SRLALK  AD-16828, Modified RemovedPartLineVirtual, InstalledPartLineVirtual to align with CmsWarningVirtual and with relevant usages of the changes
+--  250121  SSIVLK  AD-16141, Added FlmFaultDeferral fragment
+--  250120  ALNILK  AD-16446, Added HasStartedExecutionInstances function and modified the CompleteTaskCommand.
+--  250116  NIRTLK  AD-15507, Modifed ludependencies of Sign method.
+--  250108  WIHALK  AD-15922, Added Validation to check already InWork work Packages.
+--  241217  NIRTLK  AD-15694, Modified StartTime in RecordActionAssistant
+--  241224  CAARLK  AD-14589, Added visibility check to the CompleteTaskCommand command.
+--  241223  SSIVLK  AD-15964, Fixed timestamptzref for TaskCertifyVirtual
+--  241217  NIRTLK  AD-15694, Modified RecordWorkAssistant and ClockInVirtual
+--  241217  SSIVLK  AD-15684, Added Start Assignment action
+--  2412209 WIHALK  AD-14750, Added validation to prevent completing a task unless all associated non-routine tasks are completed.
+--  241126  OSNALK  AD-15711, Remove enumerationtype = Standard from enumeration in FLM and FLMEXE
+--  241118  DUWJLK  AD-15606, Introduced Get_Task_Sign_Off_Permission function and did the neccessary changes implement sign-off permission.
+--  241104  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagram
+--  241031  KAWJLK  AD-14602, Added ClockInVirtual and UpdateClockOut action.
+--  241023  SSIVLK  AD-14858, Added Complete Task assistant.
+--  091024  SSIVLK  AD-14593, Added a popup message to confirm actual hours
+--  241015  LAWALK  AD-14586, Record Action enhancements.
+--  090924  psualk  AD-14212, Web Record Work -Sign button not visible after complete task
+--  240724  bachlk  AD-13686, Implemented CMS for Record Removed Part
+--  240719  majslk  AD-13685, Implemented CMS for Record Install Part
+--  240506  SATGLK  AD-9803, Refractored Step Action commands to use bind parent
+--  240430  KAWJLK  AD-10914, Added headerlogo and MediaObject attribute.
+--  240315  ROERLK  AD-12443, Fixed Last Action Taken time when a task action is edited
+--  240214  DUWJLK  AD-11480, Updated content of the completeTaskCommand command to show the Missing Component Warning.
+--  240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+--  240118  DUWJLK  AD-10942, Added ShowMissingComponentWarning  method and Modified CompleteTaskCommand command to show the Missing Component Warning.
+--  231107  vaallk  AD-10513, Updated StepDescription to fetch the value appending target blank to the anchor tags in the StepVirtual.
+--  231101  waislk  AD-9574,  Renamed record work sub-assistant buttons.
+--  231026  rosdlk  AD-10255, Added e-sig related file name changes.
+--  230925  rosdlk  AD-10761, enabled multiline for part group column.
+--  230922  rosdlk  AD-10761, Added part group details and concatenate assembly position, position together to display in install and removal part list in record work assistant
+--  230922  LAWALK  AD-10756, Modified Scheduled Start Date (UTC) with AvAircraftWpRef.
+--  230920  JIWELK  AD-10749, Added AvAircraftWorkPackage ludependecy to action Sign.
+--  230911  DUWJLK  AD-10562, Changed Field's Lable names in FaultGroup and TaskDetails Group
+--  230821  KAWJLK  AD-10252, Update TaskCertifyList
+--  230821  KAWJLK  AD-10252, Exclude ActualDuration from Hash order mapping
+--  230821  KAWJLK  AD-10252, Modify Record workflow with e-signature security remediation changes.
+--  230804  majslk  AD-10387, Modified labels to support time zone changes
+--  230801  KAWJLK  AD-10341, Modified signdocument responce type to Structure and include FndEsignature fragment
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230502  VAALLK  AD-7020, Added orderby for StepSection repeatingsection.
+--  230428  ROSDLK  AD-9808, Order the task actions by ActionOrd field in desc order.
+--  230426  RWELLK  AD-9816, Added order by clause ( orderby = TaskPartId ) to the install and removed part list in Recordwork assistant.
+--  230404  KAWJLK  AD-7387, Modified RecordRemovePartCommand, RecordActionTakenCommand,RecordInstalledPartCommand, CompleteTaskCommand, RecordToolCommand, RecordResourceToolCommand, RecordMeasurementCommand, PartialStepCommand, NotApplicableStepCommand, AwaitInspectStepCommand, CompleteStepCommand, AcceptStepCommand and RejectStepCommand
+--  230404  KAWJLK  AD-7387, Removed Signed user parameter from RecordResourceTool, RecordTool, RecordMeasurement, UpdateInstallPart, UpdateRmvPart, AddAction, AddStepAction and CompleteTask
+--  221019  LAHNLK  AD-7975, removed redundant ludependencies from recordworkvirtual
+--  220818  JIWELK  AD-8507, Updated the data type of attribute AssignedDateTime to Timestamp in ResourceToolLineVirtual, Updated the data type of attribute MeasuredDate to Timestamp in MeasurementLineVirtual
+--  220816  SPATLK  AD-8485, Updated Record Removed parts sign button condition.
+--  220801  SPATLK  AD-7819, Updated install part record assistant label.
+--  220801  SPATLK  AD-7819, Remove Mandotory check for the BATCH parts when removing.
+--  220728  SPATLK  AD-7819, Added Null checks for the Part remove and Install assitants.
+--  220620  VAALLK  AD-7820, Added ludependency AvExeTaskMeasurement in Sign action
+--  220510  KAWJLK  AD-6791, Add orderby to Record Work lists, and modify user description to display the username of the user who recorded work.
+--  220223  lahnlk  AD-6795, Modified step label in record work steps repeating section
+--  220224  KAWJLK  AD-6705, Modified SignCommand.
+--  220128  KAWJLK  AD-5799, Modified RecordWorkAssistant, command SignCommand for RecordWorkVirtual, command FinishCommand for RecordWorkVirtual and RecordWorkVirtual. Added function GetESigPermission.
+--  220112  Waislk  AD-5752, Added Assembly Position to record work assistant, InstalledPartLineVirtual, RemovedPartLineVirtual
+--  220104  LaDelk  AD-4695, Moved ReferenceResourceToolEquipJoinLovSelector to FlmResourceToolEquipCommonObjects fragment.
+--  211223  LaDelk  AD-5560, Added lov descriptions, corrected field labels and corrected RecordResourceTool action to fecth the ResourceId.
+--  211216  LaDelk  AD-4694, Moved common elements to FlmResourceToolEquipCommonObjects fragment.
+--  211126  LaDelk  AD-5167, Modified to use resource_seq instead of resource_id and adjusted serial no and actual duration fields in resource tools.
+--  211125  AyAmlk  AD-4724, Added validations for the RecordResourceToolGroup and references to ResourceToolUsedList.
+--  211123  AyAmlk  AD-4725, Added logic to support updating tools when recording work.
+--  211122  LaDelk  AD-4693, Added validations to fields in record tool dialog.
+--  211117  AyAmlk  AD-4724, Added logic to record tool using the assistant.
+--  211108  AyAmlk  AD-4723, Added a virtual and a list to show tools added from resource tool equipment.
+--  211013  nignlk  AD-2312, Added condition to RecordRemovedPartGrup to hidden RemovedSerialNo for BATCH parts.
+--  211005  sevhlk  AD-4041, Removed config_slot_code, config_slot_position_code and aircraft_type_code from AvExeTaskPartTab, AvFaultPartTab, AvExeTaskPartRequestTab and AvFaultPartRequestTab and added config_slot_position_id to these entity sets.
+--  210721  sevhlk  AD-2476, Changed the StepDescription attribute type to LongText.
+--  210719  himklk  AD-2214, Added action CheckPartIsAllowed. Passed TaskId, ConfigSlotPositionCode, ConfigSlotCode as inputs in RecordInstallAssistant.
+--  210705  himklk  AD-2278, Modified data type of InstalledDate in InstalledPartLineVirtual, RemovedDate in RemovedPartLineVirtual and ActionDate in TaskActionLineVirtual to timestamp.
+--  210701  himklk  AD-2278, Added multiline = true to fields which can contain long text and changed datatype of ActualEndDate to Timestamp in TaskCertifyVirtual.
+--  210621  himklk  AD-1262, Added commands AcceptStepCommand, RejectStepCommand, Added IsRejected parameter to AddStepAction and enabled AwaitInspectStepCommand.
+--  210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+--  210607  SEVHLK  AD-1258, Modified the ReferenceAvPartNumberNewSelector to hide its key.
+--  210604  himklk  AD-1195, Added ludependencies to CompleteTask action.
+--  210604  SUPKLK  AD-1699, Changed MeasurementType to MeasurementCategory
+--  210530  Kawjlk  AD-1696, Modified RecordRemovedPartAssistant, RecordInstallAssistant, RecordRemovedPartGrup, RecordInstallPartGroup, RecordRemovePartCommand, Added GetPartNumberLov
+--  210601  lahnlk  AD-1711, added step state change commands, assistant RecordStepAction, TaskStepActionList
+--  210524  Supklk  AD-1699, Added MeasurementType to the MeasurementLineVirtual and modified RecordMeasurementDialog fields to display according to the MeasurementType
+--  210521  Supklk  AD-1699, Modified MeasurmentList to fetch Measurement Values, Added RecordMeasurementGroup, RecordMeasurementCmnd, RecordMeasurementDialog, RecordMeasurementStructure and RecordMeasurement Action
+--  210517  Kawjlk  AD-1697, Added RecordRemovedPartAssistant, RecordInstallAssistant, RecordRemovedPartGrup, RecordInstallPartGroup, RecordRemovePartCommand, RecordInstalledPartCommand, RemovedSign, InstalledSign, RecordInstalledPartLineVirtual, RecordRemovedPartVirtual, GetCurrentUser, GetCurrentUserDesc
+--  210511  Lahnlk  AD-1700, implemented Record Action Taken
+--  210514  SatGlk  AD-1698, Implemented Record Work Tool dialog
+--  210511  Kawjlk  AD-1243, Created, added RecordWorkAssistant and related lists and virtuals
+-----------------------------------------------------------------------------
+fragment FlmRecordWork;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Record Work assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmResourceToolEquipCommonObjects;
+include fragment ResourceGroupMaintLovSelector;
+@DynamicComponentDependency TOOLEQ
+include fragment ResourceToolEquipJoinLovSelector;
+include fragment PartCatalogLovSelector;
+include fragment FndEsignature;
+include fragment InventoryServiceManager;
+include fragment FlmTaskAssignments;
+include fragment FlmFaultDeferral;
+include fragment TaskServiceManager;
+include fragment FlmTaskTool;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant RecordWorkAssistant using RecordWorkVirtualSet {
+   label = "Task Card";
+   savemode = OnLostFocus;
+   input this;
+
+   setup SetDefaultValues {
+      variable DefTaskCardOption Text;
+      variable DefFaultId Number;
+      variable DefAircraftId Number;
+      variable DefAircraftWpId Number;
+      variable DefAction Text;
+      variable DefTaskSeq Number;
+      variable DefActualHours Text;
+      variable DefStartTime Timestamp;
+      variable DefEndTime Timestamp;
+      variable DefSource Text;
+      variable DefAssignmentStatus Text;
+      variable DefExecutionInstanceSeq Number;
+      variable DefKeyRef Text;
+      variable DefLuName Text;
+      variable DefObjstate Text;
+      variable DefClassCode Text;
+      variable DefSubclassCode Text;
+
+      execute {
+         set TaskCardOption = DefTaskCardOption;
+         set FaultId = DefFaultId;
+         set AircraftId = DefAircraftId;
+         set AircraftWpId = DefAircraftWpId;
+         set LatestAction = DefAction;
+         set TaskSeq = DefTaskSeq;
+         set CloseFaultAssignActualHours = DefActualHours;
+         set CloseFaultAssignStartTime = DefStartTime;
+         set CloseFaultAssignStopTime = DefEndTime;
+         set Source = DefSource;
+         set AssignmentStatus = DefAssignmentStatus;
+         set ExecutionInstanceSeq = DefExecutionInstanceSeq;
+         set KeyRef = DefKeyRef;
+         set LuName = DefLuName;
+         set Objstate = DefObjstate;
+         set ClassCode = DefClassCode;
+         set SubclassCode = DefSubclassCode;
+      }
+   }
+
+   init command {
+      execute {
+         call GetCurrentUser() into LoginUser;
+         call GetESigPermission(LoginUser) into ESigPermission;
+         call GetEsigFileName(AircraftId, TaskSeq, FaultId) into FileName;
+         call GetSite(TaskSeq) into Site;
+      }
+   }
+   singlestep {
+      group TaskDetails;
+      group FaultGroup;
+      list TaskActionList(TaskActionsArray);
+      list RemovePartList(RemovedPartsArray) {
+         visible = [RemovedPartEnable];
+      }
+      list InstallPartList(InstalledPartsArray) {
+         visible = [InstallededPartEnable];
+      }
+      list ToolDemandList(ToolDemandsArray) {
+         visible = [ResourceToolEnable];
+      }
+      list MeasurmentList(MeasurementsArray) {
+         visible = [MeasurementEnable];
+      }
+      repeatingsection StepSection(Steps);
+      repeatingsection PanelSection(Panels);
+      list TaskCertifyList(TaskCertifyArray);
+   }
+   command RecordActionTakenCommand;
+   command JobStopCommand;
+   command SignCommand;
+   command FinishCommand;
+}
+assistant RecordActionTaken using TaskActionLineVirtualSet {
+   label = "Record Action";
+   savemode = OnLostFocus;
+   input this;
+   output(ActionDesc, CertifyWorkPerformed);
+   singlestep {
+      group RecordActionGroup;
+   }
+   command SaveAction;
+   command Cancel;
+}
+assistant JobStop using TaskActionLineVirtualSet {
+   label = "Job Stop";
+   savemode = OnLostFocus;
+   input this;
+   output(ActionDesc, CertifyWorkPerformed);
+   singlestep {
+
+      group JobStop;
+      group RecordActionGroup;
+   }
+   command SaveAction;
+   command Cancel;
+}
+assistant RecordStepAction using TaskActionLineVirtualSet {
+   label = "Record Step Note";
+   savemode = OnLostFocus;
+   output(ActionDesc);
+   singlestep {
+      group RecordStepActionGroup;
+   }
+   command SaveAction;
+   command Cancel;
+}
+assistant RecordRemovedPartAssistant using RemovedPartLineVirtualSet {
+   label = "Record Removed Part";
+   savemode = OnLostFocus;
+   input this;
+   output(RemovalSerialNo, RemovalBatchNo, RemovedQuantity, RemovalReasonCode, RemovedUser, RemovalPartNoId);
+   singlestep {
+      group RecordRemovedPartGrup;
+   }
+   command RemovedSign {
+      label = "Save";
+   }
+   command Cancel;
+}
+
+assistant EditRemovedPartAssistant using RemovedPartLineVirtualSet {
+   label = "Edit Removed Part";
+   savemode = OnLostFocus;
+   input this;
+   output(RemovalSerialNo, RemovedQuantity, RemovalReasonCode, RemovalPartNoId, RemovalBatchNo, RemovalEditReason, ConfigSlotPositionId);
+   singlestep {
+      group EditRemovedPartGroup;
+   }
+   command EditRemovedSign {
+      label = "Save";
+   }
+   command Cancel;
+}
+
+assistant RevokeRemovePartSignOffAssistant using RemovedPartLineVirtualSet {
+   label = "Revoke Sign-Off for Removed Part";
+   savemode = OnLostFocus;
+   input(PartNumberRmvdRef, RemovalSerialNo, PartGroup, AssyPos, RemovedQuantity, RemovalReasonCode, RemovedDate, RemovedUser);
+   output(RevokeSignOffReason);
+
+   singlestep {
+      group RevokeRemovedPartGroup;
+   }
+
+   command Ok {
+      label = "Save";
+      enabled = [RevokeSignOffReason != null];
+   }
+   command Cancel;
+}
+
+assistant RevokeInstallPartSignOffAssistant using InstalledPartLineVirtualSet {
+   label = "Revoke Sign-Off for Installed Part";
+   savemode = OnLostFocus;
+   input(PartNumberInstRef, InstalledSerialNo, PartGroup, AssyPos, InstalledQuantity, InstalledDate, InstalledUser);
+   output(RevokeSignOffReason);
+
+   singlestep {
+      group RevokeInstallPartGroup;
+   }
+
+   command Ok {
+      label = "Save";
+      enabled = [RevokeSignOffReason != null];
+   }
+   command Cancel;
+}
+
+assistant RecordInstallAssistant using InstalledPartLineVirtualSet {
+   label = "Record Installed Part";
+   savemode = OnLostFocus;
+   input this;
+   output(InstalledSerialNo, InstalledBatchNo, InstalledQuantity, InstalledUser, InstalledPartNoId, InventoryClassCode, RemovalSerialNo, RemovalBatchNo, RemovalPartAltId);
+   singlestep {
+      group RecordInstallPartGroup;
+   }
+   command InstalledSign {
+      label = "Save";
+   }
+   command Cancel;
+}
+
+assistant EditInstallPartAssistant using InstalledPartLineVirtualSet {
+   label = "Edit Installed Part";
+   savemode = OnLostFocus;
+   input this;
+   output(InstalledSerialNo, InstalledQuantity, InstalledPartNoId, InstalledBatchNo, InstalledEditReason, ConfigSlotPositionId);
+   singlestep {
+      group EditInstalledPartGroup;
+   }
+   command EditInstalledSign {
+      label = "Save";
+   }
+   command Cancel;
+}
+
+assistant EditActionTaken using TaskActionLineVirtualSet {
+   label = "Record Action Taken";
+   savemode = OnLostFocus;
+   input(ActionDesc);
+   output(ActionDesc, ActionDate);
+   init command {
+      execute {
+         set InitialActionDesc = ActionDesc;
+      }
+   }
+   singlestep {
+      group RecordEditActionGroup;
+   }
+   command SaveAction;
+   command Cancel;
+}
+assistant CompleteTaskAssitant using TaskCertifyVirtualSet {
+   label = "Final Sign-Off";
+   savemode = OnLostFocus;
+   input(SignOffReqType);
+   output(ApprovalNumber, CompletionNote);
+   singlestep {
+      group RecordTaskCompletion;
+   }
+   command Ok {
+      label = "Save";
+   }
+   command Cancel;
+}
+assistant RecordSignOff using TaskStepSignOffVirtualSet {
+   label = "Step Action";
+   savemode = OnLostFocus;
+   input(SignOffNote);
+   output(SignOffNote);
+   singlestep {
+      group RecordSignOffGroup;
+   }
+   command Ok {
+      label = "Save";
+   }
+   command Cancel;
+}
+
+
+assistant RevokeStepSignOffAssistant using TaskStepSignOffVirtualSet {
+   label = "Revoke Sign-Off for Step ${OrderNo}";
+   savemode = OnLostFocus;
+   input(Role, LicenseId, SignOffDate, Identity, SignOffNote, OrderNo);
+   output(RevokeSignOffReason);
+   singlestep {
+      group RevokeStepSignOffGroup;
+   }
+   command Ok {
+      label = "Save";
+      enabled = [RevokeSignOffReason != null];
+   }
+   command Cancel;
+}
+
+assistant RecordToolAssistant using ToolResourceDemandVirtualSet {
+   label = "Record Tool";
+   savemode = OnLostFocus;
+   input this;
+   output(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq);
+   singlestep {
+      group RecordToolDemandGroup;
+   }
+   command SignedToolResource;
+   command Cancel;
+}
+
+assistant EditToolAssistant using ToolResourceDemandVirtualSet {
+   label = "Edit Tool";
+   savemode = OnLostFocus;
+   input this;
+   output(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq);
+
+   singlestep {
+      group EditToolDemandGroup;
+   }
+
+   command Ok {
+      label = "Save";
+      visible = [ResourceParentId != null and ResourceSeq != null and CheckedOutDate != null and ActualHours != null and ActualEndDate != null and SerialNo != null];
+      variable IsCheckedOutTool Boolean;
+      execute {
+         call IsToolCheckedOut(ResourceSeq) into IsCheckedOutTool;
+         if [IsCheckedOutTool = false] {
+            error("Assigned tool is not checked out.");
+         }
+         else {
+            exit OK;
+         }
+      }
+   }
+   command Cancel;
+}
+
+assistant EditAuthorizedToolAssistant using ToolResourceDemandVirtualSet {
+   label = "Edit Tool";
+   savemode = OnLostFocus;
+   input this;
+   output(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq, ReasonToEdit);
+
+   singlestep {
+      group EditAuthorizedToolDemandGroup;
+   }
+   command Ok {
+      label = "Save";
+      enabled = [ReasonToEdit != null and ActualHours != null and SerialNo != null and ResourceSeq != null];
+   }
+   command Cancel;
+}
+---------------------------------- GROUPS -----------------------------------
+group TaskDetails for RecordWorkVirtual {
+   visible = [FaultId = null];
+   label = "Task Details";
+
+   field AvExeTaskRef.TaskCode {
+      label = "Task Code";
+      visible = [AvExeTaskRef.TaskCode != null];
+   }
+   field AircraftRef.AircraftMob {
+      label = "Aircraft";
+   }
+   field AvExeTaskRef.ConfigPosition {
+      label = "Config Position";
+   }
+   field AvExeTaskRef.Description {
+      label = "Name";
+      size = FullWidth;
+      multiline = true;
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   field AvExeTaskRef.ClassCode {
+      label = "Class";
+   }
+
+   field AvExeTaskRef.SubclassCode {
+      label = "Subclass";
+   }
+   field AvAircraftWpRef.WoNumber {
+      label = "WO #";
+   }
+   field AvAircraftWpRef.LocationCode {
+      label = "Maintenance Location";
+   }
+   field AvAircraftWpRef.SchedStartDateTimeUtc {
+      label = "Scheduled Start Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+}
+group FaultGroup for RecordWorkVirtual {
+   visible = [FaultId != null];
+   label = "Fault Details";
+
+   field AircraftRef.AircraftMob {
+      label = "Aircraft";
+   }
+   field FaultQueryRef.SubSystemCode {
+      label = "System";
+   }
+   field AvFaultRef.LogbookReference {
+      label = "Logbook Reference";
+   }
+   field AvFaultRef.Description {
+      label = "Name";
+      size = FullWidth;
+      multiline = true;
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   badge AvExeTaskRef.Objstate {
+      label = "Status";
+      editable = [false];
+
+      emphasis Primary = [Objstate = "RELEASED"];
+      emphasis Complementary7 = [Objstate = "WORKSTARTED"];
+      emphasis True = [Objstate = "FINISHED"];
+      emphasis Neutral = [Objstate = "REMOVED"];
+      size = Medium;
+      signaturemappingattribute = OBJSTATE;
+   }
+   field AvFaultRef.FoundOnDate {
+      label = "Found on Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field AvFaultRef.FoundOnDesc {
+      label = "Found on Task";
+      visible = [AvFaultRef.FoundOnType = "TASK"];
+   }
+   field AvFaultRef.FoundOnDesc {
+      label = "Found on Flight";
+      visible = [AvFaultRef.FoundOnType = "FLIGHT"];
+   }
+   field AvAircraftWpRef.WoNumber {
+      label = "WO #";
+   }
+   field AvAircraftWpRef.LocationCode {
+      label = "Maintenance Location";
+   }
+   field AvAircraftWpRef.ActualStartDateTime {
+      label = "Work Package Start Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+}
+group RecordToolGroup for RecordToolStructure {
+   field PartNumberRef.PartName;
+   field PartNumberRef.PartNumber;
+   field SerialNo;
+   field ActualDuration {
+      label = "Actual Hours (HH:MM)";
+      format = decimal;
+      required = [true];
+   }
+}
+
+group RecordResourceToolGroup for RecordResourceToolStructure {
+   lov ResourceGroupIdRef with ReferenceResourceGroupMaintLovSelector {
+      description = ResourceGroupIdRef.Description;
+      preview = ResourceGroupMaintLovCard;
+   }
+   @DynamicComponentDependency TOOLEQ
+   lov ResourceIdRef with ReferenceResourceToolEquipJoinLovSelector using GetResources(ResourceGroupSeq) {
+      description = ResourceIdRef.Description;
+      search = ResourceId, Description;
+      validate command {
+         variable PartSerialVar Structure(PartSerialStructure);
+
+         execute {
+            if [ResourceId != null] {
+               call GetPartSerial(ResourceSeq) into PartSerialVar;
+               copy PartSerialVar into this;
+            }
+            else {
+               set ResourceSeq = null;
+               set PartNo = null;
+               set SerialNo = null;
+            }
+         }
+      }
+   }
+   @DynamicComponentDependency TOOLEQ
+   lov PartCatalogRef with ReferencePartCatalogLovSelector using GetToolEquipGroupParts(ResourceGroupSeq) {
+      description = PartCatalogRef.Description;
+      search = PartNo, Description;
+      validate command {
+         execute {
+            if [SerialNo != null] {
+               set SerialNo = null;
+            }
+            if [ResourceId != null] {
+               set ResourceId = null;
+               set ResourceSeq = null;
+            }
+         }
+      }
+   }
+   @DynamicComponentDependency TOOLEQ
+   lov PartSerialCatalogRef with PartSerialCatalogSelector using GetToolEquipGroupSerials(ResourceGroupSeq) {
+      editable = [ResourceSeq = null];
+      validate command {
+         execute {
+            if [PartNo != null and SerialNo != null] {
+               call GetResourceId(PartNo, SerialNo) into ResourceId;
+            }
+            else {
+               set ResourceId = null;
+               set ResourceSeq = null;
+            }
+         }
+      }
+   }
+   field ActualDuration {
+      format = decimal;
+   }
+}
+
+group RecordMeasurementGroup for RecordMeasurementStructure {
+   field MeasurementTypeCode {
+      editable = [false];
+   }
+   lov MeasurementValueRef with ReferenceAvMeasurementValueSelector {
+      label = "Value";
+      visible = [MeasurementCategory = "CH"];
+   }
+   field MeasurementQty {
+      label = "Value";
+      visible = [MeasurementCategory = "ME"];
+   }
+   field MeasurementDateTime {
+      label = "Value";
+      visible = [MeasurementCategory = "CME"];
+   }
+   field MeasurementText {
+      label = "Value";
+      visible = [MeasurementCategory = "TEXT"];
+   }
+   field MeasurementBoolean {
+      label = "Value";
+      visible = [MeasurementCategory = "CHK"];
+      required = [MeasurementCategory = "CHK"];
+   }
+   field ReasonToEdit {
+      label = "Reason for Editing Measurement";
+      visible = [DbMeasuredUser != null and TaskControlAuthorityEnabled = "Yes"];
+      required = [true];
+      size = FullWidth;
+   }
+}
+
+group RevokeMeasurementSignOffGroup for MeasurementLineVirtual {
+   field MeasurementTypeCode {
+      editable = [false];
+   }
+   field MeasurementValue {
+      label = "Value";
+      editable = [false];
+   }
+   field MeasuredUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   field RevokeSignOffReason {
+      label = "Reason for Revoking Sign-Off";
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group RecordRemovedPartGrup for RemovedPartLineVirtual {
+   label = "Removal Details";
+   lov PartNumberRmvdRef with ReferenceAvPartNumberNewSelector using GetPartNumberLov(RemovalPartGroupId) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberRmvdRef.PartNumber;
+      size = Medium;
+      validate command {
+         execute {
+            set PartType = PartNumberRmvdRef.InventoryClassCode;
+            if [PartType != "BATCH"] {
+               set RemovedQuantity = 1;
+            }
+         }
+      }
+   }
+   field RemovalSerialNo {
+      label = "Serial Number";
+      required = [PartType != "BATCH"];
+      visible = [PartType != "BATCH"];
+   }
+   field RemovalBatchNo {
+      label = "Batch Number";
+      required = [PartType = "BATCH" and PartNumberRmvdRef.IsRepairable];
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+      editable = [PartType = "BATCH"];
+      required = [true];
+   }
+   lov RemovalReasonRef with ReferenceAvRemovalReasonSelector {
+      label = "Removal Reason";
+      description = RemovalReasonCode;
+      editable = [true];
+      required = [true];
+   }
+}
+
+group RevokeRemovedPartGroup for RemovedPartLineVirtual {
+   field PartNumberRmvdRef.PartNumber {
+      label = "Part Number";
+      editable = [false];
+   }
+   field RemovalSerialNo {
+      label = "Serial Number";
+      editable = [false];
+   }
+   field PartGroup {
+      label = "Part Group";
+      editable = [false];
+   }
+   field AssyPos {
+      label = "Position";
+      editable = [false];
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+      editable = [false];
+   }
+   field RemovalReasonCode {
+      label = "Removal Reason";
+      editable = [false];
+   }
+   field RemovedDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+      editable = [false];
+   }
+   field RemovedUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   field RevokeSignOffReason {
+      label = "Reason for Revoking Sign-Off";
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group RecordInstallPartGroup for InstalledPartLineVirtual {
+   label = "Install Details";
+   lov PartNumberInstRef with ReferenceAvPartNumberNewSelector using GetPartNumberLov(PartGroupId) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberInstRef.PartNumber;
+      size = Medium;
+      validate command {
+         execute {
+            set PartType = PartNumberInstRef.InventoryClassCode;
+            if [PartType != "BATCH"] {
+               set InstalledQuantity = 1;
+            }
+         }
+      }
+   }
+   lov InstalledSerialRef with PartSerialCatalogSelector using GetSerialNo(PartNumberInstRef.PartNumber, OriginalInstalledSerialNo, TaskSeq) {
+      label = "Serial Number";
+      hidekey = [true];
+      required = [PartType != "BATCH"];
+   }
+   lov InstalledBatchRef with LotBatchMasterSelector using GetBatchNo(PartNumberInstRef.PartNumber, TaskSeq) {
+      label = "Batch Number";
+      hidekey = [true];
+      required = [PartType = "BATCH"];
+      validate command {
+         variable IsQuantityUnavailable Boolean;
+         execute {
+            call CheckQuantiyForBatch(PartNumberInstRef.PartNumber, TaskSeq, InstalledQuantity, InstalledBatchNo) into IsQuantityUnavailable;
+            if[IsQuantityUnavailable] {
+               set InstalledBatchNo = OriginalInstalledBatchNo;
+               error("The available quantity in the selected batch is less than the requested quantity.");
+            }
+         }
+      }
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+      editable = [PartType = "BATCH"];
+      required = [true];
+   }
+}
+
+group RevokeInstallPartGroup for InstalledPartLineVirtual {
+   field PartNumberInstRef.PartNumber {
+      label = "Part Number";
+      editable = [false];
+   }
+   field InstalledSerialNo {
+      label = "Serial Number";
+      editable = [false];
+   }
+   field PartGroup {
+      label = "Part Group";
+      editable = [false];
+   }
+   field AssyPos {
+      label = "Position";
+      editable = [false];
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+      editable = [false];
+   }
+   field InstalledDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+      editable = [false];
+   }
+   field InstalledUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   field RevokeSignOffReason {
+      label = "Reason for Revoking Sign-Off";
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group RecordActionGroup for TaskActionLineVirtual {
+   label = "Action Taken";
+   field ActionDesc {
+      label = "Action Taken";
+      size = FullWidth;
+      required = [true];
+   }
+   lov DemandLineRef with DemandLineSelector using GetSkillDemand(TaskSeq, Remark, CurrentUser) {
+      label = "Skill";
+      visible = [Source != "Final Sign-Off" and IsEditTaskCardAccess = false];
+      hidekey = [true];
+      editable = [TaskResourceSeq = null or MainVrtUpdate = true];
+      searchable = true;
+      search = DemandLineRef.ResourceDemand;
+      description = DemandLineRef.ResourceDemand;
+      required = [true];
+      validate command {
+         execute {
+            set ExecutionInstanceSeq = DemandLineRef.ExecutionInstanceSeq;
+            set MainVrtUpdate = true;
+            if [TaskResourceSeq = null] {
+               set TaskResourceSeq = DemandLineRef.TaskResourceSeq;
+            }
+         }
+      }
+   }
+
+   field ActualHours {
+      label = "Actual Hours (HH:MM)";
+      visible = [Source = "Finish" or IsJobStopExecuted];
+      format = decimal;
+      validate command {
+         execute {
+            if [IsJobStopExecuted] {
+               call ValidateHours(ActualHours, "Actual Hours") into ActualHours;
+               call CalculateRemainingHours(ActualHours, ScheduledHours) into RemainingHours;
+            }
+         }
+      }
+   }
+   field StartTime {
+      label = "Start Time";
+      visible = [Source = "Finish" or IsJobStopExecuted];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      editable = [AssignmentStatus = "ASSIGNED"];
+      validate command {
+         execute {
+            call ValidateStartEndDates(StartTime, EndTime, Site, "Start Date", "End Date") into ActualHours;
+         }
+      }
+   }
+   field EndTime {
+      label = "End Time";
+      visible = [Source = "Finish" or IsJobStopExecuted];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      validate command {
+         execute {
+            call ValidateStartEndDates(StartTime, EndTime, Site, "Start Date", "End Date") into ActualHours;
+         }
+      }
+   }
+   field CertifyWorkPerformed {
+      visible = [IsSignOffSigned = "TRUE" and IsEditTaskCardAccess = false];
+   }
+}
+group JobStop for TaskActionLineVirtual {
+   label = "Job Stop";
+   lov IncompletionCauseRef with JtIncompletionCauseNewSelector {
+      label = "Reason";
+      description = IncompletionCauseRef.Description;
+      editable = [true];
+      required = [true];
+   }
+   field RemainingHours {
+      label = "Remaining Hours (HH:MM)";
+      visible = [Source != "RecordWork" or IsJobStopExecuted];
+      required = [true];
+      editable = [IsRemHoursEditable];
+      format = decimal;
+
+      validate command {
+         execute {
+            call ValidateHours(RemainingHours, "Remaining Hours") into RemainingHours;
+         }
+      }
+   }
+   field JobstopNote {
+      label = "Note";
+      size = FullWidth;
+   }
+   field AssignToMeNewTaskRes {
+      label = "Assign me to the new skill requirement";
+   }
+}
+
+group RecordEditActionGroup for TaskActionLineVirtual {
+   label = "Action Taken";
+   field ActionDesc {
+      label = "Action Taken";
+      size = FullWidth;
+      validate command {
+         execute {
+            call GetTimestamp(Site) into ActionDate;
+         }
+      }
+   }
+}
+
+group RecordStepActionGroup for TaskActionLineVirtual {
+   label = "Add Step Note";
+   field ActionDesc {
+      label = "Step Note";
+      size = FullWidth;
+   }
+}
+
+group RecordTaskCompletion for TaskCertifyVirtual {
+   label = "Final Sign-Off";
+   field ApprovalNumber {
+      label = "Approval Number";
+      visible = [SignOffReqType = "Inspector"];
+   }
+   field CompletionNote {
+      label = "Final Sign-Off Note";
+      size = FullWidth;
+   }
+}
+
+group RecordSignOffGroup for TaskStepSignOffVirtual {
+   label = "Record Sign-Off";
+   field SignOffNote {
+      label = "Sign-off Note";
+      size = FullWidth;
+   }
+}
+
+group RevokeStepSignOffGroup for TaskStepSignOffVirtual {
+   field Role {
+      label = "Role";
+      editable = [false];
+   }
+   field LicenseId {
+      label = "Certificate ID";
+      editable = [false];
+   }
+   field SignOffDate {
+      label = "Date";
+      type = Date;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+      editable = [false];
+   }
+   field Identity {
+      label = "Signed-By";
+      editable = [false];
+   }
+   field SignOffNote {
+      label = "Sign-Off Note";
+      editable = [false];
+   }
+   field RevokeSignOffReason {
+      label = "Reason for Revoking Sign-Off";
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group EditActionGroup for TaskActionLineVirtual {
+   label = "Action Taken";
+   field ActionDesc {
+      label = "Action Taken";
+      size = FullWidth;
+   }
+   field ReasonToEdit {
+      label = "Reason for Editing Actions";
+      visible = [DbActionUser != null and TaskControlAuthorityEnabled = "Yes"];
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group EditStepSignOffGroup for TaskStepSignOffVirtual {
+   label = "Edit step note";
+   field Role {
+      editable = [false];
+   }
+   field LicenseId {
+      label = "Certificate ID";
+      editable = [false];
+   }
+   field SignOffNote {
+      label = "Sign-Off Note";
+      size = FullWidth;
+   }
+}
+
+group EditRemovedPartGroup for RemovedPartLineVirtual {
+   label = "Edit Removed Part";
+
+   lov PartNumberRmvdRef with ReferenceAvPartNumberNewSelector using GetPartNumberLov(RemovalPartGroupId) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberRmvdRef.PartNumber;
+      size = Medium;
+      validate command {
+         execute {
+            set PartType = PartNumberRmvdRef.InventoryClassCode;
+            if [PartType != "BATCH"] {
+               set RemovedQuantity = 1;
+            }
+         }
+      }
+   }
+   field PartGroupRef.PartGroupCode {
+      label = "Part Group";
+      visible = [PartNumberRmvdRef.PartNumber != null];
+      editable = [false];
+   }
+   field RemovalSerialNo {
+      label = "Serial Number";
+      required = [PartType != "BATCH"];
+      visible = [PartType != "BATCH"];
+   }
+
+   field RemovalBatchNo {
+      label = "Batch Number";
+      required = [PartType = "BATCH" and PartNumberRmvdRef.IsRepairable];
+   }
+
+   lov ConfigSlotPositionRef with ReferenceAvConfigSlotPosNewSelector using GetConfigSlotPosLov(PartGroupRef.ConfigSlotCode, PartGroupRef.AssemblyTypeCode) {
+      label = "Position";
+      required = [true];
+      visible = [PartType = "TRK" or PartType = "ASSY"];
+      hidekey = [true];
+      description = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      size = Medium;
+
+      validate command {
+         variable InventorySearchResponse {
+            type = Structure(InventorySearchResponseStructure);
+         }
+         variable CmsRequestInfo {
+            type = Structure(CmsDataStructure);
+         }
+         variable NewRemovalPartNoId Number;
+
+         execute {
+            set ConfigSlotPositionId = ConfigSlotPositionRef.ConfigSlotPositionId;
+            call GetRemovalCmsRequestData(Objkey, ConfigSlotPositionId) into CmsRequestInfo;
+            call GetRemovalInfoService(CmsRequestInfo.AircraftAltId, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition) into InventorySearchResponse;
+            if [InventorySearchResponse != null] {
+               set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+               set RemovalPartNumber = InventorySearchResponse.PartNumber;
+               call GetPartIdByAltId(InventorySearchResponse.AltId) into NewRemovalPartNoId;
+               set RemovalPartNoId = NewRemovalPartNoId;
+            }
+         }
+      }
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+      editable = [PartType = "BATCH"];
+      required = [true];
+   }
+   lov RemovalReasonRef with ReferenceAvRemovalReasonSelector {
+      label = "Removal Reason";
+      description = RemovalReasonCode;
+      editable = [true];
+      required = [true];
+   }
+   field RemovalEditReason {
+      label = "Reason for Editing Removed Part";
+      visible = [DbRemovedUser != null];
+      size = FullWidth;
+      required = [true];
+   }
+}
+
+group RecordToolDemandGroup for ToolResourceDemandVirtual {
+
+   field ToolGroup {
+      editable = [false];
+   }
+
+   lov ResourceIdRef with MaintResourcesSelector using GetCheckedOutSerial(ResourceGroupSeq, Site) {
+      label = "Serial No";
+      visible = [ToolEqpAssigned = "FALSE"];
+      required = [ToolEqpAssigned = "FALSE"];
+      hidekey = [true];
+      searchable = true;
+      search = ResourceIdRef.SerialNo;
+      description = ResourceIdRef.SerialNo;
+      required = [true];
+      validate command {
+         variable ToolPartVar Structure(ToolPartStructure);
+         execute {
+            call GetToolPartForAssignedResource(ResourceSeq, Site) into ToolPartVar;
+            set ToolPartId = ToolPartVar.ToolPartId;
+            set ToolPartDescription = ToolPartVar.ToolPartDescription;
+         }
+      }
+   }
+
+   field SerialNo {
+      label = "Serial No";
+      editable = [false];
+      visible = [ToolEqpAssigned = "TRUE"];
+   }
+   field ToolPartId {
+      label = "Tool Part No";
+      editable = [false];
+   }
+   field ToolPartDescription {
+      label = "Tool Part Description";
+      editable = [false];
+   }
+   field ActualHours {
+      label = "Actual Hours (HH:MM)";
+      validate command {
+         execute {
+            call VerifyActualHours(ActualHours);
+         }
+      }
+   }
+   field CheckedOutDate {
+      label = "Actual Start Date";
+      validate command {
+         execute {
+            call ValidateToolStartEndDate(TaskSeq, ResourceSeq, CheckedOutDate, ActualEndDate) into ActualHours;
+         }
+      }
+   }
+   field ActualEndDate {
+      label = "Actual End Date";
+      validate command {
+         execute {
+            call ValidateToolStartEndDate(TaskSeq, ResourceSeq, CheckedOutDate, ActualEndDate) into ActualHours;
+         }
+      }
+   }
+}
+
+group EditInstalledPartGroup for InstalledPartLineVirtual {
+   label = "Edit Installed Part";
+
+   lov PartNumberInstRef with ReferenceAvPartNumberNewSelector using GetPartNumberLov(PartGroupId) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      description = PartNumberInstRef.PartNumber;
+      size = Medium;
+      validate command {
+         execute {
+            set PartType = PartNumberInstRef.InventoryClassCode;
+            if [PartType != "BATCH"] {
+               set InstalledQuantity = 1;
+               set InstalledSerialNo = null;
+               set InstalledBatchNo = null;
+            }
+         }
+      }
+   }
+   field PartGroupRef.PartGroupCode {
+      label = "Part Group";
+      visible = [PartNumberInstRef.PartNumber != null];
+      editable = [false];
+   }
+   lov InstalledSerialRef with PartSerialCatalogSelector using GetSerialNo(PartNumberInstRef.PartNumber, OriginalInstalledSerialNo, TaskSeq) {
+      label = "Serial Number";
+      hidekey = [true];
+      description = InstalledSerialNo;
+      required = [PartType != "BATCH"];
+   }
+   lov InstalledBatchRef with LotBatchMasterSelector using GetBatchNo(PartNumberInstRef.PartNumber, TaskSeq) {
+      label = "Batch Number";
+      hidekey = [true];
+      description = InstalledBatchNo;
+      required = [PartType = "BATCH"];
+      validate command {
+         variable IsQuantityUnavailable Boolean;
+         execute {
+            call CheckQuantiyForBatch(PartNumberInstRef.PartNumber, TaskSeq, InstalledQuantity, InstalledBatchNo) into IsQuantityUnavailable;
+            if[IsQuantityUnavailable] {
+               set InstalledBatchNo = OriginalInstalledBatchNo;
+               error("The available quantity in the selected batch is less than the requested quantity.");
+            }
+         }
+      }
+   }
+   lov ConfigSlotPositionRef with ReferenceAvConfigSlotPosNewSelector using GetConfigSlotPosLov(PartGroupRef.ConfigSlotCode, PartGroupRef.AssemblyTypeCode) {
+      label = "Position";
+      visible = [PartType = "TRK" or PartType = "ASSY"];
+      required = [true];
+      hidekey = [true];
+      description = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      size = Medium;
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+      editable = [PartType = "BATCH"];
+      required = [true];
+   }
+   field InstalledEditReason {
+      label = "Reason for Editing Installed Part";
+      visible = [DbInstalledUser != null];
+      size = FullWidth;
+      required = [true];
+
+   }
+}
+
+group EditToolDemandGroup for ToolResourceDemandVirtual {
+
+   lov ToolResourceGroupLovRef with ReferenceResourceGroupSiteLovSelector using ResourceGroupSiteLovFunction(Site) {
+      label = "Tool/Equipment Group";
+      hidekey = [true];
+      searchable = true;
+      search = ResourceId, Description;
+      description = ResourceParentId;
+      required = [true];
+      validate command {
+         execute {
+            set ResourceSeq = null;
+            set ToolPartId = null;
+            set SerialNo = null;
+            set ResourceId = null;
+         }
+      }
+   }
+
+   field ToolGroupDescription {
+      label = "Tool/Equipment Group Description";
+      editable = [false];
+   }
+
+   lov ResourceIdRef with MaintResourcesSelector using ResourceIdLovFunction(ResourceGroupSeq, Site) {
+      label = "Tool/Equipment Id";
+      hidekey = [true];
+      searchable = true;
+      search = ResourceIdRef.ResourceId;
+      description = ResourceIdRef.ResourceId;
+      required = [true];
+      validate command {
+         variable ToolPartVar Structure(ToolPartStructure);
+         execute {
+
+            call GetToolPartForAssignedResource(ResourceSeq, Site) into ToolPartVar;
+            set ToolPartId = ToolPartVar.ToolPartId;
+            set ToolPartDescription = ToolPartVar.ToolPartDescription;
+
+         }
+      }
+   }
+
+
+   field SerialNo {
+      label = "Serial Number";
+      editable = [false];
+   }
+
+   field ToolPartId {
+      label = "Part Number";
+      editable = [false];
+   }
+
+   field ActualHours {
+      label = "Actual Hours(HH:MM)";
+      required = [true];
+      validate command {
+         execute {
+            call VerifyActualHours(ActualHours);
+         }
+      }
+   }
+
+   field CheckedOutDate {
+      label = "Actual Start";
+      required = [true];
+      validate command {
+         execute {
+            call ValidateToolStartEndDate(TaskSeq, ResourceSeq, CheckedOutDate, ActualEndDate) into ActualHours;
+         }
+      }
+   }
+
+   field ActualEndDate {
+      label = "Actual Finish";
+      required = [true];
+      validate command {
+         execute {
+            call ValidateToolStartEndDate(TaskSeq, ResourceSeq, CheckedOutDate, ActualEndDate) into ActualHours;
+         }
+      }
+   }
+}
+
+group EditAuthorizedToolDemandGroup for ToolResourceDemandVirtual {
+   field ToolGroup {
+      label = "Tool/Equipment Group";
+      editable = [false];
+   }
+   field ToolGroupDescription {
+      label = "Tool/Equipment Group Description";
+      editable = [false];
+   }
+   lov ResourceIdRef with MaintResourcesSelector using ResourceIdLovFunction(ResourceGroupSeq, Site) {
+      label = "Tool/Equipment Id";
+      hidekey = [true];
+      searchable = true;
+      search = ResourceIdRef.ResourceId;
+      description = ResourceIdRef.ResourceId;
+      required = [true];
+      validate command {
+         variable ToolPartVar Structure(ToolPartStructure);
+         execute {
+            call GetToolPartForAssignedResource(ResourceSeq, Site) into ToolPartVar;
+            set ToolPartId = ToolPartVar.ToolPartId;
+            set ToolPartDescription = ToolPartVar.ToolPartDescription;
+         }
+      }
+   }
+   field SerialNo {
+      label = "Serial Number";
+      editable = [false];
+   }
+   field ToolPartId {
+      label = "Part Number";
+      editable = [false];
+   }
+   field ActualHours {
+      label = "Actual Hours(HH:MM)";
+      required = [true];
+      validate command {
+         execute {
+            call ValidateHours(ActualHours, "Actual Hours") into ActualHours;
+            call ValidateStartEndDates(CheckedOutDate, ActualEndDate, Site, "Actual Start Date", "Actual End Date");
+            call GetEndDateFromHours(CheckedOutDate, ActualHours) into ActualEndDate;
+         }
+      }
+   }
+   field CheckedOutDate {
+      label = "Actual Start";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+      editable = [false];
+   }
+   field ActualEndDate {
+      label = "Actual Finish";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+      editable = [false];
+   }
+   field ReasonToEdit {
+      label = "Reason for Editing Tool";
+      required = [true];
+      size = FullWidth;
+   }
+}
+----------------------------------- LISTS -----------------------------------
+list TaskActionList for TaskActionLineVirtual {
+   label = "Actions";
+   multiselect = [false];
+   digitalsignature for AvExeTaskAction {
+      hashcontent = [SignedFlag = true];
+   }
+   orderby = ActionOrd desc;
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ActionDesc {
+      label = "Action Taken";
+      size = Large;
+      multiline = true;
+   }
+   field ActionDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+   }
+   field ActionUser {
+      label = "Signed By";
+   }
+   conditionalformat {
+      when [SignedFlag = true] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+
+   command EditActionCommand;
+}
+
+list TaskStepSignOffList for TaskStepSignOffVirtual {
+   label = "Step Action";
+   multiselect = [false];
+   orderby = GroupingNo, OrderNo;
+
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field Role {
+      label = "Role";
+      size = Small;
+      editable = [false];
+   }
+   badge SignOffStatus {
+      label = "SignOff Status";
+      style = TextOnly;
+      size = Small;
+      editable = [false];
+
+      emphasis Warning = [SignOffStatus = "Pending"];
+      emphasis OK = [SignOffStatus = "Signed"];
+   }
+   field LicenseId {
+      label = "Certificate ID";
+      size = Small;
+      editable = [false];
+   }
+   field SignOffNote {
+      label = "Sign-Off Note";
+      size = Large;
+      editable = [SignOffStatus = "Signed" and SignedFlag = true and parent.IsActionRecorded != true];
+      multiline = true;
+   }
+   field SignOffDate {
+      label = "Date";
+      type = Date;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+   field Identity {
+      label = "Signed-By";
+      size = Small;
+      editable = [false];
+   }
+
+   conditionalformat {
+      when [Identity != null] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+
+   command SignStepSignOffCommand;
+   command EditStepSignOffCommand;
+   command RevokeStepSignOffCommand;
+}
+
+list RemovePartList for RemovedPartLineVirtual {
+   label = "Removed Parts";
+   multiselect = [false];
+   orderby = TaskPartId desc;
+   digitalsignature for AvExeTaskPart {
+      hashcontent = [SignedFlag = true];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field PartGroup {
+      label = "Part Group";
+      excludefromsignaturemapping = true;
+      multiline = true;
+   }
+   field AssyPos {
+      label = "Position";
+      excludefromsignaturemapping = true;
+   }
+   field PartNumberRmvdRef.PartNumber {
+      label = "Part No";
+      excludefromsignaturemapping = true;
+   }
+   field SerialBatchNo {
+      label = "Serial/Batch No";
+      excludefromsignaturemapping = true;
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+   }
+   field RemovalReasonCode {
+      label = "Reason for Removal";
+   }
+   field RemovedDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+   }
+   field RemovedUser {
+      label = "Signed By";
+   }
+   field CancelledBy {
+      label = "Cancelled By";
+      excludefromsignaturemapping = true;
+   }
+
+   conditionalformat {
+      when [SignedFlag] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+   command EditRemovePartCommand;
+   command RecordRemovePartCommand {
+      label = "Record Part Removal";
+   }
+
+   command RevokeRemovePartCommand;
+}
+list InstallPartList for InstalledPartLineVirtual {
+   label = "Installed Parts";
+   multiselect = [false];
+   orderby = TaskPartId desc;
+   digitalsignature for AvExeTaskPart {
+      hashcontent = [SignedFlag = true];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field PartGroup {
+      label = "Part Group";
+      excludefromsignaturemapping = true;
+      multiline = true;
+   }
+   field AssyPos {
+      label = "Position";
+      excludefromsignaturemapping = true;
+   }
+   field PartNumberInstRef.PartNumber {
+      label = "Part No";
+      excludefromsignaturemapping = true;
+   }
+   field SerialBatchNo {
+      label = "Serial/Batch No";
+      excludefromsignaturemapping = true;
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+   }
+   field InstalledDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+   }
+   field InstalledUser {
+      label = "Signed By";
+   }
+   field CancelledBy {
+      label = "Cancelled By";
+      excludefromsignaturemapping = true;
+   }
+   conditionalformat {
+      when [SignedFlag] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+   command EditInstalledPartCommand;
+   command RecordInstalledPartCommand {
+      label = "Record Part Installation";
+   }
+   command RevokeInstalledPartCommand;
+}
+
+list ToolDemandList for ToolResourceDemandVirtual {
+   label = "Tools Used";
+   multiselect = [false];
+   orderby = TaskResourceSeq asc;
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field ToolGroup;
+   field SerialNo {
+      label = "Serial No (Tool/Equipment)";
+   }
+   field ToolPartId {
+      label = "Tool Part No";
+   }
+   field ToolPartDescription {
+      label = "Tool Part Description";
+   }
+   field CheckedOutDate;
+   field SignedDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+   }
+   field SignedUser {
+      label = "Signed By";
+   }
+
+   conditionalformat {
+      when [SignedFlag] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+
+   command RecordToolDemandCommand {
+      label = "Record Tool";
+   }
+   command EditToolDemandCommand;
+   command RevokeToolDemandCommand;
+}
+
+list MeasurmentList for MeasurementLineVirtual {
+   label = "Measurements";
+   multiselect = [false];
+   digitalsignature for AvExeTaskMeasurement {
+      hashcontent = [SignedFlag = true];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field MeasurementTypeCodeRef.MeasurementTypeDesc {
+      label = "Measurement Type Description";
+      editable = [false];
+      size = Large;
+      excludefromsignaturemapping = true;
+   }
+   field MeasurementValue {
+      label = "Value";
+      excludefromsignaturemapping = true;
+   }
+   field MeasuredDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      excludefromsignaturemapping = true;
+   }
+   field MeasuredUser {
+      label = "Signed By";
+   }
+   conditionalformat {
+      when [SignedFlag] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+   command RecordMeasurementCommand;
+   command EditMeasurementCommand;
+   command RevokeMeasurementSignOffCommand;
+}
+
+list TaskCertifyList for TaskCertifyVirtual {
+   label = "Task Certification";
+   orderby = SignOffReqSeq;
+   multiselect = [false];
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field Role {
+      excludefromsignaturemapping = true;
+   }
+   badge SignOffStatus {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Warning = [SignOffStatus = "Pending"];
+      emphasis OK = [SignOffStatus = "Signed"];
+   }
+   field CompletionNote;
+   field ApprovalNumber;
+   field ActualEndDate {
+      label = "Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field SignedBy {
+      label = "Signed By";
+   }
+   conditionalformat {
+      when [SignedFlag] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+   command CompleteTaskCommand;
+   command RecordInspectionCommand;
+   command EditTaskCertificationCommand;
+   command RevokeTaskCertificationCommand;
+
+}
+
+list TaskPanelSignOffList clone TaskStepSignOffList {
+   label = "Panel Sign Off";
+}
+
+repeatingsection StepSection for StepVirtual {
+   orderby = StepOrd asc;
+   markdowntext {
+      text = "### **Step ${StepOrd} ( ${StepStatus} )**";
+   }
+   htmltext {
+      text = "${Instructions}";
+   }
+   list TaskStepSignOffList(StepSignOff);
+}
+
+repeatingsection PanelSection for PanelVirtual {
+   markdowntext {
+      text = "### <strong>Panel ${PanelCode}</strong> ";
+   }
+   htmltext {
+      text = "${PanelDescription}<br>${PanelInstruction}";
+   }
+
+   list TaskPanelSignOffList(PanelSignOff);
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command RecordRemovePartCommand for RemovedPartLineVirtual {
+   enabled = [RemovedUser = null and CancelledBy = null];
+   mode = SingleRecord;
+   variable NewRemovedSerialNo Text;
+   variable NewRemovedQuantity Number;
+   variable NewRemovalReasonCode Text;
+   variable RemovalReasonCode Text;
+   variable NewRemovedUser Text;
+   variable NewRemovedBatchNo Text;
+   variable NewRemovedPartNoId Number;
+   variable RecordRemovedPartInfo Structure(RecordRemovedPartInfoStructure);
+
+
+   execute {
+
+      copy this into RecordRemovedPartInfo;
+      call GetAircraftRegCode(AircraftId) into AircraftRegCode;
+      set RecordRemovedPartInfo.AircraftRegCode = AircraftRegCode;
+      set RemovalReasonCode = RemovalReasonRef.RemovalReasonCode;
+      assistant RecordRemovedPartAssistant(RecordRemovedPartInfo) into(NewRemovedSerialNo, NewRemovedBatchNo, NewRemovedQuantity, NewRemovalReasonCode, NewRemovedUser, NewRemovedPartNoId) {
+         when OK {
+            call UpdateRmvPart(Objkey, NewRemovedSerialNo, NewRemovedBatchNo, NewRemovedQuantity, NewRemovalReasonCode, NewRemovedPartNoId);
+            exit;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditRemovePartCommand for RemovedPartLineVirtual {
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   visible = [SignedFlag = true or(RemovedUser != null and parent.IsEditTaskCardAccess = true)];
+
+   variable NewRemovedSerialNo Text;
+   variable NewRemovedQuantity Number;
+   variable NewRemovalReasonCode Text;
+   variable NewRemovedPartNoId Number;
+   variable NewRemovalBatchNo Text;
+   variable NewRemovalEditReason Text;
+   variable NewConfigSlotPosId Text;
+   variable RecordRemovedPartInfo Structure(RecordRemovedPartInfoStructure);
+
+   execute {
+      copy this into RecordRemovedPartInfo;
+      call GetAircraftRegCode(AircraftId) into AircraftRegCode;
+      set RecordRemovedPartInfo.AircraftRegCode = AircraftRegCode;
+      set RecordRemovedPartInfo.ConfigSlotPositionId = ConfigSlotPositionId;
+      set RecordRemovedPartInfo.AssemblyConfigSlotPositionId = AssemblyConfigSlotPositionId;
+      assistant EditRemovedPartAssistant(RecordRemovedPartInfo) into(NewRemovedSerialNo, NewRemovedQuantity, NewRemovalReasonCode, NewRemovedPartNoId, NewRemovalBatchNo, NewRemovalEditReason, NewConfigSlotPosId) {
+         when OK {
+            call EditRemovedPart(Objkey, NewRemovedPartNoId, NewRemovedSerialNo, NewRemovalReasonCode, NewRemovedQuantity, NewRemovalBatchNo, NewRemovalEditReason, NewConfigSlotPosId) {
+               when SUCCESS {
+                  success("Removed part updated successfully");
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RevokeRemovePartCommand for RemovedPartLineVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+   enabled = [(SignedFlag = true or(parent.IsEditTaskCardAccess = true and DbRemovedUser != null and RemovedUser != null)) and parent.TaskCertificationEnable = false];
+   mode = SingleRecord;
+
+   execute {
+      if [SignedFlag = true and parent.IsEditTaskCardAccess = false] {
+         confirm("Do you want to revoke the sign-off?") {
+            when OK {
+               call RevokeRemovedPart(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Part removal is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         assistant RevokeRemovePartSignOffAssistant(PartNumberRmvdRef, RemovalSerialNo, PartGroup, AssyPos, RemovedQuantity, RemovalReasonCode, RemovedDate, RemovedUser) into(RevokeSignOffReason) {
+            when OK {
+               call RevokeRemovedPart(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Part removal is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command RecordActionTakenCommand for RecordWorkVirtual {
+   label = "Record Action";
+   mode = Global;
+   enabled = [Objstate != "Complete" and not IsActionRecorded and TaskCardOption != "RaiseAndClose"];
+   variable ActionDesc Text;
+   variable RecordActionTime Timestamp;
+   variable ActualHours Text;
+   variable StartTime Timestamp;
+   variable IsCertifyWorkPerformed Boolean;
+   variable SignOffCount Number;
+   variable IsSignOffSigned Text;
+   variable RecordActionTakenInfo Structure(RecordActionTakenInfoStructure);
+   execute {
+      if [IsHeavyMaintenance = true and IsNonRoutine = true and HmContractLineNo != null and NeedCommercialApproval = true and ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this. ") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+      copy this into RecordActionTakenInfo;
+      call GetTimestamp(Site) into RecordActionTime;
+
+      if [Source = "Finish" and AssignmentStatus = "ASSIGNED"] {
+         set StartTime = RecordActionTime;
+         set ActualHours = ScheduledHours;
+      }
+      else {
+         if [Source = "Finish" and AssignmentStatus = "WORKSTARTED"] {
+            set StartTime = AssignmentStart;
+         }
+         else {
+            set StartTime = RecordWorkStartTime;
+         }
+         call CalculateAssignmntTotActualHrs(TaskSeq, ExecutionInstanceSeq, RecordActionTime, Site) into ActualHours;
+      }
+      call SignOffCountForSession(Objkey) into SignOffCount;
+
+      set RecordActionTakenInfo.EndTime = RecordActionTime;
+      set RecordActionTakenInfo.StartTime = StartTime;
+      set RecordActionTakenInfo.ActualHours = ActualHours;
+      set RecordActionTakenInfo.MainVtrObjkey = Objkey;
+      set RecordActionTakenInfo.Source = Source;
+
+      if [SignOffCount > 0 and CertifyWorkPerformed] {
+         set IsSignOffSigned = "TRUE";
+         set IsCertifyWorkPerformed = CertifyWorkPerformed;
+      }
+      else {
+         set IsSignOffSigned = "FALSE";
+         set IsCertifyWorkPerformed = false;
+      }
+      set RecordActionTakenInfo.IsSignOffSigned = IsSignOffSigned;
+      set RecordActionTakenInfo.CertifyWorkPerformed = IsCertifyWorkPerformed;
+      set RecordActionTakenInfo.IsEditTaskCardAccess = IsEditTaskCardAccess;
+      assistant RecordActionTaken(RecordActionTakenInfo) into(ActionDesc, IsCertifyWorkPerformed) {
+         when OK {
+            if[ActionDesc = null] {
+               exit;
+            }
+            call AddAction(Objkey, ActionDesc, TaskSeq, IsCertifyWorkPerformed);
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+command JobStopCommand for RecordWorkVirtual {
+   label = "Job Stop";
+   mode = Global;
+   enabled = [Objstate != "Complete" and not IsActionRecorded and not IsJobStopExecuted and Source = "RecordWork" and IsEditTaskCardAccess = false];
+   variable ActionDesc Text;
+   variable RecordActionTime Timestamp;
+   variable ActualHours Text;
+   variable StartTime Timestamp;
+   variable RemainingHours Text;
+   variable IsSignOffSigned Text;
+   variable IsCertifyWorkPerformed Boolean;
+   variable RecordActionTakenInfo Structure(RecordActionTakenInfoStructure);
+   execute {
+      copy this into RecordActionTakenInfo;
+      call GetTimestamp(Site) into RecordActionTime;
+      if [AssignmentStatus = "ASSIGNED"] {
+         set StartTime = RecordWorkStartTime;
+         set ActualHours = ScheduledHours;
+      }
+      else {
+         set StartTime = AssignmentStart;
+         call CalculateAssignmntTotActualHrs(TaskSeq, ExecutionInstanceSeq, RecordActionTime, Site) into ActualHours;
+      }
+      call SignOffCountForSession(Objkey) into SignOffCount;
+
+      if [SignOffCount > 0 and CertifyWorkPerformed] {
+         set IsSignOffSigned = "TRUE";
+         set IsCertifyWorkPerformed = CertifyWorkPerformed;
+      }
+      else {
+         set IsSignOffSigned = "FALSE";
+         set IsCertifyWorkPerformed = false;
+      }
+
+      call CalculateRemainingHours(ActualHours, ScheduledHours) into RemainingHours;
+
+      set RecordActionTakenInfo.IsSignOffSigned = IsSignOffSigned;
+      set RecordActionTakenInfo.CertifyWorkPerformed = IsCertifyWorkPerformed;
+      set RecordActionTakenInfo.EndTime = RecordActionTime;
+      set RecordActionTakenInfo.StartTime = StartTime;
+      set RecordActionTakenInfo.ActualHours = ActualHours;
+      set RecordActionTakenInfo.ScheduledHours = ScheduledHours;
+      set RecordActionTakenInfo.RemainingHours = RemainingHours;
+      set RecordActionTakenInfo.MainVtrObjkey = Objkey;
+      set RecordActionTakenInfo.Source = Source;
+      set RecordActionTakenInfo.IsJobStopExecuted = true;
+      assistant JobStop(RecordActionTakenInfo) into(ActionDesc, IsCertifyWorkPerformed) {
+         when OK {
+            if[ActionDesc = null] {
+               exit;
+            }
+            call AddAction(Objkey, ActionDesc, TaskSeq, IsCertifyWorkPerformed);
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+command RecordInstalledPartCommand for InstalledPartLineVirtual {
+   enabled = [InstalledUser = null and CancelledBy = null];
+   mode = SingleRecord;
+   variable NewInstalledSerialNo Text;
+   variable NewInstalledBatchNo Text;
+   variable NewInstalledQuantity Number;
+   variable NewInstalledUser Text;
+   variable NewInstalledPartNoId Number;
+   variable RemovalPartInfo {
+      type = Structure(RemovedPartInfoStructure);
+   }
+   variable RemovalPartNoId Number;
+   variable RecordInstallInfo Structure(RecordInstallInfoStructure);
+   variable RecordRemovedPartInfo Structure(RecordRemovedPartInfoStructure);
+   execute {
+      copy this into RecordInstallInfo;
+      call GetAircraftRegCode(AircraftId) into AircraftRegCode;
+      set RecordInstallInfo.AircraftRegCode = AircraftRegCode;
+      if [SchedulingAction = "REQ" and MaintMaterialReqRef.Qty = 0] {
+         error("The part must be issued to the task before the installation can be recorded.");
+      }
+      else {
+         assistant RecordInstallAssistant(RecordInstallInfo) into(NewInstalledSerialNo, NewInstalledBatchNo, NewInstalledQuantity, NewInstalledUser, NewInstalledPartNoId, InventoryClassCode, RemovalSerialNo, RemovalBatchNo, RemovalPartAltId) {
+            when OK {
+               call UpdateInstallPart(Objkey, NewInstalledSerialNo, NewInstalledBatchNo, NewInstalledQuantity, NewInstalledPartNoId);
+               if [InventoryClassCode in("ASSY", "TRK")] {
+                  call GetRemovedPartRecord(InventoryClassCode, ConfigSlotPositionId, AssyConfigSlotPositionId, ParentObjkey) into RemovalPartInfo;
+                  set RemovedQuantity = RemovalPartInfo.RemovalQuantity;
+                  set RemovalReasonCode = RemovalPartInfo.RemovalReasonCode;
+                  set RemovedUser = RemovalPartInfo.RemovalUser;
+                  set RemovedUserDesc = RemovalPartInfo.RemovalUserDesc;
+                  set RemovalPartGroupId = RemovalPartInfo.RemovalPartGroupId;
+                  set RemovalPartNoId = RemovalPartInfo.RemovalPartNoId;
+
+                  if [RemovalPartInfo.IsSigned = false] {
+                     confirm("Do you want to add removal serial number and sign?") {
+                        when OK {
+                           if [RemovalSerialNo = null] {
+                              set RemovalSerialNo = RemovalPartInfo.RemovalSerialNo;
+                           }
+                           if [RemovalBatchNo = null] {
+                              set RemovalBatchNo = RemovalPartInfo.RemovalBatchNo;
+                           }
+                           if[RemovalPartAltId != RemovalPartInfo.RemovalAltId] {
+                              call GetPartIdByAltId(RemovalPartAltId) into RemovalPartNoId;
+                              info("The removed part and serial number are updated according to the aircraft configuration.");
+                           }
+
+                           copy this into RecordRemovedPartInfo;
+                           assistant RecordRemovedPartAssistant(RecordRemovedPartInfo) into(NewRemovedSerialNo, NewRemovedBatchNo, NewRemovedQuantity, NewRemovalReasonCode, NewRemovedUser, NewRemovedPartNoId) {
+                              when OK {
+                                 call UpdateRmvPart(RemovalPartInfo.RemovalObjkey, NewRemovedSerialNo, NewRemovedBatchNo, NewRemovedQuantity, NewRemovalReasonCode, NewRemovedPartNoId);
+                                 refresh;
+                                 exit;
+                              }
+                              when CANCEL {
+                                 exit;
+                              }
+                           }
+                        }
+                        when CANCEL {
+                           exit;
+                        }
+                     }
+                  }
+               }
+               exit;
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+command EditInstalledPartCommand for InstalledPartLineVirtual {
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   visible = [SignedFlag = true or(parent.IsEditTaskCardAccess = true and InstalledUser != null)];
+
+   variable NewInstalledSerialNo Text;
+   variable NewInstalledQuantity Number;
+   variable NewInstalledPartNoId Number;
+   variable NewInstalledBatchNo Text;
+   variable NewInstalledEditReason Text;
+   variable NewConfigSlotPosId Text;
+   variable RecordInstallInfo Structure(RecordInstallInfoStructure);
+
+   execute {
+      copy this into RecordInstallInfo;
+      call GetAircraftRegCode(AircraftId) into AircraftRegCode;
+      set RecordInstallInfo.AircraftRegCode = AircraftRegCode;
+      set RecordInstallInfo.ConfigSlotPositionId = ConfigSlotPositionId;
+      assistant EditInstallPartAssistant(RecordInstallInfo) into(NewInstalledSerialNo, NewInstalledQuantity, NewInstalledPartNoId, NewInstalledBatchNo, NewInstalledEditReason, NewConfigSlotPosId) {
+         when OK {
+            call EditInstalledPart(Objkey, NewInstalledPartNoId, NewInstalledSerialNo, NewInstalledQuantity, NewInstalledBatchNo, NewInstalledEditReason, NewConfigSlotPosId) {
+               when SUCCESS {
+                  success("Installed part updated successfully");
+                  exit OK;
+               }
+
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RevokeInstalledPartCommand for InstalledPartLineVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+   enabled = [(SignedFlag = true or(parent.IsEditTaskCardAccess = true and DbInstalledUser != null and InstalledUser != null)) and parent.TaskCertificationEnable = false];
+   mode = SingleRecord;
+
+   execute {
+      if [SignedFlag = true and parent.IsEditTaskCardAccess = false] {
+         confirm("Do you want to revoke the sign-off?") {
+            when OK {
+               call RevokeInstalledPart(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Part installation is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         assistant RevokeInstallPartSignOffAssistant(PartNumberInstRef, InstalledSerialNo, PartGroup, AssyPos, InstalledQuantity, InstalledDate, InstalledUser) into(RevokeSignOffReason) {
+            when OK {
+               call RevokeInstalledPart(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Part installation is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command EditActionTakenCommand for TaskActionLineVirtual {
+   label = "";
+   mode = SingleRecord;
+   enabled = [SignedFlag];
+   icon = "edit";
+   execute {
+      assistant EditActionTaken(ActionDesc) into(ActionDesc, ActionDate) {
+         when OK {
+            exit;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+command RemovedSign for RemovedPartLineVirtual {
+   enabled = [(PartType != "BATCH" and RemovalSerialNo != null and RemovedQuantity != null and RemovalReasonCode != null)or(PartType = "BATCH" and RemovedQuantity != null and RemovalReasonCode != null)];
+   variable PartChangeType      Text;
+   variable TempRemovalSerialNo Text;
+   variable CmsRequestInfo {
+      type = Structure(CmsDataStructure);
+   }
+   variable PartValidationWarningInfo Structure(PartValidationWarningInfoStructure);
+   execute {
+      set RemovalPartNumber = PartNumberRmvdRef.PartNumber;
+      set RemovalPartManufacturer = PartNumberRmvdRef.Manufacture;
+      set RemovalPartManufacturer = PartNumberRmvdRef.Manufacturer;
+      set InventoryClassCode = PartNumberRmvdRef.InventoryClassCode;
+      set InventoryClassCode = PartNumberRmvdRef.InventoryClassCode;
+      if [RemovalSerialNo != null or PartType = "BATCH"] {
+         if[PartNumberRmvdRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            call GetCmsRequestData(TaskPartId, ParentObjkey) into CmsRequestInfo;
+            set PartChangeType = "REMOVE";
+            set AssmblConfSlotCode = CmsRequestInfo.AssemblyConfigSlotCode;
+            set AssmblConfSlotPosCode = CmsRequestInfo.AssemblyConfigSlotPosition;
+            set ConfigSlot = CmsRequestInfo.ConfigSlotCode;
+            set ConfSlotPosCode = CmsRequestInfo.ConfigSlotPosition;
+            set IsSubAssy = CmsRequestInfo.IsSubAssy;
+            if [RemovalSerialNo != null or RemovalBatchNo != null] {
+               if [RemovalSerialNo = null and RemovalBatchNo != null] {
+               -- When RemovalSerialNo is null, sending the RemovalBatchNo to trigger CMS
+                  set TempRemovalSerialNo = RemovalSerialNo;
+                  set RemovalSerialNo = RemovalBatchNo;
+               }
+               call CmsDryRunResponseSeverityService(PartNumberRmvdRef.PartNumber, PartNumberRmvdRef.Manufacturer, RemovalSerialNo, RemovalReasonCode, "", "", "", AircraftRegCode, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.IsSubAssy, PartNumberRmvdRef.InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            }
+
+            -- CmsResponseSeverity will be -1 if there are no CMS Errors/warnings
+            -- CmsResponseSeverity will be 0 if there are only CMS warnings and no errors
+            -- CmsResponseSeverity will be 1 if there are at least one CMS Error
+
+            if [CmsResponseSeverity !=-1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     set RemovalSerialNo = null;
+                     set RemovalBatchNo = null;
+                     exit;
+                  }
+               }
+            }
+         }
+         if [PartType = "BATCH" and RemovalBatchNo != null] {
+            set RemovalSerialNo = TempRemovalSerialNo;
+         }
+
+         call GetCurrentUser() into RemovedUser;
+         call GetCurrentUserDesc() into RemovedUserDesc;
+         exit OK;
+      }
+   }
+}
+
+command EditRemovedSign for RemovedPartLineVirtual {
+   enabled = [RemovedQuantity != null and RemovalReasonCode != null and RemovalPartNoId != null and(PartType = "BATCH" or(RemovalSerialNo != null and ConfigSlotPositionRef.ConfigSlotPositionCode != null)) and(RemovalEditReason != null or DbRemovedUser = null)];
+
+   variable PartChangeType Text;
+   variable TempRemovalSerialNo Text;
+   variable CmsRequestInfo {
+      type = Structure(CmsDataStructure);
+   }
+   variable PartValidationWarningInfo Structure(PartValidationWarningInfoStructure);
+   execute {
+      set RemovalPartNumber = PartNumberRmvdRef.PartNumber;
+      set RemovalPartManufacturer = PartNumberRmvdRef.Manufacturer;
+      set InventoryClassCode = PartNumberRmvdRef.InventoryClassCode;
+
+      if [RemovalSerialNo != null or PartType = "BATCH"] {
+         if[PartNumberRmvdRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            call GetRemovalCmsRequestData(Objkey, ConfigSlotPositionId) into CmsRequestInfo;
+            set PartChangeType = "REMOVE";
+            set AssmblConfSlotCode = CmsRequestInfo.AssemblyConfigSlotCode;
+            set AssmblConfSlotPosCode = CmsRequestInfo.AssemblyConfigSlotPosition;
+            set ConfigSlot = CmsRequestInfo.ConfigSlotCode;
+            set ConfSlotPosCode = CmsRequestInfo.ConfigSlotPosition;
+            set IsSubAssy = CmsRequestInfo.IsSubAssy;
+            if [RemovalSerialNo != null or RemovalBatchNo != null] {
+               if [RemovalSerialNo = null and RemovalBatchNo != null] {
+               -- When RemovalSerialNo is null, sending the RemovalBatchNo to trigger CMS
+                  set TempRemovalSerialNo = RemovalSerialNo;
+                  set RemovalSerialNo = RemovalBatchNo;
+               }
+               call CmsDryRunResponseSeverityService(PartNumberRmvdRef.PartNumber, PartNumberRmvdRef.Manufacturer, RemovalSerialNo, RemovalReasonCode, "", "", "", AircraftRegCode, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.IsSubAssy, PartNumberRmvdRef.InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            }
+            -- CmsResponseSeverity values:
+            -- -1 : No CMS errors or warnings
+            --  0 : Only CMS warnings (no errors)
+            --  1 : At least one CMS error
+
+            if [CmsResponseSeverity !=-1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     set RemovalSerialNo = null;
+                     set RemovalBatchNo = null;
+                     exit;
+                  }
+               }
+            }
+         }
+         if [PartType = "BATCH" and RemovalBatchNo != null] {
+            set RemovalSerialNo = TempRemovalSerialNo;
+         }
+         exit OK;
+      }
+   }
+}
+command InstalledSign for InstalledPartLineVirtual {
+   enabled = [((InstalledSerialNo != null or InstalledBatchNo != null) and InstalledQuantity != null and InstalledPartNoId != null)];
+   variable PartChangeType        Text;
+   variable TempInstalledSerialNo Text;
+   variable InventorySearchResponse {
+      type = Structure(InventorySearchResponseStructure);
+   }
+   variable CmsRequestInfo {
+      type = Structure(CmsDataStructure);
+   }
+   variable PartValidationWarningInfo Structure(PartValidationWarningInfoStructure);
+   execute {
+      if [InstalledSerialNo != null or InstalledBatchNo != null] {
+         if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            call GetCmsRequestData(TaskPartId, InstVrtParentObjkey) into CmsRequestInfo;
+            if [CmsRequestInfo.IsRemovedPartSigned = false] {
+               if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK")] {
+                  call GetRemovalInfoService(CmsRequestInfo.AircraftAltId, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition) into InventorySearchResponse;
+                  if [InventorySearchResponse != null] {
+                     set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+                     set RemovalPartNumber = InventorySearchResponse.PartNumber;
+                     set RemovalPartManufacturer = InventorySearchResponse.ManufacturerCode;
+                     set RemovalPartAltId = InventorySearchResponse.AltId;
+                     if[RemovalSerialNo != null] {
+                        set PartChangeType = "REPLACE";
+                     }
+                     else {
+                        set PartChangeType = "INSTALL";
+                     }
+                  }
+               }
+               else {
+                  set RemovalSerialNo = CmsRequestInfo.RemovalSerialNo;
+                  set RemovalPartNumber = CmsRequestInfo.RemovalPartNumber;
+                  set RemovalPartManufacturer = CmsRequestInfo.RemovalPartManufacturer;
+                  set PartChangeType = CmsRequestInfo.PartChangeType;
+               }
+            }
+            else {
+               set RemovalSerialNo = CmsRequestInfo.RemovalSerialNo;
+               set RemovalPartNumber = CmsRequestInfo.RemovalPartNumber;
+               set RemovalPartManufacturer = CmsRequestInfo.RemovalPartManufacturer;
+               set PartChangeType = CmsRequestInfo.PartChangeType;
+            }
+            set InventoryClassCode = PartNumberInstRef.InventoryClassCode;
+            set RemovalReasonCode = CmsRequestInfo.RemovalReasonCode;
+            set AssmblConfSlotCode = CmsRequestInfo.AssemblyConfigSlotCode;
+            set AssmblConfSlotPosCode = CmsRequestInfo.AssemblyConfigSlotPosition;
+            set ConfigSlot = CmsRequestInfo.ConfigSlotCode;
+            set ConfSlotPosCode = CmsRequestInfo.ConfigSlotPosition;
+            set IsSubAssy = CmsRequestInfo.IsSubAssy;
+         }
+         set PartValidationWarningInfo.InstallationPartNumber = PartNumberInstRef.PartNumber;
+         set PartValidationWarningInfo.InstallationManufacturerCode = PartNumberInstRef.Manufacturer;
+         set PartValidationWarningInfo.InventoryClassCode = PartNumberInstRef.InventoryClassCode;
+
+         if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            if [(InstalledSerialNo != null and InstalledSerialNo != "*") or(InstalledBatchNo != null and InstalledBatchNo != "*")] {
+               if [InstalledSerialNo = null and InstalledBatchNo != null] {
+               -- When InstalledSerialNo is null, sending the InstalledBatchNo to trigger CMS
+                  set TempInstalledSerialNo = InstalledSerialNo;
+                  set InstalledSerialNo = InstalledBatchNo;
+               }
+               call CmsDryRunResponseSeverityService(RemovalPartNumber, RemovalPartManufacturer, RemovalSerialNo, CmsRequestInfo.RemovalReasonCode, PartNumberInstRef.PartNumber, PartNumberInstRef.Manufacturer, InstalledSerialNo, AircraftRegCode, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.IsSubAssy, PartNumberInstRef.InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            }
+            -- CmsResponseSeverity will be -1 if there are no CMS Errors/warnings
+            -- CmsResponseSeverity will be 0 if there are only CMS warnings and no errors
+            -- CmsResponseSeverity will be 1 if there are at least one CMS Error
+            if [CmsResponseSeverity !=-1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     set Barcode = null;
+                     set InstalledSerialNo = null;
+                     set InstalledBatchNo = null;
+                     exit;
+                  }
+               }
+            }
+         }
+         if [PartNumberInstRef.InventoryClassCode = "BATCH" and(InstalledBatchNo != null and InstalledBatchNo != "*")] {
+            set InstalledSerialNo = TempInstalledSerialNo;
+         }
+
+         call GetCurrentUser() into InstalledUser;
+         exit OK;
+      }
+   }
+}
+
+command EditInstalledSign for InstalledPartLineVirtual {
+   enabled = [InstalledQuantity != null and InstalledPartNoId != null and(PartType = "BATCH" or(ConfigSlotPositionRef.ConfigSlotPositionCode != null and InstalledSerialNo != null)) and(InstalledEditReason != null or DbInstalledUser = null)];
+   variable PartChangeType Text;
+   variable TempInstalledSerialNo Text;
+   variable InventorySearchResponse {
+      type = Structure(InventorySearchResponseStructure);
+   }
+   variable CmsRequestInfo {
+      type = Structure(CmsDataStructure);
+   }
+   variable PartValidationWarningInfo Structure(PartValidationWarningInfoStructure);
+   execute {
+      if [InstalledSerialNo != null or InstalledBatchNo != null] {
+         if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            call GetCmsRequestData(TaskPartId, InstVrtParentObjkey) into CmsRequestInfo;
+            if [CmsRequestInfo.IsRemovedPartSigned = false] {
+               if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK")] {
+                  call GetRemovalInfoService(CmsRequestInfo.AircraftAltId, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition) into InventorySearchResponse;
+                  if [InventorySearchResponse != null] {
+                     set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+                     set RemovalPartNumber = InventorySearchResponse.PartNumber;
+                     set RemovalPartManufacturer = InventorySearchResponse.ManufacturerCode;
+                     set RemovalPartAltId = InventorySearchResponse.AltId;
+                     if[RemovalSerialNo != null] {
+                        set PartChangeType = "REPLACE";
+                     }
+                     else {
+                        set PartChangeType = "INSTALL";
+                     }
+                  }
+               }
+               else {
+                  set RemovalSerialNo = CmsRequestInfo.RemovalSerialNo;
+                  set RemovalPartNumber = CmsRequestInfo.RemovalPartNumber;
+                  set RemovalPartManufacturer = CmsRequestInfo.RemovalPartManufacturer;
+                  set PartChangeType = CmsRequestInfo.PartChangeType;
+               }
+            }
+            else {
+               set RemovalSerialNo = CmsRequestInfo.RemovalSerialNo;
+               set RemovalPartNumber = CmsRequestInfo.RemovalPartNumber;
+               set RemovalPartManufacturer = CmsRequestInfo.RemovalPartManufacturer;
+               set PartChangeType = CmsRequestInfo.PartChangeType;
+            }
+            set InventoryClassCode = PartNumberInstRef.InventoryClassCode;
+            set RemovalReasonCode = CmsRequestInfo.RemovalReasonCode;
+            set AssmblConfSlotCode = CmsRequestInfo.AssemblyConfigSlotCode;
+            set AssmblConfSlotPosCode = CmsRequestInfo.AssemblyConfigSlotPosition;
+            set ConfigSlot = CmsRequestInfo.ConfigSlotCode;
+            set ConfSlotPosCode = CmsRequestInfo.ConfigSlotPosition;
+            set IsSubAssy = CmsRequestInfo.IsSubAssy;
+         }
+         set PartValidationWarningInfo.InstallationPartNumber = PartNumberInstRef.PartNumber;
+         set PartValidationWarningInfo.InstallationManufacturerCode = PartNumberInstRef.Manufacturer;
+         set PartValidationWarningInfo.InventoryClassCode = PartNumberInstRef.InventoryClassCode;
+
+         if[PartNumberInstRef.InventoryClassCode in("ASSY", "TRK", "SER", "BATCH")] {
+            if [(InstalledSerialNo != null and InstalledSerialNo != "*") or(InstalledBatchNo != null and InstalledBatchNo != "*")] {
+               if [InstalledSerialNo = null and InstalledBatchNo != null] {
+               -- When InstalledSerialNo is null, sending the InstalledBatchNo to trigger CMS
+                  set TempInstalledSerialNo = InstalledSerialNo;
+                  set InstalledSerialNo = InstalledBatchNo;
+               }
+               call CmsDryRunResponseSeverityService(RemovalPartNumber, RemovalPartManufacturer, RemovalSerialNo, CmsRequestInfo.RemovalReasonCode, PartNumberInstRef.PartNumber, PartNumberInstRef.Manufacturer, InstalledSerialNo, AircraftRegCode, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.IsSubAssy, PartNumberInstRef.InventoryClassCode, PartChangeType) into CmsResponseSeverity;
+            }
+            -- CmsResponseSeverity values:
+            -- -1 : No CMS errors or warnings
+            --  0 : Only CMS warnings (no errors)
+            --  1 : At least one CMS error
+            if [CmsResponseSeverity != -1] {
+               copy this into PartValidationWarningInfo;
+               assistant PartValidationWarningAssistant(PartValidationWarningInfo) into(CmsResponseSeverity) {
+                  when CANCEL {
+                     set Barcode = null;
+                     set InstalledSerialNo = null;
+                     set InstalledBatchNo = null;
+                     exit;
+                  }
+               }
+            }
+         }
+         if [PartNumberInstRef.InventoryClassCode = "BATCH" and(InstalledBatchNo != null and InstalledBatchNo != "*")] {
+            set InstalledSerialNo = TempInstalledSerialNo;
+         }
+         exit OK;
+      }
+   }
+}
+
+command SignCommand for RecordWorkVirtual {
+   label = "Sign";
+   variable HasExistingInWorkWP Boolean;
+   variable SignResponse {
+      type = Structure(EsigResponseStructure);
+   }
+   variable LatestActionInfo {
+      type = Structure(LatestActionInfoStruct);
+   }
+
+   enabled = [SignEnable and(ESigPermission = "Yes" or ESigPermission = null)and(Source != "Finish" or IsActionRecorded)];
+   execute {
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      if[HasExistingInWorkWP = false] {
+         signdocument into SignResponse {
+            headerlogo = MediaObject;
+            keyref = ParentKeyRef;
+            luname = ParentLuName;
+            filenameprefix = "${FileName}";
+            documenttype = pdf;
+         }
+         if[TaskCardOption = "RaiseAndClose"] {
+            set RecordWorkStartTime = CloseFaultAssignStartTime;
+         }
+         if [SignResponse.State = "SUCCESS"] {
+            call Sign(Objkey, TaskSeq, SignResponse.Guid, RecordWorkStartTime, Site);
+            if[TaskCardOption != "RaiseAndClose" or(TaskCardOption = "RaiseAndClose" and NavigatedFrom = "Task")] {
+               exit OK;
+            }
+            else {
+               if[NavigatedFrom = "Flight"] {
+                  exit OK;
+               }
+               navigate "page/FlmTaskDetail/MyWorkPage;$filter=TaskSeq eq $[TaskSeq]";
+            }
+         }
+         if [SignResponse.State = "FAIL"] {
+            error("Failed to record electronic signature. Review changes and try again.");
+         }
+         exit;
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to start another one.");
+      }
+   }
+}
+command FinishCommand for RecordWorkVirtual {
+   label = "Finish";
+   variable HasExistingInWorkWP Boolean;
+   enabled = [SignEnable and ESigPermission = "No"and(Source != "Finish" or IsActionRecorded)];
+   execute {
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      if[HasExistingInWorkWP = false] {
+         if[TaskCardOption = "RaiseAndClose"] {
+            set RecordWorkStartTime = CloseFaultAssignStartTime;
+         }
+         call Sign(Objkey, TaskSeq, Null, RecordWorkStartTime, Site);
+         if[TaskCardOption != "RaiseAndClose" or(TaskCardOption = "RaiseAndClose" and NavigatedFrom = "Task")] {
+            exit OK;
+         }
+         else {
+            if[NavigatedFrom = "Flight"] {
+               exit OK;
+            }
+            navigate "page/FlmTaskDetail/MyWorkPage;$filter=TaskSeq eq $[TaskSeq]";
+         }
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to start another one.");
+      }
+   }
+}
+command CompleteTaskCommand for TaskCertifyVirtual {
+   label = "Record Task Certification";
+   mode = SingleRecord;
+   enabled = [parent.CompleteTaskEnable and parent.IsActionRecorded and Role = "Inspector" and SignedBy = null];
+   visible = [parent.Source != "RecordWork"];
+   variable Warning Text;
+   variable CurrentUser Text;
+   variable StartedExecutionInstances Boolean;
+   variable ExistingIndependent Boolean;
+
+   execute {
+      call GetCurrentUser() into CurrentUser;
+      call GetTaskSignOffPermission(CurrentUser) into TaskSignOffPermission;
+      call HasStartedExecutionInstances(TaskSeq, parent.ExecutionInstanceSeq) into StartedExecutionInstances;
+      call CheckExistIndependent(TaskSeq) into ExistingIndependent;
+
+      if[TaskSignOffPermission = "No"] {
+         error("Missing task sign-off permission. Contact system administrator.");
+      }
+      else {
+         if [ExistingIndependent = true] {
+            assistant CompleteTaskAssitant(SignOffReqType) into(ApprovalNumber, CompletionNote) {
+               when OK {
+                  call ShowMissingComponentWarning(TaskSeq, AircraftWpId) into Warning;
+                  if[parent.HasPendingNonRoutines = false] {
+                     if[Warning != null] {
+                        messagebox("Warning", warning, "This task removed a component with config slot ${Warning} and there is no matching installation in the work package. Do you want to complete this task?") {
+                           when "OK" {
+                              call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                              set CompleteTaskEnable = false;
+                              set TaskCertificationEnable = true;
+                              refresh;
+
+                           }
+                           when "CANCEL" {
+                              exit;
+                           }
+                        }
+                     }
+                     else {
+                        call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                        set CompleteTaskEnable = false;
+                        set TaskCertificationEnable = true;
+                        refresh;
+                     }
+                  }
+                  else {
+                     alert("Complete or defer all open Non-Routines found during this task to complete it.");
+                  }
+               }
+               when CANCEL {
+                  exit;
+               }
+            }
+         }
+         else {
+            if[StartedExecutionInstances = true] {
+               error("Cannot complete the task while assignments are in progress.");
+            }
+            else {
+               assistant CompleteTaskAssitant(SignOffReqType) into(ApprovalNumber, CompletionNote) {
+                  when OK {
+                     call ShowMissingComponentWarning(TaskSeq, AircraftWpId) into Warning;
+                     if[parent.HasPendingNonRoutines = false] {
+                        if[Warning != null] {
+                           messagebox("Warning", warning, "This task removed a component with config slot ${Warning} and there is no matching installation in the work package. Do you want to complete this task?") {
+                              when "OK" {
+                                 call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                                 set CompleteTaskEnable = false;
+                                 set TaskCertificationEnable = true;
+                                 refresh;
+
+                              }
+                              when "CANCEL" {
+                                 exit;
+                              }
+                           }
+                        }
+                        else {
+                           call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                           set CompleteTaskEnable = false;
+                           set TaskCertificationEnable = true;
+                           refresh;
+                        }
+                     }
+                     else {
+                        alert("Complete or defer all open Non-Routines found during this task to complete it.");
+                     }
+                  }
+                  when CANCEL {
+                     exit;
+                  }
+               }
+            }
+         }
+
+
+      }
+   }
+}
+
+command RevokeTaskCertificationCommand for TaskCertifyVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+   enabled = [SignedFlag = true];
+   mode = SingleRecord;
+
+   execute {
+      confirm("Do you want to revoke the sign-off?") {
+         when OK {
+            call RevokeTaskCertification(Objkey) {
+               when SUCCESS {
+                  success("Sign-off successfully revoked. Task certification is now pending sign-off.");
+                  set CompleteTaskEnable = true;
+                  if [Role = "Inspector"] {
+                     set TaskCertificationEnable = false;
+                  }
+                  refresh;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+
+}
+
+command RecordInspectionCommand for TaskCertifyVirtual {
+   label = "Record Task Inspection";
+   enabled = [parent.IsActionRecorded and Role = "Independent" and ExistingUser and SignedBy = null];
+   visible = [parent.Source != "RecordWork"];
+   variable Warning Text;
+   variable CurrentUser Text;
+   variable StartedExecutionInstances Boolean;
+
+   execute {
+      call GetCurrentUser() into CurrentUser;
+      call GetTaskSignOffPermission(CurrentUser) into TaskSignOffPermission;
+      call HasStartedExecutionInstances(TaskSeq, parent.ExecutionInstanceSeq) into StartedExecutionInstances;
+
+      if[TaskSignOffPermission = "No"] {
+         error("Missing task sign-off permission. Contact system administrator.");
+      }
+      else {
+         if[StartedExecutionInstances = true] {
+            error("Cannot complete the task while assignments are in progress.");
+         }
+         else {
+            assistant CompleteTaskAssitant(SignOffReqType) into(ApprovalNumber, CompletionNote) {
+               when OK {
+                  call ShowMissingComponentWarning(TaskSeq, AircraftWpId) into Warning;
+                  if[parent.HasPendingNonRoutines = false] {
+                     if[Warning != null] {
+                        messagebox("Warning", warning, "This task removed a component with config slot ${Warning} and there is no matching installation in the work package. Do you want to complete this task?") {
+                           when "OK" {
+                              call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                              set CompleteTaskEnable = false;
+                              refresh;
+                           }
+                           when "CANCEL" {
+                              exit;
+                           }
+                        }
+                     }
+                     else {
+                        call CompleteTask(Objkey, ApprovalNumber, CompletionNote, TaskSeq);
+                        set CompleteTaskEnable = false;
+                        refresh;
+                     }
+                  }
+                  else {
+                     alert("Complete or defer all open Non-Routines found during this task to complete it.");
+                  }
+               }
+               when CANCEL {
+                  exit;
+               }
+            }
+         }
+      }
+   }
+}
+
+command RevokeToolDemandCommand for ToolResourceDemandVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+   enabled = [SignedFlag = true and parent.TaskCertificationEnable = false and parent.IsEditTaskCardAccess = false];
+   mode = SingleRecord;
+
+   execute {
+      confirm("Do you want to revoke the sign-off?") {
+         when OK {
+            call RevokeToolDemand(Objkey) {
+               when SUCCESS {
+                  success("Sign-off successfully revoked. Tool is now pending sign-off.");
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RecordMeasurementCommand for MeasurementLineVirtual {
+   label = "Record Measurement";
+   enabled = [SignedFlag = false and not parent.IsActionRecorded];
+   mode = SingleRecord;
+   variable MeasTypeValueCodeVar   Text;
+   variable MeasurementQtyVar      Number;
+   variable MeasurementDateTimeVar Timestamp;
+   variable MeasurementTextVar     Text;
+   variable MeasurementBooleanVar  Boolean;
+   execute {
+      dialog RecordMeasurementDialog(MeasurementId, MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, MeasurementCategory)
+      into(MeasTypeValueCodeVar, MeasurementQtyVar, MeasurementDateTimeVar, MeasurementTextVar, MeasurementBooleanVar) {
+         when OK {
+            call RecordMeasurement(Objkey, MeasurementTypeCode, MeasTypeValueCodeVar, MeasurementQtyVar, MeasurementDateTimeVar, MeasurementTextVar, MeasurementBooleanVar, MeasurementCategory, ReasonToEdit) {
+               when SUCCESS {
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditMeasurementCommand for MeasurementLineVirtual {
+   label = "";
+   icon = "edit";
+   visible = [(parent.IsEditTaskCardAccess = true and DbMeasuredUser != null and MeasuredUser != null) or SignedFlag = true];
+   mode = SingleRecord;
+
+   variable MeasTypeValueCodeVar   Text;
+   variable MeasurementQtyVar      Number;
+   variable MeasurementDateTimeVar Timestamp;
+   variable MeasurementTextVar     Text;
+   variable MeasurementBooleanVar  Boolean;
+   variable ReasonToEditVar        Text;
+
+   execute {
+      dialog EditMeasurementDialog(MeasurementId, MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, MeasurementCategory, DbMeasuredUser, TaskControlAuthorityEnabled) into(MeasTypeValueCodeVar, MeasurementQtyVar, MeasurementDateTimeVar, MeasurementTextVar, MeasurementBooleanVar, ReasonToEditVar) {
+         when OK {
+            call RecordMeasurement(Objkey, MeasurementTypeCode, MeasTypeValueCodeVar, MeasurementQtyVar, MeasurementDateTimeVar, MeasurementTextVar, MeasurementBooleanVar, MeasurementCategory, ReasonToEditVar) {
+               when SUCCESS {
+                  success("Measurement updated successfully.");
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+
+command EditActionCommand for TaskActionLineVirtual {
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   visible = [(parent.IsEditTaskCardAccess = true and DbActionUser != null) or SignedFlag = true];
+
+   variable ActionDescVar  Text;
+   variable ReasonToEditVar Text;
+
+   execute {
+      dialog EditActionDialog(TaskActionId, ActionDesc, DbActionUser, TaskControlAuthorityEnabled) into(ActionDescVar, ReasonToEditVar) {
+         when OK {
+            call EditActionSave(Objkey, ActionDescVar, ReasonToEditVar) {
+               when SUCCESS {
+                  success("Actions updated successfully.");
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditTaskCertificationCommand for TaskCertifyVirtual {
+
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   visible = [SignedFlag = true];
+
+   variable CompletionNoteVar Text;
+   variable ApprovalNumberVar Text;
+
+   execute {
+
+      dialog EditTaskCertificationDialog(CompletionNote, ApprovalNumber, SignOffReqType) into(CompletionNoteVar, ApprovalNumberVar) {
+         when OK {
+            call EditTaskCertification(Objkey, CompletionNoteVar, ApprovalNumberVar) {
+               when SUCCESS {
+                  success("Task certification updated successfully.");
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+
+}
+
+command EditStepSignOffCommand for TaskStepSignOffVirtual {
+   label = "";
+   icon = "edit";
+   mode = SingleRecord;
+   visible = [SignedFlag = true];
+
+   variable SignOffNoteVar Text;
+
+   execute {
+      if [StepObjConnLuNameDb = "AircraftPanel"] {
+         dialog EditPanelSignOffDialog(TaskStepSeq, SignOffNote, OrderNo, Role, LicenseId, PanelVirtualRef.PanelCode) into(SignOffNoteVar) {
+            when OK {
+               call EditStepSignOffNote(Objkey, SignOffNoteVar) {
+                  when SUCCESS {
+                     success("Panel ${PanelVirtualRef.PanelCode} updated successfully.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         dialog EditStepSignOffDialog(TaskStepSeq, SignOffNote, OrderNo, Role, LicenseId) into(SignOffNoteVar) {
+            when OK {
+               call EditStepSignOffNote(Objkey, SignOffNoteVar) {
+                  when SUCCESS {
+                     success("Step ${OrderNo} updated successfully.");
+                     exit OK;
+                  }
+
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command RevokeMeasurementSignOffCommand for MeasurementLineVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+   enabled = [(SignedFlag = true or(parent.IsEditTaskCardAccess = true and DbMeasuredUser != null and MeasuredUser != null)) and parent.TaskCertificationEnable = false];
+   mode = SingleRecord;
+
+   execute {
+      if [SignedFlag = true and parent.IsEditTaskCardAccess = false] {
+         confirm("Do you want to revoke the sign-off?") {
+            when OK {
+               call RevokeMeasurement(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Measurement is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         assistant RevokeMeasurementSignOffAssistant(MeasurementId, MeasurementTypeCode, MeasurementValue, MeasTypeValueCode, MeasurementCategory, MeasuredUser, MeasuredDate) into(RevokeSignOffReason) {
+            when OK {
+               call RevokeMeasurement(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Measurement is now pending sign-off.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command SaveAction for TaskActionLineVirtual {
+   label = "Save";
+   visible = [ActionDesc != null and ActionDesc != InitialActionDesc];
+   variable ConfirmationMsg Text;
+   execute {
+      call IsActualHoursMandatory() into ActualHoursMandatory;
+      call IsSkillMandatory(MainVtrObjkey, TaskResourceSeq);
+      if [MainVrtUpdate = true] {
+         call UpdateRecordWorkVirtual(MainVtrObjkey, TaskSeq, TaskResourceSeq, ExecutionInstanceSeq);
+      }
+      if [ActualHoursMandatory = "TRUE" and(Source = "Finish" or IsJobStopExecuted)] {
+         call ValidateHours(ActualHours, "Actual Hours");
+         call GetSaveActionConfirmMsg(ActualHours, RemainingHours, IsJobStopExecuted) into ConfirmationMsg;
+         confirm("${ConfirmationMsg}") {
+            when OK {
+               call ValidateStartEndDates(StartTime, EndTime, Site, "Start Date", "End Date");
+               call UpdateClockOut(MainVtrObjkey, StartTime, EndTime, ActualHours, Site);
+               if [IsJobStopExecuted] {
+                  call DoJobStopTemporary(MainVtrObjkey, ActualHours, IncompletionCause, JobstopNote, RemainingHours, AssignToMeNewTaskRes);
+               }
+               exit OK;
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         if [Source = "Final Sign-Off"] {
+            exit OK;
+         }
+
+         if [(Source = "RecordWork" and IsJobStopExecuted) or Source != "RecordWork"] {
+            call ValidateHours(ActualHours, "Actual Hours");
+            call ValidateStartEndDates(StartTime, EndTime, Site, "Start Date", "End Date");
+            call UpdateClockOut(MainVtrObjkey, StartTime, EndTime, ActualHours, Site);
+            if [IsJobStopExecuted] {
+               call DoJobStopTemporary(MainVtrObjkey, ActualHours, IncompletionCause, JobstopNote, RemainingHours, AssignToMeNewTaskRes);
+            }
+         }
+         exit OK;
+      }
+   }
+}
+
+command SignStepSignOffCommand for TaskStepSignOffVirtual {
+   label = "${CommandLabel}";
+   enabled = [SignOffStatus != "Signed" and not parent.parent.IsActionRecorded];
+   execute {
+      call ValidateSignOff(TaskSeq, Objkey);
+      if [StepObjConnLuNameDb = "AircraftPanel"] {
+         call UpdateStepSignOff(Objkey, SignOffNote);
+      }
+      else {
+         assistant RecordSignOff(SignOffNote)into(SignOffNote) {
+            when OK {
+               call UpdateStepSignOff(Objkey, SignOffNote);
+               refresh;
+               exit;
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command RevokeStepSignOffCommand for TaskStepSignOffVirtual {
+   icon = "user-absent";
+   label = "Revoke Sign-Off";
+
+   enabled = [((SignedFlag = true) or(RevokeEnable = true) or(parent.parent.IsEditTaskCardAccess = true and DbSignedUser != null and Identity != null and IsDbRevokeSignOffCapable)) and IsRevokeSignOffCapable and parent.parent.TaskCertificationEnable = false];
+   mode = SingleRecord;
+
+   execute {
+      if [SignedFlag = true and IsRevokeSignOffCapable and parent.parent.IsEditTaskCardAccess = false] {
+         confirm("Do you want to revoke the sign-off?") {
+            when OK {
+               call RevokeStepSignOff(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     if [StepObjConnLuNameDb = "AircraftPanel"] {
+                        success("Sign-off successfully revoked. Panel ${PanelVirtualRef.PanelCode} is now pending sign-off.");
+                     }
+                     else {
+                        success("Sign-off successfully revoked. Step ${OrderNo} is now pending sign-off.");
+                     }
+                     refresh;
+                     exit;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         assistant RevokeStepSignOffAssistant(Role, LicenseId, SignOffDate, Identity, SignOffNote, OrderNo) into(RevokeSignOffReason) {
+            when OK {
+               call RevokeStepSignOff(Objkey, RevokeSignOffReason) {
+                  when SUCCESS {
+                     success("Sign-off successfully revoked. Step ${OrderNo} is now pending sign-off.");
+                     refresh;
+                     exit;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+@Override
+command RecordSignOffCommand for JtTaskStepSignOff {
+   label = "Record Sign-off";
+   enabled = [JtTaskStepRef.Objstate != "DONE" and Identity = null];
+   mode = SelectedRecords;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable IsPanelValidated Text;
+   variable CheckConnectedTasks Text;
+
+   bulkexecute {
+
+      call CanMaintenanceTaskStart(Selection) into IsPanelValidated;
+      call CanMpcCloseTaskStart(Selection) into CheckConnectedTasks;
+
+      if [IsPanelValidated = "FALSE"] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = "FALSE"] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+      bulkcall ValidateBulkSignOff(TaskSeq, JtTaskSignOffReqRef.LicenseId, JtTaskSignOffReqRef.SignOffReqType);
+      bulkcall CheckStepSigned(JtTaskSignOffReqRef.SignOffReqType, TaskSeq, JtTaskStepRef.TaskStepSeq, SignOffReqSeq, JtTaskSignOffReqRef.LicenseId, StepObjConnLuNameDb);
+      bulkcall CheckInspectorSignOff(JtTaskSignOffReqRef.SignOffReqType, TaskSeq, JtTaskStepRef.TaskStepSeq, SignOffReqSeq, JtTaskSignOffReqRef.LicenseId, StepObjConnLuNameDb);
+
+      copy this into RecordWorkInfo;
+      ifall [StepObjConnLuNameDb = "AircraftPanel"] {
+         call GetRecordWorkInfo(component.PanelSignOffList.Selection) into RecordWorkInfo;
+      }
+      else {
+         call GetRecordWorkInfo(component.StepSignOffList.Selection) into RecordWorkInfo;
+      }
+
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RecordToolDemandCommand for ToolResourceDemandVirtual {
+   label = "Record Tool";
+   visible = [SignedUser = null];
+
+   variable ToolDemandInfo Structure(ToolResourceDemandStructure);
+   variable ActualStartDate Timestamp;
+   variable ActualHours Text;
+   variable ActualEndDate Timestamp;
+   variable DateInSiteTimezone Timestamp;
+
+   execute {
+      copy this into ToolDemandInfo;
+      call GetTimestamp(Site) into ToolDemandInfo.ActualEndDate;
+      if [AssignmentStartDate < CheckedOutDate or CheckedOutDate = null] {
+         set ToolDemandInfo.CheckedOutDate = AssignmentStartDate;
+      }
+      call GetSerialAvaliablity(SerialNo) into ToolDemandInfo.ToolEqpAssigned;
+      call GetTimeDuration(ToolDemandInfo.CheckedOutDate, ToolDemandInfo.ActualEndDate) into ToolDemandInfo.ActualHours;
+      assistant RecordToolAssistant(ToolDemandInfo) into(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq) {
+         when OK {
+            call RecordToolDemand(Objkey, CheckedOutDate, ActualEndDate, ActualHours, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq, ReasonToEdit) {
+               when SUCCESS {
+                  exit OK;
+               }
+            }
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditToolDemandCommand for ToolResourceDemandVirtual {
+   label = "";
+   icon = "edit";
+   visible = [SignedFlag = true or(parent.IsEditTaskCardAccess = true and DbSignedUser != null and SignedUser != null)];
+   mode = SingleRecord;
+
+   variable ToolDemandInfo Structure(ToolResourceDemandStructure);
+   variable ActualStartDate Timestamp;
+   variable ActualHours Text;
+   variable ActualEndDate Timestamp;
+   variable DateInSiteTimezone Timestamp;
+
+   execute {
+      copy this into ToolDemandInfo;
+      call GetCurrentDateInUtc() into ToolDemandInfo.ActualEndDate;
+      call GetSerialAvaliablity(SerialNo) into ToolDemandInfo.ToolEqpAssigned;
+
+      if [SignedFlag = true and parent.IsEditTaskCardAccess = false] {
+         assistant EditToolAssistant(ToolDemandInfo) into(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq) {
+            when OK {
+               call RecordToolDemand(Objkey, CheckedOutDate, ActualEndDate, ActualHours, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq, ReasonToEdit) {
+                  when SUCCESS {
+                     success("Tool updated successfully.");
+                     refresh;
+                     exit;
+                  }
+               }
+
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         assistant EditAuthorizedToolAssistant(ToolDemandInfo) into(CheckedOutDate, ActualHours, ActualEndDate, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq, ReasonToEdit) {
+            when OK {
+               call RecordToolDemand(Objkey, CheckedOutDate, ActualEndDate, ActualHours, ToolPartId, ToolPartDescription, ResourceSeq, SerialNo, ResourceParentId, ResourceGroupSeq, ReasonToEdit) {
+                  when SUCCESS {
+                     success("Tool updated successfully.");
+                     exit OK;
+                  }
+               }
+            }
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command SignedToolResource for ToolResourceDemandVirtual {
+   label = "Save";
+   visible = [CheckedOutDate != null and ActualHours != null and ActualEndDate != null and ToolPartId != null and SerialNo != null];
+
+   execute {
+      call VerifyActualHours(ActualHours);
+      call ValidateToolStartEndDate(TaskSeq, ResourceSeq, CheckedOutDate, ActualEndDate);
+      exit OK;
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+dialog RecordResourceToolDialog for RecordResourceToolStructure {
+   label = "Record Tool Used";
+   input(ResourceGroupId, ResourceId, ResourceGroupSeq, ResourceSeq, PartNo, SerialNo);
+   output(ResourceId, ResourceSeq, PartNo, SerialNo, ActualDuration);
+
+   group RecordResourceToolGroup;
+   command Ok {
+      label = "Save";
+      enabled = [((ResourceId != null) or(PartNo != null and SerialNo != null)) and ActualDuration != null];
+   }
+   command Cancel;
+}
+
+dialog RecordMeasurementDialog for RecordMeasurementStructure {
+   label = "Record Measurement";
+   input(MeasurementId, MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, MeasurementCategory);
+   output(MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean);
+
+   group RecordMeasurementGroup;
+   command Ok {
+      label = "Save";
+      enabled = [MeasTypeValueCode != null or MeasurementQty != null or MeasurementDateTime != null or MeasurementText != null or MeasurementBoolean != null];
+   }
+   command Cancel;
+}
+
+assistant RevokeMeasurementSignOffAssistant using MeasurementLineVirtualSet {
+   label = "Revoke Sign-Off for Measurement";
+   savemode = OnLostFocus;
+   input(MeasurementId, MeasurementTypeCode, MeasurementValue, MeasTypeValueCode, MeasurementCategory, MeasuredUser, MeasuredDate, RevokeSignOffReason);
+   output(RevokeSignOffReason);
+
+   singlestep {
+      group RevokeMeasurementSignOffGroup;
+   }
+
+   command Ok {
+      label = "Save";
+      enabled = [RevokeSignOffReason != null];
+   }
+   command Cancel;
+}
+
+dialog EditMeasurementDialog for RecordMeasurementStructure {
+   label = "Edit Measurement";
+   input(MeasurementId, MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, MeasurementCategory, DbMeasuredUser, TaskControlAuthorityEnabled);
+   output(MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, ReasonToEdit);
+   group RecordMeasurementGroup;
+
+   command Ok {
+      label = "Save";
+      enabled = [(DbMeasuredUser = null and(MeasTypeValueCode != null or MeasurementQty != null or MeasurementDateTime != null or MeasurementText != null or MeasurementBoolean != null)) or(DbMeasuredUser != null and TaskControlAuthorityEnabled = "Yes" and(MeasTypeValueCode != null or MeasurementQty != null or MeasurementDateTime != null or MeasurementText != null or MeasurementBoolean != null) and ReasonToEdit != null)];
+   }
+   command Cancel;
+}
+
+dialog EditActionDialog for RecordActionInfoStructure {
+   label = "Edit Action";
+   input(TaskActionId, ActionDesc, DbActionUser, TaskControlAuthorityEnabled);
+   output(ActionDesc, ReasonToEdit);
+
+   group EditActionGroup;
+
+   command Ok {
+      label = "Save";
+      enabled = [(DbActionUser = null and ActionDesc != null) or(DbActionUser != null and TaskControlAuthorityEnabled = "Yes" and ActionDesc != null and ReasonToEdit != null)];
+   }
+   command Cancel;
+}
+
+dialog EditTaskCertificationDialog for TaskCertificationInfoStruct {
+   label = "Edit Final Sign-Off";
+
+   input(CompletionNote, ApprovalNumber, SignOffReqType);
+   output(CompletionNote, ApprovalNumber);
+
+   group RecordTaskCompletion;
+
+   command Ok {
+      label = "Save";
+      enabled = [CompletionNote != null];
+   }
+   command Cancel;
+
+}
+
+dialog EditStepSignOffDialog for StepSignOffInfoStruct {
+   label = "Edit Step${OrderNo}";
+
+   input(TaskStepSeq, SignOffNote, OrderNo, Role, LicenseId);
+   output(SignOffNote);
+
+   group EditStepSignOffGroup;
+
+   command Ok {
+      label = "Save";
+      enabled = [SignOffNote != null];
+   }
+   command Cancel;
+
+}
+
+dialog EditPanelSignOffDialog for StepSignOffInfoStruct {
+   label = "Edit Panel ${PanelCd}";
+
+   input(TaskStepSeq, SignOffNote, OrderNo, Role, LicenseId, PanelCd);
+   output(SignOffNote);
+
+   group EditStepSignOffGroup;
+
+   command Ok {
+      label = "Save";
+      enabled = [SignOffNote != null];
+   }
+   command Cancel;
+
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector ReferenceAvPartNumberNewSelector for AvPartNumber {
+   label = "";
+   static Manufacturer;
+   static PartNumber;
+   static PartName;
+   static InventoryClassCode;
+}
+
+selector JtIncompletionCauseNewSelector for JtIncompletionCause {
+   label = "${Description}";
+   static IncompletionCause {
+      label = "Job Stop Reason";
+   }
+   static Description;
+}
+
+selector DemandLineSelector for JtTaskResourceDemandQuery {
+   static ResourceDemand;
+}
+
+@Override
+selector PartSerialCatalogSelector for PartSerialCatalog {
+   orderby = SerialNo;
+   static SerialNo;
+   exclude PartNo, Objstate;
+}
+
+@Override
+selector LotBatchMasterSelector for LotBatchMaster {
+   orderby = LotBatchNo;
+   static LotBatchNo;
+   exclude PartNo;
+}
+
+selector ReferenceAvConfigSlotPosNewSelector for AvConfigSlotPosition {
+   label = "";
+   static ConfigSlotCode;
+   static ConfigSlotPositionCode;
+}
+
+@Override
+selector MaintResourcesSelector for MaintResources {
+   static SerialNo;
+   static ResourceId;
+   static Description;
+   static ResourceParentId;
+   exclude Company, Site;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+------------------------------ ENTITY DETAILS -------------------------------
+entityset RecordWorkVirtualSet for RecordWorkVirtual;
+entityset StepSet for StepVirtual;
+entityset RemovedPartLineVirtualSet for RemovedPartLineVirtual;
+entityset InstalledPartLineVirtualSet for InstalledPartLineVirtual;
+entityset TaskActionLineVirtualSet for TaskActionLineVirtual;
+entityset TaskCertifyVirtualSet for TaskCertifyVirtual;
+entityset TaskStepSignOffVirtualSet for TaskStepSignOffVirtual;
+entityset MeasurementLineVirtualSet for MeasurementLineVirtual;
+entityset PanelSet for PanelVirtual;
+entityset ToolResourceDemandVirtualSet for ToolResourceDemandVirtual;
+
+---------------------------------- QUERIES ----------------------------------
+
+query MaintResources {
+   from = "MAINT_RESOURCES_LOV6";
+   keys = ResourceId, ResourceParentId, Company, Site;
+   ludependencies = ToolResourceDemandVirtual;
+   lu = none;
+   attribute ResourceId Text {
+      label = "Resource ID";
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+   }
+   attribute ResourceParentId Text {
+      label = "Resource Parent ID";
+      lovcolumn = [true];
+   }
+   attribute ResourceParentDesc Text {
+      label = "Description";
+   }
+   attribute ResourceType Enumeration(ResourceTypes);
+   attribute Company Text;
+   attribute Site Text;
+   attribute ResourceSeq Number;
+   attribute ResourceParentSeq Number;
+   attribute SerialNo Text {
+      fetch = "Resource_Tool_Equip_API.Get_Serial_No(resource_seq)";
+      lovcolumn = [true];
+   }
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+virtual RecordWorkVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute StepEnable Boolean;
+   attribute RemovedPartEnable Boolean;
+   attribute InstallededPartEnable Boolean;
+   attribute ToolEnable Boolean;
+   attribute ResourceToolEnable Boolean;
+   attribute MeasurementEnable Boolean;
+   attribute ActionTakenMandatory Boolean;
+   attribute Objstate Text;
+   attribute TaskSeq Number;
+   attribute FaultId Number;
+   attribute AircraftWpId Number;
+   attribute FlightId Number;
+   attribute TaskObjState Text;
+   attribute SignedBy Text;
+   attribute AircraftId Number;
+   attribute ActEndDate Date;
+   attribute TaskStepId Number;
+   attribute StepOrd Number;
+   attribute StepDescription LongText;
+   attribute StepNote Text;
+   attribute StepSet Text;
+   attribute PanelSet Text;
+   attribute LatestAction Text;
+   attribute StateChangeFlag Boolean;
+   attribute StateFlag Boolean;
+   attribute StepStatus Enumeration(TaskStepEnum);
+   attribute TaskPartId Number;
+   attribute PartGroupId Number;
+   attribute PartGroupCode Text;
+   attribute PartGroupName Text;
+   attribute Position Text;
+   attribute RemovedPartNoId Number;
+   attribute InstalledPartNoId Number;
+   attribute RemovedPartNo Text;
+   attribute InstalledPartNo Text;
+   attribute RemovedSerialNo Text;
+   attribute RemovedBatchNo Text;
+   attribute RemovedQuantity Number;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute InstalledQuantity Number;
+   attribute RemovalReason Text;
+   attribute RemovalStates Text;
+   attribute InstallStates Text;
+   attribute RemovedUser Text;
+   attribute InstalledUser Text;
+   attribute RemovalReasonCode Text;
+   attribute RemovalReasonDesc Text;
+   attribute ConfigSlotPositionCode Text;
+   attribute ConfigSlotPositionId Number;
+   attribute IpcReference Text;
+   attribute RemovedDate Date;
+   attribute InstalledDate Date;
+   attribute PartRequestId Number;
+   attribute SignedUser Text;
+   attribute CurrentUser Text;
+   attribute RemovedQuantityTemp Number;
+   attribute InstalledQuantityTemp Number;
+   attribute SignForRemoval Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+   attribute SignForTool Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+   attribute InstalledSerialNoTemp Text;
+   attribute PartNoId Number;
+   attribute SerialNo Text;
+   attribute TaskToolId Number;
+   attribute ToolSpecificationCode Text;
+   attribute ToolStatus Text;
+   attribute ActualDuration Number;
+   attribute SignForInstall Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+   attribute AssignedUser Text;
+   attribute MeasurementTypeCode Text;
+   attribute MeasurementQty Text;
+   attribute MeasurementId Number;
+   attribute Inventory Text;
+   attribute MeasuredQty Number;
+   attribute MeasurementStatus Text;
+   attribute MeasuredUser Text;
+   attribute SignForMeasurement Boolean("TRUE", "FALSE") {
+      required = [true];
+   }
+   attribute UnitOfMeasurement Text;
+   attribute SignEnable Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute CompleteTaskEnable Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute TaskCertificationEnable Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute LoginUser Text;
+   attribute ESigPermission Text;
+   attribute FileName Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute MediaObject Stream {
+      implementation = "Java";
+   }
+   attribute IsActionRecorded Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute RecordWorkStartTime Timestamp;
+   attribute TaskSignOffPermission Text;
+   attribute HasPendingNonRoutines Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Pending_NR_Exists(task_seq)";
+   }
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute AssignmentStatus Text;
+   attribute AssignmentStart Timestamp;
+   attribute ScheduledHours Text;
+   attribute Source Text;
+   attribute AssignedUserResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute Remark Text;
+   attribute IsJobStopExecuted Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute IncompletionCause Text;
+   attribute JobstopNote Text;
+   attribute RemainingHours Text;
+   attribute ActualHours Text;
+   attribute AssignToMeNewTaskRes Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+      required = [true];
+   }
+   attribute CertifyWorkPerformed Boolean("TRUE", "FALSE") {
+      default = "TRUE";
+      required = [true];
+   }
+   attribute Selection Text;
+   attribute TaskCardOption Text;
+   attribute CloseFaultAssignStartTime Timestamp;
+   attribute CloseFaultAssignStopTime Timestamp;
+   attribute CloseFaultAssignActualHours Text;
+   attribute Location Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id)";
+   }
+   attribute Site Text;
+   attribute ClassCode Text;
+   attribute SubclassCode Text;
+   attribute TaskReturnLineSeq Number;
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_In_Task_Card(task_seq)";
+   }
+   attribute IsHeavyMaintenance Boolean;
+   attribute HmContractLineNo Number;
+   attribute NeedCommercialApproval Boolean;
+   attribute ProceedAtRisk Boolean;
+   attribute IsNonRoutine Boolean;
+   attribute IsExecutionBlockedByCap Boolean;
+   attribute ApprovalStatus Text;
+   attribute IsEditTaskCardAccess Boolean {
+      default = "false";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvFlightRef(FlightId) to AvFlight(FlightId);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference AvAircraftWpRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvFaultRef(FaultId) to AvFault(FaultId);
+   reference FaultQueryRef(FaultId) to FaultQuery(FaultId);
+   array Steps() to StepVirtual();
+   array ToolsArray() to ToolLineVirtual();
+   array ResourceToolsArray() to ResourceToolLineVirtual();
+   array TaskActionsArray() to TaskActionLineVirtual();
+   array RemovedPartsArray() to RemovedPartLineVirtual();
+   array InstalledPartsArray() to InstalledPartLineVirtual();
+   array MeasurementsArray() to MeasurementLineVirtual();
+   array TaskCertifyArray(KeyList) to TaskCertifyVirtual();
+   array Panels() to PanelVirtual();
+   array ToolDemandsArray() to ToolResourceDemandVirtual();
+}
+
+virtual StepVirtual {
+   ludependencies = RecordWorkVirtual, TaskActionLineVirtual;
+   attribute TaskSeq Number;
+   attribute TaskStepId Number;
+   attribute StepOrd Number;
+   attribute Objstate Text;
+   attribute StepNote Text;
+   attribute StepSet Text;
+   attribute LatestAction Text;
+   attribute SignedBy Text;
+   attribute StateChangeFlag Boolean;
+   attribute StateFlag Boolean;
+   attribute StepStatus Enumeration(TaskStepEnum);
+   attribute MeasurementVisible Boolean;
+   attribute SkillsVisible Boolean;
+   attribute IsRejected Text;
+   attribute LatestSignedBy Text;
+   attribute TaskResourceSeq Number;
+   attribute Selection Text;
+   attribute Instructions LongText;
+
+   array StepSignOff() to TaskStepSignOffVirtual();
+}
+
+virtual PanelVirtual {
+   ludependencies = RecordWorkVirtual;
+   attribute PanelCode Text;
+   attribute PanelDescription Text;
+   attribute PanelInstruction Text;
+   attribute PanelSet Text;
+   attribute TaskSeq Number;
+   attribute TaskStepId Number;
+   attribute TaskResourceSeq Number;
+   attribute Selection Text;
+   attribute StepStatus Enumeration(TaskStepEnum);
+
+   array PanelSignOff() to TaskStepSignOffVirtual();
+}
+
+virtual TaskActionLineVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = RecordWorkVirtual, StepVirtual;
+   attribute TaskSeq Number;
+   attribute TaskActionId Number;
+   attribute TaskStepId Number;
+   attribute ActionOrd Number;
+   attribute ActionUser Text;
+   attribute ActionUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(action_user))";
+   }
+   attribute ActionDesc Text;
+   attribute InitialActionDesc Text;
+   attribute ActionDate Timestamp;
+   attribute ActionType Text;
+   attribute StepCurrStatus Text;
+   attribute SignedFlag Boolean;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute ActualHours Text;
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute MainVtrObjkey Text;
+   attribute AssignmentStatus Text;
+   attribute Source Text;
+
+   --attributes specific to job stop
+   attribute IsRemHoursEditable Boolean("TRUE", "FALSE") {
+      fetch = "Adcom_Util_API.Is_Remaining_Hours_Editable()";
+   }
+   attribute IsJobStopExecuted Boolean;
+   attribute IncompletionCause Text;
+   attribute JobstopNote Text;
+   attribute RemainingHours Text;
+   attribute AssignToMeNewTaskRes Boolean {
+      default = "false";
+      required = [true];
+   }
+   attribute CertifyWorkPerformed Boolean("TRUE", "FALSE") {
+      default = "TRUE";
+      required = [true];
+   }
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute SkillDemand Text;
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute MainVrtUpdate Boolean("TRUE", "FALSE") {
+      default = "FALSE";
+   }
+   attribute Site Text;
+   attribute TaskControlAuthorityEnabled Text {
+      fetch = "Adcom_Util_API.Get_User_Task_Ctrl_Auth_Perm(Fnd_Session_API.Get_Fnd_User())";
+   }
+   attribute ReasonToEdit Text;
+   attribute DbActionUser Text {
+      fetch = "Av_Exe_Task_Action_API.Get_Action_User(task_action_id)";
+   }
+   attribute IsEditTaskCardAccess Boolean;
+
+   reference IncompletionCauseRef(IncompletionCause) to JtIncompletionCause(IncompletionCause);
+   reference DemandLineRef(TaskSeq, TaskResourceSeq) to TaskAssignmentEntity(TaskSeq, TaskResourceSeq);
+}
+virtual MeasurementLineVirtual {
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute TaskSeq Number;
+   attribute MeasurementId Number;
+   attribute MeasurementTypeCode Text;
+   attribute MeasTypeValueCode Text;
+   attribute MeasurementOrder Number;
+   attribute MeasurementValue Text;
+   attribute MeasurementCategory Text;
+   attribute MeasurementQty Number;
+   attribute MeasurementDateTime Timestamp;
+   attribute MeasurementText Text;
+   attribute MeasurementBoolean Boolean;
+   attribute MeasuredUser Text;
+   attribute MeasuredUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(measured_user))";
+   }
+
+   attribute MeasuredDate Timestamp;
+   attribute IsTaskDef Boolean;
+   attribute SignedFlag Boolean;
+   attribute RevokeSignOffReason Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute DbMeasuredUser Text {
+      fetch = "Av_Exe_Task_Measurement_API.Get_Measured_User(measurement_id)";
+   }
+   attribute TaskControlAuthorityEnabled Text {
+      fetch = "Adcom_Util_API.Get_User_Task_Ctrl_Auth_Perm(Fnd_Session_API.Get_Fnd_User())";
+   }
+   attribute ReasonToEdit Text;
+
+   reference MeasurementTypeCodeRef(MeasurementTypeCode) to AvMeasurementType(MeasurementTypeCode);
+   reference MeasurementValueRef(MeasurementTypeCode, MeasTypeValueCode) to AvMeasurementValue(MeasurementTypeCode, MeasTypeValueCode);
+}
+virtual ToolLineVirtual {
+   crud = Read;
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute TaskToolId Number;
+   attribute ToolSpecificationCode Text;
+   attribute PartNoId Number;
+   attribute SerialNo Text;
+   attribute AssignedUser Text;
+   attribute AssignedUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(assigned_user))";
+   }
+   attribute AssignedDateTiime Timestamp;
+   attribute SchedDuration Number;
+   attribute ActualDuration Text;
+   attribute IsSigned Boolean;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+
+   reference ToolSpecificationCodeRef(ToolSpecificationCode) to AvToolSpecification(ToolSpecificationCode);
+   reference PartNumberIdRef(PartNoId) to AvPartNumber(PartNumberId);
+}
+virtual ResourceToolLineVirtual {
+   crud = Read;
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute ToolId Number;
+   attribute ResourceId Text;
+   attribute ResourceGroupId Text;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute AssignedUser Text {
+      label = "Signed By";
+   }
+   attribute IsSigned Boolean;
+   attribute AssignedDateTime Timestamp {
+      label = "Date";
+   }
+   attribute SchedDuration Text {
+      label = "Scheduled Hours (HH:MM)";
+   }
+   attribute ActualDuration Text {
+      label = "Actual Hours (HH:MM)";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+
+   reference ResourceGroupIdRef(ResourceGroupId) to ResourceGroupMaintLov(ResourceId) {
+      label = "Tool/Equipment Group";
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+
+   action RecordResourceTool {
+      ludependencies = RecordWorkVirtual;
+      parameter ResourceId Text;
+      parameter ResourceSeq Number;
+      parameter PartNo Text;
+      parameter SerialNo Text;
+      parameter ActualDuration Text;
+   }
+}
+virtual InstalledPartLineVirtual {
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute TaskPartId Number;
+   attribute TaskSeq Number;
+   attribute ConfigSlotPositionCode Text;
+   attribute PartGroupId Number;
+   attribute InstalledPartNoId Number;
+   attribute IpcReference Text;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute InstalledQuantity Number;
+   attribute InstalledUser Text;
+   attribute InstalledUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(installed_user))";
+   }
+   attribute InstalledDate Timestamp;
+   attribute PartRequestId Number;
+   attribute ConfigSlotCode Text;
+   attribute AircraftTypeCode Text;
+   attribute PartType Text;
+   attribute SignedFlag Boolean;
+   attribute ConfigSlotPositionId Number;
+   attribute AssemblyConfigSlotPositionId Number {
+      fetch = "Av_Exe_Task_Part_API.Get_Assy_Config_Position(task_part_id,part_group_id)";
+   }
+   attribute PartGroup Text;
+   attribute AssyPos Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute IsSubAssy Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalBatchNo Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartAltId Text;
+   attribute RemovalReasonCode Text;
+   attribute AircraftRegCode Text;
+   attribute CmsResponseSeverity Number;
+   attribute AircraftId Number;
+   attribute InventoryClassCode Text;
+   attribute PartGroupAltId Text;
+   attribute AssmblConfSlotCode Text;
+   attribute AssmblConfSlotPosCode Text;
+   attribute ConfigSlot Text;
+   attribute ConfSlotPosCode Text;
+   attribute RemovedQuantity Number;
+   attribute RemovedUserDesc Text;
+   attribute CancelledBy Text;
+   attribute RemovedUser Text;
+   attribute RemovalPartGroupId Number;
+   attribute SerialBatchNo Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Concat_Serial_Batch_No(installed_serial_no, installed_batch_no)";
+   }
+   attribute OriginalInstalledSerialNo Text;
+   attribute OriginalInstalledBatchNo Text;
+   attribute DbInstalledUser Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Installed_User(task_part_id)";
+   }
+   attribute RevokeSignOffReason Text;
+   attribute InstalledEditReason Text;
+   attribute RmvdTaskPartId Number;
+   attribute InstVrtParentObjkey Text;
+   attribute MaintMaterialOrderNo Number;
+   attribute LineItemNo Number;
+   attribute SchedulingAction Enumeration(SchedulingActionType);
+
+   reference PartGroupRef(PartGroupId) to AvPartGroup(PartGroupId);
+   reference PartNumberInstRef(InstalledPartNoId) to AvPartNumber(PartNumberId);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AssemblyConfigSlotPositionRef(AssemblyConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference InstalledSerialRef(InstalledSerialNo) to PartSerialCatalog(SerialNo);
+   reference InstalledBatchRef(InstalledBatchNo) to LotBatchMaster(LotBatchNo);
+   reference MaintMaterialReqRef(MaintMaterialOrderNo, LineItemNo) to MaintMaterialReqLine(MaintMaterialOrderNo, LineItemNo);
+}
+virtual RemovedPartLineVirtual {
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute TaskPartId Number;
+   attribute TaskSeq Number;
+   attribute ConfigSlotPositionCode Text;
+   attribute RemovalPartGroupId Number;
+   attribute RemovalPartNoId Number;
+   attribute RemovalReasonCode Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalBatchNo Text;
+   attribute RemovedQuantity Number;
+   attribute IpcReference Text;
+   attribute RemovedUser Text;
+   attribute RemovedUserName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(removed_user))";
+   }
+   attribute RemovedDate Timestamp;
+   attribute PartRequestId Number;
+   attribute ConfigSlotCode Text;
+   attribute AircraftTypeCode Text;
+   attribute PartType Text;
+   attribute RemovedUserDesc Text;
+   attribute SignedFlag Boolean;
+   attribute ConfigSlotPositionId Number;
+   attribute AssemblyConfigSlotPositionId Number {
+      fetch = "Av_Exe_Task_Part_API.Get_Assy_Config_Position(task_part_id, removal_part_group_id)";
+   }
+   attribute PartGroup Text;
+   attribute AssyPos Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute AircraftRegCode Text;
+   attribute CmsResponseSeverity Number;
+   attribute AircraftId Number;
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute InstallationPartNumber Text;
+   attribute InstallationManufacturerCode Text;
+   attribute AssmblConfSlotCode Text;
+   attribute AssmblConfSlotPosCode Text;
+   attribute ConfigSlot Text;
+   attribute ConfSlotPosCode Text;
+   attribute IsSubAssy Text;
+   attribute InventoryClassCode Text;
+   attribute PartChangeType Text;
+   attribute TaskReturnLineSeq Number;
+   attribute SerialBatchNo Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Concat_Serial_Batch_No(removal_serial_no, removal_batch_no)";
+   }
+   attribute DbRemovedUser Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Removed_User(task_part_id)";
+   }
+   attribute RevokeSignOffReason Text;
+   attribute CancelledBy Text;
+   attribute RemovalEditReason Text;
+   attribute InstallTaskPartId Number;
+
+   reference RemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+   reference PartGroupRef(RemovalPartGroupId) to AvPartGroup(PartGroupId);
+   reference PartNumberRmvdRef(RemovalPartNoId) to AvPartNumber(PartNumberId);
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AssemblyConfigSlotPositionRef(AssemblyConfigSlotPositionId) to AvConfigSlotPosition(ConfigSlotPositionId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+}
+virtual StepMeasurementVirtual {
+   crud = Read;
+   attribute Measurement Text;
+   attribute Value Number;
+   attribute SignedBy Text;
+}
+virtual TaskCertifyVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   ludependencies = RecordWorkVirtual;
+   attribute TaskSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute TaskObjstate Enumeration(AvExeTaskState);
+   attribute ActualEndDate Timestamp;
+   attribute SignedBy Text;
+   attribute SignedByName Text {
+      fetch = "Fnd_User_API.Get_Description(UPPER(signed_by))";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute ApprovalNumber Text;
+   attribute CompletionNote Text;
+   attribute TaskSignOffPermission Text;
+   attribute Role Enumeration(SignOffReqTypeEnum) {
+      fetch = "Sign_Off_Req_Type";
+      label = "Role";
+      maxlength = 20;
+   }
+   attribute SignOffReqSeq Number;
+   attribute SignOffReqType Text;
+   attribute GroupingNo Number;
+   attribute SignOffStatus Text;
+   attribute TaskCertificationEnable Boolean;
+   attribute CompleteTaskEnable Boolean;
+   attribute SignOffDate Date;
+   attribute IdentityName Text;
+   attribute IsFinalSignOff Boolean;
+   attribute SignedFlag Boolean;
+   attribute ExistingUser Boolean;
+}
+
+virtual ClockInVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = RecordWorkVirtual;
+   attribute TaskSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute StartTime Timestamp;
+   attribute StopTime Timestamp;
+   attribute WorkHours Text;
+   attribute Company Text;
+   attribute ActualHours Number;
+   attribute AssignmentStatus Text;
+   attribute Source Text;
+}
+
+virtual TaskStepSignOffVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = RecordWorkVirtual, StepVirtual, PanelVirtual;
+   attribute TaskSeq Number;
+   attribute TaskStepSeq Number;
+   attribute SignOffReqSeq Number;
+   attribute Role Enumeration(SignOffReqType);
+   attribute LicenseId Text;
+   attribute Description Text;
+   attribute SignOffStatus Text;
+   attribute Identity Text;
+   attribute SignOffDate Timestamp;
+   attribute SignedFlag Boolean;
+   attribute SignOffNote Text;
+   attribute CommandLabel Text;
+   attribute SignOffReqTypeDb Text;
+   attribute GroupingNo Number;
+   attribute OrderNo Number;
+   attribute RevokeEnable Boolean;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute StepObjConnLuNameDb Text;
+   attribute IsRevokeSignOffCapable Boolean;
+   attribute IsDbRevokeSignOffCapable Boolean("TRUE", "FALSE") {
+      fetch = "Mm_Step_Sign_off_Req_Util_API.Is_Db_Sign_Off_Revoke_Capable(sign_off_req_type_db, sign_off_status, task_seq, task_step_seq, grouping_no)";
+   }
+   attribute RevokeSignOffReason Text;
+   attribute DbSignedUser Text {
+      fetch = "Jt_Task_Step_Sign_Off_API.Get_Identity(task_seq, task_step_seq, sign_off_req_seq)";
+   }
+
+   reference JtTaskSignOffReqRef(TaskSeq, SignOffReqSeq) to JtTaskSignOffReq(TaskSeq, SignOffReqSeq);
+   reference PanelVirtualRef(TaskSeq, TaskStepSeq, ParentObjkey) to PanelVirtual(TaskSeq, TaskStepId, Objkey);
+}
+
+virtual ToolResourceDemandVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = RecordWorkVirtual;
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute ToolGroup Text;
+   attribute SerialNo Text;
+   attribute ResourceParentId Text;
+   attribute CheckedOutDate Timestamp;
+   attribute ToolPartId Text;
+   attribute ToolPartDescription Text;
+   attribute Site Text;
+   attribute AllocatedStartDate Timestamp;
+   attribute AllocatedFinishDate Timestamp;
+   attribute PlannedHours Number;
+   attribute ActualHours Text;
+   attribute ActualEndDate Timestamp;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute SignedFlag Boolean;
+   attribute SignedUser Text;
+   attribute SignedDate Timestamp;
+   attribute ToolEqpAssigned Text;
+   attribute AssignmentStartDate Timestamp;
+   attribute ResourceGroupDescription Text;
+   attribute IsEditTool Boolean;
+   attribute DbSignedUser Text {
+      fetch = "Adcom_Util_API.Get_Latest_Transaction_User(task_seq, execution_instance_seq)";
+   }
+   attribute ToolGroupDescription Text {
+      fetch = "Resource_API.Get_Description(resource_group_seq)";
+   }
+   attribute ReasonToEdit Text;
+   attribute ResourceId Text;
+
+   reference ResourceIdRef(Site, ResourceId) to MaintResources(Site, ResourceId) {
+      copy SerialNo to SerialNo;
+      copy ResourceSeq to ResourceSeq;
+      copy ResourceId to ResourceId;
+   }
+   reference ToolResourceGroupLovRef(Site) to ResourceGroupSiteLov(Site) {
+      copy ResourceSeq to ResourceGroupSeq;
+      copy ResourceId to ResourceParentId;
+      copy Description to ToolGroupDescription;
+   }
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure RecordToolStructure {
+   attribute PartNoId Number;
+   attribute SerialNo Text {
+      required = [true];
+   }
+   attribute ActualDuration Text {
+      required = [true];
+   }
+
+   reference PartNumberRef(PartNoId) to AvPartNumber(PartNumberId);
+}
+
+structure RecordResourceToolStructure {
+   attribute ResourceGroupId Text {
+      editable = [false];
+   }
+   attribute ResourceId Text;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute ActualDuration Text {
+      label = "Actual Hours (HH:MM)";
+      required = [true];
+   }
+
+   reference ResourceGroupIdRef(ResourceGroupId) to ResourceGroupMaintLov(ResourceId) {
+      label = "Tool/Equipment Group";
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+      copy ResourceSeq to ResourceSeq;
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo) {
+      label = "Serial No";
+   }
+}
+
+structure RecordMeasurementStructure {
+   timestamptzref = "server";
+   attribute MeasurementId Number;
+   attribute MeasurementTypeCode Text;
+   attribute MeasTypeValueCode Text;
+   attribute MeasurementQty Number;
+   attribute MeasurementDateTime Timestamp;
+   attribute MeasurementText Text;
+   attribute MeasurementBoolean Boolean;
+   attribute MeasuredUser Text;
+   attribute MeasuredDate Date;
+   attribute MeasurementCategory Text;
+   attribute ReasonToEdit Text;
+   attribute DbMeasuredUser Text;
+   attribute TaskControlAuthorityEnabled Text;
+
+   reference MeasurementValueRef(MeasurementTypeCode, MeasTypeValueCode) to AvMeasurementValue(MeasurementTypeCode, MeasTypeValueCode);
+}
+
+structure CmsDataStructure {
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalReasonCode Text;
+   attribute AssemblyConfigSlotCode Text;
+   attribute AssemblyConfigSlotPosition Text;
+   attribute ConfigSlotPosition Text;
+   attribute IsSubAssy Text;
+   attribute InventoryClassCode Text;
+   attribute PartChangeType Text;
+   attribute IsRemovedPartSigned Boolean;
+   attribute AircraftAltId Text;
+   attribute ConfigSlotCode Text;
+   attribute PartGroupAltId Text;
+}
+
+structure RemovedPartInfoStructure {
+   attribute RemovalPartNumber Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalBatchNo Text;
+   attribute RemovalReasonCode Text;
+   attribute RemovalPartNoId Number;
+   attribute RemovalPartGroupId Number;
+   attribute RemovalQuantity Number;
+   attribute RemovalUser Text;
+   attribute RemovalUserDesc Text;
+   attribute RemovalObjkey Text;
+   attribute RemovalAltId Text;
+   attribute IsSigned Boolean;
+}
+
+structure RecordRemovedPartInfoStructure {
+   attribute RemovalPartNoId Number;
+   attribute RemovalSerialNo Text;
+   attribute RemovalBatchNo Text;
+   attribute RemovedQuantity Number;
+   attribute RemovalReasonCode Text;
+   attribute RemovedUser Text;
+   attribute RemovedUserDesc Text;
+   attribute PartType Text;
+   attribute PartGroupId Number;
+   attribute InventoryClassCode Text;
+   attribute RemovalPartGroupId Number;
+   attribute TaskPartId Number;
+   attribute AircraftRegCode Text;
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute PartGroup Text;
+   attribute ConfigSlotPositionId Number;
+   attribute AssemblyConfigSlotPositionId Number;
+}
+
+structure RecordActionInfoStructure {
+   attribute TaskActionId Number;
+   attribute ActionDesc Text;
+   attribute ReasonToEdit Text;
+   attribute DbActionUser Text;
+   attribute TaskControlAuthorityEnabled Text;
+}
+
+structure RecordActionTakenInfoStructure {
+   timestamptzref = "site(Site)";
+
+   attribute TaskSeq Number;
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute ActualHours Text;
+   attribute ScheduledHours Text;
+   attribute MainVtrObjkey Text;
+   attribute AssignmentStatus Text;
+   attribute Source Text;
+   attribute RemainingHours Text;
+   attribute IsJobStopExecuted Boolean;
+   attribute CertifyWorkPerformed Boolean;
+   attribute IsSignOffSigned Text;
+   attribute Remark Text;
+   attribute TaskResourceSeq Number;
+   attribute Site Text;
+   attribute IsEditTaskCardAccess Boolean;
+}
+
+structure RecordInstallInfoStructure {
+   attribute InstalledPartNoId Number;
+   attribute InstalledSerialNo Text;
+   attribute InstalledBatchNo Text;
+   attribute OriginalInstalledSerialNo Text;
+   attribute OriginalInstalledBatchNo Text;
+   attribute InstalledQuantity Number;
+   attribute InstalledUser Text;
+   attribute PartType Text;
+   attribute PartGroupId Number;
+   attribute TaskSeq Number;
+   attribute ConfigSlotPositionId Number;
+   attribute ConfigSlotCode Text;
+   attribute TaskPartId Number;
+   attribute AircraftRegCode Text;
+   attribute PartGroup Text;
+   attribute InstVrtParentObjkey Text;
+}
+structure PartValidationWarningInfoStructure {
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalReasonCode Text;
+   attribute InstallationPartNumber Text;
+   attribute InstallationManufacturerCode Text;
+   attribute InstalledSerialNo Text;
+   attribute AircraftRegCode Text;
+   attribute AssmblConfSlotCode Text;
+   attribute AssmblConfSlotPosCode Text;
+   attribute ConfigSlot Text;
+   attribute ConfSlotPosCode Text;
+   attribute IsSubAssy Text;
+   attribute InventoryClassCode Text;
+   attribute PartChangeType Text;
+   attribute CmsResponseSeverity Number;
+}
+
+structure RecordWorkInfoStructure {
+   timestamptzref = "site(Site)";
+
+   attribute TaskSeq Number;
+   attribute FaultId Number;
+   attribute SignedBy Text;
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute Objstate Enumeration(AvExeTaskState);
+   attribute KeyRef Text;
+   attribute LuName Text;
+   attribute RecordWorkStartTime Timestamp;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute AssignmentStatus Text;
+   attribute AssignmentStart Timestamp;
+   attribute ScheduledHours Text;
+   attribute Source Text;
+   attribute AssignedUserResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute Remark Text;
+   attribute CertifyWorkPerformed Boolean;
+   attribute Selection Text;
+   attribute Site Text;
+   attribute ClassCode Text;
+   attribute SubclassCode Text;
+   attribute IsHeavyMaintenance Boolean;
+   attribute HmContractLineNo Number;
+   attribute NeedCommercialApproval Boolean;
+   attribute ProceedAtRisk Boolean;
+   attribute IsNonRoutine Boolean;
+   attribute IsExecutionBlockedByCap Boolean;
+   attribute IsEditTaskCardAccess Boolean;
+   attribute ApprovalStatus Text;
+}
+
+structure LatestActionInfoStruct {
+   attribute Description Text;
+   attribute Username Text;
+   attribute TaskAltId Text;
+   attribute ActionDate Timestamp;
+}
+
+structure TaskCertificationInfoStruct {
+   attribute CompletionNote Text;
+   attribute ApprovalNumber Text;
+   attribute SignOffReqType Text;
+}
+
+structure StepSignOffInfoStruct {
+   attribute TaskStepSeq Number;
+   attribute SignOffNote Text;
+   attribute Role Enumeration(SignOffReqType);
+   attribute LicenseId Text;
+   attribute OrderNo Number;
+   attribute PanelCd Text;
+}
+
+structure ToolResourceDemandStructure {
+   timestamptzref = "site(Site)";
+
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ToolGroup Text;
+   attribute SerialNo Text;
+   attribute CheckedOutDate Timestamp;
+   attribute ActualEndDate Timestamp;
+   attribute ToolPartId Text;
+   attribute ToolPartDescription Text;
+   attribute Site Text;
+   attribute ToolEqpAssigned Text;
+   attribute AssignmentStartDate Timestamp;
+   attribute ToolResourceSeq Number;
+   attribute ToolResourceGroupSeq Text;
+   attribute ActualHours Text;
+   attribute ToolGroupDescription Text;
+   attribute ResourceParentId Text;
+   attribute ResourceId Text;
+}
+
+structure ToolPartStructure {
+   attribute ToolPartId Text;
+   attribute ToolPartDescription Text;
+   attribute Site Text;
+}
+------------------------------- ENUMERATIONS --------------------------------
+enumeration TaskStepEnum {
+   value = "NOTDONE" {
+      label = "Not Done";
+   }
+   value = "PENDING" {
+      label = "Pending";
+   }
+   value = "DONE" {
+      label = "Done";
+   }
+   value = "CANCELLED" {
+      label = "Cancelled";
+   }
+}
+
+enumeration SignOffReqTypeEnum {
+   value = "Inspector" {
+      identifier = "Inspector";
+      label = "Certifying Staff";
+   }
+   value = "Independent" {
+      identifier = "Independent";
+      label = "Independent Inspector (RII)";
+   }
+}
+---------------------------------- ACTIONS ----------------------------------
+action RecordWorkClearAction {
+   initialcheck none;
+   --ludependencies = AvExeTask, AvFaultDeferralRequest, AvFault;
+}
+action RecordTool {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual;
+   parameter Objkey Text;
+   parameter SerialNo Text;
+   parameter ActualDuration Text;
+}
+action RecordMeasurement {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, MeasurementLineVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+   parameter MeasurementTypeCode Text;
+   parameter MeasTypeValueCode Text;
+   parameter MeasurementQty Number;
+   parameter MeasurementDateTime Timestamp;
+   parameter MeasurementText Text;
+   parameter MeasurementBoolean Boolean;
+   parameter MeasurementCategory Text;
+   parameter ReasonToEdit Text;
+}
+action RevokeMeasurement {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, MeasurementLineVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+   parameter RevokeSignOffReason Text;
+}
+
+action RevokeToolDemand {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+}
+
+action RevokeInstalledPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, InstalledPartLineVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+   parameter RevokeSignOffReason Text;
+}
+
+action RevokeRemovedPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, RemovedPartLineVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+   parameter RevokeSignOffReason Text;
+}
+
+action RevokeTaskCertification {
+   initialcheck none;
+   ludependencies = TaskCertifyVirtual, AvExeTask, AvFault, RecordWorkVirtual;
+   timestamptzref = "server";
+   parameter Objkey Text;
+}
+
+action UpdateInstallPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, InstalledPartLineVirtual;
+   parameter Objkey Text;
+   parameter InstalledSerialNo Text;
+   parameter InstalledBatchNo Text;
+   parameter InstalledQuantity Number;
+   parameter InstalledPartNoId Number;
+}
+action UpdateRmvPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, RemovedPartLineVirtual;
+   parameter Objkey            Text;
+   parameter RemovedSerialNo   Text;
+   parameter RemovedBatchNo    Text;
+   parameter RemovedQuantity   Number;
+   parameter RemovalReasonCode Text;
+   parameter RemovedPartNoId   Number;
+}
+action AddAction {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, TaskActionLineVirtual, RemovedPartLineVirtual, InstalledPartLineVirtual, MeasurementLineVirtual, ResourceToolLineVirtual, ToolLineVirtual;
+
+   parameter ParentObjkey Text;
+   parameter ActionDesc Text;
+   parameter TaskSeq Number;
+   parameter CertifyWorkPerformed Boolean;
+}
+action DoJobStopTemporary {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual;
+   parameter ParentObjkey Text;
+   parameter ActualHours Text;
+   parameter IncompletionCause Text;
+   parameter JobstopNote Text;
+   parameter RemainingHours Text;
+   parameter AssignToMeNewTaskRes Boolean;
+}
+action CompleteTask {
+   initialcheck none;
+   ludependencies = TaskCertifyVirtual, AvExeTask, AvFault, RecordWorkVirtual;
+
+   parameter Objkey Text;
+   parameter ApprovalNumber Text;
+   parameter CompletionNote Text;
+   parameter TaskSeq Number;
+}
+action Sign {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+   ludependencies = AvExeTask, AvExeTaskTool, AvExeTaskAction, AvResourceToolEquipment, AvExeTaskMeasurement, AvInstalledParts, AvRemovedParts, AvAircraftWorkPackage, JtTaskTransaction, JtTaskResource, JtExecutionInstance,
+   JtTaskResourceDemandQuery, JtTaskLaborSummaryTotal, JtTaskLaborSummaryBreakdown, JtTaskSignOffReq, JtTaskStepSignOff, AvCriticalItem, JtTaskReturn, JtTaskStep, AvExeTaskPanel, MaintMaterialReqLine, ToolDemandQuery, AvExeTaskZone;
+
+   parameter Objkey Text;
+   parameter TaskSeq Number;
+   parameter BindSignatureId Text;
+   parameter RecordWorkStartTime Timestamp;
+   parameter Site Text;
+}
+
+action CheckPartIsAllowed {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter InstalledPartNoId Number;
+   parameter PartGroupId Number;
+   parameter ConfigSlotPositionId Number;
+}
+
+action CheckPartIncompatibility {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter InstalledPartNoId Number;
+   parameter PartGroupId Number;
+}
+
+action UpdateClockOut {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+
+   parameter ParentObjkey Text;
+   parameter StartTime Timestamp;
+   parameter EndTime Timestamp;
+   parameter ActualHours Text;
+   parameter Site Text;
+
+}
+
+action StartAssignment {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+   ludependencies = AvExeTask, JtTaskResource, JtExecutionInstance, JtTaskResourceDemandQuery;
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+   parameter StartTime Timestamp;
+   parameter Site Text;
+}
+
+action ValidateSignOff {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, StepVirtual, TaskStepSignOffVirtual;
+
+   parameter TaskSeq Number;
+   parameter Objkey Text;
+}
+
+action UpdateStepSignOff {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, StepVirtual, TaskStepSignOffVirtual;
+
+   parameter Objkey Text;
+   parameter SignOffNote Text;
+}
+
+action RevokeStepSignOff {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, StepVirtual, TaskStepSignOffVirtual;
+   parameter Objkey Text;
+   parameter RevokeSignOffReason Text;
+}
+
+action ValidateBulkSignOff {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter LicenseId Text;
+   parameter Role Text;
+}
+
+action CheckStepSigned {
+   initialcheck none;
+   parameter Role Text;
+   parameter TaskSeq Number;
+   parameter TaskStepSeq Number;
+   parameter SignOffReqSeq Number;
+   parameter LicenseId Text;
+   parameter ObjConnLuNameDb Text;
+}
+
+action CheckInspectorSignOff {
+   initialcheck none;
+   parameter Role Text;
+   parameter TaskSeq Number;
+   parameter TaskStepSeq Number;
+   parameter SignOffReqSeq Number;
+   parameter LicenseId Text;
+   parameter ObjConnLuNameDb Text;
+}
+
+action UpdateRecordWorkVirtual {
+   initialcheck none;
+   parameter Objkey Text;
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+   parameter ExecutionInstanceSeq Number;
+}
+
+action IsSkillMandatory {
+   initialcheck none;
+   parameter Objkey Text;
+   parameter TaskResourceSeq Number;
+}
+
+action UpdateRevokeStepSignOffCapability {
+   initialcheck none;
+   parameter Objkey Text;
+   parameter UpdateType Text;
+}
+action EditActionSave {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, TaskActionLineVirtual;
+   parameter Objkey Text;
+   parameter ActionDesc Text;
+   parameter ReasonToEdit Text;
+}
+action EditTaskCertification {
+   initialcheck none;
+   ludependencies = TaskCertifyVirtual, AvExeTask, AvFault, RecordWorkVirtual;
+   parameter Objkey Text;
+   parameter CompletionNote Text;
+   parameter ApprovalNumber Text;
+}
+
+action EditStepSignOffNote {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, StepVirtual, TaskStepSignOffVirtual;
+   parameter Objkey Text;
+   parameter SignOffNote Text;
+}
+
+action EditRemovedPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, RemovedPartLineVirtual;
+   parameter Objkey Text;
+   parameter RemovalPartNoId Text;
+   parameter RemovalSerialNo Text;
+   parameter RemovalReasonCode Text;
+   parameter RemovedQuantity Number;
+   parameter RemovalBatchNo Text;
+   parameter RemovalEditReason Text;
+   parameter ConfigSlotPosId Text;
+}
+
+action EditInstalledPart {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, InstalledPartLineVirtual;
+   parameter Objkey Text;
+   parameter InstalledPartNoId Text;
+   parameter InstalledSerialNo Text;
+   parameter InstalledQuantity Text;
+   parameter InstalledBatchNo Text;
+   parameter InstalledEditReason Text;
+   parameter ConfigSlotPosId Text;
+}
+
+action RecordToolDemand {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, ToolResourceDemandVirtual;
+   parameter Objkey Text;
+   parameter ActualStartDate Timestamp;
+   parameter ActualEndDate Timestamp;
+   parameter ActualHours Text;
+   parameter ToolPartId Text;
+   parameter ToolPartDescription Text;
+   parameter ResourceSeq Number;
+   parameter SerialNo Text;
+   parameter ResourceParentId Text;
+   parameter ResourceGroupSeq Number;
+   parameter ReasonToEdit Text;
+}
+
+function IsToolCheckedOut Boolean {
+   parameter ResourceSeq Number;
+}
+
+action VerifyActualHours {
+   initialcheck none;
+   parameter ActualHours Text;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetCurrentUser Text {
+}
+function GetCurrentUserDesc Text {
+}
+function GetPartNumberLov List < Entity(AvPartNumber) > {
+   parameter PartGroupId Number;
+   where = "part_number_id IN(SELECT part_no_id FROM Av_Part_Group_Part WHERE part_group_id = :PartGroupId) ";
+}
+function GetConfigSlotPosLov List < Entity(AvConfigSlotPosition) > {
+   syncpolicy Online;
+   parameter ConfigSlotCode Text;
+   parameter AssemblyType Text;
+   where = "config_slot_code IN (:ConfigSlotCode) AND assembly_type_code IN (:AssemblyType)";
+}
+function GetESigPermission  Text {
+   parameter UserId Text;
+}
+
+function GetEsigFileName Text {
+   parameter AircraftId Number;
+   parameter TaskSeq Number;
+   parameter FaultId Number;
+}
+
+function GetSaveActionConfirmMsg Text {
+   parameter ActualHours Text;
+   parameter RemainingHours Text;
+   parameter IsJobStopExecuted Boolean;
+}
+
+function ShowMissingComponentWarning Text {
+   parameter TaskSeq Number;
+   parameter AircraftWpId Number;
+}
+
+function GetTimestamp Timestamp {
+   timestamptzref = "site(Site)";
+   parameter Site Text;
+}
+
+function GetAircraftRegCode Text {
+   parameter AircraftId Number;
+}
+
+function GetCmsRequestData Structure(CmsDataStructure) {
+   parameter TaskPartId Number;
+   parameter ParentObjkey Text;
+}
+
+function GetRemovalCmsRequestData Structure(CmsDataStructure) {
+   parameter Objkey Text;
+   parameter ConfigSlotPosId Number;
+}
+
+function GetRemovedPartRecord Structure(RemovedPartInfoStructure) {
+   parameter InventoryClassCode Text;
+   parameter ConfigSlotPositionId Number;
+   parameter AssyConfigSlotPositionId Number;
+   parameter ParentObjkey Text;
+}
+
+function GetPartIdByAltId Number {
+   parameter AltId Text;
+}
+
+function ValidateHours Text {
+   parameter Hours Text;
+   parameter VariableName Text;
+}
+
+function GetTimeDuration Text {
+   parameter StartTime Timestamp;
+   parameter EndTime Timestamp;
+}
+function CalculateRemainingHours Text {
+   parameter ActualHours Text;
+   parameter ScheduledHours Text;
+}
+
+function ValidateStartEndDates Text {
+   timestamptzref = "site(Site)";
+
+   parameter StartTime Timestamp;
+   parameter EndTime Timestamp;
+   parameter Site Text;
+   parameter StartDateText Text;
+   parameter EndDateText Text;
+
+}
+
+function IsActualHoursMandatory Text {
+
+}
+function GetTaskSignOffPermission  Text {
+   parameter UserId Text;
+}
+function CheckInworkWp Boolean {
+   parameter AircraftId Number;
+   parameter Location Text;
+}
+function HasStartedExecutionInstances Boolean {
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+}
+function SignOffCountForSession Number {
+   parameter Objkey Text;
+}
+
+function GetRecordWorkInfo Structure(RecordWorkInfoStructure) {
+   timestamptzref = "site(Site)";
+   parameter Selection Text;
+}
+
+function GetSkillDemand List < Entity(JtTaskResourceDemandQuery) >  {
+   parameter TaskSeq Number;
+   parameter Remark Text;
+   parameter CurrentUser Text;
+   where = "task_seq = :TaskSeq AND UPPER(remark) = UPPER(:Remark) AND assigned_resource_id = :CurrentUser AND rowstate IN ('ASSIGNED','WORKSTARTED')";
+}
+function CalculateAssignmntTotActualHrs Text {
+   timestamptzref = "site(Site)";
+
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+   parameter EndTime Timestamp;
+   parameter Site Text;
+
+}
+function CheckExistIndependent Boolean {
+   parameter TaskSeq Number;
+}
+function GetSerialNo List < Entity(PartSerialCatalog) > {
+   parameter PartNo  Text;
+   parameter SerialNo Text;
+   parameter TaskSeq Number;
+}
+function GetBatchNo List < Entity(LotBatchMaster) > {
+   parameter PartNo Text;
+   parameter TaskSeq Number;
+}
+function CheckQuantiyForBatch Boolean {
+   initialcheck none;
+   parameter PartNo   Text;
+   parameter TaskSeq  Number;
+   parameter Quantity Number;
+   parameter BatchNo  Text;
+}
+function GetCheckedOutSerial List < Entity(MaintResources) >  {
+   parameter ResourceGroupSeq Number;
+   parameter Site Text;
+   where = "resource_type = 'EQUIPMENT'
+            AND site = :Site
+            AND resource_seq IN (SELECT resource_seq
+                                 FROM resource_tool_equip_tab
+                                 WHERE checked_out_to IS NOT NULL)
+            AND resource_parent_seq IN (SELECT r.resource_seq
+                                        FROM maint_resources_lov6 r
+                                        WHERE used_in_maintenance = 'TRUE')
+            AND resource_parent_seq IN (SELECT r.resource_seq
+                                        FROM Resource_Pub r, Resource_Parent p
+                                        WHERE r.resource_seq = p.resource_parent_seq
+                                        AND r.resource_type_db = 'EQUIPMENT_GROUP'
+                                        START WITH p.resource_parent_seq = :ResourceGroupSeq
+                                        CONNECT BY PRIOR p.resource_seq = p.resource_parent_seq)";
+}
+function ResourceIdLovFunction List < Entity(MaintResources) >  {
+   parameter ResourceGroupSeq Number;
+   parameter Site Text;
+   where = "resource_type = 'EQUIPMENT'
+            AND site = :Site
+            AND resource_parent_seq IN (SELECT r.resource_seq
+                                        FROM maint_resources_lov6 r
+                                        WHERE used_in_maintenance = 'TRUE')
+            AND resource_parent_seq IN (SELECT r.resource_seq
+                                        FROM Resource_Pub r, Resource_Parent p
+                                        WHERE r.resource_seq = p.resource_parent_seq
+                                        AND r.resource_type_db = 'EQUIPMENT_GROUP'
+                                        START WITH p.resource_parent_seq = :ResourceGroupSeq
+                                        CONNECT BY PRIOR p.resource_seq = p.resource_parent_seq)";
+}
+function GetToolPartForAssignedResource Structure(ToolPartStructure) {
+   parameter ResourceSeq Number;
+   parameter Site Text;
+}
+function GetCurrentDateInUtc Timestamp {
+}
+function GetSerialAvaliablity Text {
+   parameter SerialNo Text;
+}
+function GetEndDateFromHours Timestamp {
+   parameter StartDate Timestamp;
+   parameter Hours Text;
+}
+function CanMaintenanceTaskStart Text {
+   parameter Selection Text;
+}
+function CanMpcCloseTaskStart Text {
+   parameter Selection Text;
+}
+
+function ValidateToolStartEndDate Text {
+   initialcheck none;
+   ludependencies = RecordWorkVirtual, ToolResourceDemandVirtual;
+
+   parameter TaskSeq Number;
+   parameter AssignedResourceSeq Number;
+   parameter ActualStart Timestamp;
+   parameter ActualEnd Timestamp;
+}
+------------------------------- ENUMERATIONS --------------------------------
+@Override
+enumeration SignOffReqType {
+   value = "Executor" {
+      identifier = "Executor";
+      label = "Executor";
+   }
+   value = "Inspector" {
+      identifier = "Inspector";
+      label = "Certifier";
+   }
+   value = "Independent" {
+      identifier = "Independent";
+      label = "Inspector";
+   }
+}

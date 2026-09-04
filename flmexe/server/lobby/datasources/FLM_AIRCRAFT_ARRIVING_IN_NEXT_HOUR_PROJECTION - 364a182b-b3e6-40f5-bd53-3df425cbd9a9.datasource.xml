@@ -1,0 +1,38 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of aircraft arriving in next hour</DescriptiveText>
+    <LastModified>18/04/2024, 07:40:19</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_AIRCRAFT_ARRIVING_IN_NEXT_HOUR_PROJECTION</Name>
+    <ID>364a182b-b3e6-40f5-bd53-3df425cbd9a9</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>ShedArrivalDateTime</Column>
+            <Name>Shed Arrival Date Time</Name>
+            <DataType>Date</DataType>
+            <Value></Value>
+        </DataColumn>
+        <DataColumn>
+            <Column>FlightTurnStatus</Column>
+            <Name>Flight Turn Status</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>AircraftArrivingInNextHourQuerySet</EntitySet>
+    <EntityType>AircraftArrivingInNextHourQuery</EntityType>
+</ProjectionDataSource>

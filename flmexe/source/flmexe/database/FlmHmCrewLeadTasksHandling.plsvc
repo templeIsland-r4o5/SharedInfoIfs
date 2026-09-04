@@ -1,0 +1,21 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmCrewLeadTasksHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Default_Search_Context___ RETURN Page_Search_Context_Structure_Rec
+IS
+   rec_ Page_Search_Context_Structure_Rec;
+BEGIN
+   rec_.shift := '';
+   RETURN rec_;
+END Get_Default_Search_Context___;

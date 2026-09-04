@@ -1,0 +1,151 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250214        KASTLK  AVMXSOL-4078, Changed the FluidServiceDefinitionPageNavEntry index
+--  211130        rjoslk  AD-4123, Created.
+---------------------------------------------------------------------------------
+
+client FlmFluidServiceDef;
+component FLMEXE;
+layer Core;
+projection FlmFluidServiceDefHandling;
+description "Client for Fluid Service Definitions";
+
+--------------------------------- FRAGMENTS ---------------------------------
+navigator {
+   entry FluidServiceDefinitionPageNavEntry parent FlmexeNavigator.FluidNav  at index 3310 {
+      label = "Aircraft Fluid Servicing Definition";
+      page FluidServiceDefPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page FluidServiceDefPage using AvFluidServiceDefSet {
+   label = "Aircraft Fluid Servicing Definition";
+   selector FluidServiceSelector;
+   group DetailsGroup;
+   list DefinitionList(AvFluidServiceDefArr);
+}
+--------------------------------- COMMANDS ----------------------------------
+command MoveUpCommand for AvFluidServiceDefRec {
+   label = "Move Up";
+   execute {
+      call MoveUp();
+   }
+}
+
+command MoveDownCommand for AvFluidServiceDefRec {
+   label = "Move Down";
+   execute {
+      call MoveDown();
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector AssemblyLovSelector for AvAssembly {
+   static AssemblyTypeCode;
+   static AssemblyTypeName;
+}
+
+selector FluidServiceSelector for AvFluidServiceDef {
+   label = "${AssemblyTypeCode} - ${ServiceName}";
+   static ServiceDefName;
+}
+
+selector FluidDefLovSelector for FluidDefinitionQuery {
+   static AssemblyTypeCode;
+   static FluidName;
+}
+
+selector ConfigSlotPosSelector for AssemblyPositionQuery {
+   static CspCode {
+      label = "Config Slot Position Code";
+   }
+   static AssemblyTypeCode;
+   static CspConfigSlotCode {
+      label = "Config Slot Code";
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group DetailsGroup for AvFluidServiceDef {
+   label = "Details";
+
+   lov AvAssemblyRef with AssemblyLovSelector {
+      label = "Aicraft Type";
+      description = AvAssemblyRef.AssemblyTypeName;
+      size = Medium;
+
+   }
+   field ServiceName {
+      label = "Name";
+      size = Large;
+   }
+   field OptionalBool {
+      label = "Optional";
+   }
+}
+
+list DefinitionList for AvFluidServiceDefRec {
+   label = "Fluids and Gases to Record";
+   orderby = RecordOrder asc;
+
+   lov AvAssemblyFluidRef with FluidDefLovSelector using GetAcftFluidDefinitions(AssemblyTypeCode) {
+      label = "Assembly";
+      hidekey = [true];
+      description = AvAssemblyFluidRef.AssemblyTypeCode;
+      search = FluidName, AssemblyTypeCode;
+      size = Large;
+      validate command {
+         execute {
+            set FluidDefAssemblyCode = AvAssemblyFluidRef.AssemblyTypeCode;
+         }
+      }
+   }
+   lov AvConfigSlotPositionRef with ConfigSlotPosSelector using GetAssemblyPositions(AssemblyTypeCode, FluidDefAssemblyCode) {
+      label = "Position";
+      hidekey = [true];
+      description = AvConfigSlotPositionRef.CspCode;
+      search = CspCode, AssemblyTypeCode, CspConfigSlotCode;
+      size = Large;
+   }
+   field AvAssemblyFluidRef.FluidName {
+      label = "Fluid/Gas";
+      editable = [false];
+      size = Medium;
+   }
+   field RecordOrder {
+      label = "Order";
+   }
+   commandgroup MoveCommandGroup {
+      command MoveUpCommand;
+      command MoveDownCommand;
+   }
+}
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

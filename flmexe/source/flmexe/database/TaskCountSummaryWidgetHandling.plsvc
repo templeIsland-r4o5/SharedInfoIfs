@@ -1,0 +1,186 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: TaskCountSummaryWidgetHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-- 260825   rathus  AD-18556, Task Count Summary Widget data rendering logic
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Task_Count_Summary___ (
+   aircraft_id_ IN VARCHAR2,
+   barcode_ IN VARCHAR2,
+   start_date_ IN DATE,
+   end_date_ IN DATE) RETURN Task_Count_Summary_Structure_Arr
+IS
+   rec_ Task_Count_Summary_Structure_Arr;
+   idx_ NUMBER := 0;
+   
+   -- Cursor to get task count summary for Routine and Non Routine tasks within date range
+   CURSOR get_task_summary IS
+      SELECT 
+         CASE 
+            WHEN t.is_routine = 1 THEN 'Routine'
+            ELSE 'NonRoutine'
+         END as task_type,
+         COUNT(CASE WHEN t.state IN ('Removed', 'Cancelled', 'Completed') AND t.actual_finish BETWEEN start_date_ AND end_date_ THEN 1 END) AS completed_tasks_count,
+         COUNT(CASE WHEN t.state IN ('Active', 'In Work') AND (t.created_date BETWEEN start_date_ AND end_date_) THEN 1 END) AS open_tasks_count,
+         COUNT(CASE WHEN t.state IN ('Removed', 'Cancelled', 'Completed') THEN 1 END) as total_completed_count,
+         COUNT(CASE WHEN t.state IN ('Active', 'In Work') THEN 1 END) as total_open_count,
+         COUNT(CASE WHEN t.state IN ('Active', 'In Work') AND (t.duration IS NULL OR t.duration = 0) THEN 1 END) AS non_scheduled_tasks_count,
+         COUNT(*) as total_count
+      FROM av_exe_task t
+      WHERE (t.aircraft_id IS NULL OR t.aircraft_id = aircraft_id_)
+        AND (t.barcode IS NULL OR EXISTS (
+            SELECT 1 FROM av_aircraft_work_package wp 
+            WHERE wp.aircraft_work_package_id = t.aircraft_wp_id 
+            AND wp.barcode = barcode_
+        ))
+      GROUP BY CASE 
+                  WHEN t.is_routine = 1 THEN 'Routine'
+                  ELSE 'NonRoutine'
+               END
+      ORDER BY task_type;
+   
+   -- Variables for new calculations
+   avg_per_day_completed_ NUMBER := 0;
+   avg_per_day_total_ NUMBER := 0;
+   days_between_ NUMBER := 1;
+   total_finished_count_ NUMBER := 0;
+   total_states_count_ NUMBER := 0;
+   oldest_planned_date_ DATE;
+   
+BEGIN
+   -- Initialize the array
+   rec_ := Task_Count_Summary_Structure_Arr();
+   
+   -- Second pass: populate the array with calculated data
+   FOR task_summary_rec_ IN get_task_summary LOOP
+      idx_ := idx_ + 1;
+      rec_.EXTEND;
+      
+      rec_(idx_).Task_Type := task_summary_rec_.task_type;
+      rec_(idx_).Completed := task_summary_rec_.completed_tasks_count;
+      rec_(idx_).Total_Completed_Tasks := task_summary_rec_.total_completed_count;
+      rec_(idx_).Open := task_summary_rec_.open_tasks_count;
+      rec_(idx_).Total_Open_Tasks := task_summary_rec_.total_open_count;
+      rec_(idx_).Total_Tasks_Count := task_summary_rec_.total_count;
+      rec_(idx_).Non_Scheduled_Tasks_Count := task_summary_rec_.non_scheduled_tasks_count;
+      
+      -- Calculate percentage completed (avoid division by zero)
+      IF task_summary_rec_.total_count > 0 THEN
+         rec_(idx_).Total_Percentage_Completed := ROUND((task_summary_rec_.total_completed_count / task_summary_rec_.total_count) * 100, 0);
+      ELSE
+         rec_(idx_).Total_Percentage_Completed := 0;
+      END IF;
+      
+      -- Only for Non Routine tasks
+      IF task_summary_rec_.task_type = 'NonRoutine' THEN
+         -- Get the oldest scheduled start date from av_aircraft_work_package for all non-routine tasks
+         SELECT MIN(wp.Actual_Start_Date_Time)
+           INTO oldest_planned_date_
+           FROM av_exe_task t
+           JOIN av_aircraft_work_package wp ON wp.aircraft_work_package_id = t.aircraft_wp_id
+          WHERE (t.aircraft_id IS NULL OR t.aircraft_id = aircraft_id_)
+            AND (t.barcode IS NULL OR wp.barcode = barcode_)
+            AND t.is_routine = 0
+            AND wp.Actual_Start_Date_Time IS NOT NULL;
+         
+         -- Calculate days between oldest scheduled start date and today
+         IF oldest_planned_date_ IS NOT NULL THEN
+            days_between_ := GREATEST(1, TRUNC(SYSDATE) - TRUNC(oldest_planned_date_));
+         ELSE
+            days_between_ := 1;
+         END IF;
+         
+         -- Count for Finished (for AvgPerDayForTotalCompletedTasks)
+         SELECT COUNT(*)
+           INTO total_finished_count_
+           FROM av_exe_task t
+          WHERE (t.aircraft_id IS NULL OR t.aircraft_id = aircraft_id_)
+            AND (t.barcode IS NULL OR EXISTS (
+                 SELECT 1 FROM av_aircraft_work_package wp 
+                  WHERE wp.aircraft_work_package_id = t.aircraft_wp_id 
+                    AND wp.barcode = barcode_
+                ))
+            AND t.is_routine = 0
+            AND t.state IN ('Completed', 'Removed', 'Cancelled');
+         
+         -- Count for all required states (for AvgPerDayForTotalTasks)
+         SELECT COUNT(*)
+           INTO total_states_count_
+           FROM av_exe_task t
+          WHERE (t.aircraft_id IS NULL OR t.aircraft_id = aircraft_id_)
+            AND (t.barcode IS NULL OR EXISTS (
+                 SELECT 1 FROM av_aircraft_work_package wp 
+                  WHERE wp.aircraft_work_package_id = t.aircraft_wp_id 
+                    AND wp.barcode = barcode_
+                ))
+            AND t.is_routine = 0
+            AND t.state IN ('Active', 'In Work', 'Removed','Cancelled', 'Completed');
+         
+         -- Calculate averages
+         avg_per_day_completed_ := total_finished_count_ / days_between_;
+         avg_per_day_total_ := total_states_count_ / days_between_;
+         
+         rec_(idx_).Avg_Per_Day_For_Total_Completed_Tasks := ROUND(avg_per_day_completed_, 0);
+         rec_(idx_).Avg_Per_Day_For_Total_Tasks := ROUND(avg_per_day_total_, 0);
+      ELSE
+         rec_(idx_).Avg_Per_Day_For_Total_Completed_Tasks := NULL;
+         rec_(idx_).Avg_Per_Day_For_Total_Tasks := NULL;
+      END IF;
+   END LOOP;
+   
+   RETURN rec_;
+END Get_Task_Count_Summary___;
+
+
+FUNCTION Get_Open_And_Closed_Task_Count___ (
+   aircraft_id_ IN VARCHAR2,
+   barcode_ IN VARCHAR2,
+   start_date_ IN DATE,
+   end_date_ IN DATE) RETURN Open_Completed_Task_Count_Structure_Arr
+IS
+   rec_ Open_Completed_Task_Count_Structure_Arr;
+   index_ NUMBER := 0;
+   
+   CURSOR get_task_count IS
+      SELECT 
+         CASE 
+            WHEN t.is_routine = 1 THEN 'Routine'
+            ELSE 'NonRoutine'
+         END as task_type,
+         COUNT(CASE WHEN t.state IN ('Removed', 'Cancelled', 'Completed') AND t.actual_finish BETWEEN start_date_ AND end_date_ THEN 1 END) AS closed_tasks_count,
+         COUNT(CASE WHEN t.state IN ('Active', 'In Work') AND (t.created_date BETWEEN start_date_ AND end_date_) THEN 1 END) AS opened_tasks_count
+      FROM av_exe_task t
+      WHERE (t.aircraft_id IS NULL OR t.aircraft_id = aircraft_id_)
+        AND (t.barcode IS NULL OR EXISTS (
+            SELECT 1 FROM av_aircraft_work_package wp 
+            WHERE wp.aircraft_work_package_id = t.aircraft_wp_id 
+            AND wp.barcode = barcode_
+        ))
+      GROUP BY CASE 
+                  WHEN t.is_routine = 1 THEN 'Routine'
+                  ELSE 'NonRoutine'
+               END
+      ORDER BY task_type;
+BEGIN
+   
+   rec_ := Open_Completed_Task_Count_Structure_Arr();
+   
+   FOR task_count_rec_ IN get_task_count LOOP
+      index_ := index_ + 1;
+      rec_.EXTEND;
+      
+      rec_(index_).Task_Type := task_count_rec_.task_type;
+      rec_(index_).Completed_Count := task_count_rec_.closed_tasks_count;
+      rec_(index_).Open_Count := task_count_rec_.opened_tasks_count;
+   END LOOP;  
+    
+	RETURN rec_;
+END Get_Open_And_Closed_Task_Count___;

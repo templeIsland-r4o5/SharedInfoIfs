@@ -1,0 +1,33 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/26/24, 5:05:51 PM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_AVAILABLE_TECHNICIANS_PROJECTION</Name>
+    <ID>e6620555-f234-44ca-a6c3-0e30a11e0181</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>AvailableTechniciansCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>PageParameter</Column>
+                <DataType>Number</DataType>
+                <Value>$duration$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

@@ -1,0 +1,1336 @@
+--------------------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  ---------------------------------------------------------------
+--  250430     KAPALK  AD-18282, Added Zone tab in the Line workscope loader page
+--  250430     KAPALK  AD-18285, Added Panel Skill tab in the Line workscope loader page
+--  250419     KAPALK  AD-18284, Added Part Requirement tab in the Line workscope loader page.
+--  250217     SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+-- 2024-02-06  ROERLK  AD-11896, Added mx status in the task step
+-- 2024-01-24  VAALLK  AD-11861, Added external id in the MeasurementList
+-- 2023-08-04  majslk  AD-10387, Modified labels to support time zone changes
+-- 2023-05-25  BHSILK  AD-9895, Added Barcode field to WorkPAckageList
+-- 2023-01-04  LAWALK  AD-9124, Added RecordId field to FaultList
+-- 2022-12-08  DUWJLK  AD-9055, Added TaskStepList, TaskStepErrorList and Task Step Nexted Tab
+-- 2022-12-02  BHSILK  AD-9054, Added changes to support task measurement in WSL
+-- 2022-12-01  majslk  AD-9053, Added changes to support task fault parts in WSL
+-- 2022-11-24  SatGlk  AD-8950, Extend WSL UI to show Task/Fault Action
+-- 2022-11-18  WAISLK  AD-8941, Added changes to support task fault labour in WSL
+-- 2022-11-15  BHSILK  AD-8942, Added EstimatedDuration for WorkTaskList
+-- 2022-11-10  BHSILK  AD-8986, Changes to support task fault tools
+-- 2022-11-09  majslk  AD-8943, Added FailureTypeCode, FaultCode, FoundByUser, PhaseOfFlightCode, EstimatedDuration for FaultsList
+-- 2022-11-01  WAISLK  AD-8834, Added WorkTypeList, WorkTypeErrorList and new tab to the ForwardLineMaintenanceWorkPackageLoaderPage
+-- 2022-10-31  LAVWLK  AD-8961, Modified WorkPackageList, FaultList by changing the feild name and description.
+-- 2022-10-07  DUWJLK  AD-8793, Changed label name of WorkscopeLoaderNavEntry and header of ForwardLineMaintenanceWorkPackageLoaderPage
+-- 2022-09-13  KAPALK  AD-8317, Changed label for tasks, faults and work packages
+-- 2022-09-05  DUWJLK  AD-8572, Changed FileLoadAssistant markdowntext content
+-- 2022-08-17  DUWJLK  AD-8311, Added Label for ATA in Faultlist
+-- 2022-08-16  DUWJLK  AD-8311, Added Fault Tab and create Faultlist
+-- 2022-08-16  majslk  AD-8387, Added status column to WorkPackageList and WorkTaskList
+-- 2222-08-09  majslk  AD-8387, Added WorkTaskList and Work Task tab
+-- 2022-08-09  KAPALK  AD-8046, Changed the page name to ForwardLineMaintenanceWorkPackageLoaderPage in FilrLoadAssistant
+-- 2022-07-29  SatGlk  AD-8045, Changed naming from Workscope Loader to Forward Line Maintenance Work Package Loader
+-- 2022-07-25  SatGlk  AD-8045, Implemented view error functionality
+-- 2022-07-18  SatGlk  AD-8041, Added state colours
+-- 2022-07-14  SatGlk  AD-8041, Implemented Upload Workscope page
+-- 2022-07-21  KAPALK  AD-8042, Called the ImportFile procedure
+--------------------------------------------------------------------------------------
+client FlmLoadWorkscope;
+component FLMEXE;
+layer Core;
+projection FlmLoadWorkscopeHandling;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment WorkScopeLoaderTabs;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry WorkscopeLoaderNavEntry parent FlmexeNavigator.StationPlanningNav at index 2200 {
+      label = "Line Maintenance Work Package Loader";
+      page ForwardLineMaintenanceWorkPackageLoaderPage;
+   }
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page ForwardLineMaintenanceWorkPackageLoaderPage using AvFileUploadSet {
+   label = "Line Maintenance Work Package Loader";
+   stateindicator AvFileUploadStateIndicator;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   selector AvFileUploadCustomSelector;
+   group ExecutionDetailsGroup;
+   tabs {
+      tab {
+         label = "Work Packages";
+         list WorkPackageList(PAvAircraftWPArray);
+         list WorkPackageErrorList(PAvAircraftWPErrorsArray) bind WorkPackageList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Tasks";
+         list WorkTaskList(PAvExeTaskArray);
+         list WorkTaskErrorList(PAvExeTaskErrorsArray) bind WorkTaskList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Faults";
+         list FaultList(PAvFaultArray);
+         list FaultErrorList(PAvFaultErrorArray) bind FaultList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Tools";
+         list ToolList(PAvToolArray);
+         list ToolErrorList(PAvToolErrorsArray) bind ToolList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Skills";
+         list LabourSkillList(PAvLabourArray);
+         list LabourErrorList(PAvLabourErrorsArray) bind LabourSkillList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Parts";
+         list PartList(PAvPartArray);
+         list PartErrorList(PAvPartErrorsArray) bind PartList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Measurements";
+         list MeasurementList(PAvMeasurementArray);
+         list MeasurementErrorList(PAvMeasurementErrorsArray) bind MeasurementList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Actions";
+         list ActionList(PAvActionArray);
+         list ActionErrorList(PAvActionErrorsArray) bind ActionList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Work Types";
+         list WorkTypeList(PAvWPWorkTypeArray);
+         list WorkTypeErrorList(PAvWPWorkTypeErrorsArray) bind WorkTypeList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Task Step";
+         list TaskStepList(PAvTaskStepArray);
+         list TaskStepErrorList(PAvTaskStepErrorsArray) bind TaskStepList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Step Skills";
+         list StepSkillList(PAvStepSkillArray);
+         list StepSkillErrorList(PAvStepSkillErrorsArray) bind StepSkillList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Unassigned";
+         list UnassignedTaskList(PAvUnassignedTaskArray);
+         list UnassignedTaskErrorList(PAvUnassignedErrorsArray) bind UnassignedTaskList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Panels";
+         list PanelList(PAvPanelArray);
+         list PanelErrorList(PAvPanelErrorsArray) bind PanelList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Zones";
+         list ZoneList(PAvZoneArray);
+         list ZoneErrorList(PAvZoneErrorsArray) bind ZoneList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Panel Requirement";
+         list PanelRequirementList(PAvPanelRequirementArray);
+         list PanelReqErrorList(PAvPanelReqErrorsArray) bind PanelRequirementList {
+            label = "Panel Requirement Error List";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Panel Skills";
+         list PanelSkillList(PAvPanelSkillArray);
+         list PanelSkillErrorList(PAvPanelSkillErrorsArray) bind PanelSkillList {
+            label = "Panel Skill Error List";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Workscope History";
+         list WpHistoryList(PAvWpHistoryArray);
+         list WpHistoryErrorList(PAvWpHistoryErrorsArray) bind WpHistoryList {
+            label = "Workscope History Error List";
+            display = Nested;
+         }
+      }
+   }
+   command LoadWorkscopeCommand;
+   command ViewTransTabErrorsCommand;
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector AvFileUploadCustomSelector for AvFileUpload {
+   label = "${LoadFileId} -${FileName}";
+   static LoadFileId;
+   static LoadDateTime {
+      label = "Load Date (UTC)";
+   }
+
+   static FileName;
+   badge Objstate {
+      label = "Status";
+      showlabel = false;
+      emphasis Complementary2 = [Objstate = "Uploaded"];
+      emphasis Complementary6 = [Objstate = "Processing"];
+      emphasis Complementary1 = [Objstate = "Failed"];
+      emphasis Complementary4 = [Objstate = "Error"];
+      emphasis Complementary9 = [Objstate = "Completed"];
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command LoadWorkscopeCommand for AvFileUpload {
+   label = "Load Work Package";
+   mode = Global;
+   variable NewFileLoadIdVar Number;
+
+   execute {
+      assistant FileLoadAssistant into(NewFileLoadIdVar) {
+         when OK {
+            navigate {
+               page ForwardLineMaintenanceWorkPackageLoaderPage {
+                  filter(NewFileLoadIdVar, LoadFileId);
+               }
+            }
+         }
+         when NO {
+            exit;
+         }
+      }
+   }
+}
+command ViewTransTabErrorsCommand for AvFileUpload {
+   label = "External File Transactions Logs";
+   mode = SingleRecord;
+   enabled = [LoadFileId != null];
+   execute {
+      navigate "page/ExternalFileTransactions/Form?$filter=LoadFileId eq ${LoadFileId}";
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group ExecutionDetailsGroup for AvFileUpload {
+   label = "Execution Summary";
+   field LoadFileId;
+   badge Objstate {
+      label = "Status";
+      emphasis Complementary2 = [Objstate = "Uploaded"];
+      emphasis Complementary6 = [Objstate = "Processing"];
+      emphasis Complementary1 = [Objstate = "Failed"];
+      emphasis Complementary4 = [Objstate = "Error"];
+      emphasis Complementary9 = [Objstate = "Completed"];
+   }
+   field FailedRows;
+   field FileName;
+   field LoadDateTime {
+      label = "Load Date (UTC)";
+   }
+   field UserId {
+      contactwidget {
+         enabled = [true];
+         source = User;
+      }
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list WorkPackageList for PAvAircraftWP {
+   orderby = RowNo;
+   label = "Work Package";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Work Order ID";
+   }
+   field AircraftUniqueKey {
+      label = "Aircraft ID";
+   }
+   field WorkPackageName;
+   field SchedStartDateTimeS {
+      label = "Start Date(UTC)";
+   }
+
+   field SchedEndDateTimeS {
+      label = "End Date(UTC)";
+   }
+
+   field DurationS {
+      label = "Duration";
+   }
+   field LocationCode {
+      label = "Location";
+   }
+   field Status;
+   field Barcode {
+      label = "Maintenix Barcode";
+   }
+   field IsHeavyMaintenance {
+      label = "Heavy Maintenance";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+list WorkPackageErrorList for PAvAircraftWPErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list WorkTypeList for PAvWPWorkType {
+   orderby = RowNo;
+   label = "Work Type";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalWpId {
+      label = "Work Order ID";
+   }
+   field AircraftUniqueKey {
+      label = "Aircraft ID";
+   }
+   field WorkTypeCode;
+
+   field WorkTypeRef.WorkTypeDescription {
+      label = "Work Type Description";
+   }
+
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list WorkTypeErrorList for PAvWPWorkTypeErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list FaultList for PAvFault {
+   orderby = RowNo;
+   label = "Fault";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalWpId {
+      label = "Work Order ID";
+   }
+   field AircraftUniqueKey {
+      label = "Aircraft ID";
+   }
+   field ExternalId {
+      label = "Fault ID";
+   }
+   field ATA {
+      label = "ATA";
+   }
+   field Description {
+      label = "Name";
+   }
+   field FaultSourceCode;
+   field FoundOnDateS {
+      label = "Found On Date(UTC)";
+   }
+   field LogbookTypeCode;
+   field LogbookReference;
+   field FailureTypeCode;
+   field FaultCode;
+   field FoundByUser;
+   field FoundOnFlight;
+   field PhaseOfFlightCode;
+   field EstimatedDurationS {
+      label = "Estimated Duration";
+   }
+   field Status;
+   field RecordId {
+      label = "Record ID";
+   }
+   field Evaluated;
+   field MaterialAvailUserStatus {
+      label = "Material Availability Status User Code";
+   }
+   field FoundDuringWPId {
+      label = "Found During Work Package";
+   }
+   field FoundDuringTaskId {
+      label = "Found During Task";
+   }
+   field ScheduledStartDateS {
+      label = "Scheduled Start Date";
+   }
+   field ScheduledEndDateS {
+      label = "Scheduled End Date";
+   }
+   field Location {
+      label = "Task Location ";
+   }
+   field CrewCode {
+      label = "Crew Code ";
+   }
+   field CrewName {
+      label = "Crew Name ";
+   }
+   field IsRoutine {
+      label = "Routine";
+   }
+   field TaskType;
+   field LongDescription {
+      label = "Description";
+   }
+   field FileLine {
+      multiline = true;
+   }
+   field EtopsSignificant {
+      label = "ETOPS Significant";
+   }
+   field FlightSafetyImpact {
+      label = "Flight Safety Impact";
+   }
+}
+list FaultErrorList for PAvFaultErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list WorkTaskList for PAvExeTask {
+   orderby = RowNo;
+   label = "Task";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalWpId {
+      label = "Work Order ID";
+   }
+   field AircraftUniqueKey {
+      label = "Aircraft ID";
+   }
+   field ExternalId {
+      label = "Task ID";
+   }
+   field ConfigPosition;
+   field ClassCode {
+      label = "Class";
+   }
+   field SubclassCode {
+      label = "Subclass";
+   }
+   field TaskCode;
+   field TaskName;
+   field EstimatedDurationS {
+      label = "Estimated Duration";
+   }
+   field Status {
+      label = "Status";
+   }
+   field TaskPriority {
+      label = "Task Priority";
+   }
+   field ScheduledStartDateS {
+      label = "Scheduled Start Date";
+   }
+   field ScheduledEndDateS {
+      label = "Scheduled End Date";
+   }
+   field Location {
+      label = "Task Location ";
+   }
+   field Description {
+      label = "Name";
+   }
+   field IsRoutine {
+      label = "Routine";
+   }
+   field CrewCode {
+      label = "Crew Code ";
+   }
+   field CrewName {
+      label = "Crew Name ";
+   }
+   field MaterialAvailUserStatus {
+      label = "Material Availability Status User Code";
+   }
+   field EtopsSignificant {
+      label = "ETOPS Significant";
+   }
+   field FlightSafetyImpact {
+      label = "Flight Safety Impact";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list WorkTaskErrorList for PAvExeTaskErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list ToolList for PAvTool {
+   orderby = RowNo;
+   label = "Tool";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Tool ID";
+   }
+   field TaskFaultId {
+      label = "Task Fault ID";
+   }
+
+   field ToolSpecificationCode;
+   field ToolPartNo;
+   field SchedDurationS {
+      label = "Tool Est Duration";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list ToolErrorList for PAvToolErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+list LabourSkillList for PAvLabour {
+   orderby = RowNo;
+   label = "Skill";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Labour Skill ID";
+   }
+   field TaskFaultId {
+      label = "Task Fault ID";
+   }
+   field CompetencyId {
+      label = "Labour Skill";
+   }
+   field NumPeopleRequired {
+      label = "Number of Labour Resources";
+   }
+   field LabourHours {
+      label = "Labour Duration";
+   }
+   field IsCertRequired {
+      label = "Certify Required";
+   }
+   field CertHours {
+      label = "Certify Hours";
+   }
+   field IsIndInspectRequired {
+      label = "Independent Inspection";
+   }
+   field IndInspectHours {
+      label = "Independent Inspection Hours";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+list LabourErrorList for PAvLabourErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list ActionList for PAvAction {
+   orderby = RowNo;
+   label = "Actions";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Action ID";
+   }
+   field TaskFaultId {
+      label = "Task Fault ID";
+   }
+   field ActionOrd {
+      label = "Action Order";
+   }
+   field ActionUser;
+   field ActionDesc {
+      label = "Action Description";
+   }
+   field ActionDateS {
+      label = "Action Date(UTC)";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list ActionErrorList for PAvActionErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list PartList for PAvPart {
+   orderby = RowNo;
+   label = "Part";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Part ID";
+   }
+   field TaskFaultId {
+      label = "Task Fault ID";
+   }
+   field AssemblyTypeCode;
+   field PartGroupUniqueKey {
+      label = "Part Group";
+   }
+   field ConfigSlotPosUniqueKey {
+      label = "Config Slot Position";
+   }
+   field AsseConfigPosUniqueKey {
+      label = "Assembly Position";
+   }
+   field RemovedPartUniqueKey {
+      label = "Removed Part Number";
+   }
+   field RemovedSerialNo {
+      label = "Removed Serial Number";
+   }
+   field RemovedQuantity {
+      label = "Removed Quantity";
+   }
+   field RemovedManufacturer {
+      label = "Removed Part Manufacturer";
+   }
+   field RemovalReasonCode {
+      label = "Removal Reason";
+   }
+   field InstalledPartUniqueKey {
+      label = "Installed Part Number";
+   }
+   field InstalledSerialNo {
+      label = "Installed Serial Number";
+   }
+   field InstalledQuantity {
+      label = "Installed Quantity";
+   }
+   field InstalledManufacturer {
+      label = "Installed Part Manufacturer";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list MeasurementList for PAvMeasurement {
+   orderby = RowNo;
+   label = "Measurement";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "Measurement ID";
+   }
+   field TaskExternalId {
+      label = "Task ID";
+   }
+   field MeasurementTypeCode {
+      label = "Measurement Type Code";
+   }
+   field MeasurementValue {
+      label = "Measurement Value";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list MeasurementErrorList for PAvMeasurementErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list PartErrorList for PAvPartErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+list TaskStepList for PAvTaskStep {
+   orderby = RowNo;
+   label = "Task Step";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field ExternalId {
+      label = "External_ID";
+   }
+   field TaskFaultId {
+      label = "Task Fault ID";
+   }
+   field StepOrder {
+      label = "Step Order";
+   }
+   field Applicability {
+      label = "Applicability";
+   }
+   field PrimarySkill {
+      columnvisible = [false];
+      label = "Primary Skill";
+   }
+   field SecondarySkill {
+      columnvisible = [false];
+      label = "Secondary Skill";
+   }
+   field StepDescription {
+      label = "Step Description";
+   }
+   field Status {
+      label = "Status";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+list TaskStepErrorList for PAvTaskStepErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+list StepSkillList for PAvStepSkill {
+   orderby = RowNo;
+   label = "Step Skills";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "Task ID";
+   }
+   field TaskStepExternalId {
+      label = "Task Step ID";
+   }
+   field SkillCode {
+      label = "Skill Code";
+   }
+   field IsInspectionRequired {
+      label = "Independent Inspection Required";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list StepSkillErrorList for PAvStepSkillErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list UnassignedTaskList for PAvUnassigned {
+   orderby = RowNo;
+   label = "Unassigned";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "External ID";
+   }
+   field TaskFaultId {
+      label = "Task/Fault ID";
+   }
+   field Barcode {
+      label = "Barcode";
+   }
+   field TaskFaultName {
+      label = "Task/FaultName";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list UnassignedTaskErrorList for PAvUnassignedErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list ZoneList for PAvZone {
+   orderby = RowNo;
+   label = "Panels";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "Task/Fault ID";
+   }
+   field ZoneCode {
+      label = "Zone Code";
+   }
+   field ZoneName {
+      label = "Zone Name";
+      multiline = true;
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list ZoneErrorList for PAvZoneErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant FileLoadAssistant using WorkscopeFileLoadVirtualSet {
+   label = "Load Work Package";
+   savemode = OnLostFocus;
+   output(LoadFileId);
+
+   steps {
+      step {
+         markdowntext {
+            text = "Accepted file type .CSV only and maximum file size should be 800 KB";
+         }
+         fileselector {
+            multifile = [false];
+            init command {
+               execute {
+                  set component.UploadQueue.AcceptedExtensions = ".csv";
+               }
+            }
+            onfileselect {
+               execute {
+                  set FileName = component.UploadQueue.FileList;
+               }
+            }
+            label = "Browse";
+         }
+      }
+      final step {
+      }
+   }
+   finish command {
+      label = "Upload";
+      enabled = [component.UploadQueue.InvalidFileList = "" and not component.UploadQueue.IsEmpty];
+      variable ImportFileInfoVar Structure(ImportFileInfoStructure);
+
+      execute {
+         if[FileName != null] {
+            upload "WorkscopeFileLoadVirtualSet(Objkey=$[Objkey])/FileData";
+            call ImportFile() into ImportFileInfoVar;
+            set LoadFileId = ImportFileInfoVar.LoadFileId;
+            set ReturnInfo = ImportFileInfoVar.Info;
+            exit OK;
+         }
+      }
+   }
+   cancel command {
+      execute {
+         if [not component.UploadQueue.IsEmpty] {
+            confirm("Do you want to exit ?") {
+               when CANCEL {
+                  exit;
+               }
+               when OK {
+                  exit NO;
+               }
+            }
+         }
+         else {
+            exit NO;
+         }
+      }
+   }
+}
+
+----------------------------- STATE INDICATORS ------------------------------
+
+@Override
+stateindicator AvFileUploadStateIndicator for AvFileUpload {
+   state "Uploaded" {
+      completed = 17%;
+      emphasis Complementary2 = [Objstate = "Uploaded"];
+   }
+   state "Processing" {
+      completed = 33%;
+      emphasis Complementary6 = [Objstate = "Processing"];
+   }
+   state "Completed" {
+      completed = 100%;
+      emphasis Complementary9 = [Objstate = "Completed"];
+   }
+   state "Error" {
+      completed = 100%;
+      emphasis Complementary4 = [Objstate = "Error"];
+   }
+   state "Failed" {
+      completed = 100%;
+      emphasis Complementary1 = [Objstate = "Failed"];
+   }
+}

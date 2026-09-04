@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+  <DescriptiveText>Starting lobby designed for Hangar Maintenance Supervisors to access all functionalities.</DescriptiveText>
+  <LastModified>2025-08-20-10.16.22</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="2a0331d2-db15-4d15-96e1-25e0e72c2059" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="0b8bfa7a-c2bb-4dcd-bdce-424b9c9cf1fd" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters/>
+  <PageTitle>Hangar Maintenance Supervisor</PageTitle>
+  <PageId>c34b39a9-2a38-4466-9ba5-62f97e013836</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

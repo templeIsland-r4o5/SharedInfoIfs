@@ -1,0 +1,108 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  211130        Rjoslk  AD-4123, Created.
+---------------------------------------------------------------------------------
+
+projection FlmFluidServiceDefHandling;
+component FLMEXE;
+layer Core;
+description "API for handling Fluid Service Definitions";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFluidServiceDefSet for AvFluidServiceDef;
+entityset AvFluidServiviceDefRecSet for AvFluidServiceDefRec;
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvFluidServiceDef {
+   attribute ServiceDefName Text {
+      fetch = "assembly_type_code|| '-' || service_name";
+   }
+   reference AvAssemblyRef(AssemblyTypeCode) to AircraftTypeQuery(AssemblyTypeCode);
+   array AvFluidServiceDefArr(AssemblyTypeCode, FluidServiceDefId) to AvFluidServiceDefRec(AssemblyTypeCode, FluidServiceDefId);
+}
+
+@Override
+entity AvFluidServiceDefRec {
+   ludependencies = AvFluidServiceDef, AvFluidServiceDefRec;
+   crud = Create, Delete, Read;
+
+   action MoveUp {
+   }
+
+   action MoveDown {
+   }
+
+   reference AvAssemblyFluidRef(FluidDefinitionId) to FluidDefinitionQuery(FluidDefinitionId) {
+      where = "(:parent.AssemblyTypeCode = :child.AcftAssemblyTypeCode)";
+   }
+   reference AvConfigSlotPositionRef(ConfigSlotPositionId) to AssemblyPositionQuery(ConfigSlotPosId) {
+      where = "(:parent.AssemblyTypeCode = :child.AcftAssemblyTypeCode) AND (:parent.FluidDefAssemblyCode = :child.AssemblyTypeCode)";
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query AircraftTypeQuery {
+   lu = AvAssembly;
+   from = "Av_Assembly";
+   where = "assembly_type_class_code = 'ACFT'";
+   keys = AssemblyTypeCode;
+   attribute AssemblyTypeCode Text;
+   attribute AssemblyTypeName Text;
+   attribute AssemblyTypeClassCode Text;
+}
+
+query FluidDefinitionQuery {
+   lu = AvFluidDefinition;
+   from = "Fluid_Definitions_For_Acft";
+   keys = AssemblyTypeCode, FluidDefinitionId;
+   attribute AcftAssemblyTypeCode Text;
+   attribute AssemblyTypeCode Text;
+   attribute FluidDefinitionId Number;
+   attribute FluidName Text;
+}
+
+query AssemblyPositionQuery {
+   lu = AvConfigSlotPosition;
+   from = "Positions_For_Assembly_In_Acft";
+   keys = ConfigSlotPosId;
+   attribute CspAssyTypeCode Text;
+   attribute CspConfigSlotCode Text;
+   attribute CspCode Text;
+   attribute ConfigSlotPosId Number;
+   attribute AcftAssemblyTypeCode Text;
+   attribute AssemblyTypeCode Text;
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetAcftFluidDefinitions List<Entity(FluidDefinitionQuery)> {
+   from = "Fluid_Definitions_For_Acft";
+   parameter AssemblyTypeCode Text;
+   where = ":AssemblyTypeCode = acft_assembly_type_code";
+}
+
+function GetAssemblyPositions List<Entity(AssemblyPositionQuery)> {
+   from = "Positions_For_Assembly_In_Acft";
+   where = "(:AircraftAssyTypeCode = Acft_Assembly_Type_Code) AND (:FluidDefAssemblyCode = Assembly_Type_Code)";
+   parameter AircraftAssyTypeCode Text;
+   parameter FluidDefAssemblyCode Text;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

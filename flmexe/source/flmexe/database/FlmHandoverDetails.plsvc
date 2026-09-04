@@ -1,0 +1,875 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmHandoverDetails
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Hand_Over_Details_Virtual_Rec )
+IS 
+   rec_dup_          Hand_Over_Details_Virtual_Rec ;
+   
+   CURSOR get_handover_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_HANDOVER_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;
+      
+   CURSOR get_blocked_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_BLOCKED_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;
+      
+    CURSOR get_in_maint_aircraft_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_IN_MAINTENANCE_AIRCRAFTS_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;
+      
+    CURSOR get_completed_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_COMPLETED_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;  
+ 
+    CURSOR get_nr_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_NON_ROUTINE_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;        
+
+    CURSOR get_task_within_range_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_TASKS_WITHIN_RANGE_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_; 
+           
+   CURSOR get_deferred_faults_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_DEFERRED_FAULTS_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;  
+BEGIN
+   rec_dup_ := rec_;
+   
+   IF rec_.source = 'HMSLOBBY' or rec_.source = 'HMCLOBBY' THEN   
+      Add_Handover_And_Blocked_Tasks(rec_.objkey, rec_.aircraft_id, rec_.work_package_id); 
+      Add_Completed_Tasks(rec_.objkey, rec_.aircraft_id, rec_.work_package_id, rec_.start_time,rec_.end_time);
+      Add_Non_Routines(rec_.objkey, rec_.aircraft_id, rec_.work_package_id, rec_.start_time,rec_.end_time); 
+      
+      OPEN get_completed_task_count(rec_dup_.objkey);
+      FETCH get_completed_task_count INTO rec_dup_.completed_task_count;
+      CLOSE get_completed_task_count;  
+      
+      OPEN get_nr_count(rec_dup_.objkey);
+      FETCH get_nr_count INTO rec_dup_.non_routine_count;
+      CLOSE get_nr_count;  
+   
+   ELSE
+      Add_In_Maintenance_Aircrafts_List___(rec_.objkey,rec_.start_time,rec_.end_time);
+      Add_Line_Handover_And_Blocked_Tasks___(rec_.objkey,rec_.start_time,rec_.end_time,rec_.current_user_airport_id);
+      Add_In_Range_Tasks(rec_dup_.objkey, rec_dup_.aircraft_id, rec_dup_.start_time,rec_dup_.end_time);
+      Add_Deferred_Faults_List___(rec_.objkey,rec_.start_time,rec_.end_time);
+      
+      OPEN get_in_maint_aircraft_count(rec_dup_.objkey);
+      FETCH get_in_maint_aircraft_count INTO rec_dup_.in_maint_aircraft_count;
+      CLOSE get_in_maint_aircraft_count;  
+
+      OPEN get_task_within_range_count(rec_dup_.objkey);
+      FETCH get_task_within_range_count INTO rec_dup_.in_range_task_count;
+      CLOSE get_task_within_range_count;
+      
+      OPEN get_deferred_faults_count(rec_dup_.objkey);
+      FETCH get_deferred_faults_count INTO rec_dup_.deferred_fault_count;
+      CLOSE get_deferred_faults_count;  
+   END IF;
+   
+   OPEN get_handover_task_count(rec_dup_.objkey);
+   FETCH get_handover_task_count INTO rec_dup_.handover_task_count;
+   CLOSE get_handover_task_count;     
+
+   OPEN get_blocked_task_count(rec_dup_.objkey);
+   FETCH get_blocked_task_count INTO rec_dup_.blocked_task_count;
+   CLOSE get_blocked_task_count;
+   
+   super(rec_dup_);
+
+END CRUD_Create___;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Update___(
+   old_ IN Hand_Over_Details_Virtual_Rec,
+   new_ IN Hand_Over_Details_Virtual_Rec)
+IS 
+  rec_dup_ Hand_Over_Details_Virtual_Rec ;
+  
+  CURSOR get_handover_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_HANDOVER_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;
+      
+   CURSOR get_blocked_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_BLOCKED_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;
+      
+   CURSOR get_in_maint_aircraft_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_IN_MAINTENANCE_AIRCRAFTS_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;   
+      
+   CURSOR get_completed_task_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_COMPLETED_TASK_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;     
+
+   CURSOR get_nr_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_NON_ROUTINE_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;        
+
+   CURSOR get_task_within_range_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_TASKS_WITHIN_RANGE_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_;     
+      
+   CURSOR get_deferred_faults_count(objkey_ VARCHAR2) IS
+      SELECT COUNT(*) 
+      FROM ${PROJECTION}_DEFERRED_FAULTS_VIRTUAL_VRT
+      WHERE parent_objkey = objkey_; 
+BEGIN
+   rec_dup_ := new_;
+   
+   IF old_.source = 'HMSLOBBY' or old_.source = 'HMCLOBBY' THEN   
+      Add_Handover_And_Blocked_Tasks(rec_dup_.objkey, rec_dup_.aircraft_id, rec_dup_.work_package_id);
+      Add_Completed_Tasks(rec_dup_.objkey, rec_dup_.aircraft_id, rec_dup_.work_package_id, rec_dup_.start_time,rec_dup_.end_time);
+      Add_Non_Routines(rec_dup_.objkey, rec_dup_.aircraft_id, rec_dup_.work_package_id, rec_dup_.start_time,rec_dup_.end_time);     
+
+      OPEN get_completed_task_count(rec_dup_.objkey);
+      FETCH get_completed_task_count INTO rec_dup_.completed_task_count;
+      CLOSE get_completed_task_count;  
+      
+      OPEN get_nr_count(rec_dup_.objkey);
+      FETCH get_nr_count INTO rec_dup_.non_routine_count;
+      CLOSE get_nr_count;  
+   ELSE
+      Add_In_Maintenance_Aircrafts_List___(rec_dup_.objkey,rec_dup_.start_time,rec_dup_.end_time); 
+      Add_Line_Handover_And_Blocked_Tasks___(rec_dup_.objkey,rec_dup_.start_time,rec_dup_.end_time,rec_dup_.current_user_airport_id);
+      Add_In_Range_Tasks(rec_dup_.objkey, rec_dup_.aircraft_id, rec_dup_.start_time,rec_dup_.end_time);
+      Add_Deferred_Faults_List___(rec_dup_.objkey,rec_dup_.start_time,rec_dup_.end_time); 
+      
+      OPEN get_in_maint_aircraft_count(rec_dup_.objkey);
+      FETCH get_in_maint_aircraft_count INTO rec_dup_.in_maint_aircraft_count;
+      CLOSE get_in_maint_aircraft_count; 
+      
+      OPEN get_deferred_faults_count(rec_dup_.objkey);
+      FETCH get_deferred_faults_count INTO rec_dup_.deferred_fault_count;
+      CLOSE get_deferred_faults_count;
+
+      OPEN get_task_within_range_count(rec_dup_.objkey);
+      FETCH get_task_within_range_count INTO rec_dup_.in_range_task_count;
+      CLOSE get_task_within_range_count;  
+   END IF;
+   
+   OPEN get_handover_task_count(rec_dup_.objkey);
+   FETCH get_handover_task_count INTO rec_dup_.handover_task_count;
+   CLOSE get_handover_task_count; 
+
+   OPEN get_blocked_task_count(rec_dup_.objkey);
+   FETCH get_blocked_task_count INTO rec_dup_.blocked_task_count;
+   CLOSE get_blocked_task_count; 
+   super(old_, rec_dup_);
+
+END CRUD_Update___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Handover_Shift_Details___ (
+   work_package_id_ IN NUMBER,
+   source_ IN VARCHAR2) RETURN Get_Shift_Details_Structure_Rec
+IS
+   rec_                    Get_Shift_Details_Structure_Rec;
+   parameter_              av_flm_parameter_tab.parameter_value%TYPE;
+   period_                 NUMBER;
+   work_package_start_     DATE;
+   start_time_             DATE;
+BEGIN
+   parameter_:=Av_Flm_Parameter_API.Get_Parameter_Value('HANDOVER_REPORT_PERIOD_HOURS');
+   period_:= Adcom_Util_API.Validate_Format_Hours(parameter_);
+   
+   rec_.end_time                       :=sysdate;
+   start_time_                         :=rec_.end_time - NUMTODSINTERVAL(period_, 'HOUR');
+   rec_.current_user_airport_time_zone :=Av_Airport_For_User_API.Get_User_Time_Zone();
+   rec_.current_user_airport_id        :=Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User());
+   
+   IF source_ = 'HMSLOBBY' or source_ = 'HMCLOBBY' THEN
+      rec_.handover_task_label   :='Handed-Over Tasks in the Work Package';
+      rec_.blocked_task_label    :='Blocked Tasks in the Work Package';
+      work_package_start_        :=Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(work_package_id_);
+      IF work_package_start_>= start_time_ THEN
+         rec_.start_time:=work_package_start_;
+      ELSE
+         rec_.start_time:=start_time_;
+      END IF;
+      
+      rec_.aircraft_id:=Av_Aircraft_Work_Package_API.Get_Aircraft_Id(work_package_id_);
+      rec_.work_package_status:=Av_Aircraft_Work_Package_API.Get_State(work_package_id_);
+   ELSE
+      rec_.start_time:=start_time_;
+      rec_.handover_task_label   :='Handed-Over Tasks and Faults ';
+      rec_.blocked_task_label    :='Blocked Tasks and Faults';
+   END IF;
+	RETURN rec_;
+END Get_Handover_Shift_Details___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Default_Work_Package_Id___ (
+   aircraft_id_ IN NUMBER) RETURN NUMBER
+IS
+   wp_id_      NUMBER;
+   count_      NUMBER:=0;
+   
+   CURSOR get_default_wp(aircraft_id_ NUMBER) IS
+      SELECT aircraft_work_package_id
+      FROM  Av_Aircraft_Work_Package 
+      WHERE aircraft_id = aircraft_id_ AND (objstate = 'InWork') AND is_heavy_maintenance = 1;
+BEGIN
+   FOR rec_ IN get_default_wp (aircraft_id_) LOOP
+      count_:=count_+1;
+      IF count_>1 THEN
+         RETURN null;
+      END IF;
+      wp_id_:=rec_.aircraft_work_package_id;
+   END LOOP;
+   IF count_ = 1 THEN
+      RETURN wp_id_;
+   END IF;  
+END Get_Default_Work_Package_Id___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_Handover_And_Blocked_Tasks (
+   objkey_          IN VARCHAR2,
+   aircraft_id_     IN NUMBER,
+   work_package_id_ IN NUMBER)
+IS
+   handover_task_rec_               Handover_Task_Virtual_Rec;
+   blocked_task_rec_                Blocked_Task_Virtual_Rec;
+   latest_js_reason_                VARCHAR2(200);  
+   handover_reason_                 VARCHAR2(200);  
+   
+   CURSOR get_task_list_ IS
+      SELECT t.*
+      FROM av_exe_task t
+      WHERE t.objstate = 'WORKSTARTED'
+      AND t.aircraft_wp_id = work_package_id_;
+
+BEGIN
+   DELETE FROM ${PROJECTION}_HANDOVER_TASK_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   DELETE FROM ${PROJECTION}_BLOCKED_TASK_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   
+   handover_reason_ := Labour_Assignment_Util_API.Get_Handover_Reason;
+        
+   FOR task_ IN get_task_list_ LOOP
+      latest_js_reason_ := Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_.task_seq);
+      IF latest_js_reason_ = handover_reason_ THEN 
+         handover_task_rec_.objkey                      := sys_guid();
+         handover_task_rec_.parent_objkey               := objkey_;
+         handover_task_rec_.task_seq                    := task_.task_seq;
+         handover_task_rec_.barcode                     := task_.barcode;     
+         handover_task_rec_.description                 := task_.description;
+         handover_task_rec_.material_avail_user_status  := task_.material_avail_user_status;
+         handover_task_rec_.duration                    := task_.duration;
+         handover_task_rec_.planned_start               := task_.planned_start;
+         handover_task_rec_.planned_finish              := task_.planned_finish;
+         handover_task_rec_.actual_start                := task_.actual_start;
+         handover_task_rec_.actual_finish               := task_.actual_finish;
+         handover_task_rec_.config_position             := task_.config_position;
+         handover_task_rec_.class_code                  := task_.class_code;
+         handover_task_rec_.subclass_code               := task_.subclass_code;
+         handover_task_rec_.location                    := task_.location;
+         handover_task_rec_.crew_name                   := task_.crew_name;
+         handover_task_rec_.crew_code                   := task_.crew_code;
+         handover_task_rec_.priority_id                 := task_.priority_id;
+         handover_task_rec_.long_description            := task_.long_description;
+         handover_task_rec_.aircraft_wp_id              := work_package_id_;
+         handover_task_rec_.aircraft_id                 := aircraft_id_;
+         CRUD_Create___(handover_task_rec_);
+      ELSIF (latest_js_reason_ IS NOT NULL AND latest_js_reason_ != handover_reason_) THEN 
+         blocked_task_rec_.objkey                       := sys_guid();
+         blocked_task_rec_.parent_objkey                := objkey_;
+         blocked_task_rec_.task_seq                     := task_.task_seq;
+         blocked_task_rec_.barcode                      := task_.barcode;     
+         blocked_task_rec_.description                  := task_.description;
+         blocked_task_rec_.material_avail_user_status   := task_.material_avail_user_status;
+         blocked_task_rec_.duration                     := task_.duration;
+         blocked_task_rec_.planned_start                := task_.planned_start;
+         blocked_task_rec_.planned_finish               := task_.planned_finish;
+         blocked_task_rec_.actual_start                 := task_.actual_start;
+         blocked_task_rec_.actual_finish                := task_.actual_finish;
+         blocked_task_rec_.config_position              := task_.config_position;
+         blocked_task_rec_.class_code                   := task_.class_code;
+         blocked_task_rec_.subclass_code                := task_.subclass_code;
+         blocked_task_rec_.location                     := task_.location;
+         blocked_task_rec_.crew_name                    := task_.crew_name;
+         blocked_task_rec_.crew_code                    := task_.crew_code;
+         blocked_task_rec_.priority_id                  := task_.priority_id;
+         blocked_task_rec_.long_description             := task_.long_description;
+         blocked_task_rec_.aircraft_wp_id               := work_package_id_;
+         blocked_task_rec_.aircraft_id                  := aircraft_id_;
+         CRUD_Create___(blocked_task_rec_);
+      END IF;
+   END LOOP;  
+   
+END Add_Handover_And_Blocked_Tasks;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_Completed_Tasks (
+   objkey_          IN VARCHAR2,
+   aircraft_id_     IN NUMBER,
+   work_package_id_ IN NUMBER,
+   start_time_      IN DATE,
+   end_time_        IN DATE)
+IS
+   completed_task_rec_               Completed_Task_Virtual_Rec;
+   
+   CURSOR get_task_list_(start_ IN DATE, end_ IN DATE) IS
+      SELECT t.*
+      FROM av_exe_task t
+      WHERE t.objstate = 'FINISHED'
+      AND t.aircraft_wp_id = work_package_id_
+      AND t.actual_finish BETWEEN start_ AND end_;
+
+BEGIN
+   DELETE FROM ${PROJECTION}_COMPLETED_TASK_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+           
+   FOR task_ IN get_task_list_(start_time_, end_time_) LOOP
+         completed_task_rec_.objkey                      := sys_guid();
+         completed_task_rec_.parent_objkey               := objkey_;
+         completed_task_rec_.task_seq                    := task_.task_seq;
+         completed_task_rec_.barcode                     := task_.barcode;     
+         completed_task_rec_.description                 := task_.description;
+         completed_task_rec_.material_avail_user_status  := task_.material_avail_user_status;
+         completed_task_rec_.duration                    := task_.duration;
+         completed_task_rec_.planned_start               := task_.planned_start;
+         completed_task_rec_.planned_finish              := task_.planned_finish;
+         completed_task_rec_.actual_start                := task_.actual_start;
+         completed_task_rec_.actual_finish               := task_.actual_finish;
+         completed_task_rec_.config_position             := task_.config_position;
+         completed_task_rec_.class_code                  := task_.class_code;
+         completed_task_rec_.subclass_code               := task_.subclass_code;
+         completed_task_rec_.location                    := task_.location;
+         completed_task_rec_.crew_name                   := task_.crew_name;
+         completed_task_rec_.crew_code                   := task_.crew_code;
+         completed_task_rec_.priority_id                 := task_.priority_id;
+         completed_task_rec_.long_description            := task_.long_description;
+         completed_task_rec_.aircraft_wp_id              := work_package_id_;
+         completed_task_rec_.aircraft_id                 := aircraft_id_;
+         CRUD_Create___(completed_task_rec_);     
+   END LOOP;  
+   
+END Add_Completed_Tasks;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_Non_Routines (
+   objkey_          IN VARCHAR2,
+   aircraft_id_     IN NUMBER,
+   work_package_id_ IN NUMBER,
+   start_time_      IN DATE,
+   end_time_        IN DATE)
+IS
+   non_routine_rec_               Non_Routine_Virtual_Rec;
+      
+   CURSOR get_nr_list_(start_ IN DATE, end_ IN DATE) IS
+      SELECT f.*
+      FROM av_fault f
+      INNER JOIN av_exe_task t
+      ON f.fault_id = t.fault_id
+      WHERE f.source_connection_lu_name_db IN ('AvExeTask','WorkPackage')
+      AND t.aircraft_wp_id = work_package_id_
+      AND f.found_on_date BETWEEN start_ AND end_;   
+
+BEGIN
+   DELETE FROM ${PROJECTION}_NON_ROUTINE_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+           
+   FOR task_ IN get_nr_list_(start_time_, end_time_) LOOP
+         non_routine_rec_.objkey                      := sys_guid();
+         non_routine_rec_.parent_objkey               := objkey_;
+         non_routine_rec_.task_seq                    := task_.task_seq;
+         non_routine_rec_.fault_id                    := task_.fault_id;
+         non_routine_rec_.external_id                 := task_.external_id;
+         non_routine_rec_.barcode                     := task_.barcode;     
+         non_routine_rec_.description                 := task_.description;
+         non_routine_rec_.objstate                    := task_.objstate;
+         IF task_.evaluated = 1 THEN
+            non_routine_rec_.evaluated                := true;
+         ELSE
+            non_routine_rec_.evaluated                := false;
+         END IF;
+         non_routine_rec_.evaluated_by                := task_.evaluated_by;
+         non_routine_rec_.fault_severity_code         := task_.fault_severity_code;
+         non_routine_rec_.found_on_date               := task_.found_on_date;
+         non_routine_rec_.found_by_user               := task_.found_by_user;
+         non_routine_rec_.fault_source_code           := task_.fault_source_code;
+         non_routine_rec_.long_description            := task_.long_description;
+         IF task_.flight_safety_impact = 1 THEN
+            non_routine_rec_.flight_safety_impact     := true;
+         ELSE
+            non_routine_rec_.flight_safety_impact     := false;
+         END IF;
+         non_routine_rec_.failure_type_code           := task_.failure_type_code;
+         non_routine_rec_.fault_code                  := task_.fault_code;
+         non_routine_rec_.sub_system_id               := task_.sub_system_id;
+         non_routine_rec_.logbook_reference           := task_.logbook_reference;
+         non_routine_rec_.logbook_type_code           := task_.logbook_type_code;
+         CRUD_Create___(non_routine_rec_);     
+   END LOOP;  
+   
+END Add_Non_Routines;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_Deferred_Faults_List___ (
+   objkey_     IN VARCHAR2,
+   start_time_ IN DATE,
+   end_time_   IN DATE)
+IS
+   deferred_faults_rec_     deferred_faults_Virtual_Rec;
+   
+   CURSOR get_deferred_faults_in_range_(start_time_ DATE,end_time_ DATE) IS
+   SELECT f.*,mat.flight_turn_status
+   FROM av_fault f
+   INNER JOIN av_fault_deferral fd ON fd.fault_id=f.fault_id 
+   INNER JOIN MY_AIRCRAFT_TURNS mat ON mat.aircraft_id=f.aircraft_id AND mat.flight_turn_status='InMaintenance'
+   WHERE f.objstate='Deferred' 
+   AND fd.deferral_dt BETWEEN start_time_ AND end_time_ ;
+         
+BEGIN
+   DELETE FROM ${PROJECTION}_Deferred_Faults_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   FOR rec_ IN get_deferred_faults_in_range_(start_time_,end_time_) LOOP 
+      deferred_faults_rec_                         := NULL;
+      deferred_faults_rec_.parent_objkey           := objkey_;
+      deferred_faults_rec_.objkey                  := sys_guid();
+      deferred_faults_rec_.fault_id                := rec_.fault_id;
+      deferred_faults_rec_.barcode                 := rec_.barcode;
+      deferred_faults_rec_.aircraft_id             := rec_.aircraft_id;
+      deferred_faults_rec_.task_seq                := rec_.task_seq;
+      deferred_faults_rec_.description             := rec_.Description;
+      deferred_faults_rec_.sub_system_id           := rec_.sub_system_id;
+      deferred_faults_rec_.logbook_type_code       := rec_.logbook_type_code;
+      deferred_faults_rec_.found_on_date           := rec_.found_on_date;
+      deferred_faults_rec_.aircraft_turn_status    := rec_.flight_turn_status;
+      CRUD_Create___(deferred_faults_rec_);              
+   END LOOP;  
+END Add_Deferred_Faults_List___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Current_Time___ RETURN DATE
+IS
+BEGIN
+	RETURN sysdate;
+END Get_Current_Time___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_In_Maintenance_Aircrafts_List___ (
+   objkey_     IN VARCHAR2,
+   start_time_ IN DATE,
+   end_time_   IN DATE)
+IS
+   in_maintenance_aircraft_rec_     In_Maintenance_Aircrafts_Virtual_Rec;
+   
+   CURSOR get_in_maintenance_aircrafts(start_time_ DATE,end_time_ DATE) IS
+   SELECT flight_id
+   FROM MY_AIRCRAFT_TURNS mat
+   WHERE flight_turn_status='InMaintenance' 
+   AND 
+   (dept_sched_dep_date_time BETWEEN start_time_ AND end_time_
+   OR Av_Aircraft_Work_Package_API.Get_Func_Actual_Start (aircraft_id, arrival_airport_id, flight_id) BETWEEN start_time_ AND end_time_
+   OR EXISTS (SELECT 1
+             FROM av_exe_task t
+             INNER JOIN jt_task_clocking cl ON cl.task_seq = t.task_seq
+             WHERE
+                t.aircraft_wp_id = work_package_id
+                 AND (
+                     (cl.start_time BETWEEN start_time_ AND end_time_)
+                     OR
+                     (cl.stop_time BETWEEN start_time_ AND end_time_))));
+ 
+BEGIN
+   DELETE FROM ${PROJECTION}_In_Maintenance_Aircrafts_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   FOR aircraft_rec_ IN get_in_maintenance_aircrafts(start_time_,end_time_) LOOP 
+      in_maintenance_aircraft_rec_                 := NULL;
+      in_maintenance_aircraft_rec_.parent_objkey   := objkey_;
+      in_maintenance_aircraft_rec_.objkey          := sys_guid();
+      in_maintenance_aircraft_rec_.flight_id       := aircraft_rec_.flight_id;
+      CRUD_Create___(in_maintenance_aircraft_rec_);              
+   END LOOP;  
+END Add_In_Maintenance_Aircrafts_List___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_Line_Handover_And_Blocked_Tasks___ (
+   objkey_     IN VARCHAR2,
+   start_time_ IN DATE,
+   end_time_   IN DATE,
+   current_user_airport_id_ IN NUMBER)
+IS
+   handover_tasks_and_faults_rec_   Handover_Task_Virtual_Rec;
+   blocked_tasks_and_faults_rec_    Blocked_Task_Virtual_Rec;
+   latest_js_reason_                VARCHAR2(200);  
+   handover_reason_                 VARCHAR2(200);
+   
+   CURSOR get_task_list_(start_time_ DATE,end_time_ DATE,current_user_airport_id_ NUMBER) IS
+      SELECT t.*,mat.flight_turn_status
+      FROM av_exe_task t
+      INNER JOIN av_aircraft_work_package awp 
+          ON awp.aircraft_work_package_id = t.aircraft_wp_id
+      LEFT JOIN MY_AIRCRAFT_TURNS mat 
+          ON mat.work_package_id = t.aircraft_wp_id
+      WHERE t.objstate = 'WORKSTARTED'
+      AND Av_Exe_Task_API.Get_Latest_Jobstop_Date(t.task_seq) BETWEEN start_time_ AND end_time_
+      AND awp.is_heavy_maintenance = 0
+      AND av_maintenance_location_API.Get_Airport_Id(awp.location_code) = current_user_airport_id_;
+ 
+BEGIN
+   DELETE FROM ${PROJECTION}_HANDOVER_TASK_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   DELETE FROM ${PROJECTION}_BLOCKED_TASK_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+   handover_reason_ := Labour_Assignment_Util_API.Get_Handover_Reason;       
+   FOR task_ IN get_task_list_(start_time_,end_time_,current_user_airport_id_) LOOP
+      latest_js_reason_ := Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_.task_seq);
+      
+      IF latest_js_reason_ = handover_reason_ THEN 
+         handover_tasks_and_faults_rec_.objkey                      := sys_guid();
+         handover_tasks_and_faults_rec_.parent_objkey               := objkey_;
+         handover_tasks_and_faults_rec_.task_seq                    := task_.task_seq;
+         handover_tasks_and_faults_rec_.barcode                     := task_.barcode;     
+         handover_tasks_and_faults_rec_.description                 := task_.description;
+         handover_tasks_and_faults_rec_.material_avail_user_status  := task_.material_avail_user_status;
+         handover_tasks_and_faults_rec_.duration                    := task_.duration;
+         handover_tasks_and_faults_rec_.planned_start               := task_.planned_start;
+         handover_tasks_and_faults_rec_.planned_finish              := task_.planned_finish;
+         handover_tasks_and_faults_rec_.actual_start                := task_.actual_start;
+         handover_tasks_and_faults_rec_.actual_finish               := task_.actual_finish;
+         handover_tasks_and_faults_rec_.config_position             := task_.config_position;
+         handover_tasks_and_faults_rec_.class_code                  := task_.class_code;
+         handover_tasks_and_faults_rec_.subclass_code               := task_.subclass_code;
+         handover_tasks_and_faults_rec_.location                    := task_.location;
+         handover_tasks_and_faults_rec_.crew_name                   := task_.crew_name;
+         handover_tasks_and_faults_rec_.crew_code                   := task_.crew_code;
+         handover_tasks_and_faults_rec_.priority_id                 := task_.priority_id;
+         handover_tasks_and_faults_rec_.long_description            := task_.long_description;
+         handover_tasks_and_faults_rec_.aircraft_wp_id              := task_.aircraft_wp_id;
+         handover_tasks_and_faults_rec_.aircraft_id                 := task_.aircraft_id;
+         handover_tasks_and_faults_rec_.aircraft_turn_status        := task_.flight_turn_status;    
+         handover_tasks_and_faults_rec_.fault_id                    := task_.fault_id;
+         CRUD_Create___(handover_tasks_and_faults_rec_); 
+      ELSIF (latest_js_reason_ IS NOT NULL AND latest_js_reason_ != handover_reason_) THEN 
+         blocked_tasks_and_faults_rec_.objkey                       := sys_guid();
+         blocked_tasks_and_faults_rec_.parent_objkey                := objkey_;
+         blocked_tasks_and_faults_rec_.task_seq                     := task_.task_seq;
+         blocked_tasks_and_faults_rec_.barcode                      := task_.barcode;     
+         blocked_tasks_and_faults_rec_.description                  := task_.description;
+         blocked_tasks_and_faults_rec_.material_avail_user_status   := task_.material_avail_user_status;
+         blocked_tasks_and_faults_rec_.duration                     := task_.duration;
+         blocked_tasks_and_faults_rec_.planned_start                := task_.planned_start;
+         blocked_tasks_and_faults_rec_.planned_finish               := task_.planned_finish;
+         blocked_tasks_and_faults_rec_.actual_start                 := task_.actual_start;
+         blocked_tasks_and_faults_rec_.actual_finish                := task_.actual_finish;
+         blocked_tasks_and_faults_rec_.config_position              := task_.config_position;
+         blocked_tasks_and_faults_rec_.class_code                   := task_.class_code;
+         blocked_tasks_and_faults_rec_.subclass_code                := task_.subclass_code;
+         blocked_tasks_and_faults_rec_.location                     := task_.location;
+         blocked_tasks_and_faults_rec_.crew_name                    := task_.crew_name;
+         blocked_tasks_and_faults_rec_.crew_code                    := task_.crew_code;
+         blocked_tasks_and_faults_rec_.priority_id                  := task_.priority_id;
+         blocked_tasks_and_faults_rec_.long_description             := task_.long_description;
+         blocked_tasks_and_faults_rec_.aircraft_wp_id               := task_.aircraft_wp_id;
+         blocked_tasks_and_faults_rec_.aircraft_id                  := task_.aircraft_id;
+         blocked_tasks_and_faults_rec_.aircraft_turn_status         := task_.flight_turn_status;
+         blocked_tasks_and_faults_rec_.fault_id                     := task_.fault_id;
+         CRUD_Create___(blocked_tasks_and_faults_rec_);
+      END IF;
+   END LOOP;  
+END Add_Line_Handover_And_Blocked_Tasks___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Clear_L_M_Lists___
+IS
+BEGIN
+   DELETE FROM ${PROJECTION}_In_Maintenance_Aircrafts_VIRTUAL_VRT;
+   DELETE FROM ${PROJECTION}_HANDOVER_TASK_VIRTUAL_VRT;
+   DELETE FROM ${PROJECTION}_BLOCKED_TASK_VIRTUAL_VRT;
+   DELETE FROM ${PROJECTION}_Deferred_Faults_VIRTUAL_VRT;
+   DELETE FROM ${PROJECTION}_TASKS_WITHIN_RANGE_VIRTUAL_VRT;  
+   
+END Clear_L_M_Lists___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Update_Wp_To_Null___ (
+   objkey_ IN VARCHAR2)
+IS
+   vrt_key_  Hand_Over_Details_Virtual_Key;
+   old_rec_  Hand_Over_Details_Virtual_Rec;
+   new_rec_  Hand_Over_Details_Virtual_Rec;
+BEGIN
+   vrt_key_.objkey := objkey_;
+	old_rec_ := Get_Record___(vrt_key_);
+   new_rec_ := old_rec_;
+   new_rec_.work_package_id  := NULL;
+   new_rec_.work_package     := NULL;
+   CRUD_UPDATE___(old_rec_,new_rec_);
+END Update_Wp_To_Null___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Update_Air_To_Null___ (
+   objkey_ IN VARCHAR2)
+IS
+   vrt_key_  Hand_Over_Details_Virtual_Key;
+   old_rec_  Hand_Over_Details_Virtual_Rec;
+   new_rec_  Hand_Over_Details_Virtual_Rec;
+BEGIN
+   vrt_key_.objkey := objkey_;
+	old_rec_ := Get_Record___(vrt_key_);
+   new_rec_ := old_rec_;
+   new_rec_.aircraft_id  := NULL;
+   new_rec_.work_package_id  := NULL;
+   CRUD_UPDATE___(old_rec_,new_rec_);
+END Update_Air_To_Null___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Clear_H_M_Lists___
+IS
+BEGIN
+   DELETE FROM ${PROJECTION}_COMPLETED_TASK_VIRTUAL_VRT;
+   DELETE FROM ${PROJECTION}_NON_ROUTINE_VIRTUAL_VRT;
+END Clear_H_M_Lists___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Shift_Start_End___ (
+   work_package_id_ IN NUMBER) RETURN Shift_Start_End_Structure_Rec
+IS
+   rec_                 Shift_Start_End_Structure_Rec;
+   parameter_           av_flm_parameter_tab.parameter_value%TYPE;
+   period_              NUMBER;
+   work_package_start_  DATE;
+   start_time_          DATE;
+BEGIN
+   parameter_           :=Av_Flm_Parameter_API.Get_Parameter_Value('HANDOVER_REPORT_PERIOD_HOURS');
+   period_              :=Adcom_Util_API.Validate_Format_Hours(parameter_);   
+   rec_.end_time        :=sysdate;
+   start_time_          :=rec_.end_time - NUMTODSINTERVAL(period_, 'HOUR');
+   work_package_start_  :=Av_Aircraft_Work_Package_API.Get_Actual_Start_Date_Time(work_package_id_);
+   
+   IF work_package_start_>= start_time_ THEN
+      rec_.start_time:=work_package_start_;
+   ELSE
+      rec_.start_time:=start_time_;
+   END IF;
+   
+   RETURN rec_;
+END Get_Shift_Start_End___;
+
+@IgnoreUnitTest DMLOperation
+FUNCTION Execute_Report___ (
+   key_ IN Hand_Over_Details_Virtual_Key) RETURN NUMBER
+IS
+   vrt_rec_                  Hand_Over_Details_Virtual_Rec;
+   param_attr_               VARCHAR2(32000);
+   report_attr_              VARCHAR2(32000);
+   result_key_               NUMBER;
+   aircraft_id_              NUMBER;
+   work_package_id_          NUMBER;
+   aircraft_                 VARCHAR2(100);  
+   start_time_utc_           VARCHAR2(100);
+   end_time_utc_             VARCHAR2(100);
+   start_time_tz_            VARCHAR2(200);
+   end_time_tz_              VARCHAR2(200);
+   current_user_airport_tz_  VARCHAR2(300);
+   current_time_in_tz_       VARCHAR2(200);
+   start_time_               DATE;
+   end_time_                 DATE;
+   
+BEGIN 
+   Client_SYS.Clear_Attr(param_attr_);
+   Client_SYS.Clear_Attr(report_attr_);
+   
+   vrt_rec_ := Get_Record___(key_);
+   
+   IF vrt_rec_.source = 'HMSLOBBY' or vrt_rec_.source = 'HMCLOBBY' THEN
+      aircraft_id_    := vrt_rec_.aircraft_id;   
+      aircraft_       := CONCAT(CONCAT((Aircraft_API.Get_Assembly_Type_Code(aircraft_id_)), ' - '), TO_CHAR(Aircraft_API.Get_Reg_Code(aircraft_id_)));
+      work_package_id_:= vrt_rec_.work_package_id;
+      
+      Client_SYS.Add_To_Attr('REPORT_ID', 'H_M_SHIFT_HANDOVER_REPORT_REP', report_attr_);
+      Client_SYS.Add_To_Attr('WORK_PACKAGE_ID', work_package_id_, param_attr_);
+      Client_SYS.Add_To_Attr('AIRCRAFT', aircraft_, param_attr_);
+      Client_SYS.Add_To_Attr('WORK_PACKAGE', Av_Aircraft_Work_Package_API.Get_Barcode(work_package_id_), param_attr_);
+      Client_SYS.Add_To_Attr('WP_NAME', Av_Aircraft_Work_Package_API.Get_Work_Package_Name(work_package_id_), param_attr_);
+      Client_SYS.Add_To_Attr('WP_LOCATION', Av_Aircraft_Work_Package_API.Get_Location_Code(work_package_id_), param_attr_);
+   ELSE
+      Client_SYS.Add_To_Attr('REPORT_ID', 'L_M_SHIFT_HANDOVER_REPORT_REP', report_attr_);
+      Client_SYS.Add_To_Attr('CURRENT_USER_AIRPORT_ID', vrt_rec_.current_user_airport_id, param_attr_);
+   END IF;
+   
+   start_time_              := vrt_rec_.start_time;
+   end_time_                := vrt_rec_.end_time;      
+   start_time_utc_          := TO_CHAR(start_time_, 'YYYY-MM-DD"T"HH24:MI:SS');
+   end_time_utc_            := TO_CHAR(end_time_, 'YYYY-MM-DD"T"HH24:MI:SS');
+   current_user_airport_tz_ := vrt_rec_.current_user_airport_time_zone;
+   start_time_tz_           := TO_CHAR(Time_Util_API.Convert_Utc_To_Timezone(start_time_, current_user_airport_tz_), 'YYYY-MM-DD, HH:MI PM');
+   end_time_tz_             := TO_CHAR(Time_Util_API.Convert_Utc_To_Timezone(end_time_, current_user_airport_tz_), 'YYYY-MM-DD, HH:MI PM');   
+   current_time_in_tz_      := TO_CHAR(Time_Util_API.Get_Current_Time_In_Timezone(current_user_airport_tz_), 'Mon DD, YYYY HH:MI:SS PM');
+         
+   Client_SYS.Add_To_Attr('START_DATE_UTC', start_time_utc_, param_attr_); 
+   Client_SYS.Add_To_Attr('END_DATE_UTC', end_time_utc_, param_attr_);   
+   Client_SYS.Add_To_Attr('START_DATE_TIME', start_time_tz_, param_attr_); 
+   Client_SYS.Add_To_Attr('END_DATE_TIME', end_time_tz_, param_attr_);
+   Client_SYS.Add_To_Attr('CREATED_TIME', current_time_in_tz_, param_attr_); 
+   Client_SYS.Add_To_Attr('CURRENT_USER_AIRPORT_TIME_ZONE', current_user_airport_tz_, param_attr_);  
+   Client_SYS.Add_To_Attr('UTC_OFF_SET',Iso_Time_Zone_API.Get_Description(current_user_airport_tz_), param_attr_);
+     
+   result_key_ := Report_Format_API.Create_New_Report(report_attr_, param_attr_, Fnd_Session_API.Get_Fnd_User);
+
+   RETURN result_key_;
+END Execute_Report___;
+
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_In_Range_Tasks (
+   objkey_          IN VARCHAR2,
+   aircraft_id_     IN NUMBER,
+    
+   start_time_      IN DATE,
+   end_time_        IN DATE)
+IS                                
+   in_range_task_rec_      Tasks_Within_Range_Virtual_Rec;
+   session_user_airport_   VARCHAR2(100);
+   latest_js_reason_       VARCHAR2(100);
+
+   CURSOR get_in_range_task_list_(start_ IN DATE, end_ IN DATE, session_user_airport_ IN VARCHAR2) IS
+      WITH base_tasks AS (
+         SELECT
+            t.task_seq, 
+            t.fault_id, 
+            t.aircraft_id, 
+            t.barcode, 
+            t.description,
+            t.material_avail_user_status, 
+            t.crew_code, 
+            t.planned_start,
+            t.planned_finish, 
+            t.actual_start, 
+            t.actual_finish,
+            t.aircraft_wp_id, 
+            t.config_position, 
+            t.class_code,
+            t.subclass_code,
+            t.location, 
+            t.crew_name, 
+            t.priority_id, 
+            t.long_description,
+            t.state,
+            w.is_heavy_maintenance, 
+            w.aircraft_work_package_id,
+            arr_f.arrival_airport_id, 
+            dep_f.shed_departure_date_time
+         FROM av_exe_task t
+         JOIN Av_Aircraft_Work_Package w 
+            ON t.Aircraft_Wp_Id = w.Aircraft_Work_Package_Id
+         JOIN av_flight_tab arr_f 
+            ON w.Aircraft_Work_Package_Id = arr_f.Work_Package_Id
+         LEFT JOIN av_flight_tab dep_f 
+            ON arr_f.dept_flight_id = dep_f.flight_id
+         WHERE w.is_heavy_maintenance = 0
+         AND arr_f.arrival_airport_id = session_user_airport_
+         AND t.state   = 'In Work'
+      ),
+      --Tasks  raised on the aircraft which has the Scheduled Departure Time within the selected time range
+      tasks_within_sched_dep_window AS (
+         SELECT task_seq 
+            FROM base_tasks
+            WHERE shed_departure_date_time BETWEEN start_ AND end_
+            )
+      SELECT 
+         b.* 
+      FROM base_tasks b
+      WHERE b.task_seq IN (SELECT task_seq FROM tasks_within_sched_dep_window)
+      
+   UNION ALL
+   -- tasks/faults that were started during the defined time range and are still in work.
+   SELECT 
+      b.* 
+      FROM base_tasks b
+      WHERE b.actual_start BETWEEN start_ AND end_
+      AND b.task_seq NOT IN (
+             SELECT task_seq FROM tasks_within_sched_dep_window
+   );
+   
+BEGIN
+   
+   session_user_airport_:= Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User);
+   DELETE FROM ${PROJECTION}_TASKS_WITHIN_RANGE_VIRTUAL_VRT WHERE parent_objkey = objkey_;
+
+   FOR task_ IN get_in_range_task_list_(start_time_, end_time_, session_user_airport_) LOOP
+      latest_js_reason_ := Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_.task_seq);
+       IF latest_js_reason_ IS NULL THEN
+         in_range_task_rec_.objkey                      := sys_guid();
+         in_range_task_rec_.parent_objkey               := objkey_;
+         in_range_task_rec_.task_seq                    := task_.task_seq;
+         in_range_task_rec_.fault_id                    := task_.fault_id;
+         in_range_task_rec_.aircraft_id                 := task_.aircraft_id;
+         in_range_task_rec_.barcode                     := task_.barcode;     
+         in_range_task_rec_.description                 := task_.description;
+         in_range_task_rec_.material_avail_user_status  := task_.material_avail_user_status;
+         in_range_task_rec_.crew_code                   := task_.crew_code;
+         in_range_task_rec_.planned_start               := task_.planned_start;
+         in_range_task_rec_.planned_finish              := task_.planned_finish;
+         in_range_task_rec_.actual_start                := task_.actual_start;
+         in_range_task_rec_.actual_finish               := task_.actual_finish;
+         in_range_task_rec_.aircraft_wp_id              := task_.aircraft_wp_id;
+         in_range_task_rec_.config_position             := task_.config_position;
+         in_range_task_rec_.class_code                  := task_.class_code;
+         in_range_task_rec_.subclass_code               := task_.subclass_code;
+         in_range_task_rec_.location                    := task_.location;
+         in_range_task_rec_.crew_name                   := task_.crew_name;
+         in_range_task_rec_.priority_id                 := task_.priority_id;
+         in_range_task_rec_.long_description            := task_.long_description;
+         in_range_task_rec_.shed_departure_date_time    := task_.shed_departure_date_time;
+         
+         CRUD_Create___(in_range_task_rec_);     
+       END IF;
+   END LOOP;  
+END Add_In_Range_Tasks;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Current_User___ RETURN VARCHAR2
+IS
+   current_user_ VARCHAR2(300);
+BEGIN
+	current_user_:=Fnd_Session_API.Get_Fnd_User();
+   RETURN current_user_;
+END Get_Current_User___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Add_New_Handover_Note___ (
+   work_package_id_ IN NUMBER,
+   note_ IN VARCHAR2,
+   priority_ IN VARCHAR2,
+   created_by_ IN VARCHAR2,
+   created_date_ IN DATE)
+IS
+   info_                     VARCHAR2(200);
+   objid_                    VARCHAR2(200);
+   objversion_               VARCHAR2(200);
+   attr_                     VARCHAR2(32000);
+BEGIN
+	Client_SYS.Clear_Attr(attr_);
+   Client_SYS.Add_To_Attr('AIRCRAFT_WORK_PACKAGE_ID', work_package_id_, attr_);
+   Client_SYS.Add_To_Attr('HANDOVER_NOTE', note_, attr_);
+   Client_SYS.Add_To_Attr('PRIORITY', priority_, attr_);
+   Client_SYS.Add_To_Attr('CREATED_BY', created_by_, attr_);
+   Client_SYS.Add_To_Attr('CREATED_DATE', created_date_, attr_);
+   
+   Av_Handover_Note_API.New__(info_, objid_, objversion_, attr_, 'DO');
+END Add_New_Handover_Note___;

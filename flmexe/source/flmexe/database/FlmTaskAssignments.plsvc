@@ -1,0 +1,925 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmTaskAssignments
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250602  BACHLK  AD-18262, Added Resource Cap Triggering for add or modify assignment.
+--  250224  SILILK  AD-15689, Added Modify_Task_Assignment_Schedule_Hour___ and Modify_Task_Assignment_Actual_Hour___ functions.
+--  250207  NIRTLK  AD-14853, Added Check_Active_Assgmt_For_Skill_Role___ and replaced the cursors in Assign_To_Me with existing functions. 
+--  250207  CAARLK  AD-15576, Modified Assign_To_Me___ procedure.
+--  250205  ROERLK  AD-15481, Added validation to assign labour with zero scheduled hours
+--  250116  DUWJLK  AD-16211, Modify Add_New_Assignment___ procedure to show planned hours as empty value on client.
+--  250123  WAISLK  AD-16491, Implemented Proxy Job Stop.
+--  241217  KAWJLK  AD-15697, Added Add_Task_Resource_Certificate Procedure and modified Add_New_Assignment___
+--  241210  DUWJLK  AD-14810, Added Un_Assign_Me___ Procedure.
+--  241120  NIRTLK  AD-14819, Added validations on Add_New_Assignment___ and related functions
+--  241127  LAHNLK  AD-14808, added Assign_To_Me___
+--  241120  NIRTLK  AD-14819, Created, added Add_New_Assignment___ and related functions
+--  250805  KUSHLK  AMDEV-23101, Refactor Jt_Task_Search_Licen_Comp_API.Get_Licence_List to Jt_Task_Resource_License_API.Get_Licence_List
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Add_New_Assignment___ (
+   task_seq_                      IN NUMBER,
+   site_                          IN VARCHAR2,
+   skill_demand_res_seq_          IN NUMBER,
+   executor_res_seq_              IN NUMBER,
+   pre_executor_scheduled_hours_  IN VARCHAR2,
+   executor_scheduled_start_      IN DATE,
+   executor_scheduled_end_        IN DATE,
+   certification_required_        IN BOOLEAN,
+   certifier_res_seq_             IN NUMBER,
+   pre_certifier_scheduled_hours_ IN VARCHAR2,
+   certifier_scheduled_start_     IN DATE,
+   certifier_scheduled_end_       IN DATE,
+   inspection_required_           IN BOOLEAN,
+   inspector_res_seq_             IN NUMBER,
+   pre_inspector_scheduled_hours_ IN VARCHAR2,
+   inspector_scheduled_start_     IN DATE,
+   inspector_scheduled_end_       IN DATE)
+IS
+   executor_scheduled_hours_           NUMBER;
+   certifier_scheduled_hours_          NUMBER;
+   inspector_scheduled_hours_          NUMBER;
+   cert_task_res_seq_                  NUMBER;
+   insp_task_res_seq_                  NUMBER;
+   exec_task_res_seq_                  NUMBER;
+   exec_execution_instance_seq_        NUMBER; 
+   exec_resource_activity_alloc_seq_   NUMBER; 
+   exec_resource_activity_seq_         NUMBER; 
+   cert_execution_instance_seq_        NUMBER; 
+   cert_resource_activity_alloc_seq_   NUMBER; 
+   cert_resource_activity_seq_         NUMBER;  
+   insp_execution_instance_seq_        NUMBER; 
+   insp_resource_activity_alloc_seq_   NUMBER; 
+   insp_resource_activity_seq_         NUMBER;
+   task_res_group_id_                  VARCHAR2(50);  
+BEGIN
+   IF skill_demand_res_seq_ IS NOT NULL THEN
+      executor_scheduled_hours_ := Validate_Format_Duration_Hours___(task_seq_, pre_executor_scheduled_hours_, 'Executor');     
+      
+      Jt_Task_Resource_API.New(
+         task_resource_seq_   => exec_task_res_seq_,
+         task_seq_            => task_seq_,
+         demand_type_         => 'PERSON',
+         resource_group_seq_  => skill_demand_res_seq_,
+         planned_hours_       => executor_scheduled_hours_,
+         remark_              => 'Executor');
+  
+      Labour_Assignment_Util_API.Add_Task_Resource_Certificate (
+         task_seq_, 
+         exec_task_res_seq_,
+         skill_demand_res_seq_,
+         'EXECUTOR-CERTIFICATE');
+      
+      IF executor_res_seq_ IS NOT NULL THEN
+         IF Validate_Schedule_Range___(task_seq_, executor_scheduled_start_, executor_scheduled_end_, executor_scheduled_hours_, 'Executor') THEN
+            Jt_Execution_Instance_API.New_Modify_Execution_Instance(
+               execution_instance_seq_       => exec_execution_instance_seq_,
+               resource_activity_alloc_seq_  => exec_resource_activity_alloc_seq_,
+               resource_activity_seq_        => exec_resource_activity_seq_,
+               task_resource_seq_            => exec_task_res_seq_,
+               task_seq_                     => task_seq_,
+               allocated_start_              => executor_scheduled_start_,
+               allocated_finish_             => executor_scheduled_end_, 
+               allocated_hours_              => executor_scheduled_hours_,
+               resource_seq_                 => executor_res_seq_);
+         END IF;
+      END IF;
+      
+      IF certification_required_ THEN
+         certifier_scheduled_hours_ := Validate_Format_Duration_Hours___(task_seq_, pre_certifier_scheduled_hours_, 'Certifier');         
+
+         Jt_Task_Resource_API.New(
+            task_resource_seq_   => cert_task_res_seq_,
+            task_seq_            => task_seq_,
+            demand_type_         => 'PERSON',
+            resource_group_seq_  => skill_demand_res_seq_,
+            planned_hours_       => certifier_scheduled_hours_,
+            remark_              => 'Certifier');
+
+         Labour_Assignment_Util_API.Add_Task_Resource_Certificate (
+            task_seq_, 
+            cert_task_res_seq_,
+            skill_demand_res_seq_,
+            'CERTIFIER-CERTIFICATE');
+         
+         IF certifier_res_seq_ IS NOT NULL THEN
+            IF Validate_Schedule_Range___(task_seq_, certifier_scheduled_start_, certifier_scheduled_end_, certifier_scheduled_hours_, 'Certifier') THEN
+               Jt_Execution_Instance_API.New_Modify_Execution_Instance(
+                  execution_instance_seq_       => cert_execution_instance_seq_,
+                  resource_activity_alloc_seq_  => cert_resource_activity_alloc_seq_,
+                  resource_activity_seq_        => cert_resource_activity_seq_,
+                  task_resource_seq_            => cert_task_res_seq_,
+                  task_seq_                     => task_seq_,
+                  allocated_start_              => certifier_scheduled_start_,
+                  allocated_finish_             => certifier_scheduled_end_, 
+                  allocated_hours_              => certifier_scheduled_hours_,
+                  resource_seq_                 => certifier_res_seq_);
+            END IF; 
+         END IF;
+         
+         IF inspection_required_ THEN 
+            inspector_scheduled_hours_ := Validate_Format_Duration_Hours___(task_seq_, pre_inspector_scheduled_hours_, 'Inspector');
+      
+            Jt_Task_Resource_API.New(
+               task_resource_seq_   => insp_task_res_seq_,
+               task_seq_            => task_seq_,
+               demand_type_         => 'PERSON',
+               resource_group_seq_  => skill_demand_res_seq_,
+               planned_hours_       => inspector_scheduled_hours_,
+               remark_              => 'Inspector');
+   
+            Labour_Assignment_Util_API.Add_Task_Resource_Certificate (
+               task_seq_, 
+               insp_task_res_seq_,
+               skill_demand_res_seq_,
+               'INSPECTOR-CERTIFICATE');
+            
+            IF inspector_res_seq_ IS NOT NULL THEN
+               IF Validate_Schedule_Range___(task_seq_, inspector_scheduled_start_, inspector_scheduled_end_, inspector_scheduled_hours_, 'Inspector') THEN
+                  Jt_Execution_Instance_API.New_Modify_Execution_Instance(
+                     execution_instance_seq_       => insp_execution_instance_seq_,
+                     resource_activity_alloc_seq_  => insp_resource_activity_alloc_seq_,
+                     resource_activity_seq_        => insp_resource_activity_seq_,
+                     task_resource_seq_            => insp_task_res_seq_,
+                     task_seq_                     => task_seq_,
+                     allocated_start_              => inspector_scheduled_start_,
+                     allocated_finish_             => inspector_scheduled_end_, 
+                     allocated_hours_              => inspector_scheduled_hours_,
+                     resource_seq_                 => inspector_res_seq_);
+               END IF; 
+            END IF;
+         END IF;
+      END IF;
+      Av_Exe_Task_Assignment_API.Add_Entry(task_seq_, exec_task_res_seq_, cert_task_res_seq_, insp_task_res_seq_, task_res_group_id_);
+   END IF;
+END Add_New_Assignment___;
+
+
+FUNCTION Validate_Schedule_Dates___ (
+   task_seq_      IN NUMBER,
+   start_date_    IN DATE,
+   end_date_      IN DATE,
+   field_         IN VARCHAR2)   RETURN Schedule_Hours_Structure_Rec
+IS
+   duration_               NUMBER;
+   max_schedule_hours_     NUMBER := 9999.59;
+   schedule_hours_         Schedule_Hours_Structure_Rec;
+   schedule_date_interval_ Av_Exe_Task_API.Task_Schedule_Time_Interval_Rec;
+BEGIN
+   IF start_date_ > end_date_ THEN
+      Error_SYS.Record_General(lu_name_, 'ERRINVALIDDATES: :P1 Scheduled Start Date should be less than the Scheduled End Date.',field_);
+   END IF;
+
+   schedule_date_interval_ := Av_Exe_Task_API.Get_Task_Schedule_Interval(task_seq_);
+   
+   IF start_date_ < schedule_date_interval_.schedule_start OR end_date_ > schedule_date_interval_.schedule_end THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDASSIGNMENT: :P1 Assignment is outside the schedule time.',field_);
+   END IF;
+   duration_           := Adcom_Util_API.Get_Time_Difference_In_Hours(start_date_, end_date_);
+   IF duration_ > max_schedule_hours_ THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDSCHEDHOURS2: Exceeded maximum allowed :P1 Schedule Hours.',field_);  
+   END IF;
+   schedule_hours_.schedule_hours         := duration_;
+   schedule_hours_.pre_schedule_hours     := Adcom_Util_API.Get_Text_Time(schedule_hours_.schedule_hours);
+   RETURN schedule_hours_;  
+END Validate_Schedule_Dates___;
+
+
+FUNCTION Validate_Format_Duration_Hours___ (
+   task_seq_      IN NUMBER,
+   duration_hhmm_ IN VARCHAR2,
+   field_         IN VARCHAR2)   RETURN NUMBER
+IS
+   duration_        NUMBER;
+   departure_date_  DATE;
+   start_date_      DATE;
+   end_date_        DATE;
+BEGIN
+   IF duration_hhmm_ = '00:00' THEN
+      RETURN  NULL;
+   END IF;
+   
+   duration_   :=  Adcom_Util_API.Validate_Format_Hours(duration_hhmm_);
+   IF duration_ IS NULL  THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDSCHEDHOURS: Enter :P1 Scheduled Hours in the HH:MM format.', field_);
+   END IF; 
+   
+   start_date_       := Av_Exe_Task_API.Get_Arrival_Time(task_seq_);
+   departure_date_   := Av_Exe_Task_API.Get_Departure_Time(task_seq_);
+   end_date_         := (start_date_ + (1/24*duration_));
+   IF departure_date_ < end_date_ THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDASSIGNMENT: :P1 Assignment is outside the schedule time.',field_);
+   END IF;
+   
+   RETURN duration_;
+END Validate_Format_Duration_Hours___;
+
+
+FUNCTION Get_Schedule_Date_And_Interval___ (
+   task_seq_         IN NUMBER,
+   duration_hhmm_    IN VARCHAR2,
+   field_            IN VARCHAR2   )    RETURN Schedule_Interval_Structure_Rec
+IS
+   duration_               NUMBER;
+   schedule_date_interval_ Av_Exe_Task_API.Task_Schedule_Time_Interval_Rec;
+   dates_                  Schedule_Interval_Structure_Rec;
+BEGIN
+   duration_               := NVL(Adcom_Util_API.Validate_Format_Hours(duration_hhmm_),0);
+   schedule_date_interval_ := Av_Exe_Task_API.Get_Task_Schedule_Interval(task_seq_);
+   dates_.start_date       := schedule_date_interval_.schedule_start;
+   dates_.end_date         := (dates_.start_date + (1/24*duration_));
+   
+   IF schedule_date_interval_.schedule_end < dates_.end_date THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDASSIGNMENT: :P1 Assignment is outside the schedule time.',field_);
+   END IF; 
+   IF duration_ = 0 THEN
+      dates_.pre_schedule_hours := '00:00';
+   ELSE
+      dates_.pre_schedule_hours := duration_hhmm_;
+   END IF;
+   RETURN dates_;
+END Get_Schedule_Date_And_Interval___;
+
+
+FUNCTION Get_Schedule_Time_Range___ (
+   task_seq_         IN NUMBER,
+   duration_hours_   IN NUMBER)    RETURN Schedule_Range_Structure_Rec
+IS
+   departure_date_   DATE;
+   duration_         NUMBER;
+   dates_            Schedule_Range_Structure_Rec;
+BEGIN
+   duration_         :=  NVL(duration_hours_,0);
+   dates_.start_date := Av_Exe_Task_API.Get_Arrival_Time(task_seq_);
+   departure_date_   := Av_Exe_Task_API.Get_Departure_Time(task_seq_);
+   dates_.end_date   := (dates_.start_date + (1/24*duration_));
+   IF (departure_date_ < dates_.end_date) THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDASSIGNMENT2: Assignment is outside the schedule time.');
+   END IF; 
+   RETURN dates_;
+END Get_Schedule_Time_Range___;
+
+
+FUNCTION Validate_Schedule_Range___ (
+   task_seq_            IN NUMBER,
+   start_date_          IN DATE,
+   end_date_            IN DATE,
+   schedule_hours_      IN NUMBER,
+   field_               IN VARCHAR2)    RETURN BOOLEAN
+IS 
+   val_schedule_hours_       Schedule_Hours_Structure_Rec;
+BEGIN
+   val_schedule_hours_         := Validate_Schedule_Dates___(task_seq_,start_date_, end_date_,field_);
+   IF val_schedule_hours_.schedule_hours  != schedule_hours_ THEN
+      Error_SYS.Record_General(lu_name_, 'EXCEEDINTERVAL: :P1 Scheduled hours exceed the schedule date interval', field_);         
+   END IF;
+   RETURN TRUE;
+END Validate_Schedule_Range___;
+
+FUNCTION Assign_User_To_Competency___ (
+   key_           IN Task_Competency_Query_Key,
+   assigned_user_ IN VARCHAR2,
+   start_stamp_   IN DATE,
+   end_stamp_     IN DATE ) RETURN VARCHAR2
+IS
+   info_                   VARCHAR2(2000);
+   attr_                   VARCHAR2(2000);
+   dummy_                  NUMBER;
+   task_seq_               av_exe_task.task_seq%TYPE;
+   task_resource_seq_      jt_task_resource.task_resource_seq%TYPE;
+   execution_instance_seq_ jt_execution_instance.execution_instance_seq%TYPE;
+   resource_group_seq_     jt_task_resource.resource_group_seq%TYPE;
+   start_date_             av_flight_tab.shed_arrival_date_time%TYPE;
+   end_date_               av_flight_tab.shed_departure_date_time%TYPE;
+   assigned_user_res_seq_  resource_tab.resource_seq%TYPE;
+   
+   ---- This cursor validates whether the updated assignee belongs to the appropriate resource group.
+   CURSOR validate_user_resource_group IS
+      SELECT 1
+       FROM resource_join_parent
+       WHERE resource_parent_seq = resource_group_seq_
+       AND resource_seq = assigned_user_res_seq_;
+BEGIN
+   task_seq_               :=key_.task_seq;
+   task_resource_seq_      :=key_.task_resource_seq;
+   execution_instance_seq_ :=key_.execution_instance_seq;
+   assigned_user_res_seq_  :=Resource_API.Get_Resource_Seq(assigned_user_,'PERSON');
+   start_date_     := Av_Exe_Task_API.Get_Arrival_Time(task_seq_);   
+   end_date_       := Av_Exe_Task_API.Get_Departure_Time(task_seq_);
+   
+   IF start_stamp_< start_date_ OR end_stamp_ >end_date_ THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDASSIGNMENT: Assignment is outside the schedule time.');
+   END IF;
+   
+   resource_group_seq_ := Jt_Task_Resource_API.Get_Resource_Group_Seq(task_seq_, task_resource_seq_);
+   
+   OPEN validate_user_resource_group;
+   FETCH validate_user_resource_group INTO dummy_;
+   IF validate_user_resource_group%NOTFOUND THEN
+      CLOSE validate_user_resource_group;
+      Error_SYS.Record_General(lu_name_, 'INVALIDRESGROUPERROR: :P1 does not possess the required skill',assigned_user_);
+   ELSE
+      CLOSE validate_user_resource_group;
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('RESOURCE_SEQ',assigned_user_res_seq_, attr_); 
+      Client_SYS.Add_To_Attr('ALLOCATED_START',start_stamp_, attr_);     
+      Client_SYS.Add_To_Attr('ALLOCATED_FINISH',end_stamp_, attr_); 
+      Jt_Execution_Instance_API.Modify(info_, attr_, task_seq_, execution_instance_seq_, 'DO');
+   END IF;
+   
+   RETURN Pers_API.Get_Internal_Display_Name(assigned_user_);
+   
+END Assign_User_To_Competency___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Assign_To_Me___ (
+   task_seq_           IN NUMBER,
+   task_resource_seq_  IN NUMBER,
+   planned_hours_      IN NUMBER,
+   resource_group_seq_ IN NUMBER)
+IS 
+   user_res_seq_                       NUMBER;
+   exec_execution_instance_seq_        NUMBER; 
+   exec_resource_activity_alloc_seq_   NUMBER; 
+   exec_resource_activity_seq_         NUMBER; 
+   allocated_hours_                    Jt_Execution_Instance_tab.allocated_hours%TYPE;
+   dates_                              Schedule_Range_Structure_Rec; 
+   license_id_                         Pers_License_Profile_Tab.license_id%TYPE;
+   person_resource_                    Pers_License_Profile_Tab.person_id%TYPE;
+   assignment_role_                    VARCHAR2(20); 
+          
+BEGIN
+   Labour_Assignment_Util_API.Create_Assignment_To_Sess_User(task_seq_, task_resource_seq_, resource_group_seq_, planned_hours_);
+END Assign_To_Me___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Unassign___ (
+   task_seq_                  IN NUMBER,
+   execution_instance_seq_    IN NUMBER)
+IS
+BEGIN
+   Labour_Assignment_Util_API.Remove_Allocation_From_Demand(task_seq_, execution_instance_seq_);  
+END Unassign___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Validate_Sess_User_Resource_Skills___ (
+   selection_ IN VARCHAR2)
+IS
+   fnd_user_                  VARCHAR2(30) := Fnd_Session_API.Get_Fnd_User();
+   string_tab_                Utility_SYS.STRING_TABLE;
+   token_number_              NUMBER;
+   task_seq_                  Jt_Task_Resource_Tab.task_seq%TYPE;
+   task_resource_seq_         Jt_Task_Resource_Tab.task_resource_seq%TYPE;
+   resource_seq_              Jt_Execution_Instance_Tab.resource_seq%TYPE;
+   resource_group_seq_        Jt_Task_Resource_Tab.resource_group_seq%TYPE;
+   resource_group_id_         Resource_Tab.resource_id%TYPE;
+   resource_id_               Resource_Tab.resource_id%TYPE;
+   failed_skill_list_         VARCHAR2(200);
+   error_count_               NUMBER := 0;
+BEGIN
+	resource_seq_ := resource_API.Get_Resource_Seq(fnd_user_, 'PERSON');
+   resource_id_   := Resource_API.Get_Resource_Id(resource_seq_);
+   IF resource_seq_ IS NULL THEN
+      Error_SYS.Appl_General(lu_name_,'USRRESNOTEXIST: :P1 Resource does not exist.', resource_id_);
+   END IF;
+   
+   Utility_SYS.Tokenize(selection_, ';', string_tab_, token_number_);
+   FOR i_ IN string_tab_.FIRST..string_tab_.LAST LOOP
+      task_seq_            := Client_SYS.Get_Key_Reference_Value(string_tab_(i_), 'TASK_SEQ');
+      task_resource_seq_   := Client_SYS.Get_Key_Reference_Value(string_tab_(i_), 'TASK_RESOURCE_SEQ') ;
+      resource_group_seq_  := Jt_Task_Resource_API.Get_Resource_Group_Seq(task_seq_, task_resource_seq_);
+      --
+      IF (NOT Labour_Assignment_Util_API.Is_Resource_In_Group(resource_seq_, resource_group_seq_)) THEN
+         error_count_ := error_count_ + 1;
+         resource_group_id_   := Resource_API.Get_Resource_Id(resource_group_seq_);
+         IF error_count_ = 1 THEN
+            failed_skill_list_ := resource_group_id_;
+         ELSE
+            failed_skill_list_ := failed_skill_list_ || ', ' || resource_group_id_;
+         END IF;
+      END IF;
+   END LOOP;
+   
+   IF error_count_ > 0 THEN 
+      Error_SYS.Appl_General(lu_name_,'RESSKILLSNOTFOUND: Selected row(s) cannot be assigned because the required :P1 skill(s) have not been assigned to the :P2 resource.', failed_skill_list_, resource_id_);
+   END IF;
+END Validate_Sess_User_Resource_Skills___;
+
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Validate_Tasks_In_My_Shift___ (
+   selection_ IN VARCHAR2) RETURN VARCHAR2
+IS
+   task_seq_            Work_Task.task_seq%TYPE;   
+   gen_task_seq_arr_    Utility_SYS.NUMBER_TABLE;
+   string_tab_          Utility_SYS.STRING_TABLE;
+   token_number_        NUMBER;
+   task_not_in_shift_   VARCHAR2(800);
+   gen_task_array_indx_ PLS_INTEGER := 1;
+   out_of_shift_found_  NUMBER := 0;
+   
+   CURSOR get_task_barcodes_not_in_shift(task_seq_arr_ Utility_SYS.NUMBER_TABLE) IS
+      SELECT wt.*
+      FROM av_exe_task wt WHERE wt.task_seq IN (SELECT COLUMN_VALUE FROM TABLE (task_seq_arr_)) AND wt.task_seq NOT IN (
+         SELECT  wt.task_seq
+         FROM av_exe_task wt 
+         LEFT JOIN resource_capacity rescap ON wt.planned_start BETWEEN rescap.start_time AND rescap.finish_time
+         INNER JOIN RESOURCE_tab res ON res.resource_seq = rescap.resource_seq
+         WHERE  wt.task_seq IN (SELECT COLUMN_VALUE FROM TABLE (task_seq_arr_))
+         AND res.resource_id = (SELECT fnd_session_api.get_fnd_user FROM dual)     
+      );
+BEGIN
+   Utility_SYS.Tokenize(selection_, ';', string_tab_, token_number_);
+   FOR i_ IN string_tab_.FIRST..string_tab_.LAST LOOP
+      task_seq_ := Client_SYS.Get_Key_Reference_Value(string_tab_(i_), 'TASK_SEQ');
+      gen_task_seq_arr_(gen_task_array_indx_) := task_seq_;
+      gen_task_array_indx_ := gen_task_array_indx_ + 1;
+   END LOOP;
+   
+   FOR rec_ IN get_task_barcodes_not_in_shift(gen_task_seq_arr_) LOOP
+      IF task_not_in_shift_ IS NULL THEN
+         out_of_shift_found_ := 1;
+         task_not_in_shift_ := rec_.barcode;
+      ELSE
+         task_not_in_shift_ := task_not_in_shift_||' , '||rec_.barcode;
+      END IF; 
+   END LOOP;
+   IF out_of_shift_found_ = 1 THEN 
+      RETURN task_not_in_shift_;  
+   ELSE 
+      RETURN '0';
+   END IF ;
+END Validate_Tasks_In_My_Shift___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Proxy_Job_Stop___ (
+   task_seq_                  IN NUMBER,
+   task_resource_seq_         IN NUMBER,
+   execution_instance_seq_    IN NUMBER,
+   resource_group_seq_        IN NUMBER,
+   assignment_role_           IN VARCHAR2,
+   curr_assignment_status_    IN VARCHAR2,
+   start_time_                IN DATE,
+   scheduled_hours_           IN NUMBER,
+   site_                      IN VARCHAR2
+   )
+IS        
+   actual_hours_        NUMBER;
+   job_stop_reason_     VARCHAR2(200);
+   action_desc_         VARCHAR2(2000);
+   one_minute_in_hours_ NUMBER := 0.02;     
+   start_date_time_     DATE;
+   end_time_            DATE;
+BEGIN
+   IF curr_assignment_status_ = 'ASSIGNED' THEN
+      start_date_time_ := Time_Util_API.Get_Sysdate_In_Utc;
+   ELSE
+      start_date_time_ := start_time_;
+   END IF;
+   end_time_        := Time_Util_API.Get_Sysdate_In_Utc;
+   actual_hours_    := one_minute_in_hours_;    
+   job_stop_reason_ := Av_Flm_Parameter_API.Get_Parameter_Value('PROXY_JOB_STOP_REASON');   
+      
+   Labour_Assignment_Util_API.Do_Job_Stop(
+      task_seq_                  => task_seq_,
+      task_resource_seq_         => task_resource_seq_,
+      execution_instance_seq_    => execution_instance_seq_,
+      resource_group_seq_        => resource_group_seq_,
+      assignment_role_           => assignment_role_,
+      actual_hours_              => actual_hours_,
+      remaining_hours_           => scheduled_hours_,
+      start_time_                => start_date_time_,
+      end_time_                  => end_time_,
+      job_stop_reason_           => job_stop_reason_,
+      curr_assignment_status_    => curr_assignment_status_);
+      
+   action_desc_ := Jt_Incompletion_Cause_API.Get_Description(job_stop_reason_);   
+   Save_Proxy_Job_Stop_Action(task_seq_, action_desc_);
+END Proxy_Job_Stop___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Save_Proxy_Job_Stop_Action (
+   task_seq_    IN NUMBER,
+   action_desc_ IN VARCHAR2)
+IS
+   CURSOR get_fault_data (task_seq_ NUMBER) IS
+      SELECT fault_id
+      FROM av_exe_task
+      WHERE task_seq = task_seq_;
+   
+   CURSOR get_max_action_ord_(fault_id_ NUMBER) IS
+      SELECT MAX(action_ord)
+      FROM AV_FAULT_ACTION_TAB
+      WHERE FAULT_ID = fault_id_;
+      
+      
+   CURSOR get_max_task_action_ord(task_seq_ NUMBER) IS
+      SELECT MAX(action_ord)
+      FROM AV_EXE_TASK_ACTION_TAB
+      WHERE task_seq = task_seq_;
+      
+   attr_                      VARCHAR2(2000);  
+   info_                      VARCHAR2(4000);
+   objid_                     VARCHAR2(200);
+   objversion_                VARCHAR2(200);
+   fault_id_                  NUMBER;
+   fault_action_id_var_       NUMBER;
+   fault_action_id_           VARCHAR2(200);
+   existing_task_action_ord_  NUMBER;
+   existing_fault_action_ord_ NUMBER;
+   fault_action_ord_          NUMBER        := 1;
+   task_action_ord_           NUMBER        := 1;
+   action_user_               VARCHAR2(200) := Fnd_Session_API.Get_Fnd_User(); 
+   action_date_               DATE          := Time_Util_API.Get_Sysdate_In_Utc;
+   
+BEGIN
+   IF (task_seq_ IS NOT NULL) THEN       
+      OPEN  get_max_task_action_ord(task_seq_);
+      FETCH get_max_task_action_ord INTO existing_task_action_ord_;
+      IF existing_task_action_ord_  IS NOT NULL THEN
+         task_action_ord_ := (existing_task_action_ord_ + 1 );
+      END IF;
+      CLOSE get_max_task_action_ord;
+   
+      OPEN get_fault_data(task_seq_);
+      FETCH get_fault_data INTO fault_id_;
+      CLOSE get_fault_data;   
+
+      IF(fault_id_ IS NOT NULL) THEN
+         OPEN get_max_action_ord_(fault_id_);
+         FETCH get_max_action_ord_ INTO existing_fault_action_ord_;
+         IF existing_fault_action_ord_  IS NOT NULL THEN
+            fault_action_ord_ := (existing_fault_action_ord_ + 1 );
+         END IF;
+         CLOSE get_max_action_ord_;
+
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('FAULT_ID',     fault_id_,                           attr_);
+         Client_SYS.Add_To_Attr('ACTION_USER',  action_user_,   attr_);
+         Client_SYS.Add_To_Attr('ACTION_DESC',  action_desc_,   attr_);
+         Client_SYS.Add_To_Attr('ACTION_DATE',  action_date_,   attr_);
+         Client_SYS.Add_To_Attr('ACTION_ORD',   fault_action_ord_,    attr_);
+         Client_SYS.Add_To_Attr('IS_CORRECTIVE','True',                              attr_);
+         Av_Fault_Action_API.New__(info_, objid_, objversion_, attr_, 'DO');
+
+         fault_action_id_var_ := Client_SYS.Get_Item_Value('FAULT_ACTION_ID', attr_);
+         fault_action_id_     := Client_SYS.Attr_Value_To_Number(fault_action_id_var_);
+
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',        task_seq_,     attr_);
+         Client_SYS.Add_To_Attr('ACTION_USER',     action_user_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_DESC',     action_desc_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_DATE',     action_date_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_ORD',      task_action_ord_,   attr_);
+         Client_SYS.Add_To_Attr('ACTION_TYPE',     'Corrective' ,                      attr_);
+         Client_SYS.Add_To_Attr('FAULT_ACTION_ID', fault_action_id_ ,                  attr_);
+         Av_Exe_Task_Action_API.New__(info_, objid_, objversion_, attr_, 'DO');
+
+      ELSE            
+         Client_SYS.Clear_Attr(attr_);
+         Client_SYS.Add_To_Attr('TASK_SEQ',        task_seq_,     attr_);
+         Client_SYS.Add_To_Attr('ACTION_USER',     action_user_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_DESC',     action_desc_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_DATE',     action_date_,  attr_);
+         Client_SYS.Add_To_Attr('ACTION_ORD',      task_action_ord_,   attr_);
+         Client_SYS.Add_To_Attr('ACTION_TYPE',     'Corrective' ,                      attr_);
+         Av_Exe_Task_Action_API.New__(info_, objid_, objversion_, attr_, 'DO');
+
+      END IF;
+   END IF;
+END Save_Proxy_Job_Stop_Action;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Create___ (
+   rec_ IN Task_Assignments_Virtual_Rec  )
+IS
+   resource_demand_rec_      Resource_Demands_Virtual_Rec;
+   resources_rec_            Resource_Virtual_Rec;
+   shift_start_              DATE;
+   shift_end_                DATE;
+   next_shift_start_         DATE;
+   next_shift_end_           DATE;
+   demand_assigned_          BOOLEAN := FALSE;
+   
+   CURSOR get_resource_demands(task_seq_ NUMBER) IS
+   SELECT tr.task_seq,tr.task_resource_seq,tr.resource_demand,tr.remark,tr.planned_hours,tr.sched_start,tr.sched_end,tl.license_id,tr.resource_group_seq
+   FROM jt_task_resource_demand_av_uiv tr
+   LEFT JOIN jt_task_resource_license_tab tl 
+   ON tr.task_seq=tl.task_seq AND tr.task_resource_seq=tl.task_resource_seq
+   WHERE tr.task_seq=task_seq_ 
+   AND NOT EXISTS(SELECT 1 FROM jt_execution_instance_tab jei WHERE jei.task_seq=tr.task_seq AND jei.task_resource_seq=tr.task_resource_seq);
+      
+   CURSOR get_resources(task_seq_ NUMBER, task_resource_seq_  NUMBER) IS
+   SELECT rt.resource_seq,rt.description,COUNT(je.resource_seq) AS total_assignments,COALESCE (ROUND(SUM(je.allocated_hours),0),0) AS total_hours 
+   FROM resource_tab rt 
+   LEFT JOIN jt_execution_instance_tab je
+   ON rt.resource_seq=je.resource_seq AND je.rowstate!= 'COMPLETED'
+   INNER JOIN av_exe_task tsk ON
+   tsk.task_seq = task_seq_  
+   WHERE 
+   rt.resource_id IN (SELECT RESOURCE_ID 
+                     FROM TABLE(Jt_Task_Resource_License_API.Get_Licence_List(task_seq_=>task_seq_))) 
+   AND  EXISTS (SELECT 1 
+                FROM user_allowed_site s
+                WHERE s.userid=rt.resource_id AND s.contract= tsk.site)
+   AND rt.resource_type='PERSON'
+   GROUP BY rt.description,rt.resource_seq,rt.resource_id;
+     
+BEGIN
+   super(rec_);
+   FOR demand_rec_ IN get_resource_demands(rec_.task_seq) LOOP 
+      resource_demand_rec_ := NULL;
+      resource_demand_rec_.parent_objkey := rec_.objkey;
+      resource_demand_rec_.objkey := sys_guid();
+      resource_demand_rec_.task_seq                       := rec_.task_seq;
+      resource_demand_rec_.task_resource_seq              := demand_rec_.task_resource_seq;
+      resource_demand_rec_.skill_demand                   := demand_rec_.resource_demand;
+      resource_demand_rec_.remark                         := demand_rec_.remark;
+      resource_demand_rec_.planned_hours                  := Adcom_Util_API.Get_Text_Time(demand_rec_.planned_hours);     
+      resource_demand_rec_.sched_start                    := demand_rec_.sched_start;
+      resource_demand_rec_.sched_end                      := demand_rec_.sched_end;
+      resource_demand_rec_.license_id                     := demand_rec_.license_id; 
+      resource_demand_rec_.resource_group_seq             := demand_rec_.resource_group_seq;
+      resource_demand_rec_.lb_demand_sched_hours          := demand_rec_.planned_hours;
+      CRUD_Create___(resource_demand_rec_);        
+      FOR resource_rec_ IN get_resources(task_seq_=>resource_demand_rec_.task_seq,task_resource_seq_=>resource_demand_rec_.task_resource_seq) LOOP 
+         shift_start_                             := NULL;
+         shift_end_                               := NULL;
+         next_shift_start_                        := NULL;
+         next_shift_end_                          := NULL;
+         resources_rec_                           := NULL;
+         resources_rec_.parent_objkey             := resource_demand_rec_.objkey;
+         resources_rec_.objkey                    := sys_guid();
+         resources_rec_.task_seq                  := resource_demand_rec_.task_seq;
+         resources_rec_.task_resource_seq         := resource_demand_rec_.task_resource_seq;
+         resources_rec_.resource_seq              := resource_rec_.resource_seq;
+         resources_rec_.description               := resource_rec_.description;
+         resources_rec_.license_id                := resource_demand_rec_.license_id;
+         resources_rec_.total_assignments         := resource_rec_.total_assignments;
+         resources_rec_.total_hours               := resource_rec_.total_hours;
+         resources_rec_.resource_group_seq        := resource_demand_rec_.resource_group_seq;
+         resources_rec_.lb_demand_sched_hours     := resource_demand_rec_.lb_demand_sched_hours;
+         Resource_Capacity_API.Get_Period_Start_End(shift_start_, shift_end_, resources_rec_.resource_seq, resource_demand_rec_.sched_start);
+         Resource_Capacity_API.Get_Next_Period_Start_End(next_shift_start_, next_shift_end_, resources_rec_.resource_seq, resource_demand_rec_.sched_start);
+         resources_rec_.shift_start               := NVL(shift_start_,NVL(next_shift_start_, NULL));
+         resources_rec_.shift_end                 := NVL(shift_end_,NVL(next_shift_end_, NULL));
+         CRUD_Create___(resources_rec_);
+      END LOOP;       
+   END LOOP;
+END CRUD_Create___;
+
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Update_Resource_Virtual___ (
+   resource_seq_ IN NUMBER,
+   lb_demand_sched_hours_ IN NUMBER)
+IS
+   key_              Resource_Virtual_Key;
+   oldrec_           Resource_Virtual_Rec;
+   newrec_           Resource_Virtual_Rec;
+   
+   CURSOR get_resource_rec(resource_seq_ NUMBER) IS 
+   SELECT objkey,total_assignments,total_hours 
+   FROM ${PROJECTION}_RESOURCE_VIRTUAL_VRT 
+   WHERE resource_seq = resource_seq_;
+BEGIN
+   FOR rec_ IN get_resource_rec (resource_seq_) LOOP 
+      key_.objkey                            := rec_.objkey;
+      oldrec_                                := Get_Record___(key_);
+      newrec_                                := oldrec_;
+      newrec_.total_assignments              := rec_.total_assignments+1;
+      newrec_.total_hours                    := rec_.total_hours + ROUND(lb_demand_sched_hours_);
+      CRUD_UPDATE___(oldrec_,newrec_);
+   END LOOP;   
+END Update_Resource_Virtual___ ;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Allocate_Resource_To_Labor_Demand___ (
+   task_seq_ IN NUMBER,
+   task_resource_seq_ IN NUMBER,
+   resource_seq_ IN NUMBER,
+   lb_resource_group_seq_ IN NUMBER,
+   lb_demand_sched_hours_ IN NUMBER,
+   selection_  VARCHAR2)
+IS
+   key_           Resource_Demands_Virtual_Key;
+   rec_           Resource_Demands_Virtual_Rec;
+BEGIN
+   Labour_Assignment_Util_API.Allocate_Resource_To_Demand(task_seq_, task_resource_seq_,resource_seq_, lb_resource_group_seq_, lb_demand_sched_hours_);
+   Update_Resource_Virtual___(resource_seq_, lb_demand_sched_hours_);
+   IF selection_ IS NOT NULL THEN 
+      key_.objkey := selection_;
+      rec_ := Get_Record___(key_);
+      --removing the assigned demand from the the resource demands list in the assistant
+      CRUD_DELETE___(rec_); 
+   END IF;
+END Allocate_Resource_To_Labor_Demand___ ;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Check_Active_Assgmt_For_Skill_Role___(
+   task_seq_        IN NUMBER,
+   skill_res_seq_   IN NUMBER,
+   assignment_role_ IN VARCHAR2,
+   user_res_seq_    IN NUMBER) RETURN BOOLEAN 
+IS
+BEGIN
+   RETURN Labour_Assignment_Util_API.Check_Active_Assgmt_For_Role(task_seq_, skill_res_seq_, assignment_role_, user_res_seq_);
+END Check_Active_Assgmt_For_Skill_Role___; 
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Validate_Assignments___ (
+   selection_   IN VARCHAR2,
+   task_seq_no_ IN NUMBER) RETURN BOOLEAN
+IS
+   task_seq_                jt_execution_instance.task_seq%TYPE;
+   task_resource_seq_       jt_execution_instance.task_resource_seq%TYPE;  
+   count_                   NUMBER; 
+   gen_task_res_seq_arr_    Utility_SYS.NUMBER_TABLE;
+   string_tab_              Utility_SYS.STRING_TABLE;
+   token_number_            NUMBER;
+   gen_task_res_array_indx_ PLS_INTEGER := 1;
+   
+   CURSOR get_assigned_assignments(task_seq_ NUMBER, gen_task_res_seq_arr_ Utility_SYS.NUMBER_TABLE) IS
+      SELECT 1
+      FROM jt_execution_instance_tab jte 
+      WHERE jte.task_seq = task_seq_ 
+      AND jte.task_resource_seq IN (SELECT COLUMN_VALUE 
+                                    FROM TABLE (gen_task_res_seq_arr_));
+      
+BEGIN       
+   task_seq_ := task_seq_no_;
+   Utility_SYS.Tokenize(selection_, ';', string_tab_, token_number_);
+   task_resource_seq_ := NULL; 
+   FOR i_ IN string_tab_.FIRST..string_tab_.LAST LOOP
+      task_resource_seq_ := Client_SYS.Get_Key_Reference_Value(string_tab_(i_), 'TASK_RESOURCE_SEQ');
+      gen_task_res_seq_arr_(gen_task_res_array_indx_) := task_resource_seq_;
+      gen_task_res_array_indx_ := gen_task_res_array_indx_ + 1;
+   END LOOP;
+   count_ := NULL;     
+   OPEN get_assigned_assignments (task_seq_, gen_task_res_seq_arr_);
+   FETCH get_assigned_assignments INTO count_;  
+   IF (get_assigned_assignments%FOUND) THEN 
+      CLOSE get_assigned_assignments;
+      RETURN TRUE;
+   END IF;
+   CLOSE get_assigned_assignments; 
+   RETURN FALSE;
+END Validate_Assignments___;
+
+
+@IgnoreUnitTest NoOutParams
+FUNCTION Validate_Shift_When_Assign_Task_To_User___ (
+   task_seq_     IN NUMBER,
+   resource_seq_ IN NUMBER) RETURN NUMBER
+IS
+   out_of_shift_found_  NUMBER := 0;
+   dummy_  NUMBER;
+   
+   CURSOR get_task_not_in_shift(task_seq_ NUMBER, resource_seq_ NUMBER) IS
+      SELECT 1  
+      FROM av_exe_task wt
+      WHERE wt.task_seq = task_seq_
+      AND wt.task_seq NOT IN (
+         SELECT wt.task_seq
+         FROM av_exe_task wt
+         LEFT JOIN resource_capacity rescap 
+            ON wt.planned_start BETWEEN rescap.start_time AND rescap.finish_time
+         INNER JOIN RESOURCE_tab res 
+            ON res.resource_seq = rescap.resource_seq
+         WHERE res.resource_seq = resource_seq_
+      );
+   
+BEGIN
+   OPEN get_task_not_in_shift(task_seq_, resource_seq_);
+   FETCH get_task_not_in_shift INTO dummy_;
+   
+   IF get_task_not_in_shift%FOUND THEN
+      out_of_shift_found_ := 1;   
+   END IF;
+   
+   CLOSE get_task_not_in_shift;
+   
+   RETURN out_of_shift_found_;
+END Validate_Shift_When_Assign_Task_To_User___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Pause_Assignment___ (
+   task_seq_               IN NUMBER,
+   execution_instance_seq_ IN NUMBER)
+IS
+   CURSOR get_assignment_clockin_time IS
+   SELECT start_time
+   FROM jt_task_clocking_tab
+   WHERE task_seq = task_seq_
+   AND execution_instance_seq = execution_instance_seq_
+   AND clocking_type = 'CLOCKED_IN'
+   AND stop_time IS NULL;
+   
+   actual_hours_                 NUMBER; 
+   end_time_                     DATE;
+   start_time_                   DATE;
+BEGIN     
+   OPEN get_assignment_clockin_time;
+   FETCH get_assignment_clockin_time INTO start_time_;
+   CLOSE get_assignment_clockin_time;
+      
+   end_time_ := Time_Util_API.Get_Sysdate_In_Utc;
+   actual_hours_ := Adcom_Util_API.Get_Time_Difference_In_Hours(start_time_,end_time_);
+                            
+   Jt_Task_Clocking_API.Clock_Out_From_Work_Asgmt( task_seq_, execution_instance_seq_, end_time_, actual_hours_, NULL, 'Clock out from MM');
+END Pause_Assignment___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Continue_Assignment___ (
+   task_seq_               IN NUMBER,
+   execution_instance_seq_ IN NUMBER ) 
+IS
+   clocking_seq_                 NUMBER;
+   start_time_                   DATE;
+BEGIN        
+   start_time_ := Time_Util_API.Get_Sysdate_In_Utc;
+   Jt_Task_Clocking_API.Clock_In_From_Work_Asgmt(clocking_seq_, task_seq_, execution_instance_seq_, start_time_);
+END Continue_Assignment___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Modify_Task_Assignment_Schedule_Hour___ (
+   task_seq_                  IN NUMBER,
+   task_resource_seq_         IN NUMBER,
+   labor_scheduled_hours_     IN VARCHAR2,
+   sched_start_               IN DATE,
+   sched_end_                 IN DATE,
+   remark_                    IN VARCHAR2,
+   site_                      IN VARCHAR2)
+IS
+   info_                      VARCHAR2(2000);
+   attr_                      VARCHAR2(32000);
+   formatted_schedule_hours_  NUMBER;
+   objid_                     VARCHAR2(2000);
+   objversion_                VARCHAR2(2000);
+   execution_instance_seq_    jt_execution_instance_tab.execution_instance_seq%TYPE;
+      
+   CURSOR get_execution_Instance_rec IS
+   SELECT execution_instance_seq
+   FROM jt_execution_instance_tab
+   WHERE  task_seq = task_seq_
+   AND task_resource_seq = task_resource_seq_;
+      
+BEGIN
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('TASK_SEQ',          task_seq_, attr_);
+      Client_SYS.Add_To_Attr('TASK_RESOURCE_SEQ', task_resource_seq_, attr_);     
+      formatted_schedule_hours_ := Validate_Format_Duration_Hours___(task_seq_, labor_scheduled_hours_, remark_);
+      Client_SYS.Add_To_Attr('PLANNED_HOURS', formatted_schedule_hours_, attr_);
+      Jt_Task_Resource_API.Modify(attr_);
+ 
+      OPEN get_execution_Instance_rec;
+      FETCH get_execution_Instance_rec INTO execution_instance_seq_;
+      CLOSE get_execution_Instance_rec;
+
+   IF(Jt_Execution_Instance_API.Exists(task_seq_, execution_instance_seq_)) THEN 
+      Client_SYS.Clear_Attr(attr_);
+      Client_SYS.Add_To_Attr('ALLOCATED_START',sched_start_, attr_);     
+      Client_SYS.Add_To_Attr('ALLOCATED_FINISH',sched_end_, attr_);
+      Jt_Execution_Instance_API.Modify(info_, attr_, task_seq_, execution_instance_seq_, 'DO');
+   ELSE
+      Labour_Assignment_Util_API.Modify_Planned_Dates(task_seq_, sched_start_, sched_end_);
+   END IF;
+END Modify_Task_Assignment_Schedule_Hour___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Modify_Task_Assignment_Actual_Hour___ (
+   task_seq_                  IN NUMBER,
+   task_resource_seq_         IN NUMBER,
+   actual_hours_              IN VARCHAR2,
+   execution_instance_seq_    IN NUMBER,
+   resource_group_seq_        IN NUMBER,
+   remark_                    IN VARCHAR2)
+IS
+   formatted_logged_hours_    NUMBER;
+   formatted_actual_hours_    NUMBER;
+   hour_difference_           NUMBER;
+      
+BEGIN     
+   formatted_logged_hours_ := Jt_Task_Transaction_API.Get_Tot_Personel_Reported_Hrs(task_seq_,execution_instance_seq_);  
+   formatted_actual_hours_ := Validate_Format_Duration_Hours___(task_seq_, actual_hours_, remark_);
+   hour_difference_        := formatted_actual_hours_ - formatted_logged_hours_;
+
+   Labour_Assignment_Util_API.Adjust_Tsk_Asgmt_Act_Hrs(task_seq_,task_resource_seq_,execution_instance_seq_,hour_difference_,resource_group_seq_);
+END Modify_Task_Assignment_Actual_Hour___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Site___ (
+   task_seq_ IN NUMBER) RETURN VARCHAR2
+IS
+BEGIN
+	RETURN Work_Task_API.Get_Site(task_seq_);
+END Get_Site___;

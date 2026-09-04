@@ -1,0 +1,101 @@
+--  Date        Sign    History
+--  ----------  ------  ------------------------------------------------------
+--  08-05-2025  kosrus  AD-18208, Client for Critical Item Severities Basic Data page
+------------------------------------------------------------------------------
+client FlmCriticalItemSeverities;
+component FLMEXE;
+layer Core;
+projection FlmCriticalItemSeveritiesHandling;
+description "Client page for the critical items severity basic data page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry CriticalItemSeverityNavEntry parent MxCoreNavigator.CriticalItemsBasicData at index 2000 {
+      label = "Critical Item Severities";
+      page CriticalItemSeverity;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page CriticalItemSeverity using AvCriticalItemSeveritySet {
+   label = "Critical Item Severities";
+   list CriticalItemSeverityList;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list CriticalItemSeverityList for AvCriticalItemSeverity {
+   orderby = SeverityCode;
+   crudactions {
+      new {
+         enabled = [true];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   field SeverityCode {
+      label = "Code";
+      size = Small;
+   }
+
+   field Description {
+      label = "Description";
+      size = Large;
+      multiline = true;
+   }
+   badge Objstate {
+      label = "Validity";
+      emphasis StatePreliminary = [Objstate = "Active"];
+      emphasis Neutral = [Objstate = "Blocked"];
+      size = Small;
+   }
+
+   commandgroup DataValidityCmdGroup {
+      label = "Validity";
+      command SetActive {
+         label = "Set Active";
+      }
+      command SetBlocked {
+         label = "Block";
+      }
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

@@ -1,0 +1,277 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmTaskTool
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250804  WEDILK  AD-20242, Create FlmTool fragment and implemented add tool functionality.
+--  250812  WEDILK  AD-20254, Implement assign/unassign functionlity.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Allocated_Finish_Date___ (
+   task_seq_         IN NUMBER,
+   allocated_hours_  IN VARCHAR2,
+   allocated_start_  IN DATE) RETURN DATE
+IS
+BEGIN   
+   RETURN Av_Exe_Task_Tool_Util_API.Get_Allocated_Finish_Date(task_seq_, allocated_hours_, allocated_start_);
+END Get_Allocated_Finish_Date___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Allocated_Hours_By_Allocated_Dates___ (
+   allocated_start_  IN DATE,
+   allocated_finish_ IN DATE) RETURN VARCHAR2
+IS
+   duration_            NUMBER;
+BEGIN
+   duration_ := Adcom_Util_API.Get_Time_Difference_In_Hours(allocated_start_, allocated_finish_);
+   
+   RETURN Adcom_Util_API.Get_Text_Time(duration_);
+END Get_Allocated_Hours_By_Allocated_Dates___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Assign_Specific_Tool___ (
+   parent_objkey_       IN VARCHAR2,
+   tool_resource_seq_   IN NUMBER,
+   tool_resource_id_    IN VARCHAR2,
+   site_                IN VARCHAR2,
+   serial_no_           IN VARCHAR2)
+IS
+   old_rec_             Add_Tool_Demand_Virtual_Rec;
+   new_rec_             Add_Tool_Demand_Virtual_Rec;   
+   key_                 Add_Tool_Demand_Virtual_Key;  
+BEGIN
+	key_.objkey := parent_objkey_;
+   old_rec_    := Get_Record___(key_);
+   new_rec_    := old_rec_; 
+   
+   new_rec_.tool_resource_seq := tool_resource_seq_;
+   new_rec_.tool_resource_id  := tool_resource_id_;
+   new_rec_.serial_no         := serial_no_;
+   
+   IF old_rec_.allocated_start IS NULL THEN
+      new_rec_.allocated_start := Site_API.Get_Site_Date(site_);
+   END IF;
+   
+   new_rec_.allocated_finish  := Av_Exe_Task_Tool_Util_API.Get_Allocated_Finish_Date(new_rec_.task_seq, new_rec_.allocated_hours, new_rec_.allocated_start);
+   
+   CRUD_Update___(old_rec_, new_rec_);
+END Assign_Specific_Tool___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Update_Tool_Inventory_Search_List___ (
+   objkey_                    IN VARCHAR2,
+   tool_resource_group_seq_   IN NUMBER,
+   site_                      IN VARCHAR2)
+IS
+   rec_  Tool_Inventory_Search_Virtual_Rec;
+   
+   CURSOR get_inventory_search_list IS
+      SELECT resource_seq, resource_id, description, resource_parent_seq, resource_parent_id, resource_parent_desc
+      FROM maint_resources_lov6
+      WHERE NVL(expire_date, sysdate) >= sysdate 
+      AND resource_type = 'EQUIPMENT' 
+      AND site = site_ 
+      AND resource_parent_seq IN (SELECT r.resource_seq 
+                                  FROM maint_resources_lov6 r 
+                                  WHERE used_in_maintenance = 'TRUE')
+      AND resource_parent_seq IN (SELECT r.resource_seq
+                                  FROM Resource_Pub r, Resource_Parent p
+                                  WHERE r.resource_seq = p.resource_parent_seq
+                                  AND r.resource_type_db = 'EQUIPMENT_GROUP'
+                                  START WITH p.resource_parent_seq = tool_resource_group_seq_
+                                  CONNECT BY PRIOR p.resource_seq = p.resource_parent_seq);
+BEGIN
+	Delete_Existing_Data_On_Tool_Inventory_Search_vrt___(objkey_);
+   
+   FOR tool_resource_ IN get_inventory_search_list LOOP
+      rec_.objkey                   := SYS_GUID();
+      rec_.parent_objkey            := objkey_;
+      rec_.tool_resource_group_seq  := tool_resource_group_seq_;
+      rec_.resource_seq             := tool_resource_.resource_seq;
+      rec_.resource_id              := tool_resource_.resource_id;
+      rec_.description              := tool_resource_.description;
+      rec_.resource_parent_seq      := tool_resource_.resource_parent_seq;
+      rec_.resource_parent_id       := tool_resource_.resource_parent_id;
+      rec_.tool_equipment           := tool_resource_.resource_id || '-' || tool_resource_.description;
+      rec_.serial_no                := Resource_Tool_Equip_API.Get_Serial_No(tool_resource_.resource_seq);
+      rec_.batch_no                 := Resource_Tool_Equip_API.Get_Lot_Batch_No(tool_resource_.resource_seq);
+      rec_.tool_condition           := Resource_Tool_Equip_API.Get_Part_Serial_Oper_Cond(tool_resource_.resource_seq);
+      rec_.tool_owner               := Av_Exe_Task_Tool_Util_API.Get_Owner_By_Tool_Resource_Seq(tool_resource_.resource_seq);
+      rec_.check_out_status         := Resource_Tool_Equip_API.Get_Check_Out_Status_Db(tool_resource_.resource_seq);
+      
+      CRUD_Create___(rec_);
+   END LOOP;
+
+END Update_Tool_Inventory_Search_List___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Delete_Existing_Data_On_Tool_Inventory_Search_vrt___(
+   parent_objkey_ IN VARCHAR2)
+IS 
+   rec_        Tool_Inventory_Search_Virtual_Rec;  
+   
+   CURSOR get_existing_obj_keys IS
+      SELECT objkey 
+      FROM ${PROJECTION}_TOOL_INVENTORY_SEARCH_VIRTUAL_VRT
+      WHERE parent_objkey = parent_objkey_;
+      
+BEGIN
+   FOR old_rec_ IN get_existing_obj_keys LOOP
+      rec_.objkey := old_rec_.objkey;
+      CRUD_Delete___(rec_);
+   END LOOP;
+END Delete_Existing_Data_On_Tool_Inventory_Search_vrt___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Default_Allocated_Start___ (
+   site_     IN VARCHAR2) RETURN DATE
+IS
+BEGIN
+	RETURN Site_API.Get_Site_Date(site_);
+END Get_Default_Allocated_Start___;
+
+FUNCTION Get_Default_Values___ (
+   task_seq_         IN NUMBER,
+   source_           IN VARCHAR2,
+   site_             IN VARCHAR2,
+   allocated_hours_  IN VARCHAR2,
+   allocated_start_  IN DATE,
+   allocated_finish_ IN DATE) RETURN Fetch_Default_Value_Strcture_Rec
+IS
+   default_rec_  Fetch_Default_Value_Strcture_Rec;
+BEGIN
+   default_rec_.site := site_;
+   
+   IF allocated_hours_ IS NULL THEN
+      default_rec_.allocated_hours := '00:00';
+   ELSE
+      default_rec_.allocated_hours := allocated_hours_;
+   END IF;
+   
+   IF allocated_start_ IS NULL OR allocated_finish_ IS NULL THEN
+      default_rec_.allocated_start           := Site_API.Get_Site_Date(site_);
+      default_rec_.allocated_finish          := default_rec_.allocated_start;
+   ELSE
+      default_rec_.allocated_start           := allocated_start_;
+      default_rec_.allocated_finish          := allocated_finish_;
+   END IF;
+   
+   default_rec_.is_inventory_search_visible  := Av_Flm_Parameter_API.Get_Parameter_Value('DISPLAY_TOOL_INVENTORY_SEARCH_LIST');
+   
+   IF source_ = 'ADD' THEN
+      default_rec_.title         := 'Add Tools/Equipment';
+      default_rec_.command_name  := 'Add'; 
+   ELSIF source_ = 'ASSIGN' THEN
+      default_rec_.title         := 'Assign Tools/Equipment';
+      default_rec_.command_name  := 'Assign'; 
+   ELSIF source_ = 'EDIT' THEN
+      default_rec_.title         := 'Edit Tools/Equipment';
+      default_rec_.command_name  := 'Save'; 
+   END IF;
+   
+   RETURN default_rec_;  
+END Get_Default_Values___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Unassign_Tool___ (
+   task_seq_               IN NUMBER,
+   execution_instance_seq_ IN NUMBER)
+IS
+BEGIN
+	Av_Exe_Task_Tool_Util_API.Remove_Tool_Allocation(task_seq_, execution_instance_seq_);
+END Unassign_Tool___;
+
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Add_Tool_Demand_Virtual_Rec )
+IS
+   tool_inventory_rec_  Tool_Inventory_Search_Virtual_Rec;
+   
+   CURSOR get_inventory_search_list IS
+      SELECT resource_seq, resource_id, description, resource_parent_seq, resource_parent_id, resource_parent_desc
+      FROM maint_resources_lov6
+      WHERE NVL(expire_date, sysdate) >= sysdate 
+      AND resource_type = 'EQUIPMENT' 
+      AND site = rec_.site 
+      AND resource_parent_seq IN (SELECT r.resource_seq 
+                                  FROM maint_resources_lov6 r 
+                                  WHERE used_in_maintenance = 'TRUE')
+      AND resource_parent_seq IN (SELECT r.resource_seq
+                                  FROM Resource_Pub r, Resource_Parent p
+                                  WHERE r.resource_seq = p.resource_parent_seq
+                                  AND r.resource_type_db = 'EQUIPMENT_GROUP'
+                                  START WITH p.resource_parent_seq = rec_.tool_resource_group_seq
+                                  CONNECT BY PRIOR p.resource_seq = p.resource_parent_seq);
+BEGIN
+   super(rec_);
+   
+   IF rec_.source = 'ASSIGN' OR rec_.source = 'EDIT' THEN
+      Delete_Existing_Data_On_Tool_Inventory_Search_vrt___(rec_.objkey);
+   
+      FOR tool_resource_ IN get_inventory_search_list LOOP
+         tool_inventory_rec_.objkey                   := SYS_GUID();
+         tool_inventory_rec_.parent_objkey            := rec_.objkey;
+         tool_inventory_rec_.tool_resource_group_seq  := rec_.tool_resource_group_seq;
+         tool_inventory_rec_.resource_seq             := tool_resource_.resource_seq;
+         tool_inventory_rec_.resource_id              := tool_resource_.resource_id;
+         tool_inventory_rec_.description              := tool_resource_.description;
+         tool_inventory_rec_.resource_parent_seq      := tool_resource_.resource_parent_seq;
+         tool_inventory_rec_.resource_parent_id       := tool_resource_.resource_parent_id;
+         tool_inventory_rec_.tool_equipment           := tool_resource_.resource_id || '-' || tool_resource_.description;
+         tool_inventory_rec_.serial_no                := Resource_Tool_Equip_API.Get_Serial_No(tool_resource_.resource_seq);
+         tool_inventory_rec_.batch_no                 := Resource_Tool_Equip_API.Get_Lot_Batch_No(tool_resource_.resource_seq);
+         tool_inventory_rec_.tool_condition           := Resource_Tool_Equip_API.Get_Part_Serial_Oper_Cond(tool_resource_.resource_seq);
+         tool_inventory_rec_.tool_owner               := Av_Exe_Task_Tool_Util_API.Get_Owner_By_Tool_Resource_Seq(tool_resource_.resource_seq);
+         tool_inventory_rec_.check_out_status         := Resource_Tool_Equip_API.Get_Check_Out_Status_Db(tool_resource_.resource_seq);
+
+         CRUD_Create___(tool_inventory_rec_);
+      END LOOP;
+   END IF;
+END CRUD_Create___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Delete_Tool___ (
+   task_seq_               IN NUMBER,
+   task_resource_seq_      IN NUMBER,
+   execution_instance_seq_ IN NUMBER)
+IS
+BEGIN
+	Mm_Task_Resource_Util_API.Delete_Demand_With_Assignment(task_seq_, task_resource_seq_, execution_instance_seq_);
+END Delete_Tool___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Save_Tool___ (
+   objkey_                    IN VARCHAR2,
+   task_seq_                  IN NUMBER,
+   task_resource_seq_         IN NUMBER,
+   execution_instance_seq_    IN NUMBER,
+   site_                      IN VARCHAR2,
+   tool_resource_group_seq_   IN NUMBER,
+   tool_resource_seq_         IN NUMBER,
+   allocated_hours_           IN VARCHAR2,
+   allocated_start_           IN DATE,
+   allocated_finish_          IN DATE,
+   source_                    IN VARCHAR2)
+IS
+   formated_allocated_hours_        NUMBER;
+BEGIN
+   IF allocated_hours_ = '00:00' THEN
+      Error_SYS.Record_General(lu_name_, 'INVALIDALLOCATEDHOURS: Allocated Hours cannot be 0.');
+   ELSE
+      formated_allocated_hours_ := Adcom_Util_API.Validate_Format_Hours(allocated_hours_);
+      IF formated_allocated_hours_ IS NULL THEN
+         Error_SYS.Record_General(lu_name_, 'INVALIDALLOCATEDHOURSFORMAT: Enter Allocated Hours in the HH:MM format.');
+      END IF;
+   END IF;
+
+   Av_Exe_Task_Tool_Util_API.Create_Update_Tool_Assignment(task_seq_, task_resource_seq_, execution_instance_seq_, tool_resource_group_seq_, tool_resource_seq_, formated_allocated_hours_, allocated_start_, allocated_finish_, source_);
+   
+   Delete_Existing_Data_On_Tool_Inventory_Search_vrt___(objkey_);
+END Save_Tool___;

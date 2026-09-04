@@ -1,0 +1,204 @@
+-----------------------------------------------------------------------------
+--
+--  Filename:      FlmManualPeggingAvMaterialLine.client
+--  Component:     FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15380, Created. Manual Pegging of Maintenance Material Requisition Line client.
+-----------------------------------------------------------------------------
+
+client FlmManualPeggingAvMaterialLine;
+component FLMEXE;
+layer Core;
+projection FlmManualPeggingAvMaterialLineHandling;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ManualPeggingMaterialLine;
+
+warningsenabled = MaintMaterialReqLine;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+page Form using MaintMaterialReqLineSet {
+   label = "Manual Pegging of Purchase Order";
+   selector MaintMaterialReqLineSelector;
+   group ManualPegMaterialGroupAllInfo;
+   @DynamicComponentDependency PURCH
+   list AvManualPegPurchOrderList using GetPurchaseOrderLinePartEntity(
+   AltRequisitionNo, PartNo, SpareContract, ConditionCode,
+   PartOwnershipDb, MaintMaterialOrderNo, LineItemNo, ActivitySeq
+   ) {
+      label = "Purchase Orders";
+      details = "page/PurchaseOrder/Form?$filter=OrderNo eq $[OrderNo]";
+   }
+   commandgroup PeggedLinesCmdGroup {
+      command OverviewPeggedAvMaterialLinesCommand;
+   }
+}
+
+-------------------------------- ASSISTANTS ---------------------------------
+
+--------------------------------- COMMANDS ----------------------------------
+command OverviewPeggedAvMaterialLinesCommand for MaintMaterialReqLine {
+   label = "Pegged Material Lines";
+   enabled = [MaintMaterialOrderNo != null];
+   execute {
+      navigate "page/FlmPeggedAvMaterialLines/List?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo] and LineItemNo eq $[LineItemNo]";
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+---------------------------------- GROUPS -----------------------------------
+
+group ManualPegMaterialGroupAllInfo for MaintMaterialReqLine {
+   label = "";
+
+   field AircraftWorkPackageId {
+      label = "Work Package No";
+      size = Small;
+      editable = [false];
+      lovswitch {
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = true] {
+            lov AvAircraftWorkPackageRef with ReferenceAvAircraftWorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[AvAircraftWorkPackageRef.Barcode]";
+            }
+         }
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = false] {
+            lov AvAircraftWorkPackageRef with ReferenceAvAircraftWorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+            }
+         }
+      }
+   }
+   field WpBarcode {
+      label = "Work Package Barcode";
+      size = Small;
+   }
+   field WorkPackageName {
+      label = "Work Package Name";
+      size = Small;
+   }
+
+   @DynamicComponentDependency WO
+   lov MaintMaterialRequisitionRef with ReferenceMaintMaterialRequisitionSelector {
+      label = "Order No";
+      size = Small;
+      details = "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+   lov AvExeTaskRef with ReferenceAvExeTaskSelector {
+      label = "Task No";
+      size = Small;
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field TaskBarcode {
+      label = "Task Barcode";
+      size = Small;
+   }
+   @DynamicComponentDependency WO
+   field TaskDescription {
+      label = "Task Description";
+      size = Small;
+   }
+   @DynamicComponentDependency WO
+   field TaskSite {
+      label = "Task Site";
+      size = Small;
+   }
+   lov AircraftRef with ReferenceAircraftSelector {
+      label = "Aircraft No";
+      size = Small;
+   }
+   field PartNo {
+      size = Small;
+   }
+   field PartDescription {
+      size = Small;
+   }
+   @DynamicComponentDependency WO
+   field DemandSite {
+      size = Small;
+   }
+   field Unit {
+      size = Small;
+   }
+   field PeggedQty {
+      label = "Qty Pegged";
+      size = Small;
+   }
+   field RemainingQtyToPeg {
+      label = "Remaining Qty To Peg";
+      size = Small;
+   }
+   field PlanQty {
+      label = "Qty Required";
+      size = Small;
+   }
+   field DateRequired {
+      label = "Required Date";
+      size = Small;
+      showtimezonebadge = true;
+   }
+   field ConditionCode {
+      visible = [false];
+   }
+   field PartOwnershipDb {
+      visible = [false];
+   }
+   field FlightId {
+      visible = [false];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+
+@DynamicComponentDependency PURCH
+list AvManualPegPurchOrderList clone ManualPegPurchOrderList {
+   lov SupplierRef with ReferenceSupplierSelector {
+      label = "Supplier Name and Code";
+      size = Large;
+      description = SupplierNameAndCode;
+      editable = [false];
+      details = "page/Supplier/Form?$filter=SupplierId eq $[VendorNo]";
+      contactwidget {
+         enabled = [VendorNo != null];
+         source = Supplier;
+      }
+   }
+   field PlannedDeliveryDate {
+      label = "Planned Delivery Date";
+   }
+   field PlannedReceiptDate {
+      label = "Planned Receipt Date";
+   }
+   field PlannedArrivalDate {
+      label = "Planned Arrival Date";
+   }
+   field Coordinator {
+      label = "Coordinator";
+   }
+}
+
+----------------------------------- CARDS -----------------------------------
+
+---------------------------------- DIALOGS ----------------------------------
+
+---------------------------------- CHARTS -----------------------------------
+
+--------------------------------- CALENDARS ---------------------------------
+
+---------------------------------- SHEETS -----------------------------------
+
+----------------------------- STATE INDICATORS ------------------------------
+
+----------------------------------- TREES -----------------------------------
+
+---------------------------------- PLUGINS ----------------------------------
+
+------------------------------- IMAGE VIEWERS -------------------------------

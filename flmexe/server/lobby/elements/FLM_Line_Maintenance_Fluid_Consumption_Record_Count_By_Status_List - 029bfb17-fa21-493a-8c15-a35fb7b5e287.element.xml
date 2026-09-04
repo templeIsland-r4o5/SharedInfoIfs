@@ -1,0 +1,68 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>Fluid Consumptions, FLM </Keywords>
+    <DescriptiveText>Oil Consumption Record Counts against the Statuses defined in 'Fluid Consumption Status Types' page.</DescriptiveText>
+    <LastModified>5/21/24, 12:58:42 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>2</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>FLUID CONSUMPTION RECORDS</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Line_Maintenance_Fluid_Consumption_Record_Count_By_Status_List</Name>
+    <ID>029bfb17-fa21-493a-8c15-a35fb7b5e287</ID>
+    <WebUrl>page/FlmAssemblyFluidConsumption/FluidConsumptionPage?$filter=OilStatusCode eq $[RecordStatusCode] and ReviewedBy eq null  and AssemblyTypeCode eq $[AssemblyTypeCode]</WebUrl>
+    <PassFilterToWebPage>false</PassFilterToWebPage>
+    <ColorStyle>Attention</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>288c4ccf-a28c-4179-8475-f16b0152879e</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>AssemblyTypeCode</Column>
+                <Name>Assembly Type Code</Name>
+                <DisplayName>Assembly</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>AssemblyTypeCode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>RecordStatus</Column>
+                <Name>Record Status</Name>
+                <DisplayName>Status</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>RecordStatus</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>RecordCount</Column>
+                <Name>Record Count</Name>
+                <DisplayName>Count</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>RecordCount</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>RecordStatusCode</Column>
+                <Name>Record Status Code</Name>
+                <DisplayName>Record Status Code</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>RecordStatusCode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+    </ColumnMapping>
+</List>

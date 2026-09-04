@@ -1,0 +1,339 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmParts
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  240625  srlalk  Add unit test for Fetch_Add_Part_Defaults___
+-----------------------------------------------------------------------------
+layer Core;
+
+FUNCTION Bool_To_Number__(value_ BOOLEAN) RETURN NUMBER
+IS
+BEGIN
+   RETURN CASE WHEN value_ THEN 1 ELSE 0 END;
+END Bool_To_Number__;
+
+FUNCTION Extract_Message_From_Info___(input_string_ VARCHAR2) RETURN VARCHAR2
+IS
+   start_pos_ NUMBER;
+   end_pos_ NUMBER;
+BEGIN
+   -- Find the position of field_separator character
+   start_pos_ := INSTR(input_string_, Client_SYS.field_separator_) + LENGTH(Client_SYS.field_separator_);
+   -- Find the position of the record_separator character
+   end_pos_ := INSTR(input_string_, Client_SYS.record_separator_, start_pos_);
+   -- Extract the message
+   RETURN SUBSTR(input_string_, start_pos_, end_pos_ - start_pos_);
+END Extract_Message_From_Info___;
+
+
+UNITTEST "Fetch_Add_Part_Defaults___ should return correct AddPartsDefaultsStructureRec data" FOR
+   FUNCTION Fetch_Add_Part_Defaults___ (
+      source_id_               IN     NUMBER,
+      inventory_class_code_    IN     VARCHAR2,
+      assembly_position_id_    IN     NUMBER,
+      config_slot_position_id_ IN     NUMBER,
+      is_repairable_           IN     BOOLEAN,
+      is_sub_assy_             IN     BOOLEAN,
+      source_of_add_part_      IN     VARCHAR2,
+      assembly_type_           IN     VARCHAR2,
+      aircraft_id_             IN     NUMBER,
+      info$_                      OUT VARCHAR2) RETURN Add_Part_Defaults_Structure_Rec;
+USING
+   test_case_              VARCHAR2(100);
+   --  Insert your mock directives and mock return variables here
+   @MockTable av_exe_task_part
+   VALUES
+      | task_seq | assmbly_config_slot_pos_id | config_slot_position_id | installed_part_no_id | removed_part_no_id |
+      | 11       | 11                         | 11                      | NULL                 | NULL               |
+      | 22       | 22                         | 22                      | 1                    | NULL               |
+      | 33       | 33                         | 33                      | NULL                 | 1                  |
+      | 44       | 44                         | 44                      | 1                    | 1                  |
+      | 55       | NULL                       | 55                      | 1                    | NULL               |
+      | 66       | NULL                       | 66                      | NULL                 | 1                  |
+      | 77       | NULL                       | 77                      | 1                    | 1                  |
+      | 88       | 88                         | NULL                    | 1                    | 1                  |
+   END VALUES;
+
+   @MockTable av_fault_part
+   VALUES
+      | assmbly_config_slot_pos_id | config_slot_position_id | installed_part_no_id | removed_part_no_id | fault_id |
+      | 11                         | 11                      | NULL                 | NULL               |11        |
+      | 22                         | 22                      | 1                    | NULL               |22        |
+      | 33                         | 33                      | NULL                 | 1                  |33        |
+      | 44                         | 44                      | 1                    | 1                  |44        |
+      | NULL                       | 55                      | 1                    | NULL               |55        |
+      | NULL                       | 66                      | NULL                 | 1                  |66        |
+      | NULL                       | 77                      | 1                    | 1                  |77        |
+      | 88                         | NULL                    | 1                    | 1                  |88        |
+
+   END VALUES;
+
+   @MockTable aircraft_tab
+   VALUES
+      |assembly_type_Code |aircraft_id |
+      |NULL               |1           |
+      |'737-NG'           |2           |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   Add_Part_Defaults_Structure_Rec;
+   expected_ Add_Part_Defaults_Structure_Rec;
+   expected1_ Add_Part_Defaults_Structure_Rec;
+   expected2_ Add_Part_Defaults_Structure_Rec;
+   expected4_ Add_Part_Defaults_Structure_Rec;
+   expected5_ Add_Part_Defaults_Structure_Rec;
+   expected6_ Add_Part_Defaults_Structure_Rec;
+   expected7_ Add_Part_Defaults_Structure_Rec;
+   expected8_ Add_Part_Defaults_Structure_Rec;
+   expected9_ Add_Part_Defaults_Structure_Rec;
+   expected10_ Add_Part_Defaults_Structure_Rec;
+   expected11_ Add_Part_Defaults_Structure_Rec;
+   expected12_ Add_Part_Defaults_Structure_Rec;
+   expected13_ Add_Part_Defaults_Structure_Rec;
+
+   output1_  VARCHAR2(2000);
+   expected_output1_  VARCHAR2(2000);
+   expected_output2_  VARCHAR2(2000);
+   expected_output3_  VARCHAR2(2000);
+   expected_output4_  VARCHAR2(2000);
+   expected_output5_  VARCHAR2(2000);
+   expected_output6_  VARCHAR2(2000);
+BEGIN
+   expected1_.installation_exists  := FALSE;
+   expected1_.removal_exists       := FALSE;
+   expected1_.installation_visible := TRUE;
+   expected1_.removal_visible      := TRUE;
+   expected1_.Include_Installation := TRUE;
+   expected1_.Include_Removal      := TRUE;
+
+   expected2_.installation_exists  := FALSE;
+   expected2_.removal_exists       := FALSE;
+   expected2_.installation_visible := TRUE;
+   expected2_.removal_visible      := FALSE;
+   expected2_.Include_Installation := TRUE;
+   expected2_.Include_Removal      := FALSE;
+
+   expected4_.installation_exists  := TRUE;
+   expected4_.removal_exists       := FALSE;
+   expected4_.installation_visible := TRUE;
+   expected4_.removal_visible      := TRUE;
+   expected4_.Include_Installation := FALSE;
+   expected4_.Include_Removal      := TRUE;
+
+   expected5_.installation_exists  := FALSE;
+   expected5_.removal_exists       := TRUE;
+   expected5_.installation_visible := TRUE;
+   expected5_.removal_visible      := TRUE;
+   expected5_.Include_Installation := TRUE;
+   expected5_.Include_Removal      := FALSE;
+
+   expected6_.installation_exists  := TRUE;
+   expected6_.removal_exists       := TRUE;
+   expected6_.installation_visible := TRUE;
+   expected6_.removal_visible      := TRUE;
+   expected6_.Include_Installation := FALSE;
+   expected6_.Include_Removal      := FALSE;
+
+   expected7_.installation_exists  := FALSE;
+   expected7_.removal_exists       := FALSE;
+   expected7_.installation_visible := FALSE;
+   expected7_.removal_visible      := FALSE;
+   expected7_.Include_Installation := TRUE;
+   expected7_.Include_Removal      := TRUE;
+
+   expected8_.installation_exists  := TRUE;
+   expected8_.removal_exists       := FALSE;
+   expected8_.installation_visible := FALSE;
+   expected8_.removal_visible      := FALSE;
+   expected8_.Include_Installation := FALSE;
+   expected8_.Include_Removal      := TRUE;
+
+   expected9_.installation_exists  := FALSE;
+   expected9_.removal_exists       := TRUE;
+   expected9_.installation_visible := FALSE;
+   expected9_.removal_visible      := FALSE;
+   expected9_.Include_Installation := TRUE;
+   expected9_.Include_Removal      := FALSE;
+
+   expected10_.installation_exists  := TRUE;
+   expected10_.removal_exists       := TRUE;
+   expected10_.installation_visible := FALSE;
+   expected10_.removal_visible      := FALSE;
+   expected10_.Include_Installation := FALSE;
+   expected10_.Include_Removal      := FALSE;
+
+   expected11_.installation_exists  := FALSE;
+   expected11_.removal_exists       := FALSE;
+   expected11_.installation_visible := TRUE;
+   expected11_.removal_visible      := TRUE;
+   expected11_.Include_Installation := TRUE;
+   expected11_.Include_Removal      := TRUE;
+
+   expected12_.installation_exists  := TRUE;
+   expected12_.removal_exists       := TRUE;
+   expected12_.installation_visible := TRUE;
+   expected12_.removal_visible      := TRUE;
+   expected12_.Include_Installation := FALSE;
+   expected12_.Include_Removal      := FALSE;
+
+   expected13_.installation_exists  := TRUE;
+   expected13_.removal_exists       := FALSE;
+   expected13_.installation_visible := TRUE;
+   expected13_.removal_visible      := TRUE;
+   expected13_.Include_Installation := FALSE;
+   expected13_.Include_Removal      := TRUE;
+
+   output1_:='Test';
+   expected_output1_ :='Installation and removal part requirements already exist in the fault';
+   expected_output2_ :='Installation and removal part requirements already exist in the task';
+   expected_output3_ :='Installation part requirement already exists in the fault';
+   expected_output4_ :='Installation part requirement already exists in the task';
+   expected_output5_ :='Removal part requirement already exists in the fault';
+   expected_output6_ :='Removal part requirement already exists in the task';
+
+   FOR
+      | expected_  | source_id_ | inventory_class_code_ | assembly_position_id_ | config_slot_position_id_ | is_repairable_ | is_sub_assy_ | source_of_add_part_ |assembly_type_|aircraft_id_| info$_            |test_case_|
+      | expected1_ | 1          | 'SER'                 | 1                     | 1                        | TRUE           | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_1'  |
+      | expected1_ | 1          | 'KIT'                 | 1                     | 1                        | TRUE           | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_2'  |
+      | expected1_ | 1          | 'BATCH'               | 1                     | 1                        | TRUE           | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_3'  |
+      | expected2_ | 1          | 'BATCH'               | 1                     | 1                        | FALSE          | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_4'  |
+      | expected1_ | 11         | 'TRK'                 | 11                    | 11                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | NULL              |'test_5'  |
+      | expected4_ | 22         | 'TRK'                 | 22                    | 22                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output4_ |'test_6'  |
+      | expected5_ | 33         | 'TRK'                 | 33                    | 33                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output6_ |'test_7'  |
+      | expected6_ | 44         | 'TRK'                 | 44                    | 44                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output2_ |'test_8'  |
+      | expected1_ | 11         | 'ASSY'                | 11                    | 11                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | NULL              |'test_9'  |
+      | expected4_ | 22         | 'ASSY'                | 22                    | 22                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output4_ |'test_10' |
+      | expected5_ | 33         | 'ASSY'                | 33                    | 33                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output6_ |'test_11' |
+      | expected6_ | 44         | 'ASSY'                | 44                    | 44                       | FALSE          | FALSE        | 'Task'              |NULL          |1           | expected_output2_ |'test_12' |
+      | expected7_ | 11         | 'TRK'                 | NULL                  | 11                       | FALSE          | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_13' |
+      | expected8_ | 55         | 'TRK'                 | NULL                  | 55                       | FALSE          | TRUE         | 'Task'              |NULL          |1           | expected_output4_ |'test_14' |
+      | expected9_ | 66         | 'TRK'                 | NULL                  | 66                       | FALSE          | TRUE         | 'Task'              |NULL          |1           | expected_output6_ |'test_15' |
+      | expected10_| 77         | 'TRK'                 | NULL                  | 77                       | FALSE          | TRUE         | 'Task'              |NULL          |1           | expected_output2_ |'test_16' |
+      | expected7_ | 88         | 'TRK'                 | 88                    | NULL                     | FALSE          | TRUE         | 'Task'              |NULL          |1           | NULL              |'test_17' |
+      | expected7_ | 1          | 'TRK'                 | 1                     | NULL                     | FALSE          | FALSE        | 'Task'              |NULL          |1           | NULL              |'test_18' |
+      | expected7_ | 1          | 'ASSY'                | 1                     | NULL                     | FALSE          | FALSE        | 'Task'              |NULL          |1           | NULL              |'test_19' |
+      --
+      | expected1_ | 1          | 'SER'                 | 1                     | 1                        | TRUE           | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_20' |
+      | expected1_ | 1          | 'KIT'                 | 1                     | 1                        | TRUE           | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_21' |
+      | expected1_ | 1          | 'BATCH'               | 1                     | 1                        | TRUE           | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_22' |
+      | expected2_ | 1          | 'BATCH'               | 1                     | 1                        | FALSE          | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_23' |
+      | expected1_ | 11         | 'TRK'                 | 11                    | 11                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | NULL              |'test_24' |
+      | expected4_ | 22         | 'TRK'                 | 22                    | 22                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output3_ |'test_25' |
+      | expected5_ | 33         | 'TRK'                 | 33                    | 33                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output5_ |'test_26' |
+      | expected6_ | 44         | 'TRK'                 | 44                    | 44                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output1_ |'test_27' |
+      | expected1_ | 11         | 'ASSY'                | 11                    | 11                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | NULL              |'test_28' |
+      | expected4_ | 22         | 'ASSY'                | 22                    | 22                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output3_ |'test_29' |
+      | expected5_ | 33         | 'ASSY'                | 33                    | 33                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output5_ |'test_30' |
+      | expected6_ | 44         | 'ASSY'                | 44                    | 44                       | FALSE          | FALSE        | 'Fault'             |NULL          |1           | expected_output1_ |'test_31' |
+      | expected7_ | 11         | 'TRK'                 | NULL                  | 11                       | FALSE          | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_32' |
+      | expected8_ | 55         | 'TRK'                 | NULL                  | 55                       | FALSE          | TRUE         | 'Fault'             |NULL          |1           | expected_output3_ |'test_33' |
+      | expected9_ | 66         | 'TRK'                 | NULL                  | 66                       | FALSE          | TRUE         | 'Fault'             |NULL          |1           | expected_output5_ |'test_34' |
+      | expected10_| 77         | 'TRK'                 | NULL                  | 77                       | FALSE          | TRUE         | 'Fault'             |NULL          |1           | expected_output1_ |'test_35' |
+      | expected7_ | 88         | 'TRK'                 | 88                    | NULL                     | FALSE          | TRUE         | 'Fault'             |NULL          |1           | NULL              |'test_36' |
+      | expected7_ | 1          | 'TRK'                 | 1                     | NULL                     | FALSE          | FALSE        | 'Fault'             |NULL          |1           | NULL              |'test_37' |
+      | expected7_ | 1          | 'ASSY'                | 1                     | NULL                     | FALSE          | FALSE        | 'Fault'             |NULL          |1           | NULL              |'test_38' |
+
+      | expected11_| 11         | 'ASSY'                | 11                    | 11                       | TRUE           | FALSE        | 'Task'              |'CFM56-7B'    |2           | NULL              |'test_39' |
+      | expected13_| 22         | 'ASSY'                | 22                    | 22                       | TRUE           | FALSE        | 'Task'              |'CFM56-7B'    |2           | expected_output4_ |'test_40' |
+      | expected5_ | 33         | 'ASSY'                | 33                    | 33                       | TRUE           | FALSE        | 'Task'              |'CFM56-7B'    |2           | expected_output6_ |'test_41' |
+      | expected12_| 44         | 'ASSY'                | 44                    | 44                       | TRUE           | FALSE        | 'Task'              |'CFM56-7B'    |2           | expected_output2_ |'test_42' |
+
+      | expected11_| 11         | 'ASSY'                | 11                    | 11                       | TRUE           | FALSE        | 'Fault'             |'CFM56-7B'    |2           | NULL              |'test_43' |
+      | expected13_| 22         | 'ASSY'                | 22                    | 22                       | TRUE           | FALSE        | 'Fault'             |'CFM56-7B'    |2           | expected_output3_ |'test_44' |
+      | expected5_ | 33         | 'ASSY'                | 33                    | 33                       | TRUE           | FALSE        | 'Fault'             |'CFM56-7B'    |2           | expected_output5_ |'test_45' |
+      | expected12_| 44         | 'ASSY'                | 44                    | 44                       | TRUE           | FALSE        | 'Fault'             |'CFM56-7B'    |2           | expected_output1_ |'test_46' |
+
+   LOOP
+      --Insert your test code here
+      return_ := Fetch_Add_Part_Defaults___(source_id_, inventory_class_code_, assembly_position_id_, config_slot_position_id_, is_repairable_, is_sub_assy_, source_of_add_part_, assembly_type_,aircraft_id_, output1_);
+      --Insert your assertions here
+      ASSERT Bool_To_Number__(return_.installation_exists )= Bool_To_Number__(expected_.installation_exists )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.installation_exists)||' but returned '||Bool_To_Number__(return_.installation_exists);
+
+      ASSERT Bool_To_Number__(return_.removal_exists )= Bool_To_Number__(expected_.removal_exists )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.removal_exists)||' but returned '||Bool_To_Number__(return_.removal_exists);
+
+      ASSERT Bool_To_Number__(return_.installation_visible )= Bool_To_Number__(expected_.installation_visible )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.installation_visible)||' but returned '||Bool_To_Number__(return_.installation_visible);
+
+      ASSERT Bool_To_Number__(return_.removal_visible )= Bool_To_Number__(expected_.removal_visible )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.removal_visible)||' but returned '||Bool_To_Number__(return_.removal_visible);
+
+      ASSERT Bool_To_Number__(return_.Include_Installation )= Bool_To_Number__(expected_.Include_Installation )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.Include_Installation)||' but returned '||Bool_To_Number__(return_.Include_Installation);
+
+      ASSERT Bool_To_Number__(return_.Include_Removal )= Bool_To_Number__(expected_.Include_Removal )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.Include_Removal)||' but returned '||Bool_To_Number__(return_.Include_Removal);
+
+      IF info$_ IS NULL THEN
+         ASSERT output1_ IS NULL MESSAGE test_case_ || ':'||'Expected '||'NULL'||' but  was '||output1_;
+      ELSE
+         ASSERT Extract_Message_From_Info___(output1_) = info$_ MESSAGE test_case_ || ':'||'Expected '||info$_||' but  was '||Extract_Message_From_Info___(output1_);
+      END IF;
+   END LOOP;
+END UNITTEST;
+
+UNITTEST "Get_Assembly_Info___ should return sub assembly data when assembly_type_code_,aircraft_id_ and inventory_class_code_ are passed" FOR
+   FUNCTION Get_Assembly_Info___ (
+      assembly_type_code_   IN     VARCHAR2,
+      aircraft_id_          IN     NUMBER,
+      inventory_class_code_ IN     VARCHAR2) RETURN Part_Group_Info_Structure_Rec;
+USING
+   test_case_  VARCHAR2(100);
+
+   @MockTable av_sub_assy_inventory_tab
+   VALUES
+      | assembly_type_code | aircraft_id | config_slot_position_id |
+      | 'CFM'              | 11          | 22                      |
+      | 'MLG'              | 11          | 30                      |
+      | 'MLG'              | 11          | 31                      |
+   END VALUES;
+
+   @MockTable aircraft_tab
+   VALUES
+      |assembly_type_Code |aircraft_id |
+      |NULL               |1           |
+      |'B737'             |11          |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   Part_Group_Info_Structure_Rec;
+   expected_ Part_Group_Info_Structure_Rec;
+   expected_1 Part_Group_Info_Structure_Rec;
+   expected_2 Part_Group_Info_Structure_Rec;
+   expected_3 Part_Group_Info_Structure_Rec;
+
+BEGIN
+   expected_1.assmbl_visibility := FALSE;
+   expected_1.assmbl_editable := FALSE;
+   expected_1.assembly_position_id := NULL;
+
+   expected_2.assmbl_visibility := TRUE;
+   expected_2.assmbl_editable := FALSE;
+   expected_2.assembly_position_id := 22;
+
+   expected_3.assmbl_visibility := TRUE;
+   expected_3.assmbl_editable := TRUE;
+   expected_3.assembly_position_id := NULL;
+
+
+   FOR
+      | expected_ | assembly_type_code_ | aircraft_id_ | inventory_class_code_ |test_case_|
+      | expected_1| 'B737'              | 11           | 'TRK'                 |'test 01' |
+      | expected_2| 'CFM'               | 11           | 'TRK'                 |'test 02' |
+      | expected_3| 'MLG'               | 11           | 'TRK'                 |'test 03' |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Assembly_Info___(assembly_type_code_, aircraft_id_, inventory_class_code_);
+      --Insert your assertions here
+      ASSERT Bool_To_Number__(return_.assmbl_visibility )= Bool_To_Number__(expected_.assmbl_visibility )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.assmbl_visibility)||' but returned '||Bool_To_Number__(return_.assmbl_visibility);
+
+      ASSERT Bool_To_Number__(return_.assmbl_editable )= Bool_To_Number__(expected_.assmbl_editable )MESSAGE test_case_ || ':'|| 'Expected '||Bool_To_Number__(expected_.assmbl_editable)||' but returned '||Bool_To_Number__(return_.assmbl_editable);
+
+      IF return_.assembly_position_id IS NULL THEN
+         ASSERT expected_.assembly_position_id IS NULL MESSAGE 'Expected NULL but returned not NULL';
+      ELSE
+         ASSERT return_.assembly_position_id = expected_.assembly_position_id MESSAGE test_case_ || ':'|| 'Expected '||expected_.assembly_position_id||' but returned '||return_.assembly_position_id;
+      END IF;
+   END LOOP;
+END UNITTEST;

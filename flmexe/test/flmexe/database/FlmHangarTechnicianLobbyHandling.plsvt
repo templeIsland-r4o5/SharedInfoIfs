@@ -1,0 +1,15 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHangarTechnicianLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250226  ROERLK  AD-17530, Added Auto generated file
+-----------------------------------------------------------------------------
+
+layer Core;
+
+

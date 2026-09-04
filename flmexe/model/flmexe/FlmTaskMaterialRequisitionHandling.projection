@@ -1,0 +1,62 @@
+projection FlmTaskMaterialRequisitionHandling;
+component FLMEXE;
+layer Core;
+description "Manage Aviation Maintenance Material Requisition";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AvTaskMaterial;
+include fragment AvCreatePickList;
+include fragment UserAllowedSiteLovSelector;
+include fragment MaintMaterialRequisition;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset MaintMaterialReqSet for MaintMaterialRequisition;
+entityset AvAircraftWorkPackageSet for AvAircraftWorkPackage;
+entityset AvFaultSet for AvFault;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity MaintMaterialRequisition {
+   from = "maint_mat_req_av_uiv";
+   ludependencies = MaintMaterialReqLine;
+   keys = MaintMaterialOrderNo;
+
+   attribute TaskSeq Number;
+   attribute AircraftId Number;
+   attribute AircraftWpId Number;
+   attribute FlightId Number {
+      fetch = "Av_Flight_API.Get_Flight_Id_By_Wp_Id(aircraft_wp_id)";
+   }
+   attribute WorkTypes Text {
+      fetch = "Av_Work_Package_Work_Type_API.Get_Work_Types_For_Workpackage(aircraft_wp_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   array MainMaterialReqLineArray(MaintMaterialOrderNo) to MaintMaterialReqLine(MaintMaterialOrderNo);
+
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

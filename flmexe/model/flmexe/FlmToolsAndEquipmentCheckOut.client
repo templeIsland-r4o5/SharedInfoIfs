@@ -1,0 +1,106 @@
+client FlmToolsAndEquipmentCheckOut;
+component FLMEXE;
+layer Core;
+projection FlmToolsAndEquipmentCheckOutHandling;
+description "Check Out Tool/Equipment for Demands in flm";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ToolEquipmentCheckOutList;
+include fragment WorkTaskAllSelector;
+
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry AviationToolEquipmentNavEntry parent MxCoreNavigator.AviationToolsAndEquipment at index 30 {
+      label = "Tool Requirements";
+      page ToolEquipmentDemandsPage;
+   }
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+page ToolEquipmentDemandsPage using ToolDemandsCheckoutSet {
+   label = "Tool Requirements";
+   list ToolEquipmentCheckoutList using GetDemandList(ListSearchContext.Assignee, ListSearchContext.TodayDemands) {
+      searchcontext ListSearchContext {
+         defaults = GetPageSearchContextDefaults();
+      }
+   }
+
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command CheckOutCommand for ToolDemandsCheckout {
+   label = "Check Out";
+   mode = SelectedRecords;
+   variable SelectionVar Text;
+   variable AssigneeVar Text;
+   bulkexecute {
+      stringify(records, "TASK_SEQ=${OrderRef1}^WO_NUMBER=${WoNumber}^BARCODE=${Barcode}^TASK_RESOURCE_SEQ=${TaskResourceSeq}^RESOURCE_ACTIVITY_SEQ=${ResourceActivitySeq}^EXECUTION_INSTANCE_SEQ=${ExecutionInstanceSeq}^WORK_PACKAGE_ID=${OrderRef2}^
+      ACTIVITY_ORIGIN_DB=${ActivityOriginDb}^TASK_SITE=${TaskSite}^RESOURCE_GROUP_SEQ=${ResourceGroupSeq}^RESOURCE_GROUP_ID=${ResourceGroupId}^RESOURCE_GROUP_DESC=${ResourceGroupDesc}^RESOURCE_SEQ=${ResourceSeq}^RESOURCE_ID=${ResourceId}^
+      RESOURCE_DESC=${ResourceDesc}^SERIAL_NO=${SerialNo}^PART_NO=${PartNo}^RESOURCE_ACT_ALLOC_SEQ=${ResourceActAllocSeq}^ALLOCATED_HOURS=${AllocatedHours}^ALLOCATED_START=${AllocatedStart}^ALLOCATED_FINISH=${AllocatedFinish}^SEARCH_CONTEXT_ASSIGNEE=${SearchContextAssignee}^;", JSON) into SelectionVar;
+      set AssigneeVar = searchcontext.ListSearchContext.Assignee;
+      assistant ToolDemandCheckOutAssistant(SelectionVar, "FLM", AssigneeVar) {
+         when CANCEL {
+            exit CANCEL;
+         }
+         when OK {
+            navigate back;
+         }
+      }
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+@Override
+list ToolEquipmentCheckoutList for ToolDemandsCheckout {
+
+   lov TaskSeqRef with ReferenceWorkTaskAllSelector {
+      label = "Task Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[OrderRef1]";
+   }
+   field WoNumber {
+      label = "Work Package No";
+   }
+   field SerialNo;
+   field TaskSite;
+   field RegCode {
+      label = "Aircraft Registration Code";
+   }
+   field LocationCode {
+      label = "Work Location";
+   }
+   fieldorder = RegCode, WoNumber, TaskSeqRef, TaskDesc, ResourceGroupIdRef, ResourceGroupDesc, ResourceIdRef, SerialNo, ResourceDesc, PlannedStart, AllocatedHours, AllocatedStart, AllocatedFinish, CurrentCheckOutStatus, LocationCode, ExpectedReturnDate, OperationalCondition, TaskSite;
+   command CheckOutCommand;
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

@@ -1,0 +1,613 @@
+fragment AvTaskReturns;
+component FLMEXE;
+layer Core;
+description "Contains common reusable client code and projection logic for Returns which resembles Part data";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment JtTaskReturn;
+include fragment MaintenanceObjectLovSelector;
+include fragment InventoryLocation5Selector;
+include fragment DefineCostStructureAssistant;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant PartReturnAssistant using PartReturnsVirtualSet {
+   label = "${AssistantLabel}";
+   savemode = OnLostFocus;
+   input this;
+   init command {
+      execute {
+         if [Source = "RETURN_TO_INVENTORY" and LatestPartTagResultKey = null] {
+            set IsPrintPartTagEnabled = true;
+         }
+         if [PartTagType = "Serviceable"] {
+            set IsServiceable = true;
+         }
+         if [PartTagType = "Unserviceable"] {
+            set IsUnServiceable = true;
+         }
+         if [PartTagType = "Quarantine"] {
+            set IsQuarantine = true;
+         }
+         set SelectedPartTagType = PartTagType;
+      }
+   }
+   singlestep {
+      markdowntext {
+         visible = [Source = "RETURN_TO_INVENTORY" and LatestPartTagResultKey != null];
+         text = "Part Tag Report : ${LatestPartTagResultKey} has been already generated for this removal.";
+         emphasis Warning = [true];
+      }
+      group ReturnTaskDetailsGroup;
+      arrange {
+         group PrintPartTagToggleGroup {
+            visible = [Source = "RETURN_TO_INVENTORY"];
+         }
+         group PartTagTypeGroup {
+            visible = [Source = "RETURN_TO_INVENTORY"];
+         }
+      }
+      group QuickPartTagToggleGroup {
+         visible = [Source = "QUICK_TAG_PRINT"];
+      }
+      list PartRemovalDetailsList(PartRemovalDetailsArray) {
+         visible = [Source = "QUICK_TAG_PRINT" or(Source = "RETURN_TO_INVENTORY" and LatestPartTagResultKey = null)];
+      }
+      group CommentGroup {
+         visible = [Source = "QUICK_TAG_PRINT" or(Source = "RETURN_TO_INVENTORY" and LatestPartTagResultKey = null)];
+      }
+      list PlannedReturnDetailsList(PlannedReturnDetailsArray) {
+         visible = [Source = "RETURN_TO_INVENTORY"];
+      }
+   }
+   command PrintPartTag;
+   command Ok {
+      visible = [Source = "RETURN_TO_INVENTORY" and IsPartReturnCompleted];
+   }
+   command Cancel {
+      visible = [Source = "QUICK_TAG_PRINT" or not IsPartReturnCompleted];
+   }
+}
+----------------------------------- LISTS -----------------------------------
+list AvTaskReturnList clone JtTaskReturnList {
+   orderby = TaskSeq, TaskReturnLineSeq;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field TaskSeq {
+      columnexclude = [true];
+   }
+   field SerialNo {
+      label = "Serial Number";
+   }
+   field LotBatchNoRef {
+      label = "Batch Number";
+   }
+   field InventoryPartTaskReturnLovRef {
+      label = "Part Number";
+   }
+   field RemovalReasonRef.RemovalReasonDesc {
+      label = "Removal Reason";
+   }
+   lov PartTagReportArchiveRef with AvPartTagReportSelector {
+      label = "Part Tag Report";
+      details = "page/FlmPartTagReportArchive/PartTags?$filter=ResultKey eq $[LatestPartTagResultKey]";
+   }
+
+   field PartAvailabilityControl {
+      visible = [IsReturnCompleted];
+   }
+   field PartSerialCatalogRef.OperationalCondition {
+      visible = [RemovalTaskPartRef.RemovedUser != null];
+   }
+   field PartSerialCatalogRef.Objstate {
+      label = "Current Location";
+      visible = [IsReturnCompleted];
+   }
+   exclude ConfigurationIdRef, ConditionCodeRef, CondCodeDescription, OwnerName, DimensionQuality, InventoryPartRef.TypeDesignation, InventoryValue, TotalValue, AcquisitionValue, PrintTagReportCommand;
+
+   fieldorder {
+      anchor TaskReturnLineSeq;
+      followedby PartTagReportArchiveRef;
+   }
+   fieldorder {
+      anchor LotBatchNoRef;
+      followedby RemovalReasonRef.RemovalReasonDesc;
+      followedby PartSerialCatalogRef.OperationalCondition;
+      followedby PartSerialCatalogRef.Objstate;
+      followedby PartAvailabilityControl;
+   }
+   command RemoveReturnLineCommand;
+   command QuickTagPrintCommand;
+   command ReturnToInventoryCommand;
+}
+
+list PartRemovalDetailsList for RemovedPartQuery {
+   label = "Part Removal Details";
+   field RemPartName;
+   field RemPartNumber;
+   field RemovedSerialNo;
+   field RemovedBatchNo;
+   field Quantity;
+   field RemovalReasonRef.RemovalReasonDesc {
+      label = "Removal Reason";
+   }
+   field OperationalCondition;
+   field PartRepairPriority;
+   field RemovedUser;
+   field RemovedDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+}
+
+list PlannedReturnDetailsList for PlannedReturnsVirtual {
+   label = "Planned Returns";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [not parent.IsPartReturnCompleted];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field TaskReturnLineSeq;
+   field Site;
+   field PartNo;
+   field JtTaskReturnRef.PartDescription;
+   field SerialNo;
+   field JtTaskReturnRef.LotBatchNo;
+   field PartSerialCatalogRef.OperationalCondition {
+      label = "New Operational Condition";
+   }
+	lov LocationNoRef with ReferenceInventoryLocation5Selector {
+      label = "Location No";
+      size = Small;
+      editable = [true];
+      required = [true];
+   }
+   field JtTaskReturnRef.QtyToReturn;
+   field JtTaskReturnRef.QtyReturned;
+   field ReturnQuantity;
+   field RemainingQtyToReturn;
+   field JtTaskReturnRef.UnitOfMeasure {
+      label = "Inventory UoM";
+   }
+   field JtTaskReturnRef.PartOwnership;
+   field JtTaskReturnRef.Owner;
+   field JtTaskReturnRef.RepairPart;
+
+   command ReturnPartCommand;
+}
+---------------------------------- GROUPS -----------------------------------
+group ReturnTaskDetailsGroup for PartReturnsVirtual {
+   label = "Task Details";
+   field Aircraft {
+      editable = [false];
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      editable = [false];
+      size = Medium;
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Task ID";
+   }
+   field AvExeTaskRef.Description {
+      label = "Task Description";
+   }
+}
+
+group PartTagTypeGroup for PartReturnsVirtual {
+   label = "";
+   field IsServiceable {
+      size = Small;
+      editable = [false];
+   }
+   field IsUnServiceable {
+      size = Small;
+      editable = [(Source = "QUICK_TAG_PRINT" or LatestPartTagResultKey = null) and PartTagType = "Unserviceable" and IsPartTagEditable];
+      validate command {
+         execute {
+            if [IsUnServiceable = true] {
+               set   IsQuarantine = false;
+               set   SelectedPartTagType = "Unserviceable";
+            }
+            if [IsUnServiceable = false] {
+               set   SelectedPartTagType = null;
+            }
+         }
+      }
+   }
+   field IsQuarantine {
+      size = Small;
+      editable = [(Source = "QUICK_TAG_PRINT" or LatestPartTagResultKey = null) and PartTagType = "Unserviceable" and IsPartTagEditable];
+      required = [PartTagType = "Quarantine"];
+      validate command {
+         execute {
+            if [IsQuarantine = true] {
+               set   IsUnServiceable = false;
+               set   SelectedPartTagType = "Quarantine";
+            }
+            if [IsQuarantine = false] {
+               set   SelectedPartTagType = null;
+            }
+         }
+      }
+   }
+}
+
+group PrintPartTagToggleGroup for PartReturnsVirtual {
+   label = "Part Tags";
+   field IsPrintPartTagEnabled {
+      size = Small;
+   }
+}
+
+group QuickPartTagToggleGroup clone PartTagTypeGroup {
+   label = "Part Tag Type";
+   field IsServiceable {
+      size = Medium;
+   }
+   field IsUnServiceable {
+      size = Medium;
+   }
+   field IsQuarantine {
+      size = Medium;
+   }
+}
+
+group CommentGroup for PartReturnsVirtual {
+   label = "Comments/Remarks";
+   field CommentRemark {
+      multiline = true;
+      size = Large;
+      maxlength = 2000;
+   }
+   field QuarComment {
+      visible = [IsQuarantine];
+      required = [IsQuarantine];
+      multiline = true;
+      size = Large;
+      maxlength = 2000;
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+command RemoveReturnLineCommand for JtTaskReturn {
+   enabled = [QtyReturned = null or QtyReturned = 0];
+   label = "";
+   icon = "delete";
+   mode = SingleRecord;
+   execute {
+      call RemoveReturnLine(TaskReturnLineSeq);
+   }
+}
+
+command QuickTagPrintCommand for JtTaskReturn {
+   label = "Quick Tag Print";
+   enabled = [RemovalTaskPartRef.RemovedUser != null];
+   mode = SingleRecord;
+   variable PartReturnInfo Structure(PartReturnInfoStructure);
+
+   execute {
+      copy this into PartReturnInfo;
+      set PartReturnInfo.RemovalTaskPartId = RemovalTaskPartRef.TaskPartId;
+      set PartReturnInfo.RemovalReasonCode = RemovalTaskPartRef.RemovalReasonCode;
+      set PartReturnInfo.Source = "QUICK_TAG_PRINT";
+      set PartReturnInfo.AssistantLabel = "Quick Tag Print" {
+         translatable = true;
+      }
+      assistant PartReturnAssistant(PartReturnInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command ReturnToInventoryCommand for JtTaskReturn {
+   label = "Return To Inventory";
+   enabled = [RemovalTaskPartRef.RemovedUser != null and not IsReturnCompleted];
+   mode = SingleRecord;
+   variable PartReturnInfo Structure(PartReturnInfoStructure);
+
+   execute {
+      copy this into PartReturnInfo;
+      set PartReturnInfo.RemovalTaskPartId = RemovalTaskPartRef.TaskPartId;
+      set PartReturnInfo.RemovalReasonCode = RemovalTaskPartRef.RemovalReasonCode;
+      set PartReturnInfo.Source = "RETURN_TO_INVENTORY";
+      set PartReturnInfo.AssistantLabel = "Return To Inventory" {
+         translatable = true;
+      }
+      assistant PartReturnAssistant(PartReturnInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command PrintPartTag for PartReturnsVirtual {
+   label = "Print";
+   visible = [Source = "QUICK_TAG_PRINT" and SelectedPartTagType != null and not(SelectedPartTagType = "Quarantine" and QuarComment = null)];
+
+   variable ResultKeyVar {
+      type = Number;
+   }
+   execute {
+      call GeneratePartTagReport(TaskReturnLineSeq, SelectedPartTagType, CommentRemark, QuarComment) into ResultKeyVar;
+      printdialog ResultKeyVar;
+   }
+}
+
+command ReturnPartCommand for PlannedReturnsVirtual {
+   label = "Return";
+   visible = [not parent.IsPartReturnCompleted and parent.SelectedPartTagType != null and not(parent.SelectedPartTagType = "Quarantine" and parent.QuarComment = null and parent.LatestPartTagResultKey = null)];
+   mode = SingleRecord;
+   variable StdCostExist Text;
+   variable ResultKey Number;
+   execute {
+      call ValidateReturnedPart(JtTaskReturnRef.PartNo, JtTaskReturnRef.SerialNo);
+      call StandardCostExist(TaskReturnLineSeq) into StdCostExist;
+      if [StdCostExist = "FALSE"] {
+         if[JtTaskReturnRef.PartOwnership != "CustomerOwned" and JtTaskReturnRef.PartOwnership != "SupplierRented" and JtTaskReturnRef.PartOwnership != "CompanyRentalAsset"] {
+            assistant DefineCostStructureAssistant(Site, JtTaskReturnRef.PartNo, JtTaskReturnRef.ConfigurationId, JtTaskReturnRef.LotBatchNo, JtTaskReturnRef.SerialNo, JtTaskReturnRef.ConditionCode, "WORK ORDER RECEIPT", null) into(CostDetailId) {
+               when CANCEL {
+                  exit CANCEL;
+               }
+            }
+         }
+      }
+      call ReturnPartInventory(TaskReturnLineSeq, ReturnQuantity, LocationNo, CostDetailId) {
+         when SUCCESS {
+            set ReturnQuantity = null;
+            set RemainingQtyToReturn = 0;
+            if [parent.LatestPartTagResultKey = null] {
+               call GeneratePartTagReport(TaskReturnLineSeq, parent.SelectedPartTagType, parent.CommentRemark, parent.QuarComment)  into ResultKey {
+                  when FAIL {
+                     error("${error.Message}");
+                  }
+               }
+            }
+            if [parent.IsPrintPartTagEnabled] {
+               if [parent.LatestPartTagResultKey != null] {
+                  set ResultKey = parent.LatestPartTagResultKey;
+               }
+               printdialog ResultKey;
+            }
+            info("Return to Inventory successful!");
+         }
+         when FAIL {
+            error("${error.Message}");
+         }
+      }
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+
+------------------------------ ENTITY DETAILS -------------------------------
+entityset PartReturnsVirtualSet for PartReturnsVirtual;
+
+@Override
+entity JtTaskReturn {
+   from = "Jt_Task_Return_Av_Uiv";
+
+   attribute PartAvailabilityControl Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Inv_Part_Avail_Ctrl(serial_no,site,part_no,lot_batch_no)";
+   }
+   attribute RemovalReasonCode  Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Removal_Reason_Code(Av_Exe_Task_Part_API.Get_Tsk_Prt_Id_By_Ret_Line_Seq(task_return_line_seq))";
+   }
+   attribute IsPartTagEditable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Util_API.Is_Part_Tag_Type_Editable";
+   }
+   attribute PartTagType Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Return_Line_Part_Tag_Type(task_return_line_seq)";
+   }
+   attribute LatestPartTagResultKey Number {
+      fetch = "Av_Part_Tag_Report_API.Get_Latest_Part_Tag_Result_Key(task_return_line_seq)";
+   }
+   attribute IsReturnCompleted Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Util_API.Is_Return_Completed(task_return_line_seq)";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   reference PartTagReportArchiveRef(LatestPartTagResultKey) to AvPartTagReport(ResultKey);
+   reference RemovalTaskPartRef(TaskReturnLineSeq) to AvExeTaskPart(TaskReturnLineSeq);
+   reference RemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+}
+
+virtual PartReturnsVirtual {
+   attribute TaskSeq Number;
+   attribute RemovalTaskPartId Number;
+   attribute TaskReturnLineSeq Number;
+   attribute IsServiceable Boolean {
+      label = "Serviceable";
+      default = "false";
+      required = [true];
+   }
+   attribute IsUnServiceable Boolean {
+      label = "Unserviceable";
+      default = "false";
+      required = [true];
+   }
+   attribute IsQuarantine Boolean {
+      label = "Quarantine";
+      default = "false";
+      required = [true];
+   }
+   attribute IsPrintPartTagEnabled Boolean {
+      label = "Print Part Tag";
+      default = "false";
+      required = [true];
+   }
+   attribute RemovalReasonCode Text;
+   attribute CommentRemark Text {
+      label = "Comments/Remarks";
+   }
+   attribute QuarComment Text {
+      label = "Quarantine Note";
+   }
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Exe_Task_API.Get_Aircraft(Av_Exe_Task_API.Get_Aircraft_Id(task_seq))";
+   }
+   attribute IsPartReturnCompleted Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Util_API.Is_Return_Completed(task_return_line_seq)";
+   }
+   attribute PartTagType Text;
+   attribute SelectedPartTagType Text;
+   attribute IsPartTagEditable Boolean;
+   attribute Source Text;
+   attribute AssistantLabel Text;
+   attribute LatestPartTagResultKey Number;
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   array PartRemovalDetailsArray(RemovalTaskPartId) to  RemovedPartQuery(TaskPartId);
+   array PlannedReturnDetailsArray() to  PlannedReturnsVirtual();
+}
+
+virtual PlannedReturnsVirtual {
+   attribute TaskReturnLineSeq Number {
+      editable = [false];
+   }
+   attribute Site Text {
+      editable = [false];
+   }
+   attribute PartNo Text;
+   attribute SerialNo Text;
+   attribute LocationNo Text;
+   attribute RemainingQtyToReturn Number {
+      editable = [false];
+   }
+   attribute ReturnQuantity Number {
+      label = "Qty To Return";
+   }
+
+   reference JtTaskReturnRef(TaskReturnLineSeq) to JtTaskReturn(TaskReturnLineSeq);
+   reference LocationNoRef(Site, LocationNo) to InventoryLocation5(Contract, LocationNo);
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo);
+}
+
+query RemovedPartQuery {
+   from = "TASK_PART_INST_RMV_UIV";
+   keys = TaskPartId;
+   lu = AvExeTaskPart;
+   attribute TaskPartId Number;
+   attribute TaskSeq Number;
+   attribute RemPartName Text {
+      label = "Part Description";
+   }
+   attribute RemPartNumber Text {
+      label = "Part Number";
+   }
+   attribute RemovedSerialNo Text {
+      label = "Serial Number";
+   }
+   attribute RemovedBatchNo Text {
+      label = "Batch Number";
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Removed_Quantity), ' '),INVENTORY_PART_API.Get_Unit_Meas(Work_Task_API.Get_Site(Task_Seq),rem_part_number))";
+   }
+   attribute RemovalReasonCode Text;
+   --Field is introduced, value population will be done in 26R1
+   attribute PartRepairPriority Text {
+      fetch = "''";
+   }
+   attribute RemovedDate Timestamp;
+   attribute RemovedUser Text {
+      label = "Removed By";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute OperationalCondition Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Rmvl_Line_Operation_Cond(Av_Exe_Task_Part_API.Get_Tsk_Prt_Id_By_Ret_Line_Seq(task_return_line_seq))";
+   }
+   reference PartSerialCatalogRef(RemPartNumber, RemovedSerialNo) to PartSerialCatalog(PartNo, SerialNo);
+   reference RemovalReasonRef(RemovalReasonCode) to AvRemovalReason(RemovalReasonCode);
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure PartReturnInfoStructure {
+   attribute TaskSeq Number;
+   attribute TaskReturnLineSeq Number;
+   attribute RemovalTaskPartId Number;
+   attribute RemovalReasonCode Text;
+   attribute Source Text;
+   attribute AssistantLabel Text;
+   attribute PartTagType Text;
+   attribute IsPartTagEditable Boolean;
+   attribute LatestPartTagResultKey Number;
+}
+---------------------------------- ACTIONS ----------------------------------
+action CreateReturnLine {
+   initialcheck none;
+   parameter TaskPartId      Number;
+   parameter TaskSeq         Number;
+   parameter RemPartNo       Text;
+   parameter QtyReturn       Number;
+   parameter RemovalSerialNo Text;
+   parameter RemovalBatchNo  Text;
+   ludependencies = JtTaskReturn, AvRemovedParts, AggFaultRemovePartQuery, AvExeTaskPart, AvExeTask, AvFault;
+}
+
+action CancelPart {
+   initialcheck none;
+   parameter TaskPartId      Number;
+   ludependencies = JtTaskReturn, AvRemovedParts, AggFaultRemovePartQuery, AvExeTaskPart, AvExeTask, AvFault;
+}
+
+action RemoveReturnLine {
+   initialcheck none;
+   parameter TaskReturnLineSeq Number;
+   ludependencies = JtTaskReturn, AvRemovedParts, AggFaultRemovePartQuery, AvExeTaskPart, AvExeTask, AvFault;
+}
+
+action ValidateReturnedPart {
+   initialcheck none;
+   parameter PartNo Text;
+   parameter SerialNo Text;
+}
+
+action ReturnPartInventory {
+   initialcheck none;
+   ludependencies = JtTaskReturn, PlannedReturnsVirtual, PartReturnsVirtual;
+   parameter TaskReturnLineSeq Number;
+   parameter ReturnQuantity Number;
+   parameter LocationNo Text;
+   parameter CostDetailId Number;
+}
+--------------------------------- FUNCTIONS ---------------------------------
+function StandardCostExist Text {
+   parameter TaskReturnLineSeq Number;
+}
+
+action GeneratePartTagReport Number {
+   initialcheck none;
+   ludependencies = JtTaskReturn, PlannedReturnsVirtual, PartReturnsVirtual;
+   parameter TaskReturnLineSeq   Number;
+   parameter SelectedPartTagType Text;
+   parameter Remark              Text;
+   parameter QuarComment         Text;
+}

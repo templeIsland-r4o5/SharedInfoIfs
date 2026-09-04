@@ -1,0 +1,53 @@
+<LinksList>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display quick links of Maintenance Supervisor pages</DescriptiveText>
+    <LastModified>9/1/23, 11:14:13 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>QUICK LINKS</Title>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Quick_Links</Name>
+    <ID>e4e2aa4d-3a0c-4bea-8d70-779439eaeae0</ID>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Accent</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <ColumnMapping>
+        <MappedColumns/>
+    </ColumnMapping>
+    <Links>
+        <Link>
+            <ID>0793671c-ddfc-4365-98e3-e6bfb95fcce0</ID>
+            <WebUrl>page/FlmStationTurns/StationTurnsPage</WebUrl>
+            <ColumnMapping>
+                <MappedColumns/>
+            </ColumnMapping>
+            <LinkTitle>My Station Turns</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>5882aa29-3074-4296-886e-beac125bafe3</ID>
+            <WebUrl>page/FlmSupervisorAircraftTurnsDetails/TurnWorkAssignmentsPage</WebUrl>
+            <ColumnMapping>
+                <MappedColumns/>
+            </ColumnMapping>
+            <LinkTitle>Assign Technicians to Aircraft Turns</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+        <Link>
+            <ID>6c47d4c6-49ff-4678-baeb-e59c4989df3b</ID>
+            <WebUrl>page/FlmTaskWorkAssignment/WorkTaskAssignmentPage</WebUrl>
+            <ColumnMapping>
+                <MappedColumns/>
+            </ColumnMapping>
+            <LinkTitle>Assign Technicians to Tasks</LinkTitle>
+            <TargetType>Single</TargetType>
+        </Link>
+    </Links>
+</LinksList>

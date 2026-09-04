@@ -1,0 +1,187 @@
+client FlmMyPartRequest;
+component FLMEXE;
+layer Core;
+projection FlmMyPartRequestHandling;
+description "My Part Request Page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AircraftLovSelector;
+include fragment FlmParts;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry MyPartRequestNavEntry parent FlmWorkManagementNavigator.WorkMngNav at index 2530 {
+      label = "My Part Requests";
+      page MyPartRequestPage;
+   }
+
+   entry MyWorkPageNavEntry parent FlmexeNavigator.FlmNav  at index 8500 {
+      label = "My Part Requests";
+      page MyPartRequestPage;
+   }
+
+   entry HangarTaskAssignmentsNav parent FlmexeNavigator.HangarMaintenanceExecution at index 5050 {
+      label = "My Part Requests";
+      page MyPartRequestPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+
+page MyPartRequestPage using MaintMaterialReqLineSet {
+   label = "My Part Requests";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   list MyPartRequestsList;
+   command AddPartToTaskCommand;
+}
+--------------------------------- COMMANDS ----------------------------------
+command AddPartToTaskCommand {
+   label = "Add Part to Task";
+   mode = Global;
+   visible = [true];
+   execute {
+      assistant AddPartToTaskAssistant {
+         when CANCEL {
+            exit;
+         }
+
+      }
+   }
+}
+
+command EditPartsCommand for MaintMaterialReqLine {
+   icon = "edit";
+   label = "";
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.TaskSeq = TaskSeq;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftLovRef.AircraftAltId;
+      set PartsInfo.AircraftRegCode = AircraftLovRef.RegCode;
+      set PartsInfo.WpId = AircraftWorkPackageId;
+      set PartsInfo.OperationType = "EDIT";
+      set PartsInfo.MaintMaterialOrderNo = MaintMaterialOrderNo;
+      set PartsInfo.LineItemNo = LineItemNo;
+      set PartsInfo.InstalledTaskPartId = AvInstalledTaskPartId;
+      set PartsInfo.AircraftId = AircraftLovRef.AircraftId;
+      set PartsInfo.AircraftAppCode = AircraftLovRef.AircraftId;
+      set PartsInfo.AssemblyTypeCode = AcftRef.AssemblyTypeCode;
+      set PartsInfo.AircraftAppCode = AcftRef.ApplicabilityCode;
+      assistant AddEditPartAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector BarcodeSelector for AvExeTask {
+   static Barcode;
+   static TaskSeq;
+}
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list MyPartRequestsList for MaintMaterialReqLine {
+   label = "My Part Requests";
+   orderby = LineItemNo;
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   lov AircraftLovRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+   }
+   field AvWorkPackageRef.WoNumber {
+      label = "Work Package ID";
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Task Barcode";
+      lovswitch {
+         when [true] {
+            lov AvExeTaskRef with AvExeTaskSelector {
+               label = "Task No";
+               details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+            }
+         }
+      }
+   }
+   field AvExeTaskRef.Description {
+      label = "Task Description";
+   }
+   field OrderLineNo {
+      label = "Order No";
+   }
+   field PartDescription {
+      label = "Requested Part";
+   }
+   field Quantity {
+      label = "Qty";
+   }
+   field DateRequired {
+      label = "Required Date";
+   }
+   field AvWorkPackageRef.LocationCode {
+      label = "Work Location";
+   }
+   badge OrderStatus {
+      editable = [false];
+      emphasis Warning = [OrderStatus = "Open"];
+      emphasis Ok = [OrderStatus = "Available"];
+      emphasis Primary = [OrderStatus = "On Order"];
+      emphasis Ok = [OrderStatus = "Issued"];
+      emphasis Complementary7 = [OrderStatus = "Remote"];
+      emphasis Complementary7 = [OrderStatus = "Processing"];
+      emphasis StateObsolete = [OrderStatus = "Unissued"];
+   }
+   field PromisedReceiptDate {
+      label = "ETA";
+   }
+   command EditPartsCommand;
+}
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

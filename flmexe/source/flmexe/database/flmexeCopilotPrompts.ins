@@ -1,0 +1,50 @@
+--------------------------------------------------------------------------------------------
+--
+--  Date    Sign    History
+--  ------  ------  -----------------------------------------------------------
+--  241008  Caarlk  Created.
+--------------------------------------------------------------------------------------------
+SET DEFINE OFF
+
+PROMPT Register Copilot Page Prompts for Client Page FlmFaultDetail.FaultDetails AND FlmTaskDetail.MyWorkPage
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, EDITION_STRATEGY_USED)
+DECLARE
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'flmexeCopilotPrompts', '1.5', 'INS') THEN
+   Fnd_Copilot_API.Enable_Edition_Strategy('Register_Page_Prompt');
+   Fnd_Copilot_API.Register_Page_Prompt(
+      client_        => 'FlmFaultDetail', 
+      artifact_name_ => 'FaultDetails', 
+      description_   => 'Show me similar faults', 
+      prompt_text_   => 'Show me similar faults', 
+      objkey_        => '8FABBF0503E6484799678436F7B0725B');
+   
+   Code_Registration_SYS.Register('FLMEXE', 'flmexeCopilotPrompts', '1.5', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 1 of flmexeCopilotPrompts was not executed because it has already been applied in a previous upgrade.');
+ END IF;
+END;
+/
+
+--SAFE_FOR_ONLINE_DEPLOYMENT(2025-07-23, kapalk, EDITION_STRATEGY_USED)
+DECLARE
+BEGIN
+ IF Code_Registration_SYS.Is_Not_Registered('FLMEXE', 'flmexeCopilotPrompts', '2.5', 'INS') THEN
+   Fnd_Copilot_API.Enable_Edition_Strategy('Register_Page_Prompt');
+   Fnd_Copilot_API.Register_Page_Prompt(
+      client_        => 'FlmTaskDetail', 
+      artifact_name_ => 'MyWorkPage', 
+      description_   => 'Show me similar faults', 
+      prompt_text_   => 'Show me similar faults', 
+      objkey_        => '9757A1B1E3A5468C912C689C8F3F8FED');
+   
+   Code_Registration_SYS.Register('FLMEXE', 'flmexeCopilotPrompts', '2.5', 'INS');
+ ELSE 
+   DBMS_OUTPUT.PUT_LINE('Section 2 of flmexeCopilotPrompts was not executed because it has already been applied in a previous upgrade.');
+ END IF;
+END;
+/
+COMMIT
+/
+
+SET DEFINE ON

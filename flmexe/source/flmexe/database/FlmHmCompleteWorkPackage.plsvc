@@ -1,0 +1,371 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmHmCompleteWorkPackage
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250816  SABOLK  AD-20013, Created.
+--  250822  SRLALK  AD-20014, Added Record Details command and complete work package second assistant
+--  250827  SABOLK  AD-20015, Modified CRUD_Create___, Sign___, and Record_Complete_Wp_Data___.
+--  250829  KAPALK  AD-20015, MOdified sugn command to support digital signature. 
+--  251030  SABOLK  AD-22080, Added and modified changes to improve performance.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@Override
+@IgnoreUnitTest MethodOverride
+PROCEDURE CRUD_Create___(
+   rec_ IN Complete_Work_Package_Virtual_Rec )
+IS
+   rec_dup_                   Complete_Work_Package_Virtual_Rec;
+   complete_wp_new_rec_       Complete_Work_Package_Virtual_Rec;
+   sign_off_req_rec_          Wp_Sign_Off_Req_Virtual_Rec;
+   release_to_service_rec_    Release_To_Service_Virtual_Rec;
+   unsigned_skill_count_      NUMBER := 0;
+   parent_key_ref_            VARCHAR2(100);
+
+   CURSOR get_wp_sign_off_reqs IS
+      SELECT wp_sign_off_req_seq, resource_group_seq, signed_date, signed_user
+      FROM Av_Wp_Sign_Off_Req_Tab
+      WHERE aircraft_wp_id = rec_.aircraft_work_package_id
+      ORDER BY wp_sign_off_req_seq;
+BEGIN
+   rec_dup_ := rec_;
+   super(rec_dup_);
+   complete_wp_new_rec_ := rec_dup_;
+   
+   --Populating wp sign off req lines
+   FOR wp_so_req_rec_ IN get_wp_sign_off_reqs LOOP
+      sign_off_req_rec_.objkey                     := sys_guid();
+      sign_off_req_rec_.parent_objkey              := rec_dup_.objkey;
+      sign_off_req_rec_.aircraft_work_package_id   := rec_.aircraft_work_package_id;
+      sign_off_req_rec_.wp_sign_off_req_seq        := wp_so_req_rec_.wp_sign_off_req_seq;
+      sign_off_req_rec_.resource_group_seq         := wp_so_req_rec_.resource_group_seq;      
+      sign_off_req_rec_.resource_group             := Resource_API.Get_Resource_Id(wp_so_req_rec_.resource_group_seq);
+      sign_off_req_rec_.signed_user                := wp_so_req_rec_.signed_user;
+      IF wp_so_req_rec_.signed_user IS NOT NULL THEN
+         sign_off_req_rec_.status                  := 'Signed';   
+      ELSE
+         sign_off_req_rec_.status                  := 'Pending';
+         unsigned_skill_count_                     := unsigned_skill_count_ + 1;
+      END IF;  
+      sign_off_req_rec_.signed_user                := wp_so_req_rec_.signed_user;
+      sign_off_req_rec_.signed_date                := wp_so_req_rec_.signed_date;
+      
+      CRUD_Create___(sign_off_req_rec_);
+   END LOOP;
+   
+   release_to_service_rec_.objkey                  := sys_guid();
+   release_to_service_rec_.parent_objkey           := rec_dup_.objkey;
+   IF unsigned_skill_count_ = 1 THEN
+      complete_wp_new_rec_.is_last_sign_off_skill  := TRUE;
+   ELSE   
+      complete_wp_new_rec_.is_last_sign_off_skill  := FALSE;
+   END IF;
+   release_to_service_rec_.release_to_service      := FALSE;
+   release_to_service_rec_.release_to_service_txt  := 'No';
+   CRUD_Create___(release_to_service_rec_);
+   
+   complete_wp_new_rec_.release_remark_objkey      := release_to_service_rec_.objkey;
+   Client_SYS.Add_To_Key_Reference(parent_key_ref_, 'AIRCRAFT_WORK_PACKAGE_ID', rec_.aircraft_work_package_id);
+   complete_wp_new_rec_.parent_key_ref             := parent_key_ref_;
+   complete_wp_new_rec_.parent_lu_name             := Av_Aircraft_Work_Package_API.lu_name_; 
+   complete_wp_new_rec_.sign_enable                := FALSE;
+   Crud_Update___(rec_dup_,complete_wp_new_rec_);
+END CRUD_Create___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Comp_Wp_Summary_Values___ (
+   aircraft_id_   IN NUMBER) RETURN Complete_Work_Package_Structure_Rec
+IS
+   complete_wp_rec_              Complete_Work_Package_Structure_Rec;
+   
+BEGIN
+   -- Configuration Warning data
+   complete_wp_rec_.cms_status   := Av_Exe_Task_Part_Warning_API.Get_Cms_Status(aircraft_id_);
+   
+   IF complete_wp_rec_.cms_status >= 0 THEN 
+      complete_wp_rec_.cms_warning_exist  := TRUE;
+   ELSE
+      complete_wp_rec_.cms_warning_exist  := FALSE;
+   END IF;
+
+	RETURN complete_wp_rec_;
+END Get_Comp_Wp_Summary_Values___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Current_Time___ RETURN DATE
+IS
+BEGIN
+	RETURN sysdate;
+END Get_Current_Time___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Current_User___ RETURN VARCHAR2
+IS
+   current_user_ VARCHAR2(300);
+BEGIN
+	current_user_:= Fnd_Session_API.Get_Fnd_User();
+   RETURN current_user_;
+END Get_Current_User___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_E_Sig_Permission___ (
+   user_id_ IN VARCHAR2) RETURN VARCHAR2
+IS
+   permission_ av_e_sig_user_permission_tab.permission%TYPE;
+BEGIN
+   permission_ := Av_E_Sig_User_Permission_API.Get_Permission(user_id_);
+   RETURN permission_;
+END Get_E_Sig_Permission___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Sign___ (
+   objkey_                    IN VARCHAR2,
+   aircraft_work_package_id_  IN NUMBER,
+   actual_end_date_time_      IN DATE,
+   bind_signature_id_         IN VARCHAR2)
+IS  
+   e_sig_permission_       VARCHAR2(20);
+   signed_wp_so_reqs_      NUMBER := 0;
+   wp_sign_off_req_count_  NUMBER := 0;
+   objid_                  Av_Hangar_Release.objid%TYPE;
+   objversion_             Av_Hangar_Release.objversion%TYPE;
+   info_                   VARCHAR2(32000);
+   attr_                   VARCHAR2(32000);
+   
+   CURSOR get_e_sig_user IS
+      SELECT permission 
+      FROM av_e_sig_user_permission_tab
+      WHERE identity = Fnd_Session_API.Get_Fnd_User();
+      
+   CURSOR get_release_to_service(parent_objkey_ VARCHAR2) IS
+      SELECT  signed_flag, release_to_service, release_number, release_remarks, released_date, signed_user
+      FROM ${PROJECTION}_RELEASE_TO_SERVICE_VIRTUAL_VRT
+      WHERE parent_objkey = parent_objkey_;
+      
+   CURSOR get_wp_sign_offs(parent_objkey_ VARCHAR2) IS
+      SELECT  signed_flag, wp_sign_off_req_seq, signed_user, signed_date
+      FROM ${PROJECTION}_WP_SIGN_OFF_REQ_VIRTUAL_VRT
+      WHERE parent_objkey = parent_objkey_;
+      
+   CURSOR get_active_critical_items IS
+      SELECT critical_item_id
+      FROM av_critical_item_tab
+      WHERE aircraft_wp_id = aircraft_work_package_id_
+      AND rowstate = 'Active';
+      
+BEGIN
+   OPEN get_e_sig_user;
+   FETCH get_e_sig_user INTO e_sig_permission_;
+   CLOSE get_e_sig_user;
+   
+   IF ((e_sig_permission_ IS NULL OR e_sig_permission_ = 'Yes') AND bind_signature_id_ IS NULL) THEN
+      Error_SYS.Record_General(lu_name_, 'ESIGWERROR: Failed to record electronic signature. Review changes and try again.');
+   END IF;
+   
+   FOR wp_sign_off_rec_ IN get_wp_sign_offs(objkey_) LOOP
+      IF (wp_sign_off_rec_.signed_flag = 1) THEN
+         Av_Wp_Sign_Off_Req_API.Perform_Sign_Off(aircraft_work_package_id_, wp_sign_off_rec_.wp_sign_off_req_seq, wp_sign_off_rec_.signed_user, wp_sign_off_rec_.signed_date, bind_signature_id_);
+      END IF;
+      
+      wp_sign_off_req_count_ := wp_sign_off_req_count_ + 1;
+      IF wp_sign_off_rec_.signed_user IS NOT NULL THEN
+         signed_wp_so_reqs_ := signed_wp_so_reqs_ + 1;
+      END IF;
+   END LOOP;
+   
+   IF wp_sign_off_req_count_ = signed_wp_so_reqs_ THEN
+      FOR release_to_serv_rec_ IN get_release_to_service(objkey_) LOOP
+         IF release_to_serv_rec_.signed_flag = 1 THEN
+            Client_SYS.Clear_Attr(attr_);
+            Client_SYS.Add_To_Attr('AIRCRAFT_WORK_PACKAGE_ID', aircraft_work_package_id_, attr_);
+            Client_SYS.Add_To_Attr('RELEASE_NUMBER', release_to_serv_rec_.release_number, attr_);
+            Client_SYS.Add_To_Attr('RELEASE_REMARKS', release_to_serv_rec_.release_remarks, attr_);
+            Client_SYS.Add_To_Attr('RELEASE_DATE', release_to_serv_rec_.released_date, attr_);
+            Client_SYS.Add_To_Attr('SIGNED_USER', release_to_serv_rec_.signed_user, attr_);
+            Client_SYS.Add_To_Attr('BIND_SIGNATURE_ID', bind_signature_id_, attr_);
+
+            Av_Hangar_Release_API.New__(info_, objid_, objversion_, attr_, 'DO');
+            
+            IF release_to_serv_rec_.release_to_service = 1 THEN
+               Client_SYS.Clear_Attr(attr_);
+               Client_SYS.Add_To_Attr('IS_RELEASE_TO_SERVICE', 'True', attr_);
+               Av_Aircraft_Work_Package_API.Modify(info_, aircraft_work_package_id_, attr_, 'DO');
+            END IF;
+         END IF;
+      END LOOP;
+      
+      Av_Aircraft_Work_Package_API.Complete_Work_Package(aircraft_work_package_id_, actual_end_date_time_);
+      
+      -- Complete Work package active critical items
+      FOR active_critical_items_ IN get_active_critical_items LOOP
+         IF active_critical_items_.critical_item_id IS NOT NULL THEN
+            Av_Critical_Item_API.Complete_Critical_Item(active_critical_items_.critical_item_id);
+         END IF;
+      END LOOP;
+   END IF;
+END Sign___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Record_Complete_Wp_Data___ (
+   wp_data_struct_ IN Record_Complete_Work_Package_Info_Structure_Rec)
+IS
+   complete_wp_rec_key_     Complete_Work_Package_Virtual_Key;
+   rel_srv_rec_key_         Release_To_Service_Virtual_Key;
+   sign_off_rec_key_        Wp_Sign_Off_Req_Virtual_Key;
+   rel_srv_old_rec_         Release_To_Service_Virtual_Rec;
+   rel_srv_new_rec_         Release_To_Service_Virtual_Rec;
+   sign_off_old_rec_        Wp_Sign_Off_Req_Virtual_Rec;
+   sign_off_new_rec_        Wp_Sign_Off_Req_Virtual_Rec;
+   complete_wp_old_rec_     Complete_Work_Package_Virtual_Rec;
+   complete_wp_new_rec_     Complete_Work_Package_Virtual_Rec; 
+   sign_off_rec_obj_key_    VARCHAR2(50);
+   resource_group_seq_      NUMBER;
+   signed_user_             VARCHAR2(300) := Get_Current_User___;
+   current_date_            DATE          := Get_Current_Time___;
+   sign_off_count_          NUMBER        := 0;
+   resource_seq_            Jt_Execution_Instance_Tab.resource_seq%TYPE;
+   
+   CURSOR get_sign_off_rec_data(aircraft_work_package_id_ NUMBER, wp_sign_off_req_seq_ NUMBER, parent_objkey_ VARCHAR2) IS
+      SELECT objkey, resource_group_seq
+      FROM ${PROJECTION}_Wp_Sign_Off_Req_Virtual_VRT sign_off
+      WHERE sign_off.aircraft_work_package_id = aircraft_work_package_id_
+      AND   sign_off.wp_sign_off_req_seq = wp_sign_off_req_seq_
+      AND   parent_objkey = parent_objkey_;
+
+      
+   CURSOR get_unsigned_sign_off_reqs_count(aircraft_work_package_id_ NUMBER, parent_objkey_ VARCHAR2) IS
+      SELECT COUNT(*) AS unsigned_skill_count
+      FROM ${PROJECTION}_Wp_Sign_Off_Req_Virtual_VRT
+      WHERE aircraft_work_package_id = aircraft_work_package_id_
+      AND   signed_user IS NULL
+      AND   parent_objkey = parent_objkey_;
+
+BEGIN
+   
+   OPEN  get_sign_off_rec_data(wp_data_struct_.aircraft_work_package_id, wp_data_struct_.wp_sign_off_req_seq, wp_data_struct_.complete_wp_objkey);
+   FETCH get_sign_off_rec_data INTO sign_off_rec_obj_key_, resource_group_seq_;
+   CLOSE get_sign_off_rec_data;
+   
+   resource_seq_ := resource_API.Get_Resource_Seq(signed_user_, 'PERSON');
+   IF (NOT Labour_Assignment_Util_API.Is_Resource_In_Group(resource_seq_, resource_group_seq_)) THEN
+      Error_SYS.Record_General(lu_name_, 'ERRINVALIDSKILL: You do not have the required skill to sign off the work package completion.');
+   END IF;
+   
+   -- Update ReleaseToServiceVirtual 
+   IF wp_data_struct_.is_last_sign_off_skill THEN
+      rel_srv_rec_key_.objkey   := wp_data_struct_.release_remark_objkey;
+      rel_srv_old_rec_          := Get_Record___(rel_srv_rec_key_);
+      rel_srv_new_rec_          := rel_srv_old_rec_;
+   
+      rel_srv_new_rec_.release_number           := wp_data_struct_.release_number;
+      rel_srv_new_rec_.release_remarks          := wp_data_struct_.release_remarks;
+      rel_srv_new_rec_.release_to_service       := wp_data_struct_.release_to_service;
+      rel_srv_new_rec_.released_date            := current_date_;
+      rel_srv_new_rec_.signed_user              := signed_user_;
+      rel_srv_new_rec_.signed_flag              := TRUE;
+      rel_srv_new_rec_.release_to_service_txt   := 'Yes';
+   
+      CRUD_Update___(rel_srv_old_rec_, rel_srv_new_rec_);
+   END IF;
+
+   --Update WpSignOffReqVirtual;
+   sign_off_rec_key_.Objkey := sign_off_rec_obj_key_;
+   sign_off_old_rec_        := Get_Record___(sign_off_rec_key_);
+   sign_off_new_rec_        := sign_off_old_rec_;
+   
+   sign_off_new_rec_.signed_user := signed_user_;
+   sign_off_new_rec_.signed_date := current_date_;
+   sign_off_new_rec_.status      := 'Signed';
+
+   sign_off_new_rec_.signed_flag := TRUE;
+   Crud_Update___(sign_off_old_rec_, sign_off_new_rec_);
+   
+   --Update CompleteWorkPackageVirtual
+   complete_wp_rec_key_.Objkey   := wp_data_struct_.complete_wp_objkey;
+   complete_wp_old_rec_          := Get_Record___(complete_wp_rec_key_);
+   complete_wp_new_rec_          := complete_wp_old_rec_;
+   
+   OPEN  get_unsigned_sign_off_reqs_count(wp_data_struct_.aircraft_work_package_id,wp_data_struct_.complete_wp_objkey);
+   FETCH get_unsigned_sign_off_reqs_count INTO sign_off_count_;
+   CLOSE get_unsigned_sign_off_reqs_count;
+   
+   IF sign_off_count_ = 1 THEN
+      complete_wp_new_rec_.is_last_sign_off_skill := TRUE;
+   ELSE
+      complete_wp_new_rec_.is_last_sign_off_skill := FALSE;
+   END IF;
+   
+   IF sign_off_count_ = 0 THEN
+      complete_wp_new_rec_.actual_end_date_time   := current_date_;
+   END IF;
+   complete_wp_new_rec_.release_to_service   := wp_data_struct_.release_to_service;
+   complete_wp_new_rec_.sign_enable          := TRUE;
+   
+   Crud_Update___(complete_wp_old_rec_, complete_wp_new_rec_);
+   
+END Record_Complete_Wp_Data___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Esig_File_Name___ (
+   aircraft_id_               IN NUMBER,
+   aircraft_work_package_id_  IN NUMBER) RETURN VARCHAR2
+IS
+   file_name_ VARCHAR2(100);
+   record_id_ VARCHAR2(100);
+   reg_code_  VARCHAR2(10);
+   signed_user_ VARCHAR2(40);
+   
+   CURSOR get_aircraft_reg_code IS
+      SELECT reg_code
+      FROM aircraft_tab
+      WHERE aircraft_id = aircraft_id_;
+BEGIN
+	OPEN  get_aircraft_reg_code;
+   FETCH get_aircraft_reg_code INTO reg_code_;
+   CLOSE get_aircraft_reg_code;
+   
+   signed_user_ := Fnd_Session_API.Get_Fnd_User();
+   
+   IF (aircraft_work_package_id_ IS NOT NULL) THEN 
+      record_id_   := 'WP-'||aircraft_work_package_id_  ;
+   END IF; 
+   
+   IF (reg_code_ IS NOT NULL AND record_id_ IS NOT NULL) THEN 
+      file_name_ := reg_code_ || '_' || record_id_ || '_' || signed_user_;
+      RETURN file_name_;
+   END IF;
+
+END Get_Esig_File_Name___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Work_Package_Details___ (
+   wp_id_ IN NUMBER) RETURN Complete_Work_Package_Structure_Rec
+IS
+   wp_rec_                 Av_Aircraft_Work_Package_TAB%ROWTYPE;
+   complete_wp_rec_        Complete_Work_Package_Structure_Rec;
+   assembly_type_code_     Aircraft_TAB.assembly_type_code%TYPE;
+   aircraft_reg_code_      Aircraft_TAB.reg_code%TYPE;
+BEGIN
+	wp_rec_                                   := Av_Aircraft_Work_Package_API.Get_Object_By_Keys(wp_id_);
+   complete_wp_rec_.aircraft_id              := wp_rec_.aircraft_id;
+   assembly_type_code_                       := Aircraft_API.Get_Assembly_Type_Code(wp_rec_.aircraft_id);
+   aircraft_reg_code_                        := Aircraft_API.Get_Reg_Code(wp_rec_.aircraft_id);
+   complete_wp_rec_.aircraft                 := CONCAT(CONCAT((assembly_type_code_), ' - '), TO_CHAR(aircraft_reg_code_));
+   complete_wp_rec_.location_code            := wp_rec_.location_code;
+   complete_wp_rec_.barcode                  := wp_rec_.barcode;
+   complete_wp_rec_.work_package_name        := wp_rec_.work_package_name;
+   complete_wp_rec_.Objstate                 := wp_rec_.rowstate;
+   complete_wp_rec_.sched_start_date_time    := wp_rec_.sched_start_date_time;
+   complete_wp_rec_.sched_end_date_time      := wp_rec_.sched_end_date_time;
+   complete_wp_rec_.actual_start_date_time   := wp_rec_.actual_start_date_time;
+   complete_wp_rec_.actual_end_date_time     := wp_rec_.actual_end_date_time;
+   
+   RETURN complete_wp_rec_;
+END Get_Work_Package_Details___;

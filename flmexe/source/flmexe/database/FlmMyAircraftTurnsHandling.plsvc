@@ -1,0 +1,23 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmMyAircraftTurnsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  211223  vifelk  AD-4114, Modified Get_Default_Value___ function.
+--  211223  vifelk  AD-4132, Modified Get_Default_Value___ function.
+--  211217  vifelk  AD-4117, Added Get_Default_Value___ function.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Default_Value___ RETURN Search_Context_Structure_Rec
+IS
+   rec_ Search_Context_Structure_Rec;
+BEGIN
+   rec_.has_turn_assigned_to_me := FALSE;
+   RETURN rec_;
+END Get_Default_Value___;

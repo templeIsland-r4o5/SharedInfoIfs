@@ -1,0 +1,47 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+    <DescriptiveText>The progress of the Hangar Maintenance Work Package that is currently work in progress. </DescriptiveText>
+    <LastModified>2/18/25, 2:58:56 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>WORK PACKAGE PROGRESS</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_SUP_WP_PROGRESS</Name>
+    <ID>6077dcdb-e248-4f6a-9c39-b69f4e59ccd2</ID>
+    <ColorStyle>OK</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>6c143c11-5730-4782-a2be-11b22546ca9d</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>DaysSinceStart</Column>
+                <Name>Days Since Start</Name>
+                <DisplayName>Days Since Start</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>DaysSinceStart</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>DaysToFinish</Column>
+                <Name>Days To Finish</Name>
+                <DisplayName>Days To Finish</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>DaysToFinish</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+        <Transpose>true</Transpose>
+    </ColumnMapping>
+</List>

@@ -1,0 +1,119 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Details of all the aircraft currently located at the airport hangar.</DescriptiveText>
+    <LastModified>3/14/25, 5:47:04 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>8</ColumnSpan>
+    <Title>AIRCRAFT AT MY AIRPORT HANGAR</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Hangar_Tech_Aircraft_At_My_Airport_List</Name>
+    <ID>c1c6aede-d6cd-41da-bf7b-c7767cc2deea</ID>
+    <WebUrl>lobby/60c9811f-595a-4025-a820-69e01c6e31b3?pageParams=WorkPackage:$[WorkPackage],AircraftCode:$[AircraftCode],WorkPackageId:$[WorkPackageId],Aircraft:$[Aircraft],WorkPackageBarcode:$[WorkPackageBarcode]
+,</WebUrl>
+    <PassFilterToWebPage>false</PassFilterToWebPage>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>bd1aa12f-0bb5-449f-9505-10a1d3b5e0fd</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>AircraftCode</Column>
+                <Name>Aircraft Code</Name>
+                <DisplayName>Aircraft</DisplayName>
+                <Width>25</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>AircraftCode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>WorkPackageName</Column>
+                <Name>Work Package Name</Name>
+                <DisplayName>Work Package Name</DisplayName>
+                <Width>40</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>WorkPackageName</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>WorkPackageBarcode</Column>
+                <Name>Work Package Barcode</Name>
+                <DisplayName>Barcode</DisplayName>
+                <Width>15</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>WorkPackageBarcode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Location</Column>
+                <Name>Location</Name>
+                <DisplayName>Location</DisplayName>
+                <Width>35</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Location</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Status</Column>
+                <Name>Status</Name>
+                <DisplayName>Status</DisplayName>
+                <Width>12</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Status</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>WorkPackage</Column>
+                <Name>Work Package</Name>
+                <DisplayName>Work Package</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>WorkPackage</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>WorkPackageId</Column>
+                <Name>Work Package Id</Name>
+                <DisplayName>Work Package Id</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>WorkPackageId</NavigateTarget>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Aircraft</Column>
+                <Name>Aircraft</Name>
+                <DisplayName>Aircraft</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Aircraft</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>StartDateInAirportTz</Column>
+                <Name>Start Date In Airport Tz</Name>
+                <DisplayName>Start Date</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>StartDateInAirportTz</NavigateTarget>
+                <DataType>DateTime</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+    </ColumnMapping>
+</List>

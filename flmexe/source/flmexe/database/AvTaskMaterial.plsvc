@@ -1,0 +1,215 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     AvTaskMaterial
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  210511  KAWJLK  AD-19850, Created
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Alt_Parts_Parent_Virtual_Rec )
+IS
+   rec_dup_                Alt_Parts_Parent_Virtual_Rec;
+   alt_part_rec_           Alt_Parts_Virtual_Rec;
+   part_number_id_         Av_Part_Number.part_number_id%TYPE;
+   part_group_id_          Av_Part_Group.part_group_id%TYPE;
+   
+   -- Cursor to fetch the Part Number ID
+   CURSOR c_part_number_id IS
+      SELECT part_number_id
+      FROM Av_Part_Number
+      WHERE part_number = rec_.part_number;
+   
+   -- Cursor to fetch the Part Group ID
+   CURSOR c_part_group_id IS
+      SELECT part_group_id
+      FROM Av_Part_Group_Part
+      WHERE part_no_id = part_number_id_;
+   
+   -- Cursor to fetch all parts in the same part group
+   CURSOR c_parts_in_group IS
+      SELECT p.part_number_id, p.part_number, p.part_name, p.manufacturer, p.inventory_class_code
+      FROM Av_Part_Group_Part gpp
+      JOIN Av_Part_Number p ON gpp.part_no_id = p.part_number_id
+      WHERE gpp.part_group_id = part_group_id_;
+BEGIN
+   rec_dup_ := rec_;
+   super(rec_dup_);
+   
+   OPEN c_part_number_id;
+   FETCH c_part_number_id INTO part_number_id_;
+   CLOSE c_part_number_id;
+   
+   OPEN c_part_group_id;
+   FETCH c_part_group_id INTO part_group_id_;
+   CLOSE c_part_group_id;
+   
+   FOR parent_part_rec_ IN c_parts_in_group LOOP
+      alt_part_rec_.objkey                  := sys_guid();
+      alt_part_rec_.parent_objkey           := rec_dup_.objkey;
+      alt_part_rec_.part_number             := parent_part_rec_.part_number;
+      alt_part_rec_.part_name               := parent_part_rec_.part_name;
+      alt_part_rec_.manufacturer            := parent_part_rec_.manufacturer;
+      alt_part_rec_.inventory_class_code    := parent_part_rec_.inventory_class_code;
+      IF parent_part_rec_.part_number = rec_dup_.part_number THEN
+         alt_part_rec_.is_selected_part     := 'TRUE';
+      ELSE
+         alt_part_rec_.is_selected_part     := 'FALSE';
+      END IF;
+      CRUD_Create___(alt_part_rec_);
+   END LOOP;   
+END CRUD_Create___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Add_Return_Line_On_Issue___ (
+   task_seq_      IN NUMBER,
+   part_no_       IN VARCHAR2,
+   mtrl_order_no_ IN NUMBER,
+   line_item_no_  IN NUMBER)
+IS
+   qty_return_           NUMBER;
+   qty_assigned_         NUMBER;
+   is_repairable_        VARCHAR2(10);
+   task_return_line_seq_ NUMBER;
+   task_wp_id_           NUMBER;
+   part_config_slot_id_  NUMBER;
+   inv_class_cd_         VARCHAR2(10);
+   rem_task_seq_         NUMBER;
+   ins_task_part_id_     NUMBER;
+   rem_task_part_id_     NUMBER;
+   removed_serial_no_    VARCHAR2(50);
+   removed_batch_no_     VARCHAR2(50);
+   removed_user_         VARCHAR2(40);
+   attr_                 VARCHAR2(32000);
+   
+   CURSOR get_installed_part_info IS
+      SELECT is_repairable, config_slot_position_id, inventory_class_code, task_part_id
+      FROM   TASK_PART_INST_RMV_UIV
+      WHERE  maint_mat_order_no = mtrl_order_no_ 
+             AND order_line_no = line_item_no_ 
+             AND installed_part_no_id IS NOT NULL;
+   
+   CURSOR get_wp_removal_line IS
+      SELECT task_seq, task_return_line_seq, task_part_id,removed_serial_no,removed_batch_no,removed_user
+      FROM   TASK_PART_INST_RMV_UIV
+      WHERE  aircraft_wp_id = task_wp_id_ 
+             AND removed_part_no_id IS NOT NULL 
+             AND removal_reason_code != 'ACCESS'
+             AND (
+                  (config_slot_position_id IS NOT NULL AND config_slot_position_id = part_config_slot_id_) 
+                  OR (install_task_part_id IS NOT NULL AND install_task_part_id = ins_task_part_id_)
+             );
+
+BEGIN
+   
+   qty_return_ := Maint_Material_Req_Line_API.Get_Qty(mtrl_order_no_, line_item_no_);
+   qty_assigned_ := Maint_Material_Req_Line_API.Get_Qty_Assigned(mtrl_order_no_, line_item_no_);      
+
+   OPEN get_installed_part_info;
+   FETCH get_installed_part_info INTO is_repairable_, part_config_slot_id_, inv_class_cd_, ins_task_part_id_;
+   CLOSE get_installed_part_info;
+   
+   Av_Exe_Task_Part_API.Update_Task_Part_Ser_Bat_No(ins_task_part_id_,task_seq_,mtrl_order_no_,line_item_no_,qty_return_,qty_assigned_);
+
+   IF is_repairable_ = 'TRUE' THEN
+      task_wp_id_ := Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq_);
+     
+      OPEN get_wp_removal_line;
+      FETCH get_wp_removal_line INTO rem_task_seq_, task_return_line_seq_,rem_task_part_id_,removed_serial_no_,removed_batch_no_,removed_user_;
+            
+      IF get_wp_removal_line%FOUND THEN 
+         
+         IF task_return_line_seq_ IS NULL THEN    
+            Av_Exe_Task_Part_Util_API.Av_Return_Creation(task_seq_             => rem_task_seq_,
+                                                part_number_          => part_no_,
+                                                serial_no_            => removed_serial_no_,
+                                                batch_no_             => removed_batch_no_,
+                                                qty_to_return_        => qty_return_,
+                                                task_return_line_seq_ => task_return_line_seq_);
+                                                
+            Av_Exe_Task_Part_API.Update_Task_Return_Line_Seq(rem_task_part_id_ ,task_return_line_seq_);
+         END IF;
+         
+         IF task_return_line_seq_ IS NOT NULL AND inv_class_cd_ = 'BATCH' AND removed_user_ IS NULL THEN     
+               Client_SYS.Clear_Attr(attr_);
+               Client_SYS.Add_To_Attr('QTY_TO_RETURN', qty_return_, attr_);
+               Jt_Task_Return_API.Update_Returns_Line(task_return_line_seq_, attr_);
+         END IF;
+      END IF;
+
+      CLOSE get_wp_removal_line;
+   END IF;
+END Add_Return_Line_On_Issue___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Save_Alt_Parts___ (
+   objkey_ IN VARCHAR2)
+IS
+   parent_key_                Alt_Parts_Parent_Virtual_Key;
+   parent_rec_                Alt_Parts_Parent_Virtual_Rec;
+   
+   CURSOR Get_Alt_Parts (master_ IN Alt_Parts_Parent_Virtual_Key) IS
+      SELECT * FROM ${PROJECTION}_ALT_PARTS_VIRTUAL_VRT 
+      WHERE parent_objkey = master_.objkey;
+BEGIN
+   parent_key_.Objkey := objkey_;
+   parent_rec_ := Get_Record___(parent_key_);
+   FOR alt_part_rec IN Get_Alt_Parts(parent_key_) LOOP 
+      -- TODO: Call the Create Alternative Part API here using the following data:
+      -- From parent record:
+      --   parent_rec_.maint_material_order_no
+      --   parent_rec_.line_item_no
+      --   parent_rec_.task_seq
+      --   parent_rec_.part_number
+      --
+      -- From alternative part record:
+      --   alt_part_rec.part_number
+      --   alt_part_rec.manufacturer
+      --   alt_part_rec.part_name
+      --   alt_part_rec.inventory_class_code
+      --   alt_part_rec.is_selected_part
+      
+      RETURN;
+   END LOOP;
+END Save_Alt_Parts___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Update_Install_Part_Ser_Bat_No___ (
+   task_seq_         IN NUMBER,
+   ins_task_part_id_ IN NUMBER,
+   mtrl_order_no_    IN NUMBER,
+   line_item_no_     IN NUMBER)
+IS
+   qty_issued_    NUMBER;
+   qty_assigned_  NUMBER;
+
+   CURSOR Get_mmrl_qty_info IS 
+     SELECT qty_assigned,qty
+     FROM   Maint_Material_Req_Line_tab 
+     WHERE  maint_material_order_no = mtrl_order_no_
+      AND   line_item_no= line_item_no_;
+
+BEGIN
+   OPEN  Get_mmrl_qty_info;
+   FETCH Get_mmrl_qty_info INTO qty_assigned_,qty_issued_;
+   CLOSE Get_mmrl_qty_info;
+   
+   Av_Exe_Task_Part_API.Update_Task_Part_Ser_Bat_No(ins_task_part_id_, task_seq_, mtrl_order_no_, line_item_no_, qty_issued_, qty_assigned_);
+END Update_Install_Part_Ser_Bat_No___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Remove_Material___ (
+   maint_material_order_no_ IN NUMBER,
+   line_item_no_            IN NUMBER)
+IS
+BEGIN
+	Av_Exe_Task_Part_Util_API.Remove_Material(maint_material_order_no_, line_item_no_);
+END Remove_Material___;

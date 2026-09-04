@@ -1,0 +1,35 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Display resource conflicts in turn work assignments</DescriptiveText>
+    <LastModified>18/04/2024, 16:36:10</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>2</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>RESOURCE CONFLICTS</Title>
+    <Footer>in Turn Work Assignments</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Turns_With_Resource_Conflicts</Name>
+    <ID>86906772-ed86-491e-8b8a-d64aafcb7828</ID>
+    <WebUrl>page/FlmSupervisorAircraftTurnsDetails/TurnWorkAssignmentsPage?$filter=ResourceAssignmentStatus eq 3</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>57cb752a-3d8c-4f96-ade1-4820e4abc052</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>FlightId</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

@@ -1,0 +1,207 @@
+client FlmHmCrewLeadTasks;
+component FLMEXE;
+layer Core;
+projection FlmHmCrewLeadTasksHandling;
+description "This client is used for Tasks page for Hangar Maintenance Crew Lead";
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+include fragment FlmTasks;
+include fragment FlmTaskAssignments;
+include fragment FlmHandoverDetails;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+page HangarMaintenanceCrewLeadWPOverview using AvExeTaskSet {
+   label = "Tasks";
+   startupmode = search;
+   searchcontext PageSearchContext {
+      defaults = GetDefaultSearchContext();
+   }
+   initcontext PageInitContext;
+   list TasksList {
+      filter = [ShiftType = searchcontext.PageSearchContext.Shift];
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   list TaskAssignmentsList(TaskAssignmentEntityArray) bind TasksList {
+      display = Nested;
+   }
+}
+
+searchcontext PageSearchContext for PageSearchContextStructure {
+   label = "";
+   field Shift;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+command ProxyJobStop for TaskAssignmentEntity {
+   label = "Proxy Job Stop";
+   mode = SingleRecord;
+   visible = [AssignedResourceId != CurrentUser and ExecutionInstanceStatus in("Assigned", "Work Started")];
+   execute {
+      confirm("Proxy Job Stop on behalf of ${UserResourceUsername}?") {
+         when OK {
+            call ProxyJobStop(TaskSeq, TaskResourceSeq, ExecutionInstanceSeq, ResourceGroupSeq, Remark, Rowstate, AssignmentStart, PlannedHours, Site);
+            exit OK;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+command AssignResourceCommand for TaskAssignmentEntity {
+   label = "Assign";
+   mode = Global;
+   variable AssignmentRecord Structure(TaskAssignmentsStructure);
+   variable Assigned Boolean;
+   execute {
+      if [component.TaskAssignmentsList.SelectionCount != 0] {
+         call ValidateAssignments(component.TaskAssignmentsList.Selection, TaskSeq) into Assigned;
+         if [Assigned] {
+            warning("Select unassigned skill requirements to assign resources.");
+         }
+         else {
+            copy this into AssignmentRecord;
+            assistant TaskAssignmentAssistant(AssignmentRecord) {
+               when OK {
+                  exit;
+               }
+            }
+         }
+      }
+      else {
+         copy this into AssignmentRecord;
+         assistant TaskAssignmentAssistant(AssignmentRecord) {
+            when OK {
+               exit;
+            }
+         }
+      }
+   }
+}
+command ModifyAssignmentCommand for TaskAssignmentEntity {
+   label = "Task Supervision";
+   enabled = [ExecutionInstanceStatus != "Work Started" and Objstate != "CANCELLED"];
+   mode = SingleRecord;
+   variable AssignmentRecord Structure(TaskSupervisionStructure);
+   execute {
+      copy this into AssignmentRecord;
+      set AssignmentRecord.SkillDemand = ResourceDemand;
+      set AssignmentRecord.UserResource = AssignedResourceId;
+
+      assistant ModifyAssignmentAssistant(AssignmentRecord) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+---------------------------------- GROUPS -----------------------------------
+
+----------------------------------- LISTS -----------------------------------
+
+list TaskAssignmentsList for TaskAssignmentEntity {
+   label = "Assignments";
+
+   field ResourceDemand {
+      editable = [false];
+   }
+   field Remark {
+      label = "Assignment Role";
+      editable = [false];
+   }
+   field AssignedResourceId {
+      contactwidget {
+         enabled = [true];
+         source = Person;
+      }
+      editable = [false];
+   }
+   badge ExecutionInstanceStatus {
+      emphasis Complementary5 = [ExecutionInstanceStatus = "Assigned"];
+      emphasis Complementary9 = [ExecutionInstanceStatus = "Completed"];
+      emphasis Complementary6 = [ExecutionInstanceStatus = "Work Started"];
+      editable = [false];
+   }
+   field LaborScheduledHours {
+      label = "Scheduled Hours";
+      editable = [false];
+   }
+   field SchedStart {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEnd {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignmentStart {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignmentFinish {
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field ActualHours {
+      label = "Actual Hours";
+      editable = [false];
+   }
+   field IncompletionCauseRef.Description {
+      editable = [false];
+      label = "Job Stop Reason";
+   }
+   field ActionTaken {
+      editable = [false];
+      label = "Job Stop Note";
+   }
+
+   command AssignResourceCommand;
+   command HmCrwLdAssignToMe;
+   command UnassignLaborResource;
+   command ProxyJobStop;
+   command ModifyAssignmentCommand {
+      mode = SingleRecord;
+      label = "";
+      icon = "edit";
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

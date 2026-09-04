@@ -1,0 +1,50 @@
+projection FlmHmSupervisorMyShiftBoardHandling;
+component FLMEXE;
+layer Core;
+description "This projection is used for My Shift Board for Hangar Maintenance Supervisor";
+category Users;
+include fragment FlmTasks;
+include fragment FlmTaskAssignments;
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvExeTask {
+   where = "(Av_Aircraft_Work_Package_API.Get_Is_Heavy_Maintenance(aircraft_wp_id)) = 1
+            AND   (Av_Maintenance_Location_API.Get_Airport_Id(location)) IN (
+                     SELECT au.airport_id FROM   av_airport_for_user au
+                     WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User())
+                  )
+            AND   Flmexe_Util_API.Get_Shift_By_Sched_Start(planned_start, null) = 'CURRENT_SHIFT'
+            AND   objstate IN('RELEASED','WORKSTARTED','FINISHED')";
+
+}
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+action RefreshData {
+   initialcheck none;
+   ludependencies = AvExeTask;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetShiftBoardTaskStatus Text;
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

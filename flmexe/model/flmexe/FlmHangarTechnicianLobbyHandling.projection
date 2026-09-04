@@ -1,0 +1,68 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250120  SABOLK   AD-16454, Added HmWpTaskProgressByStatusQuerySet to get tasks grouped by aircraft, work package, and task status in a hangar maintenance WP
+--  241202  VAALLK   AD-14731, Added implementation to get NonRoutinesCount from Hangar Maintenance Technician lobby page.
+-----------------------------------------------------------------------------
+projection FlmHangarTechnicianLobbyHandling;
+component FLMEXE;
+layer Core;
+description "Manage Hangar Maintenance Technician Lobby";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmHangarMaintenanceLobby;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AircraftAtMyAirportSet for HmAircraftsAtUserAirportQuery;
+entityset MyAssignmentsSet for UserTaskAssignmentsQuery;
+entityset CrewTaskSummaryQuerySet for CrewTaskSummaryQuery;
+entityset HmWpTaskProgressByStatusQuerySet for HmWpTaskProgressByStatusQuery;
+entityset MyPartRequestSet for MaintMaterialReqLine;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function NonRoutinesCount Number {
+   parameter WorkPackageId Number;
+}
+
+function GetAssignedCountByShift Number {
+   parameter WorkPackageId Number;
+}
+
+function GetUnassignedCountByShift Number {
+   parameter WorkPackageId Number;
+}
+
+function GetACountByNextShift Number {
+   parameter WorkPackageId Number;
+}
+
+function GetHandoverAssignmentCount Number {
+   parameter WorkPackageId Number;
+}
+
+function GetMpcAssignmentCount Number {
+   parameter WorkPackageId Number;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

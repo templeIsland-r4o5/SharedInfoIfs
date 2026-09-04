@@ -1,0 +1,732 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250813  SABOLK  AD-20013, Created
+--  250821  SABOLK  AD-20015, Implemented FinishCommand to complete the work package.
+--  250822  SRLALK  AD-20014, Added Record Details command and complete work package second assistant
+--  250825  SABOLK  AD-20013, modiifed with missing mandatory component validation and command validations.
+--  250827  SABOLK  AD-20015, Updated Finish command, Sign action, CompleteWorkPackageVirtual.
+--  250829  KAPALK  AD-20015, Implemented digital signature functionality
+--  251030  SABOLK  AD-22080, Added and modified changes to improve performance.
+-----------------------------------------------------------------------------
+
+fragment FlmHmCompleteWorkPackage;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Complete Work Package assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FndEsignature;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant CompleteWorkPackageAssistant using CompleteWorkPackageVirtualSet {
+   label = "Complete Work Package";
+   input this;
+
+   init command {
+      variable CompWpDetails {
+         type = Structure(CompleteWorkPackageStructure);
+      }
+
+      execute {
+         call GetWorkPackageDetails(AircraftWorkPackageId) into CompWpDetails;
+         set Aircraft = CompWpDetails.Aircraft;
+         set Barcode = CompWpDetails.Barcode;
+         set WorkPackageName = CompWpDetails.WorkPackageName;
+         set Objstate = CompWpDetails.Objstate;
+         set SchedStartDateTime = CompWpDetails.SchedStartDateTime;
+         set SchedEndDateTime = CompWpDetails.SchedEndDateTime;
+         set ActualStartDateTime = CompWpDetails.ActualStartDateTime;
+         set ActualEndDateTime = CompWpDetails.ActualEndDateTime;
+         set LocationCode = CompWpDetails.LocationCode;
+
+         if [Source = "WORKPACKAGE"] {
+            call GetCompWpSummaryValues(AircraftId) into CompWpDetails;
+            set CmsWarningExist = CompWpDetails.CmsWarningExist;
+            set CmsStatus = CompWpDetails.CmsStatus;
+         }
+
+         call GetCurrentUser() into LoginUser;
+         call GetESigPermission(LoginUser) into ESigPermission;
+         call GetEsigFileName(AircraftId, AircraftWorkPackageId) into FileName;
+      }
+   }
+
+   singlestep {
+      group WorkPackageDetailsGroup;
+      group CompleteSummaryGroup;
+
+      list ReleaseToServiceList(ReleaseToServiceArray);
+      list WpSignOffReqList(SignOffReqArray);
+   }
+   command RecordDetailsCommand;
+   command FinishCommand;
+   command SignCommand;
+   command Cancel;
+}
+
+assistant RecordCompleteWorkPackageAssistant using RecordCompleteWpVirtualSet {
+   label = "Complete Work Package";
+   input this;
+   init command {
+      execute {
+         if [ActualEndDateTime = null and IsLastSignOffSkill] {
+            call GetCurrentTime() into ActualEndDateTime;
+         }
+         if [IsLastSignOffSkill] {
+            set ReleaseToService = true;
+         }
+         else {
+            set ReleaseToService = false;
+         }
+      }
+   }
+
+   singlestep {
+      group RecordWorkPackageDetailsGroup;
+      group ReleaseToServiceGroup;
+      group RecordSignOffSkillGroup;
+   }
+
+   command SaveRecordDetailsCommand;
+   command Cancel;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+command FinishCommand for CompleteWorkPackageVirtual {
+   label = "Finish";
+   enabled = [SignEnable and ESigPermission = "No"];
+   execute {
+      call Sign(Objkey, AircraftWorkPackageId, ActualEndDateTime, Null) {
+         when SUCCESS {
+            navigate "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[Barcode]";
+         }
+      }
+   }
+}
+
+command SignCommand for CompleteWorkPackageVirtual {
+   label = "Sign";
+   variable SignResponse {
+      type = Structure(EsigResponseStructure);
+   }
+   enabled = [SignEnable and ESigPermission = "Yes"];
+   execute {
+      signdocument into SignResponse {
+         headerlogo = MediaObject;
+         keyref = ParentKeyRef;
+         luname = ParentLuName;
+         filenameprefix = "${FileName}";
+         documenttype = pdf;
+      }
+      if [SignResponse.State = "SUCCESS"] {
+         call Sign(Objkey, AircraftWorkPackageId, ActualEndDateTime, SignResponse.Guid) {
+            when SUCCESS {
+               navigate "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[Barcode]";
+            }
+         }
+      }
+      if [SignResponse.State = "FAIL"] {
+         error("Failed to record electronic signature. Review changes and try again.");
+      }
+   }
+}
+command RecordDetailsCommand for CompleteWorkPackageVirtual {
+   label = "Record Details";
+   visible = [not ReleaseToService];
+   variable RecordCompleteWorkPackageInfo Structure(RecordCompleteWorkPackageInfoStructure);
+
+   execute {
+      copy this into RecordCompleteWorkPackageInfo;
+      set RecordCompleteWorkPackageInfo.CompleteWpObjkey = Objkey;
+      assistant RecordCompleteWorkPackageAssistant(RecordCompleteWorkPackageInfo) {
+         when CANCEL {
+            exit;
+         }
+         when OK {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveRecordDetailsCommand for RecordCompleteWorkPackageVirtual {
+   label = "Save";
+   enabled = [WpSignOffReqRef != null];
+
+   variable RecordCompleteWpStruct Structure(RecordCompleteWorkPackageInfoStructure);
+   execute {
+      copy this into RecordCompleteWpStruct;
+      call RecordCompleteWpData(RecordCompleteWpStruct);
+      exit OK;
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group WorkPackageDetailsGroup for CompleteWorkPackageVirtual {
+   label = "Work Package Details";
+   field Aircraft {
+      editable = [false];
+   }
+   field Barcode {
+      label = "Work Package Barcode";
+      editable = [false];
+   }
+   field WorkPackageName {
+      editable = [false];
+   }
+   badge Objstate {
+      label = "Status";
+      editable = [false];
+      emphasis StateCreated = [Objstate = "Active"];
+      emphasis StatePlanned = [Objstate = "Committed"];
+      emphasis StateInProgress = [Objstate = "InWork"];
+      emphasis StateCompleted = [Objstate = "Completed"];
+      emphasis StateClosed = [Objstate = "Canceled"];
+   }
+   field SchedStartDateTime {
+      label = "Scheduled Start";
+      editable = [false];
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+   }
+   field SchedEndDateTime {
+      label = "Scheduled End";
+      editable = [false];
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+   }
+   field ActualStartDateTime {
+      label = "Actual Start";
+      editable = [false];
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+   }
+   field ActualEndDateTime {
+      label = "Actual End";
+      editable = [false];
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+   }
+   field LocationCode {
+      label = "Location";
+      editable = [false];
+   }
+}
+
+group CompleteSummaryGroup for CompleteWorkPackageVirtual {
+   label = "Summary";
+
+   badge MissingMandaComps {
+      label = "Mandatory Components Missing";
+      editable = [false];
+      emphasis Ok = [MissingMandaStatus = "OK"];
+      emphasis Warning = [MissingMandaStatus = "WARN"];
+      emphasis Failure = [MissingMandaStatus = "ERROR"];
+
+   }
+   badge CmsWarningExist {
+      label = "Configuration Warnings";
+      editable = [false];
+      emphasis Failure = [CmsStatus = 1];
+      emphasis Ok = [CmsStatus =-1];
+      emphasis Warning = [CmsStatus = 0];
+   }
+   badge AogFaults {
+      label = "AOG Faults";
+      editable = [false];
+      emphasis Ok = [AogFaultStatus = "OK"];
+      emphasis Warning = [AogFaultStatus = "WARN"];
+      emphasis Failure = [AogFaultStatus = "ERROR"];
+   }
+   badge OpenFaults {
+      label = "Open Faults";
+      editable = [false];
+      emphasis Ok = [OpenFaultStatus = "OK"];
+      emphasis Warning = [OpenFaultStatus = "WARN"];
+      emphasis Failure = [OpenFaultStatus = "ERROR"];
+   }
+   badge OverdueFaults {
+      label = "Overdue Faults";
+      editable = [false];
+      emphasis Ok = [OverdueFaultStatus = "OK"];
+      emphasis Warning = [OverdueFaultStatus = "WARN"];
+      emphasis Failure = [OverdueFaultStatus = "ERROR"];
+   }
+   badge NeardueFaults {
+      label = "Near Due Faults";
+      editable = [false];
+      emphasis Ok = [NeardueFaultStatus = "OK"];
+      emphasis Warning = [NeardueFaultStatus = "WARN"];
+      emphasis Failure = [NeardueFaultStatus = "ERROR"];
+   }
+   badge IncompleteTasks {
+      label = "Incomplete Tasks in This WP";
+      editable = [false];
+      emphasis Ok = [IncompleteTasks = false];
+      emphasis Failure = [IncompleteTasks = true];
+   }
+   badge OverdueTasks {
+      label = "Overdue Tasks";
+      editable = [false];
+      emphasis Ok = [OverdueTaskStatus = "OK"];
+      emphasis Warning = [OverdueTaskStatus = "WARN"];
+      emphasis Failure = [OverdueTaskStatus = "ERROR"];
+   }
+   badge NeardueTasks {
+      label = "Near Due Tasks";
+      editable = [false];
+      emphasis Ok = [NeardueTaskStatus = "OK"];
+      emphasis Warning = [NeardueTaskStatus = "WARN"];
+      emphasis Failure = [NeardueTaskStatus = "ERROR"];
+   }
+   badge OpenPanels {
+      label = "Open Panels in This WP";
+      editable = [false];
+      visible = [ShowOpenPanels];
+      emphasis Failure = [OpenPanels = true];
+      emphasis Ok = [OpenPanels = false];
+   }
+}
+
+group RecordWorkPackageDetailsGroup for RecordCompleteWorkPackageVirtual {
+   label = "Work Package Details";
+
+   field ActualStartDateTime {
+      label = "Actual Start";
+      editable = [false];
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+   }
+   field ActualEndDateTime {
+      label = "Actual End";
+      showtimezonebadge = true;
+      displaytimezone = UtcTimeZoneCode;
+      editable = [false];
+   }
+}
+
+group ReleaseToServiceGroup for RecordCompleteWorkPackageVirtual {
+   label = "Release To Service";
+
+   field ReleaseToService {
+      editable = [false];
+      emphasis Info = [ReleaseToService = true];
+      emphasis Neutral = [ReleaseToService = false];
+   }
+   field ReleaseNumber {
+      editable = [ReleaseToService];
+   }
+   field ReleaseRemarks {
+      editable = [ReleaseToService];
+      multiline = true;
+   }
+}
+
+group RecordSignOffSkillGroup for RecordCompleteWorkPackageVirtual {
+   label = "Sign-off Skill";
+
+   lov WpSignOffReqRef with WpSignOffReqVirtualSelector using GetUnsignedSkills(CompleteWpObjkey) {
+      label = "Skill Required";
+      description = WpSignOffReqRef.ResourceGroup;
+      hidekey = [true];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list ReleaseToServiceList for ReleaseToServiceVirtual {
+   label = "Release to Service";
+   multiselect = [false];
+   digitalsignature for AvHangarRelease {
+      hashcontent = [SignedFlag = true];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   badge ReleaseToServiceTxt {
+      label = "Release to Service";
+      style = TextOnly;
+      emphasis Neutral = [ReleaseToService = false];
+      emphasis Info = [ReleaseToService = true];
+      excludefromsignaturemapping = true;
+   }
+   field ReleaseNumber {
+      size = Large;
+   }
+   field ReleaseRemarks {
+      size = Large;
+   }
+   field ReleasedDate {
+      label = "Date";
+      type = Date;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      size = Large;
+      excludefromsignaturemapping = true;
+   }
+   field SignedUser {
+      label = "Signed By";
+   }
+   conditionalformat {
+      when [ReleaseToService = true] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+}
+
+list WpSignOffReqList for WpSignOffReqVirtual {
+   label = "Sign-off Skill";
+   multiselect = [false];
+   digitalsignature for AvWpSignOffReq {
+      hashcontent = [SignedFlag = true];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field ResourceGroup {
+      label = "Required Skill";
+      size = Large;
+      excludefromsignaturemapping = true;
+   }
+   badge Status {
+      label = "Status";
+      style = TextOnly;
+      emphasis Warning = [Status = "Pending"];
+      emphasis OK = [Status = "Signed"];
+      size = Large;
+      excludefromsignaturemapping = true;
+   }
+   field SignedDate {
+      label = "Date";
+      type = Date;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      size = Large;
+      excludefromsignaturemapping = true;
+   }
+   field SignedUser {
+      label = "Signed By";
+      size = Large;
+   }
+
+   conditionalformat {
+      when [SignedFlag = true] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+
+}
+--------------------------------- SELECTORS ---------------------------------
+@Override
+selector WpSignOffReqVirtualSelector for WpSignOffReqVirtual {
+   label = "${ResourceGroup}";
+   static ResourceGroup;
+   exclude Objkey;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset CompleteWorkPackageVirtualSet for CompleteWorkPackageVirtual;
+entityset RecordCompleteWpVirtualSet for RecordCompleteWorkPackageVirtual;
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvWpSignOffReq {
+   crud = Create, Read, Update, Delete;
+
+   attribute SkillCode Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_group_seq)";
+   }
+   attribute SignOffStatus Text {
+      fetch = "Av_Wp_Sign_Off_Req_API.Get_Wp_Sign_Off_Status(aircraft_wp_id, wp_sign_off_req_seq)";
+   }
+
+   reference WpSignOffSkillLovRef(ResourceGroupSeq, SkillCode) to WpSignOffSkillLov(ResourceSeq, ResourceId);
+   reference AvWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+}
+
+@Override
+entity AvHangarRelease {
+   crud = Create, Read, Update, Delete;
+
+   reference AvWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+}
+
+---------------------------------- QUERIES ----------------------------------
+query WpSignOffSkillLov {
+   from = "resource_lov";
+   keys = ResourceSeq;
+   ludependencies = Resource;
+   lu = none;
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "Resource_Id";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   where = "resource_type = 'Person Group' and used_in_maintenance ='True'";
+}
+---------------------------------- ACTIONS ----------------------------------
+
+action Sign {
+   initialcheck none;
+   timestamptzref = "server";
+   ludependencies = AvAircraftWorkPackage;
+
+   parameter Objkey Text;
+   parameter AircraftWorkPackageId Number;
+   parameter ActualEndDateTime Timestamp;
+   parameter BindSignatureId Text;
+}
+
+action RecordCompleteWpData {
+   initialcheck none;
+   timestamptzref = "server";
+   ludependencies = ReleaseToServiceVirtual, WpSignOffReqVirtual, CompleteWorkPackageVirtual;
+
+   parameter WpDataStruct Structure(RecordCompleteWorkPackageInfoStructure);
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetCompWpSummaryValues Structure(CompleteWorkPackageStructure) {
+   initialcheck implementation;
+   timestamptzref = "server";
+
+   parameter AircraftId Number;
+}
+
+function GetCurrentUser Text {
+}
+
+function GetESigPermission  Text {
+   parameter UserId Text;
+}
+
+function GetCurrentTime Timestamp {
+   timestamptzref = "server";
+}
+
+function GetUnsignedSkills List < Entity(WpSignOffReqVirtual) > {
+   timestamptzref = "server";
+   parameter CompleteWpObjkey Text;
+   where = "signed_user IS NULL AND parent_objkey = :CompleteWpObjkey";
+}
+
+function GetEsigFileName Text {
+   parameter AircraftId Number;
+   parameter AircraftWorkPackageId Number;
+}
+
+function GetWorkPackageDetails Structure(CompleteWorkPackageStructure) {
+   timestamptzref = "server";
+
+   parameter WpId Number;
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+virtual CompleteWorkPackageVirtual {
+   timestamptzref = "server";
+
+   attribute Source Text;
+   attribute AircraftWorkPackageId Number;
+   attribute AircraftId Number;
+   attribute AircraftAltId Text;
+   attribute Aircraft Text;
+   attribute Barcode Text;
+   attribute WorkPackageName Text;
+   attribute Objstate Enumeration(AvAircraftWorkPackageState);
+   attribute LocationCode Text;
+   attribute SchedStartDateTime Timestamp;
+   attribute SchedEndDateTime Timestamp;
+   attribute ActualStartDateTime Timestamp;
+   attribute ActualEndDateTime Timestamp;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute MissingMandaComps Boolean;
+   attribute MissingMandaStatus Text;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute AogFaults Boolean;
+   attribute AogFaultStatus Text;
+   attribute OpenFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OverdueFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute NeardueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute IncompleteTasks Boolean;
+   attribute OverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute NeardueTasks Boolean;
+   attribute NeardueTaskStatus Text;
+   attribute OpenPanels Boolean;
+   attribute ShowOpenPanels Boolean;
+   attribute ReleaseRemarkObjkey Text;
+   attribute IsLastSignOffSkill Boolean;
+   attribute LoginUser Text;
+   attribute ESigPermission Text;
+   attribute ReleaseToService Boolean;
+   attribute FileName Text;
+   attribute ParentKeyRef Text;
+   attribute ParentLuName Text;
+   attribute SignEnable Boolean;
+   attribute MediaObject Stream {
+      implementation = "Java";
+   }
+
+   reference AvAircraftWpRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   array ReleaseToServiceArray() to ReleaseToServiceVirtual();
+   array SignOffReqArray() to WpSignOffReqVirtual();
+}
+
+virtual ReleaseToServiceVirtual {
+   timestamptzref = "server";
+
+   attribute AircraftWorkPackageId Number;
+   attribute ReleaseToServiceTxt Text;
+   attribute ReleaseToService Boolean;
+   attribute ReleaseNumber Text;
+   attribute ReleaseRemarks Text;
+   attribute ReleasedDate Timestamp;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute SignedUser Text;
+   attribute SignedFlag Boolean;
+}
+
+virtual WpSignOffReqVirtual {
+   timestamptzref = "server";
+
+   attribute AircraftWorkPackageId Number;
+   attribute WpSignOffReqSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ResourceGroup Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_group_seq)";
+   }
+   attribute Status Text;
+   attribute SignedUser Text;
+   attribute SignedDate Timestamp;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute SignedFlag Boolean;
+}
+
+virtual RecordCompleteWorkPackageVirtual {
+   timestamptzref = "server";
+
+   attribute ActualStartDateTime Timestamp;
+   attribute ActualEndDateTime Timestamp;
+   attribute UtcTimeZoneCode Text;
+   attribute ReleaseToService Boolean;
+   attribute ReleaseNumber Text;
+   attribute ReleaseRemarks Text;
+   attribute CompleteWpObjkey Text;
+   attribute ReleaseRemarkObjkey Text;
+   attribute AircraftWorkPackageId Number;
+   attribute WpSignOffReqSeq Number;
+   attribute IsLastSignOffSkill Boolean;
+
+   reference WpSignOffReqRef(AircraftWorkPackageId, WpSignOffReqSeq, CompleteWpObjkey) to WpSignOffReqVirtual(AircraftWorkPackageId, WpSignOffReqSeq, ParentObjkey) {
+      copy WpSignOffReqSeq to WpSignOffReqSeq;
+   }
+}
+-------------------------------- STRUCTURES ---------------------------------
+
+structure CompleteWorkPackageStructure {
+   timestamptzref = "server";
+
+   attribute AircraftId Number;
+   attribute Aircraft Text;
+   attribute Barcode Text;
+   attribute WorkPackageName Text;
+   attribute Objstate Enumeration(AvAircraftWorkPackageState);
+   attribute LocationCode Text;
+   attribute SchedStartDateTime Timestamp;
+   attribute SchedEndDateTime Timestamp;
+   attribute ActualStartDateTime Timestamp;
+   attribute ActualEndDateTime Timestamp;
+   attribute MissingMandaComps Boolean;
+   attribute MissingMandaStatus Text;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute AogFaults Boolean;
+   attribute AogFaultStatus Text;
+   attribute OpenFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OverdueFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute NeardueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute IncompleteTasks Boolean;
+   attribute OverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute NeardueTasks Boolean;
+   attribute NeardueTaskStatus Text;
+   attribute OpenPanels Boolean;
+   attribute ShowOpenPanels Boolean;
+}
+
+structure RecordCompleteWorkPackageInfoStructure {
+   timestamptzref = "server";
+
+   attribute ActualStartDateTime Timestamp;
+   attribute ActualEndDateTime Timestamp;
+   attribute UtcTimeZoneCode Text;
+   attribute ReleaseToService Boolean;
+   attribute ReleaseNumber Text;
+   attribute ReleaseRemarks Text;
+   attribute CompleteWpObjkey Text;
+   attribute ReleaseRemarkObjkey Text;
+   attribute AircraftWorkPackageId Number;
+   attribute WpSignOffReqSeq Number;
+   attribute IsLastSignOffSkill Boolean;
+}

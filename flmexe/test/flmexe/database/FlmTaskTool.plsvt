@@ -1,0 +1,100 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmTaskTool
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  250804  WEDILK  AD-20242, Create FlmTool.plsvt file and add unit testing for Get_Allocated_Finish_Date___ funtion
+--  250812  WEDILK  AD-20254, Add unit testing for Get_Default_Values___ function
+-----------------------------------------------------------------------------
+
+layer Core;
+
+UNITTEST "Get_Default_Values___ return default values when open the assistant" FOR
+   FUNCTION Get_Default_Values___ (
+      task_seq_         IN     NUMBER,
+      source_           IN     VARCHAR2,
+      site_             IN     VARCHAR2,
+      allocated_hours_  IN     VARCHAR2,
+      allocated_start_  IN     DATE,
+      allocated_finish_ IN     DATE) RETURN Fetch_Default_Value_Strcture_Rec;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockPackage Av_Flm_Parameter_API
+   FUNCTION Get_Parameter_Value (
+      parameter_id_ IN     VARCHAR2 )  RETURN  VARCHAR2
+   IS
+   BEGIN
+      RETURN 'TRUE';
+   END Get_Parameter_Value;
+
+   @Mock
+   FUNCTION Get_Default_Allocated_Start___ (
+      task_seq_ IN     NUMBER) RETURN DATE
+   IS
+   BEGIN
+      IF task_seq_ = 1 THEN
+         RETURN TO_DATE('2025/08/12 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSIF task_seq_ = 2 THEN
+         RETURN TO_DATE('2025/08/13 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSIF task_seq_ = 3 THEN
+         RETURN TO_DATE('2025/08/13 10:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      ELSIF task_seq_ = 4 THEN
+         RETURN TO_DATE('2025/08/13 10:00:00', 'yyyy/mm/dd hh24:mi:ss');
+      END IF;
+   END Get_Default_Allocated_Start___;
+
+IS
+   return_   Fetch_Default_Value_Strcture_Rec;
+   expected_ Fetch_Default_Value_Strcture_Rec;
+   expected1_  Fetch_Default_Value_Strcture_Rec;
+   expected2_  Fetch_Default_Value_Strcture_Rec;
+   expected3_  Fetch_Default_Value_Strcture_Rec;
+   expected4_  Fetch_Default_Value_Strcture_Rec;
+BEGIN
+   expected1_.site                        := 'MEXTS1';
+   expected1_.allocated_hours             := '00:00';
+   expected1_.is_inventory_search_visible := 'TRUE';
+   expected1_.allocated_start             := TO_DATE('2025/08/12 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected1_.allocated_finish            := TO_DATE('2025/08/12 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected1_.title                       := 'Add Tools';
+
+   expected2_.site                        := 'MEXTS2';
+   expected2_.allocated_hours             := '00:00';
+   expected2_.is_inventory_search_visible := 'TRUE';
+   expected2_.allocated_start             := TO_DATE('2025/08/13 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected2_.allocated_finish            := TO_DATE('2025/08/13 09:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected2_.title                       := 'Edit Tool';
+
+   expected3_.site                        := 'MEXTS3';
+   expected3_.allocated_hours             := '00:00';
+   expected3_.is_inventory_search_visible := 'TRUE';
+   expected3_.allocated_start             := TO_DATE('2025/08/13 10:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected3_.allocated_finish            := TO_DATE('2025/08/13 10:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected3_.title                       := 'Assign Tool';
+
+   expected4_.site                        := 'MEXTS3';
+   expected4_.allocated_hours             := '01:00';
+   expected4_.is_inventory_search_visible := 'TRUE';
+   expected4_.allocated_start             := TO_DATE('2025/08/15 10:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected4_.allocated_finish            := TO_DATE('2025/08/15 11:00:00', 'yyyy/mm/dd hh24:mi:ss');
+   expected4_.title                       := 'Assign Tool';
+
+   FOR
+      | expected_    | task_seq_ | source_ | site_    | allocated_hours_ | allocated_start_                                         | allocated_finish_                                         |
+      | expected1_   | 1         | 'ADD'   | 'MEXTS1' | NULL             | NULL                                                     | NULL                                                      |
+      | expected2_   | 2         | 'EDIT'  | 'MEXTS2' | NULL             | NULL                                                     | NULL                                                      |
+      | expected3_   | 3         | 'ASSIGN'| 'MEXTS3' | NULL             | NULL                                                     | NULL                                                      |
+      | expected4_   | 4         | 'EDIT'  | 'MEXTS3' | '01:00'          | TO_DATE('2025/08/15 10:00:00', 'yyyy/mm/dd hh24:mi:ss')  | TO_DATE('2025/08/15 11:00:00', 'yyyy/mm/dd hh24:mi:ss')   |
+   LOOP
+      return_ := Get_Default_Values___(task_seq_, source_, site_, allocated_hours_, allocated_start_, allocated_finish_);
+      ASSERT return_.site = expected_.site MESSAGE 'Expected '||expected_.site||' but returned '||return_.site;
+      ASSERT return_.allocated_hours = expected_.allocated_hours MESSAGE 'Expected '||expected_.allocated_hours||' but returned '||return_.allocated_hours;
+      ASSERT return_.is_inventory_search_visible = expected_.is_inventory_search_visible MESSAGE 'Expected '||expected_.is_inventory_search_visible||' but returned '||return_.is_inventory_search_visible;
+      ASSERT return_.allocated_start = expected_.allocated_start MESSAGE 'Expected '||expected_.allocated_start||' but returned '||return_.allocated_start;
+      ASSERT return_.allocated_finish = expected_.allocated_finish MESSAGE 'Expected '||expected_.allocated_finish||' but returned '||return_.allocated_finish;
+      ASSERT return_.title = expected_.title MESSAGE 'Expected '||expected_.title||' but returned '||return_.title;
+   END LOOP;
+END UNITTEST;

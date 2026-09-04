@@ -1,0 +1,379 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250108  SSIVLK  AD-16258, Added reference for AirportUserRef & modified ResourceGroupUsers
+--  250101  SILILK  AD-16105, Add the AircraftRegCode field for tooltip association.
+--  241128  DUWJLK  AD-15253, Made neccessaray changes to replace CompetencyId from resourceSeq.
+--  241021  WIJCLK  AD-14459, Remove the outbound dependency from Supervisor's Turn Work Assignment Page.
+--  240104  PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201  PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  231127  PSUALK  AD-9572, Modified aircraft to pick aircraft registration code and the assembly type name.
+--  231115  waislk  AD-9106, Modified MyAircraftTurnQuery to remove Departed and Released turns.
+--  231114  vaallk  AD-10921, Modified MyAircraftTurnQuerySet to allow turns to appear when tasks on the turn are assigned to line tech
+--  230710  majslk  AD-9585, Modified code to support time zone changes
+--  220103  vifelk  AD-4114, Added label to ResAssignDisplayStatus attribute in MyAircraftTurnQuery and added AssignmentStatus enumeration.
+--  211216  vifelk  AD-4114, Modified ResourceGantt and ResourceGanttAssign queries.
+--  211210  Sbanlk  AD-3953, Added where clase to MyAircraftTurnQuery.
+--  211127  Rjoslk  AD-4120, Added resource assignment status.
+--  211115  vifelk  AD-4114, Modified ResourceGantt Query.
+--  211104  vifelk  AD-4114, Created.
+-----------------------------------------------------------------------------
+
+projection FlmSupervisorAircraftTurnsDetailsHandling;
+component FLMEXE;
+layer Core;
+description "This includes the definition of Turn Work Assignments";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFlightSet for AvFlight;
+entityset MyAircraftTurnQuerySet for MyAircraftTurnQuery;
+entityset AvTurnLabourAssignmentSet for AvTurnLabourAssignment;
+entityset ResourceGanttSet for ResourceGantt;
+entityset ResourceGanttAssignSet for ResourceGanttAssign;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+@Override
+entity AvTurnLabourAssignment {
+   ludependencies = ResourceGantt, ResourceGanttAssign;
+   timestamptzref = "server";
+
+   attribute PersonName Text {
+      label = "Person Name";
+      fetch = "Pers_API.Get_Internal_Display_Name(assigned_user)";
+      lovcolumn = [true];
+   }
+   attribute FlightId Number;
+   attribute CurrentAirportCode Number {
+      fetch = "Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User)";
+   }
+   attribute Site Text {
+      fetch = "Av_Airport_API.Get_Site(Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User))";
+   }
+   attribute TurnLabourAssignmentId Number {
+      fetch = "turn_labour_assignment_id";
+      required = [false];
+   }
+   attribute DurationHHMM Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+      required = [true];
+   }
+   reference ResourceLovRef(ResourceSeq) to ResourceLov(ResourceSeq);
+   reference AirportUserRef(ResourceSeq, AssignedUser) to ResourceGroupUsers(ResourceParentSeq, PersonId);
+   reference AvFlightRef(FlightId) to MyAircraftTurnQuery(FlightId);
+   array ResourceAssignmentSet(FlightId, AssemblyTypeCode, ResourceSeq) to AvTurnLabourAssignment(FlightId, AssemblyTypeCode, ResourceSeq);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration AssignmentStatus {
+   value = "NoReqSkill" {
+      label = "No Required Skills";
+   }
+   value = "Unassigned" {
+      label = "Unassigned";
+   }
+   value = "Assigned" {
+      label = "Assigned";
+   }
+   value = "ResourceConflict" {
+      label = "Resource Conflict";
+   }
+}
+
+---------------------------------- QUERIES ----------------------------------
+query MyAircraftTurnQuery {
+   timestamptzref = "server";
+
+   from = "My_Aircraft_Turns_Status_View";
+   lu = none;
+   keys = FlightId;
+   where = "(locked_bool = 'FALSE' OR locked_bool IS NULL) AND (condition != 'SCRAP' AND condition != 'ARCHIVE') AND Flight_Turn_Status NOT IN ('Departed', 'Released')";
+   ludependencies = AvTurnLabourAssignment, ResourceGantt;
+   attribute FlightId Number;
+   attribute ArrivalAirportId Number;
+   attribute AircraftId Number;
+   attribute ActualArrivalDateTime Timestamp;
+   attribute ShedArrivalDateTime Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalGate Text;
+   attribute FlightTurnStatus Text;
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   attribute WorkPackageId Number;
+   attribute ActualEndDateTime Timestamp;
+   attribute DeptFlightId Text;
+   attribute NoOfOpenedFaults Number;
+   attribute GroundTime Text;
+   attribute ArrivalTimestamp Timestamp;
+   attribute NoOfAssignedTasks Number {
+      label = "Work Tasks";
+   }
+   attribute TotalHours Number {
+      label = "Total Hours";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Exe_Task_API.Get_Aircraft(aircraft_id)";
+   }
+   attribute AssemblyTypeCode Text {
+      fetch = "Aircraft_API.Get_Assembly_Type_Code(aircraft_id)";
+   }
+   attribute AircraftTypeName Text {
+      fetch = "Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id))";
+   }
+   attribute ActualOutboundDeptDateTime Timestamp {
+      fetch = "Av_Flight_API.Get_Actual_Departure_Date_Time(dept_flight_id)";
+   }
+   attribute TurnDisplayName Text {
+      fetch = "Av_Airport_API.Get_Iata_Code(arrival_airport_id) || ' - ' || Aircraft_API.Get_Reg_Code(aircraft_id) || ' - ' || Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id))";
+   }
+   attribute LocationCode Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Location_Code(work_package_id)";
+   }
+   attribute AirportSite Text {
+      fetch = "Av_Airport_API.Get_Site(Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User))";
+   }
+   attribute ConvertedDuration Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(Duration)";
+   }
+   attribute FlightArrival Timestamp {
+      fetch = "Av_Flight_API.Get_Arrival_Time(flight_id)";
+   }
+   attribute FlightDeparture Timestamp {
+      fetch = "Av_Flight_API.Get_Departure_Time(flight_id)";
+   }
+   attribute ResourceAssignmentStatus Number {
+      fetch = "Av_Flight_API.Get_Resource_Assignment_Status(flight_id)";
+   }
+   attribute ResAssignDisplayStatus Enumeration(AssignmentStatus) {
+      label = "Assignment Status";
+      fetch = "DECODE(Av_Flight_API.Get_Resource_Assignment_Status(flight_id),1,'NoReqSkill',2,'Unassigned',3,'ResourceConflict','Assigned')";
+   }
+   attribute WorkTypes Text {
+      fetch = "Av_Work_Package_Work_Type_API.Get_Work_Types_For_Workpackage(work_package_id)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AvFlightDepartureRef(DeptFlightId) to AvFlight(FlightId);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference LocationCodeRef(LocationCode) to AvMaintenanceLocation(LocationCode);
+
+   array ResourceAssignmentSet(FlightId, AssemblyTypeCode) to AvTurnLabourAssignment(FlightId, AssemblyTypeCode);
+   array ResourcesArray(AirportSite) to ResourceGantt(Site) {
+      where = "(:parent.FlightId = :child.FlightId)";
+   }
+}
+
+
+query ResourceGroupUsers {
+   from = "resource_join_parent";
+   keys = ResourceParentSeq, ResourceSeq;
+   lu = ResourceConnection;
+   ludependencies = Resource, ResourceParent;
+
+   where = "resource_type = 'Person'";
+
+   attribute ResourceParentSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Parent_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceSeq Text {
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   attribute PersonId Text {
+      label = "Person ID";
+      format = uppercase;
+      lovcolumn = [true];
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute PersonName Text {
+      lovcolumn = [true];
+      fetch = "Pers_API.Get_Internal_Display_Name(Resource_API.Get_Resource_Id(resource_seq))";
+   }
+   attribute Company Text;
+}
+
+query ResourceLov {
+   from = "resource_lov";
+   keys = ResourceId;
+   ludependencies = Resource, ResourceGanttAssign;
+   lu = none;
+
+   where = "resource_type = 'Person Group'";
+
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_ID";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   attribute ResourceType Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_TYPE";
+      label = "ResourceType";
+   }
+
+   reference ResourceLovRef(ResourceSeq) to ResourceLov(ResourceSeq);
+}
+
+query ResourceGantt {
+   lu = none;
+   keys = ResourceSeq;
+   from = "resource_gantt_view";
+   ludependencies = AvTurnLabourAssignment, ResourceGantt, MyAircraftTurnQuery, ResourceGanttAssign;
+   timestamptzref = "server";
+
+   where = "resource_type = 'PERSON'";
+
+   attribute ResourceSeq Number;
+   attribute ResourceId Text;
+   attribute ResourceType Text;
+   attribute Description Text;
+   attribute Site Text {
+      format = uppercase;
+   }
+   attribute ResourceSkillId Text;
+   attribute FlightId Number;
+   attribute Assignment Text;
+   attribute GanttRow Text;
+   attribute IsAvailable Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(is_available, 1, 'TRUE','FALSE')";
+   }
+   attribute RowRank Number;
+   attribute Type Text;
+
+   array ResourceShiftArray(GanttRow, Type) to ResourceGanttAssign(GanttRow, Type);
+}
+
+query ResourceGanttAssign {
+   from = "av_resource_gantt_assign_view";
+   lu = none;
+   keys = TurnLabourAssignmentId;
+   ludependencies = AvTurnLabourAssignment, ResourceGanttAssign;
+   timestamptzref = "server";
+
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute AircraftRegCode Text {
+      fetch = "Aircraft_API.Get_Reg_Code(Av_Flight_API.Get_Aircraft_Id(flight_id))";
+   }
+   attribute AssignedUser Text;
+   attribute GanttRow Text;
+   attribute FlightId Number;
+   attribute ResourceSkillId Text;
+   attribute AssemblyTypeCode Text;
+   attribute WorkTypeCode Text;
+   attribute TurnLabourAssignmentId Number;
+   attribute Type Text;
+   attribute GanttItemDescription Text {
+      fetch = "Aircraft_API.Get_Reg_Code(Av_Flight_API.Get_Aircraft_Id(flight_id))||'-'||resource_skill_id";
+   }
+
+   action AssignUserToSkill Text {
+      initialcheck none;
+
+      parameter FlightId Number;
+      parameter ResourceSeq Number;
+      parameter StartTime Timestamp;
+      parameter EndTime Timestamp;
+      parameter AssignedUser Text;
+      ludependencies = ResourceGanttAssign, ResourceGantt;
+   }
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetTimeRange Structure(TimeRangeStructure) {
+   timestamptzref = "server";
+
+   parameter FlightNo Number;
+}
+
+function GetResourceAvailability Number {
+   timestamptzref = "server";
+
+   parameter TurnLabourAssignSeq Number;
+   parameter  AssignedUser Text;
+   parameter Site Text;
+   parameter StartTime Timestamp;
+   parameter EndTime Timestamp;
+   parameter Company Text;
+   ludependencies = AvTurnLabourAssignment;
+}
+
+function GetTurnAssignmentTimeRange Structure(TimeRangeStructure) {
+   timestamptzref = "server";
+
+   parameter FlightId Number;
+   parameter DurationHhmm Text;
+}
+
+function GetDefaultTurnAssignTimeRange Structure(DefaultTimeRangeStructure) {
+   timestamptzref = "server";
+
+   parameter FlightId Number;
+}
+
+function GetTimeDifference Structure(DurationStructure) {
+   timestamptzref = "server";
+
+   parameter StartStamp Timestamp;
+   parameter EndStamp Timestamp;
+}
+
+function ValidateDuration Boolean {
+   parameter DurationHhmm Text;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure TimeRangeStructure {
+   timestamptzref = "server";
+
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+   attribute DurationHhmm Text;
+   attribute Duration Number;
+}
+
+structure DefaultTimeRangeStructure {
+   timestamptzref = "server";
+
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+   attribute Duration Number;
+   attribute DurationHhmm Text;
+}
+
+structure DurationStructure {
+   attribute Duration Number;
+   attribute DurationHhmm Text;
+}
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

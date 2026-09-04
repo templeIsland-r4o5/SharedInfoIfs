@@ -1,0 +1,33 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/29/25, 10:33:13 AM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_CREW_LEAD_HANDOVER_TASKS</Name>
+    <ID>f05a65d0-e285-40f0-8381-1f36c0eec2bf</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetHandoverTasksCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

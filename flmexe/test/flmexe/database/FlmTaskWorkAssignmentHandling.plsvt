@@ -1,0 +1,45 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmTaskWorkAssignmentHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250305  SSIVLK  AD-17778,updated test for Get_Skill_Count function
+--  241128  SSIVLK  AD-14802,Created test for Get_Skill_Count function
+-----------------------------------------------------------------------------
+
+layer Core;
+
+UNITTEST "Get_Skill_Count___ should return the number of skills " FOR
+   FUNCTION Get_Skill_Count___ (
+      task_seq_ IN     NUMBER) RETURN NUMBER;
+USING
+   --Insert your mock directives and mock return variables here
+   @MockTable jt_task_resource
+   VALUES
+      | task_seq |
+      |     2    |
+      |     2    |
+      |     3    |
+   END VALUES;
+
+IS
+   --Insert your test variables here
+   return_   NUMBER;
+   expected_ NUMBER;
+BEGIN
+   FOR
+      | expected_ | task_seq_ |
+      | 2         | 2         |
+   LOOP
+      --Insert your test code here
+      return_ := Get_Skill_Count___(task_seq_);
+      --Insert your assertions here
+      ASSERT return_ = expected_ MESSAGE 'Expected '||expected_||' but returned '||return_;
+   END LOOP;
+END UNITTEST;
+
+

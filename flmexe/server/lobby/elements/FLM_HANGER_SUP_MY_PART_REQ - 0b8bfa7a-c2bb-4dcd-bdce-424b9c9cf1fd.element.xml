@@ -1,0 +1,35 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>Hangar Work, Supervisor, FLM, My Part Requests</Keywords>
+    <DescriptiveText>Display parts requested by the Hangar Supervisor</DescriptiveText>
+    <LastModified>20/08/2025, 09:59:35</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>My Part Requests</Title>
+    <Footer>Parts</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HANGER_SUP_MY_PART_REQ</Name>
+    <ID>0b8bfa7a-c2bb-4dcd-bdce-424b9c9cf1fd</ID>
+    <WebUrl>page/FlmMyPartRequest/MyPartRequestPage</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>23e59099-7c78-422b-ab25-a42bea7be205</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>OrderLineNo</Column>
+                <Name></Name>
+                <Aggregate>COUNT</Aggregate>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

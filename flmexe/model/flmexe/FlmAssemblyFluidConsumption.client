@@ -1,0 +1,180 @@
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  250213  KASTLK  AVMXSOL-4078, changed the index of nav entry
+--  230904  psualk  AD-10510, introduce UTC badge infront of timestamps
+--  220103  vifelk  AD-4114, Added PersonName field to the FluidConsumptionRecordsList list.
+--  211206  vifelk  AD-4132, Created.
+-----------------------------------------------------------------------------
+
+client FlmAssemblyFluidConsumption;
+component FLMEXE;
+layer Core;
+projection FlmAssemblyFluidConsumptionHandling;
+description "This includes the definition of Fluid Record Consumption";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+
+   entry FluidConsumptionPageNavEntry parent FlmexeNavigator.FluidNav  at index 3330 {
+      label = "Fluid Consumption";
+      page FluidConsumptionPage;
+   }
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page FluidConsumptionPage using AvHistFldServiceDetSet {
+   label = "Fluid Consumption";
+   startupmode = search;
+   list FluidConsumptionRecordsList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command FluidRecordDetailCommand for AvHistFldServiceDet {
+   label = "Fluid Record Detail";
+   mode = SingleRecord;
+
+   execute {
+      navigate "page/FlmFluidServicingRecord/FluidServicingRecordPage?$filter=FluidServiceId eq $[FluidServiceId]";
+   }
+}
+
+command MarkReviewedCommand for AvHistFldServiceDet {
+   label = "Mark As Reviewed";
+   mode = SingleRecord;
+
+   execute {
+      dialog ReviewConsumptionRecordDialog(FluidServiceId, FldServiceDetId) {
+         when OK {
+            exit;
+         }
+      }
+   }
+}
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+group ReviewCommentGroup for ReviewStructure {
+   field ReviewComment {
+      multiline = true;
+      required = [true];
+   }
+}
+
+
+----------------------------------- LISTS -----------------------------------
+list FluidConsumptionRecordsList for AvHistFldServiceDet {
+
+   field AssemblyTypeCode {
+      size = Small;
+   }
+   field AvFluidDefinitionRef.FluidName {
+      label = "Fluid/Gas";
+   }
+   field AvHistFluidServiceRef.RegCode {
+      size = Small;
+   }
+   field InventorySerialNoOem {
+      label = "Serial No";
+   }
+   field PartNoOem {
+      label = "Part No";
+   }
+   field AvConfigSlotPositionRef.ConfigSlotPositionCode {
+      label = "Position";
+      size = Small;
+   }
+   field AvHistFluidServiceRef.RecordedDate {
+      label = "Date";
+      size = Large;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field UptakeAmount {
+      size = Small;
+   }
+   field AvFluidDefinitionRef.MeasurementUnit {
+      label = "Qty Units";
+      size = Small;
+   }
+   field TsnDelta {
+      label = "Usage Delta";
+      size = Small;
+   }
+   field AvFluidDefinitionRef.OperatorTimeParameter {
+      label = "Usage Units";
+      size = Small;
+   }
+   field Rate {
+      size = Small;
+   }
+   field ConsumptionUnits {
+      size = Small;
+   }
+   badge Status {
+      showlabel = false;
+      size = Small;
+      emphasis Success = [Status = "Reviewed"];
+   }
+   field ReviewComment {
+      multiline = true;
+   }
+   field PersonName {
+      contactwidget {
+         enabled = [true];
+         source = User;
+         key = ReviewedBy;
+      }
+   }
+   fieldranking  AssemblyTypeCode, AvFluidDefinitionRef.FluidName, AvHistFluidServiceRef.RegCode, InventorySerialNoOem,
+   PartNoOem, AvHistFluidServiceRef.RecordedDate, Rate, ConsumptionUnits, Status, ReviewComment,
+   UptakeAmount, AvFluidDefinitionRef.MeasurementUnit, TsnDelta, AvFluidDefinitionRef.OperatorTimeParameter, AvConfigSlotPositionRef.ConfigSlotPositionCode;
+
+   commandgroup FldConsumptionCommandGroup {
+      command FluidRecordDetailCommand;
+      command MarkReviewedCommand;
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+dialog ReviewConsumptionRecordDialog for ReviewStructure {
+   label = "Review";
+   input(FluidServiceId, FldServiceDetId);
+   group ReviewCommentGroup;
+   command Ok {
+      enabled = [ReviewComment != null];
+      execute {
+         call ReviewFluidRecord(FluidServiceId, FldServiceDetId, ReviewComment);
+         success("Fluid Consumption Record Reviewed.");
+         exit OK;
+      }
+   }
+   command Cancel;
+}
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

@@ -1,0 +1,45 @@
+fragment AvCriticalItem;
+component FLMEXE;
+layer Core;
+description "List of Values for Critical Item Type and Critical Item Severity fragment";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@Override
+selector AvCriticalItemTypeSelector for AvCriticalItemType {
+   orderby = CriticalItemTypeCode;
+   static CriticalItemTypeCode;
+   static Description;
+}
+@Override
+selector AvCriticalItemSeveritySelector for AvCriticalItemSeverity {
+   orderby = SeverityCode;
+   static SeverityCode;
+   static Description;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity AvCriticalItem {
+   crud = Create, Read, Update, Delete;
+   timestamptzref = "server";
+
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvCriticalItemTypeRef(CriticalItemTypeCode) to AvCriticalItemType(CriticalItemTypeCode);
+   reference AvCriticalItemSeverityRef(SeverityCode) to AvCriticalItemSeverity(SeverityCode);
+}
+
+function GetCriticalItemTypeCode List < Entity(AvCriticalItemType) > {
+   where = "objstate = 'Active'";
+   ludependencies = AvCriticalItem, AvExeTask;
+}
+
+function GetCriticalItemSeverityCode List < Entity(AvCriticalItemSeverity) > {
+   where = "objstate = 'Active'";
+   ludependencies = AvCriticalItem, AvExeTask;
+}

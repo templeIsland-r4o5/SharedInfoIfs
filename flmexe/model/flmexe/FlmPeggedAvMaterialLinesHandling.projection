@@ -1,0 +1,216 @@
+-----------------------------------------------------------------------------
+--
+--  Filename:      FlmPeggedAvMaterialLinesHandling.projection
+--  Component:     FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15887, Created. Pegged Maintenance Material Requisition Lines handling.
+-----------------------------------------------------------------------------
+
+projection FlmPeggedAvMaterialLinesHandling;
+component FLMEXE;
+layer Core;
+description "Pegged Maintenance Material Requisition Lines";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment PeggedMaterialLines;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset JtTaskMatLinePeggingSet for JtTaskMatLinePegging;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity JtTaskMatLinePegging {
+   from = "jt_task_mat_line_pegging_ext";
+
+   -- Filter to display only records linked to Aviation Maintenance Material Requisition Lines
+   where = "EXISTS (SELECT 1 FROM av_exe_task t WHERE t.task_seq = jt_task_mat_line_pegging_ext.task_seq)";
+
+   attribute TaskSeq Number {
+      label = "Task No";
+   }
+
+   @DynamicComponentDependency WO
+   attribute WoNo Number {
+      fetch = "MAINT_MATERIAL_REQUISITION_API.Get_Wo_No(maint_material_order_no)";
+      label = "WO No";
+      maxlength = 25;
+      editable = [false];
+   }
+
+   attribute AircraftWorkPackageId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+      label = "Work Package No";
+      editable = [false];
+   }
+
+   attribute FlightId Number {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Flight_Id(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+      label = "Flight ID";
+      editable = [false];
+   }
+
+   attribute WpBarcode Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Barcode(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+      label = "Work Package Barcode";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   attribute AircraftId Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Aircraft_Id(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+      label = "Aircraft No";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   attribute TaskBarcode Text {
+      fetch = "Av_Exe_Task_API.Get_Barcode(task_seq)";
+      label = "Task Barcode";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency PURCH
+   attribute Supplier Text {
+      fetch = "Supplier_API.Get_Vendor_Name(Purchase_Order_API.Get_Vendor_No(supply_source_ref1))";
+      label = "Supplier Name";
+      maxlength = 250;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency PURCH
+   attribute VendorNo Text {
+      fetch = "Purchase_Order_API.Get_Vendor_No(supply_source_ref1)";
+      label = "Supplier Code";
+      maxlength = 20;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute DemandSite Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Receiver_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Demand_Site(supply_source_ref1) ELSE NULL END";
+      label = "Demand Site";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute DemandSiteName Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Receiver_Description(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Site_API.Get_Description(Distribution_Order_API.Get_Demand_Site(supply_source_ref1)) ELSE NULL END";
+      label = "Demand Site Name";
+      maxlength = 200;
+      editable = [false];
+   }
+
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute SupplySite Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Sender_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Supply_Site(supply_source_ref1) ELSE NULL END";
+      label = "Supply Site";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute SupplySiteName Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Sender_Description(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Site_API.Get_Description(Distribution_Order_API.Get_Supply_Site(supply_source_ref1)) ELSE NULL END";
+      label = "Supply Site Name";
+      maxlength = 200;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency DISORD
+   @DynamicComponentDependency SHIPOD
+   attribute Coordinator Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'PURCHASE_ORDER' THEN Person_Info_API.Get_Name(Purchase_Order_API.Get_Authorize_Code(supply_source_ref1)) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Person_Info_API.Get_Name(Distribution_Order_API.Get_Requisitioner_Code(supply_source_ref1)) WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Person_Info_API.Get_Name(Shipment_Order_API.Get_Requisitioner_Code(supply_source_ref1)) ELSE NULL END";
+      label = "Coordinator";
+      maxlength = 100;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency PURCH
+   attribute PlannedArrivalDate Timestamp {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'PURCHASE_ORDER' THEN Purchase_Order_Line_API.Get_Planned_Arrival_Date(supply_source_ref1, supply_source_ref2, supply_source_ref3) ELSE NULL END";
+      label = "Planned Arrival Date";
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute DemandSiteId Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Receiver_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Demand_Site(supply_source_ref1) ELSE NULL END";
+      label = "Demand Site ID";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute SupplySiteId Text {
+      fetch = "CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Sender_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Supply_Site(supply_source_ref1) ELSE NULL END";
+      label = "Supply Site ID";
+      maxlength = 50;
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute DemandSiteExists Boolean("TRUE", "FALSE") {
+      fetch = "CASE WHEN EXISTS (SELECT 1 FROM site_tab WHERE contract = CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Receiver_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Demand_Site(supply_source_ref1) ELSE NULL END) THEN 'TRUE' ELSE 'FALSE' END";
+      label = "Demand Site Exists";
+      editable = [false];
+   }
+
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   attribute SupplySiteExists Boolean("TRUE", "FALSE") {
+      fetch = "CASE WHEN EXISTS (SELECT 1 FROM site_tab WHERE contract = CASE WHEN supply_source_ref_type_db = 'SHIPMENT_ORDER' THEN Shipment_Order_API.Get_Sender_Id(supply_source_ref1) WHEN supply_source_ref_type_db = 'DISTRIBUTION_ORDER' THEN Distribution_Order_API.Get_Supply_Site(supply_source_ref1) ELSE NULL END) THEN 'TRUE' ELSE 'FALSE' END";
+      label = "Supply Site Exists";
+      editable = [false];
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference MaintMatOrderNoRef(MaintMaterialOrderNo) to MaintMaterialRequisition(MaintMaterialOrderNo);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   @DynamicComponentDependency PURCH
+   reference SupplierRef(VendorNo) to Supplier(VendorNo);
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   reference DemandSiteRef(DemandSiteId) to Site(Contract);
+   @DynamicComponentDependency SHIPOD
+   @DynamicComponentDependency DISORD
+   reference SupplySiteRef(SupplySiteId) to Site(Contract);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,117 @@
+---------------------------------------------------------------------------------------------
+--  Module : FLMEXE
+--
+--  Purpose: Upgrade database objects for IFS/Forward / Line Maintenance Execution
+--           from version 21.2.0 to 22.1.0
+--
+--  File   : 2210.cdb
+--
+--  IFS Developer Studio Template Version 2.6
+--
+--  Date     Sign    History
+--  ------   ------  ------------------------------------------------------------------------
+--  210917   BDT     Created (by Build and Deployment Team).
+--  ------   ------  ------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+
+SET SERVEROUTPUT ON
+PROMPT START upgrading WITH 2210.cdb
+
+---------------------------------------------------------------------------------------------
+------------------------------ Instructions for upg files -----------------------------------
+---------------------------------------------------------------------------------------------
+--
+--  Main section should contain all upgrade operations.
+--  Next section should contain removal of obsolete objects (any removal of data inside upg is prohibited!).
+--  Removal of backup tables and obsolete columns should be added to <component>Cl.sql script!
+--
+--  If possible, everything regarding one table should be placed in one section.
+--  If this is not possible, a proper comment about the reason should be added.
+--
+--  Each section should be started with a "-----" line and a empty line.
+--  This section should then start with a line like: "-- ***** Example_Tab Start *****"
+--  and end with a line like:                       "-- ***** Example_Tab End *****"
+--
+--  Don't forget UPPER/lower case !
+--
+--  Every part inside the section should start with a "PROMPT" line explaining what is done by the block.
+--
+--  If the PL/SQL block has DML instructions (INSERT,UPDATE,DELETE etc) there should always be a "COMMIT;" line after the block.
+--
+--  Remember ordinary coding standard rules !
+--
+--  Don't drop any Table/Column !
+--
+--  Don't forget performance when updating large table !
+--
+--  No unnecessary blank lines or comments !
+--
+--  If possible, use pure SQL commands
+--
+--  If possible, try to group several updates together in one statement.
+--
+--  Timestamps will be added automatically at the end of the project.
+--
+--  For more information refer to the "Upgrade Script Standards" and the "Performance" technical documents.
+--
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ CREATE NEW SEQUENCES -----------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+--------------- CREATE/ALTER TABLES/INDEXES AND DATA CORRECTIONS ------------------
+---------------------------------------------------------------------------------------------
+
+-- ***** Example_Tab Start *****
+
+
+-- ***** Example_Tab End *****
+
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME OBSOLETE TABLES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE RPT TABLES/COLUMNS -----------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE TEMPORARY TABLES -------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE PACKAGES ---------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE VIEWS ------------------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ DROP OBSOLETE INDEXES/SEQUENCES ------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+------------------------------ RENAME INDEXES/CONSTRAINTS  ----------------------------------
+---------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------
+
+PROMPT Upgrade statements IN FILE 2210.cdb ends here.
+
+-- Nothing is allowed to be placed below here
+---------------------------------------------------------------------------------------------

@@ -1,0 +1,25 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of turns assign to resource group of logged supervisor</DescriptiveText>
+    <LastModified>30/05/2024, 16:12:54</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_TURNS_ASSIGN_TO_RESOURCE_GROUP_PROJECTION</Name>
+    <ID>ef57469b-a3b5-4c33-89c2-193b74f459f2</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>TurnsAssignedToResGroupQuerySet</EntitySet>
+    <EntityType>TurnsAssignedToResGroupQuery</EntityType>
+</ProjectionDataSource>

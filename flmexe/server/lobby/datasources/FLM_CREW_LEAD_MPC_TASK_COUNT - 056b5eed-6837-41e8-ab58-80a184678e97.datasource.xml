@@ -1,0 +1,35 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>5/21/25, 11:42:22 AM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_CREW_LEAD_MPC_TASK_COUNT</Name>
+    <ID>056b5eed-6837-41e8-ab58-80a184678e97</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>MpcTasksCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

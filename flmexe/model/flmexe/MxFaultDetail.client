@@ -1,0 +1,529 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250306  PATNLK  AVMXSOL-5942, Arrange navigator indexing according to alphabetical order.
+--  250211  KASTLK  AVMXSOL-4109, Changed the MocFlightDisruptionManagementNavEntry parent to FleetManagement and index
+--  250217  SRLALK  AD-16729,Remove mxcore dynamic dependency statements.
+--  240219  VAALLK  AD-11917, Added config slot mandatory badge for part installations/part removals.
+--  240219  VAALLK  AD-11917, Arranged ordering in child entity tabs.
+--  240212  ROSDLK  AD-11372, Added Part Installs tab to populate aggregate part installations.
+--  240208  VAALLK  AD-11373, Added Part Removals tab to populate aggregate part removals.
+--  240206  VAALLK  AD-11376, Added Actions Taken tab to populate aggregated actions.
+--  240202  LAWALK  AD-11375, Added Skills tab for fault details page.
+--  240127  RWELLK  AD-11369, Code enhancement in detail group.
+--  240124  ROSDLK  AD-11371, Added steps tab to populate aggregated mx steps.
+--  240124  LAHNLK  AD-11374, Added tools tab to populate aggregated tools
+--  240121  RWELLK  AD-11369, Added new fields to the Groups.
+--  240119  LAHNLK  AD-11370, Added MeasurementsList
+--  240117  RWELLK  AD-11369, Created FaultDetails page.
+-----------------------------------------------------------------------------
+client MxFaultDetail;
+component FLMEXE;
+layer Core;
+projection MxFaultDetailHandling;
+
+description "Maintenix Fault Detail Page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+-------------------------------- MAIN PAGES ---------------------------------
+page FaultDetails using MxFaultDetailSet {
+   label = "Aviation Fault";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   selector MxFaultSelector;
+
+   group MxFaultDetailsGroup;
+   group MxFaulttWorkGroup;
+   group MxDeferralInfoGroup;
+   group MxActionGroup;
+   tabs {
+      tab {
+         label = "Part Removals";
+         list AggMxFaultPartRemovalList(AggFaultPartRemovalArray);
+      }
+      tab {
+         label = "Part Installations";
+         list AggMxFaultPartInstallationList(AggFaultPartInstallationArray);
+      }
+      tab {
+         label = "Tools";
+         list AggMxFaultToolList(AggFaultToolArray);
+      }
+      tab {
+         label = "Skills";
+         list SkillsList(FaultSkillArray);
+      }
+      tab {
+         label = "Actions Taken";
+         list AggMxFaultActionsList(FaultActionsArray);
+      }
+      tab {
+         label = "Measurements";
+         list MeasurementsList(MeasurementArray);
+      }
+      tab {
+         label = "Steps";
+         list AggMxFaultStepList(TaskStepsArray);
+      }
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+selector MxFaultSelector for GetFaultList {
+   label = "${Barcode}";
+   static Barcode {
+      label = "Record ID";
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group MxFaultDetailsGroup for GetFaultList {
+   label = "Details";
+   static AcRegistrationCd {
+      label = "Aircraft";
+   }
+   static AcFailedSystemCd {
+      label = "Failed System";
+   }
+   static LogbookReference {
+      label = "Logbook Reference";
+      size = Medium;
+   }
+   static Description {
+      label = "Name";
+      size = FullWidth;
+      multiline = true;
+   }
+   static LogbookTypeCd {
+      label = "Logbook Type";
+      size = Small;
+   }
+   static FailureTypeCd {
+      label = "Failure Type";
+      size = Small;
+   }
+   static SourceCd {
+      label = "Fault Source";
+      size = Small;
+   }
+   static Code {
+      label = "Fault Code";
+      size = Small;
+   }
+   badge Rowstate {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary7 = [Rowstate = "Open"];
+      emphasis Ok = [Rowstate = "Closed"];
+      emphasis Info = [Rowstate = "Deferred"];
+      emphasis Neutral = [Rowstate = "NoFaultFound"];
+   }
+   field FoundOnDt {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+   static FoundOnDesc {
+      label = "Found on Flight";
+      visible = [FoundOnType = "FLIGHT"];
+   }
+   static FoundOnDesc {
+      label = "Found on Task";
+      visible = [FoundOnType = "TASK"];
+   }
+   static FoundOnDesc {
+      label = "Found on Flight";
+      visible = [FoundOnType = "FLIGHT"];
+   }
+   static FoundOnDesc {
+      label = "Found on Type";
+      visible = [FoundOnType = NULL];
+   }
+   static FoflightPhaseCd {
+      label = "Phase of Flight";
+   }
+   badge IsAssignToWP {
+      label = "Assigned To WP";
+      style = TextOnly;
+      visible = [Rowstate = "Open" or Rowstate = "Deferred"];
+      emphasis Ok = [IsAssignToWP = true];
+      emphasis Alert = [IsAssignToWP = false];
+   }
+
+   static IsAssignToWpForClosed {
+      label = "Assigned To WP";
+      visible = [Rowstate = "Closed" or Rowstate = "NoFaultFound"];
+   }
+}
+group MxFaulttWorkGroup for GetFaultList {
+   label = "Work Package Details";
+
+   visible = [WpId != null];
+
+   static WpName {
+      label = "Work Package Name";
+      size = Medium;
+   }
+   static WpWorkOrderNumber {
+      label = "Work Package";
+      size = Small;
+   }
+   field WpActualStartDt {
+      label = "Actual Start Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+   field WpScheduledEndDt {
+      label = "Estimated End Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+
+}
+group MxDeferralInfoGroup for GetFaultList {
+   label = "Deferral Information";
+   visible = [true];
+
+   static DeferralAuthorization {
+
+      visible = [Rowstate = "Deferred"];
+      label = "Deferral Authorization No";
+      size = Small;
+   }
+   static DeferralReasonCd {
+      visible = [Rowstate = "Deferred"];
+      label = "Deferral Reason";
+      size = Small;
+   }
+   static DeferralNote {
+      label = "Deferral Note";
+      visible = [Rowstate = "Deferred"];
+      size = Small;
+      multiline = true;
+   }
+
+}
+group MxActionGroup for GetFaultList {
+   label = "Last Action Taken";
+   visible = [LastActionUser != null];
+   static LastActionUser {
+      label = "User";
+   }
+   field LastActionDt {
+      label = "Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+   static LastActionLdesc {
+      size = FullWidth;
+      label = "Action Taken";
+      multiline = true;
+   }
+
+}
+----------------------------------- LISTS -----------------------------------
+list MeasurementsList for MeasurementsQuery {
+   orderby = Status desc, MeasuredDateTime desc;
+   field Measurement {
+      label = "Measurement";
+   }
+   field Quantity {
+      label = "Value";
+   }
+   badge Status {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Ok = [Status = "Signed"];
+      emphasis Alert = [Status = "Pending"];
+   }
+   field MeasuredDateTime {
+      label = "Date";
+      displaytimezone = RefGetFaultList.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+      editable = [false];
+   }
+   field MeasuredUser {
+      label = "Signed By";
+   }
+}
+list AggMxFaultToolList for AggFaultToolQuery {
+   orderby = Status desc, AssignedDateTime desc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field ToolSpecificationCode {
+      label = "Tool Specification ";
+   }
+   field AvToolSpecAggRef.ToolSpecificationName {
+      label = "Description";
+      size = Large;
+   }
+   field ScheduledHoursFmt {
+      label = "Scheduled Hours (HH:MM)";
+      size = Medium;
+   }
+   field PartNumber {
+      label = "Part No";
+   }
+   field SerialNo {
+      label = "Serial No";
+   }
+   field ActualHoursFmt {
+      label = "Actual Hours (HH:MM)";
+      size = Medium;
+   }
+   badge Status {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Ok = [Status = "Signed"];
+      emphasis Alert = [Status = "Pending"];
+   }
+   field AssignedUser {
+      label = "Signed By";
+   }
+   field AssignedDateTime {
+      label = "Date";
+      displaytimezone = RefGetFaultList.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+}
+list AggMxFaultStepList for TaskStepQuery {
+   orderby = StepOrder asc;
+   field StepOrder {
+      label = "Step Order";
+   }
+   badge StepStatus {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary2 = [StepStatus = "Pending"];
+      emphasis Danger = [StepStatus = "Partial"];
+      emphasis Complementary7 = [StepStatus = "AwaitingInspection"];
+      emphasis True = [StepStatus = "Completed"];
+      emphasis Neutral = [StepStatus = "NotApplicable"];
+   }
+   field StepDescription {
+      label = "Description";
+   }
+}
+list SkillsList for FaultSkillQuery {
+   label = "";
+
+   field ConvertedHours {
+      label = "Required Hours (HH:MM)";
+      size = Medium;
+   }
+   field CompetencyDescription {
+      label = "Skill";
+      size = Medium;
+   }
+   field AssignedUser {
+      label = "Signed By";
+      size = Medium;
+   }
+}
+list AggMxFaultActionsList for FaultActionsQuery {
+   orderby = ActionDate desc;
+
+   field ActionDescription {
+      label = "Action Taken";
+      size = FullWidth;
+      multiline = true;
+   }
+   field StepOrder {
+      label = "Step";
+      size = Small;
+   }
+   field ActionType {
+      label = "Type";
+      size = Medium;
+   }
+   field ActionDate {
+      label = "Date";
+      displaytimezone = RefGetFaultList.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field ActionUser {
+      label = "Signed By";
+      size = Medium;
+   }
+}
+list AggMxFaultPartRemovalList for FaultPartRemovalsQuery {
+   orderby = RemovalStatus desc, RemovedDate desc;
+
+   field PartGroupCode {
+      label = "Part Group Code";
+   }
+   field PartGroupName {
+      label = "Part Group Name";
+      size = Large;
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field AssemblyPosition {
+      label = "Assembly Position";
+      size = Small;
+   }
+   field ConfigSlotPositionCode {
+      label = "Position";
+   }
+   badge ConfigIsMandatory {
+      visible = [(RemovedPartNo != null or RemovedQuantity != null) and ConfigIsMandatory = "Mandatory"];
+      label = "Config Slot";
+      size = FullWidth;
+      style = TextOnly;
+      emphasis Info = [ConfigIsMandatory = "Mandatory"];
+   }
+   field RemovedPartNo {
+      label = "Part Number";
+   }
+   field RemovedSerialNo {
+      label = "Serial No/Batch No";
+   }
+   field RemovedQuantity {
+      label = "Quantity";
+   }
+   field RemovalReason {
+      label = "Reason for Removal";
+   }
+   badge RemovalStatus {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [RemovalStatus = "Pending"];
+      emphasis Ok = [RemovalStatus = "Signed"];
+   }
+   field RemovedDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = RefGetFaultList.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field RemovedUser {
+      label = "Signed By";
+      size = Small;
+   }
+}
+
+list AggMxFaultPartInstallationList for FaultPartInstallQuery {
+   orderby = InstalledStatus desc, InstalledDate desc;
+
+   field PartGroupCode {
+      label = "Part Group Code";
+   }
+   field PartGroupName {
+      label = "Part Group Name";
+      size = Large;
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [IsCommonHardware = "FALSE"];
+      size = Medium;
+   }
+   field AssemblyPosition {
+      label = "Assembly Position";
+      size = Small;
+   }
+   field ConfigSlotPositionCode {
+      label = "Position";
+   }
+   badge ConfigIsMandatory {
+      visible = [(InstalledPartNo != null or InstalledQuantity != null) and ConfigIsMandatory = "Mandatory"];
+      label = "Config Slot";
+      size = FullWidth;
+      style = TextOnly;
+      emphasis Info = [ConfigIsMandatory = "Mandatory"];
+   }
+   field InstalledPartNo {
+      label = "Part Number";
+   }
+   field InstalledSerialNo {
+      label = "Serial No/Batch No";
+   }
+   field InstalledQuantity {
+      label = "Quantity";
+   }
+   badge InstalledStatus {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Alert = [InstalledStatus = "Pending"];
+      emphasis Ok = [InstalledStatus = "Signed"];
+   }
+   field InstalledDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = RefGetFaultList.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field InstalledUser {
+      label = "Signed By";
+      size = Small;
+   }
+}
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

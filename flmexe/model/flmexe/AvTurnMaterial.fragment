@@ -1,0 +1,118 @@
+--------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+-- 250630  SSIVLK  AD-18638, Created
+-------------------------------------------------------------------------------------
+
+fragment AvTurnMaterial;
+component FLMEXE;
+layer Core;
+description "Contains common reusable client code and projection logic for materials which resembles Part data";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment UserAllowedSiteLovSelector;
+include fragment MaintMaterialReqLine;
+----------------------------- CLIENT FRAGMENTS ------------------------------
+list AvMatReqList clone MainMatReqDetailList {
+   orderby = TaskSeq;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   field Barcode;
+   field TaskName {
+      size = Large;
+      multiline = true;
+   }
+   field SerialNo {
+      label = "Serial Number";
+   }
+   field RwoLotBatchNo {
+      label = "Batch Number";
+   }
+   field PromisedReceiptDate {
+      label = "ETA";
+   }
+   field Quantity;
+   field OrderState {
+      columnexclude = [true];
+   }
+   field TaskPlanLineSeq {
+      columnexclude = [true];
+   }
+   field TaskSeq {
+      columnexclude = [true];
+   }
+   badge OrderStatus {
+      emphasis Warning = [OrderStatus = "Open"];
+      emphasis Ok = [OrderStatus = "Available"];
+      emphasis Primary = [OrderStatus = "On Order"];
+      emphasis Ok = [OrderStatus = "Issued"];
+      emphasis Complementary7 = [OrderStatus = "Remote"];
+      emphasis Complementary7 = [OrderStatus = "Processing"];
+      emphasis StateObsolete = [OrderStatus = "Unissued"];
+   }
+
+   fieldorder = Barcode, TaskName, Quantity, PartNo, SerialNo, RwoLotBatchNo, MaintMatOrderNoRef, LineItemNo, OrderStatus, PromisedReceiptDate, Qty, QtyAssigned, PeggedQty,
+   DateRequired, QtyReturned, CreatedBy, ModifiedBy, Note, QuantityAvailable, QtyShort, Owner, PartOwnership;
+
+   @DynamicComponentDependency DISCOM
+   @DynamicComponentDependency PURCH
+   @DynamicComponentDependency WO
+   @DynamicComponentDependency ORDER
+   exclude PlanQty, Uom, SerialNoRef, OrderState, TaskObjectId, TaskObjectSite, AlternatePartsExist, ChangeReason, AltPartChangeReasonRef.ChangeReasonDesc, ChangesLineItemNo, LineClosed, ConditionCodeRef,
+   RwoCopyPrepostDb, CurrentInventoryCost, Delivery, RentalTaskResSeq, SpareContractRef, InventoryPartRef.DimQuality, RwoErrDescr, Discount, DiscountedPrice, DiscountedPriceCurr, ServiceTypeRef,
+   IssuedCostAmount, RwoLotBatchNoRef, RwoOrgCodeRef, Markup, NoPartDescription, FbuyUnitPrice, RwoMchCodeRef, RwoMchContractRef, PlaceInFacility, TaskPlanLineSeq, Cost, PlannedCostAmount, PriceListNoRef, PriceEffectiveDate,
+   PriceSource, PriceSourceId, BuyUnitMeasRef, PurchaseMethod, QtyChanged, ConsumedQty, QuantityOnHand, Rental, RepairPartNo, ReqGenerated, CatalogNoRef, CatalogContractRef, SalesPriceAmount, PriceAmountCurr,
+   SenderId, SenderType, SerialPart, HasStructure, SuperObjectRef, SuperObjectSiteRef, SupplyCode, SupplySite, SupplySourceRef1, SupplySourceRef2, SupplySourceRef3, SupplySourceRef4, SupplySourceRefType,
+   TransportTaskExists, InventoryPartRef.TypeDesignation, ListPrice, ListPriceCurr, TaskSeq, SwapPart, PartType, InventoryPartAvailabilityPlaCommand, SupplierperPartCommand, CommandGroup3CmdGroup, CommandGroup2CmdGroup, CommandGroup5CmdGroup, ViewTransportTaskForLinesCommand;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity MaintMaterialReqLine {
+   from = "Maint_Material_Req_WP_Uiv";
+   keys = AircraftWpId, TaskSeq, LineItemNo, MaintMaterialOrderNo {
+      where = "AIRCRAFT_WP_ID = :AircraftWPId";
+   }
+
+   exclude attributes = ObjectState;
+   attribute TaskSeq Number;
+   attribute AircraftWpId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute TaskName Text;
+   attribute Barcode Text;
+   attribute SerialNo Text {
+      fetch = "SERIAL_NO";
+   }
+   attribute PlanQty Number {
+      label = "Quantity Required";
+      required = [true];
+   }
+   attribute SpareContract Text;
+   attribute PartNo Text {
+      label = "Part";
+      editable = [ETag = null];
+   }
+   attribute Quantity Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Plan_Qty), ' '),INVENTORY_PART_API.Get_Unit_Meas(spare_contract,Part_No))";
+   }
+   attribute OrderStatus Text {
+      fetch = "Av_Exe_Task_Part_Util_API.Get_Order_Status(maint_material_order_no, line_item_no)";
+   }
+   attribute IsRepairable Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_Part_Util_API.Is_Material_Repairable(maint_material_order_no, line_item_no)";
+   }
+}

@@ -1,0 +1,106 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  250218        DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  250218        DUWJLK  AD-15667, Introduced IsMxLabourDemand.
+--  241125        SSIVLK  AD-14802, Created JtTaskResourceQuery and neccesary skeleton for action and fucntion.
+--  241125        KAWJLK  AD-15247, Added FlmTaskAssignments fragment
+--  240104        PSUALK  AD-11816, Task/Turn Assignment duration can enter less than 1 hr.
+--  231201        PSUALK  AD-9573, Task/Turn Assignment duration in HHMM format.
+--  231127        PSUALK  AD-9572, Modified aircraft to pick aircraft registration code and the assembly type name.
+--  231114        lahnlk  AD-10920, modified AvExeTaskSet to include tasks with turn already assigned
+--  230710        majslk  AD-9585, Modified code to support time zone changes
+--  220728        PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220110        chdslk  Ad-3953: Added keyref and luname to AvTaskQuery.
+--  220103        vifelk  AD-4114, Added label to ResAssignDisplayStatus attribute in AvTaskQuery and added AssignmentStatus enumeration.
+--  211228        vifelk  AD-4114, Added label to ResAssignDisplayStatus attribute in AvTaskQuery.
+--  211216        Sbanlk  AD-3953, Added where condition to AvTaskQuery to filter assigned turn work assignments,Added GanttRow to ResourceGanttQuery and TaskCompetencyQuery.
+--  211127        Rjoslk  AD-4120, Added resource assignment status.
+--  211119        SBANLK  AD-3953, Added entity Competency,Made skill level uneditable,Added Function GetTaskAssignmentTimeRange.
+--  211105        SBANLK  AD-3953, Created.
+---------------------------------------------------------------------------------
+projection FlmTaskWorkAssignmentHandling;
+component FLMEXE;
+layer Core;
+description "This inludes the definition of Task Work Assignments";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmTaskAssignments;
+include fragment FlmTasks;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+include fragment FlmHandoverDetails;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+@Override
+entityset AvExeTaskSet for AvTaskQuery {
+   where = "aircraft_wp_id IS NOT NULL";
+}
+entityset ResourceSet for ResourceGanttQuery;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity ResourceConnection {
+   where = "site = Av_Airport_API.Get_Site(Av_Airport_For_User_API.Get_Airport_Id (Fnd_Session_API.Get_Fnd_User)) and Resource_API.Get_Resource_Type(resource_seq)='Person'";
+
+   attribute PersonId Text {
+      label = "Person ID";
+      format = uppercase;
+      lovcolumn = [true];
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute PersonName Text {
+      label = "Person Name";
+      lovcolumn = [true];
+      fetch = "Pers_API.Get_Internal_Display_Name(Resource_API.Get_Resource_Id(resource_seq))";
+   }
+   attribute Company Text;
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+---------------------------------- ACTIONS ----------------------------------
+action DeleteSkill {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+   ludependencies = JtTaskResourceQuery, TaskCompetencyQuery, ResourceGanttQuery, AvExeTask, JtTaskResource, JtExecutionInstance, JtTaskResourceDemandQuery;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetTimeRange Structure(TimeRangeStructure) {
+   timestamptzref = "server";
+
+   parameter TaskSeq Number;
+}
+function GetSkillCount Number {
+   parameter TaskSeq Number;
+}
+function IsMxLabourDemand Boolean {
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure TimeRangeStructure {
+   timestamptzref = "server";
+
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+   attribute Duration Number;
+}
+structure TaskAssignmentsStructure {
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute AircraftId Number;
+   attribute Aircraft Text;
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

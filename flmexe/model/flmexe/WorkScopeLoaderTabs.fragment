@@ -1,0 +1,310 @@
+fragment WorkScopeLoaderTabs;
+component FLMEXE;
+layer Core;
+description "Handle WSL page's tabs content for Line/Hanger WSL  ";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+list PanelList for PAvPanel {
+   orderby = RowNo;
+   label = "Panels";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "Task/Fault ID";
+   }
+   field PanelCode {
+      label = "Panel Code";
+   }
+   field PanelName {
+      label = "Panel Name";
+      multiline = true;
+   }
+   field ZoneCode {
+      label = "Panel Zone Code";
+   }
+   field ZoneName {
+      label = "Panel Zone Name";
+      multiline = true;
+   }
+   field MpcOpenTaskId {
+      label = "MPC OPEN Task ID";
+   }
+   field MpcCloseTaskId {
+      label = "MPC CLOSE Task ID";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list PanelErrorList for PAvPanelErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list PanelRequirementList for PAvPanelRequirement {
+   orderby = RowNo;
+   label = "Panel Requirement";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "Task ID";
+   }
+   field PanelCode {
+      label = "Panel Code";
+   }
+   field PanelName {
+      label = "Panel Name";
+      multiline = true;
+   }
+   field PanelZoneCode {
+      label = "Panel Zone Code";
+   }
+   field PanelZoneName {
+      label = "Panel Zone Name";
+      multiline = true;
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list PanelReqErrorList for PAvPanelReqErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list PanelSkillList for PAvPanelSkill {
+   orderby = RowNo;
+   label = "Panel Skills";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field TaskExternalId {
+      label = "Task/Fault ID";
+   }
+   field PanelCode;
+   field SkillId {
+      label = "Skill ID";
+   }
+   field SkillCode;
+   field IsCertRequired {
+      label = "Certification Required";
+   }
+   field IsIndInspectRequired {
+      label = "Independent Inspection Required";
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list PanelSkillErrorList for PAvPanelSkillErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list WpHistoryList for PAvWpHistory {
+   orderby = RowNo;
+   label = "Workscope History";
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field RowNo;
+   badge ExecutionStatus {
+      emphasis Complementary1 = [ExecutionStatus = "Failed"];
+      emphasis Complementary9 = [ExecutionStatus = "Successful"];
+   }
+   field WpExternalId {
+      label = "Work Order ID";
+   }
+   field Status {
+      label = "Status";
+   }
+   field WpClearedDateS {
+      label = "Cleared Date(UTC)";
+   }
+   field WpClearedNote {
+      label = "Note";
+      multiline = true;
+   }
+   field FileLine {
+      multiline = true;
+   }
+}
+
+list WpHistoryErrorList for PAvWpHistoryErrors {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field ErrorDesc {
+      label = "Message";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity PAvPanelRequirement {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Panel_Requirement_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvPanelReqErrorsArray(LoadFileId, RowNo) to PAvPanelReqErrors(LoadFileId, RowNo);
+
+}
+
+@Override
+entity PAvPanel {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Panel_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+
+   array PAvPanelErrorsArray(LoadFileId, RowNo) to PAvPanelErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvPanelSkill {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Panel_Skill_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+   array PAvPanelSkillErrorsArray(LoadFileId, RowNo) to PAvPanelSkillErrors(LoadFileId, RowNo);
+}
+
+@Override
+entity PAvWpHistory {
+   attribute ExecutionStatus Enumeration(LineStatus) {
+      fetch = "P_Av_Wp_History_API.Get_Execution_Status(load_file_id, row_no)";
+   }
+   array PAvWpHistoryErrorsArray(LoadFileId, RowNo) to PAvWpHistoryErrors(LoadFileId, RowNo);
+}

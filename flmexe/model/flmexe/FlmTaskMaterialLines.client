@@ -1,0 +1,60 @@
+--  Date        Sign    History
+--  ----------  ------  -----------------------------------------------------
+--  250825  GAGRLK  AVMXSOL-12731, Updated the navigation entry FlmTaskMatReqLinesNavEntry and updated page label.
+-----------------------------------------------------------------------------
+client FlmTaskMaterialLines;
+component FLMEXE;
+layer Core;
+projection FlmTaskMaterialLinesHandling;
+
+description "Aviation Maintenance Material Lines Client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AvTaskMaterial;
+include fragment UserAllowedSiteLovSelector;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry FlmTaskMatReqLinesNavEntry parent MxCoreNavigator.MaterialControllerNav at index 500 {
+   label = "Maintenance Material Requisition Lines";
+   page FlmAvMaterialRequisitionLines;
+}
+-------------------------------- MAIN PAGES ---------------------------------
+page FlmAvMaterialRequisitionLines using MaintMaterialReqLineSet {
+   label = "Maintenance Material Requisition Lines";
+   startupmode = search;
+   list AvMatReqAllList;
+}
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

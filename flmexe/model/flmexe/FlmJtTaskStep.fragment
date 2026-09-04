@@ -1,0 +1,536 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250703  SABOLK  AD-18377, Modified entity JtTaskStep, Override Enumeration SignOffConnection.
+--  250612  SABOLK  AD-18875, Modified  entity JtTaskStep.
+--  250603  KAPALK  AD-18302, Added field Panel Instruction to Open panel and Close panel tasks.
+--  250528  RAFALK  AD-18301, Added JtTaskPanelList, edited JtTasjStep entity.
+--  250311  CAARLK  AD-17900, Modified JtTaskStepSignOffList.
+--  250310  SSIVLK  AD-17820 Added IsCertified condition in AddStepCommand.
+--  241105  WEDILK  AD-14795 Created.
+-----------------------------------------------------------------------------
+
+fragment FlmJtTaskStep;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required Jt Task Step";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ZoneLovSelector;
+include fragment PanelLovSelector;
+include fragment AircraftPanel;
+include fragment FlmPanelTasks;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+----------------------------------- LISTS -----------------------------------
+list JtTaskStepList for JtTaskStep {
+   orderby = OrderNo asc;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   field Step {
+      label = "Steps";
+      size = Small;
+      editable = [false];
+   }
+
+   badge Objstate {
+      label = "Step Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Neutral = [Objstate = "NOTDONE"];
+      emphasis Warning = [Objstate = "PENDING"];
+      emphasis OK = [Objstate = "DONE"];
+   }
+
+   field Instructions {
+      label = "Step Description";
+      size = Large;
+      editable = [true];
+      multiline = true;
+   }
+
+   command AddStepCommand {
+      label = "";
+      icon = "new";
+   }
+
+   command DeleteStepCommand {
+      label = "";
+      icon = "delete";
+   }
+}
+
+list JtTaskStepSignOffList for JtTaskStepSignOff {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   field Role {
+      label = "Role";
+      size = Small;
+      editable = [false];
+   }
+
+   badge SignOffStatus {
+      label = "Sign-Off Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Warning = [SignOffStatus = "Pending"];
+      emphasis OK = [SignOffStatus = "Signed"];
+   }
+
+   field JtTaskSignOffReqRef.LicenseId {
+      label = "Certificate ID";
+      size = Small;
+   }
+
+   field SignOffNote {
+      label = "Sign-Off Note";
+      size = Large;
+      editable = [false];
+      multiline = true;
+   }
+
+   field Identity {
+      label = "Signed-By";
+      size = Small;
+   }
+
+   field SignOffDate {
+      label = "Date";
+      type = Date;
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+
+   command Disconnect;
+}
+
+list AddSignOffRequirementList for  AddStepSignOffVirtual {
+   label = "Add Sign Off Requirements";
+
+   field SignOffReqType;
+
+   lov LicenseIdRef with LicenseIdSelector using GetLicenseId(TaskSeq, SignOffReqType) {
+      size = Medium;
+      description = LicenseIdRef.LicenseId;
+   }
+}
+
+list JtTaskPanelList clone JtTaskStepList {
+   label = "";
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+   }
+
+   lov AvPanelCodeRef with PanelCodeSelector {
+      label = "Panel Code";
+      details = "page/MxPanelDetails/PanelDetails?$filter=AdBrPanelId eq $[AvAircraftPanelRef.PanelAltId]";
+   }
+   field AvAircraftPanelRef.PanelDescription {
+      label = "Panel Name";
+      multiline = true;
+      size = FullWidth;
+   }
+   badge PanelStatus {
+      label = "Panel Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Warning = [PanelStatus = "ToBeOpened"];
+      emphasis OK = [PanelStatus = "Opened"];
+      emphasis OK = [PanelStatus = "ReadyToClose"];
+      emphasis OK = [PanelStatus = "Closed"];
+   }
+   lov AvZoneCodeRef with ZoneCodeSelector {
+      label = "Panel Zone Code";
+      details = "page/MxZoneDetails/ZoneDetails?$filter=AdBrZoneId eq $[AvAircraftPanelRef.ZoneAltId]";
+   }
+   field AvAircraftPanelRef.ZoneDescription {
+      label = "Panel Zone Name";
+      multiline = true;
+      size = FullWidth;
+   }
+
+   field PanelInstructionRef.PanelInstruction {
+      multiline = true;
+      size = FullWidth;
+   }
+
+   exclude Step, Objstate, Instructions;
+}
+list JtTaskOpenPanelSignOffList clone JtTaskStepSignOffList {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field JtTaskSignOffReqRef.LicenseId {
+      label = "Certificate ID";
+      size = Small;
+   }
+   badge SignOffStatus {
+      label = "Sign-Off Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Warning = [SignOffStatus = "Pending"];
+      emphasis OK = [SignOffStatus = "Signed"];
+   }
+
+   field Identity {
+      label = "Signed By";
+      size = Small;
+   }
+
+   field SignOffDate {
+      label = "Signed Date";
+      type = Date;
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   fieldorder = JtTaskSignOffReqRef.LicenseId, SignOffStatus, Identity, SignOffDate;
+   exclude Role, SignOffNote;
+}
+list JtTaskClosePanelSignOffList clone JtTaskStepSignOffList {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field JtTaskSignOffReqRef.LicenseId {
+      label = "Certificate ID";
+      size = Small;
+   }
+   badge SignOffStatus {
+      label = "Sign-Off Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Warning = [SignOffStatus = "Pending"];
+      emphasis OK = [SignOffStatus = "Signed"];
+   }
+
+   field Identity {
+      label = "Signed By";
+      size = Small;
+   }
+
+   field SignOffDate {
+      label = "Signed Date";
+      type = Date;
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   fieldorder = JtTaskSignOffReqRef.LicenseId, SignOffStatus, Identity, SignOffDate;
+   exclude Role, SignOffNote;
+}
+
+---------------------------------- GROUPS -----------------------------------
+group AddStepGroup for AddStepVirtual {
+   label = "";
+   field Description {
+      label = "Step Description";
+      size = FullWidth;
+      required = [true];
+      multiline = true;
+      maxlength = 500;
+   }
+   field OrderNo {
+      label = "Step Order";
+      size = Large;
+      required = [true];
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command AddStepCommand for AvExeTask {
+   label = "";
+   enabled = [IsCertified = "PENDING" and ClassCode in("ADHOC", "CORR")];
+   mode = Global;
+   execute {
+      assistant AddStepAssistant(TaskSeq, "Add Step") {
+         when OK {
+            exit;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command  SaveStep for AddStepVirtual {
+   label = "Save";
+   visible = [Description != null and OrderNo != null];
+   execute {
+      call AddStepWithSignOffs(TaskSeq, Description, OrderNo, Objkey);
+   }
+}
+
+command  DeleteStepCommand for JtTaskStep {
+   label = "";
+   enabled = [Objstate = "NOTDONE" and(ClassCode = "ADHOC" or ClassCode = "CORR") and CreatedBy = CurrentUser];
+   execute {
+      messagebox("Delete Record", information, "Please confirm that you wish to delete this record.") {
+         when "Delete" {
+            call DeleteStep(TaskSeq, TaskStepSeq);
+         }
+         when "Cancel" {
+            exit;
+         }
+      }
+   }
+}
+
+command Disconnect for JtTaskStepSignOff {
+   label = "Disconnect";
+   mode = SingleRecord;
+   enabled = [parent.Objstate = "NOTDONE" and ClassCode in("ADHOC", "CORR") and parent.CreatedBy = CurrentUser];
+   execute {
+      confirm("Do you wish to disconnect the sign off requirement from task step- ${JtTaskStepRef.Description}?") {
+         when OK {
+            call DisconnectSignOffReq();
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector LicenseIdSelector for JtTaskResourceLicense {
+   static LicenseId;
+}
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant AddStepAssistant using AddStepVirtualSet {
+   label = "${Title}";
+   savemode = OnLostFocus;
+
+   input(TaskSeq, Title);
+
+   singlestep {
+      group AddStepGroup;
+      list AddSignOffRequirementList(SignOffReqArray);
+   }
+
+   command SaveStep;
+   command Cancel;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+entityset JtTaskStepSet for JtTaskStep;
+entityset AddStepVirtualSet for AddStepVirtual;
+
+@Override
+entity JtTaskStep {
+   crud = Create, Delete, Read, Update;
+
+   attribute Step Text {
+      fetch = "Av_Exe_Task_Step_Util_API.Get_Order_No(Order_No)";
+   }
+   attribute Description Text {
+      fetch = "regexp_replace(description, '<.+?>')";
+   }
+   attribute ClassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Class_Code(task_seq)";
+   }
+
+   attribute SubclassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Subclass_Code(task_seq)";
+   }
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute PanelCd Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Panel_Cd_By_Rowkey(object_connection_rowkey)";
+   }
+   attribute AcPanelSeq Number {
+      fetch = "Av_Aircraft_Panel_API.Get_Ac_Panel_Seq_By_Rowkey(object_connection_rowkey)";
+   }
+   attribute ZoneCd Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Zone_Cd_By_Panel_Rowkey(object_connection_rowkey)";
+   }
+   attribute TaskClassCd Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Class_Cd_From_Sub_Class_Cd(task_seq)";
+   }
+   attribute PanelStatus Enumeration(PanelStatuses) {
+      fetch = "Av_Exe_Task_Panel_API.Get_Panel_Status(task_seq, task_step_seq)";
+   }
+   attribute ObjectConnectionLuNameDb Text {
+      fetch = "object_connection_lu_name_db";
+   }
+   attribute Instructions LongText {
+      fetch = "instructions";
+      inlined = [true];
+      editable = [true];
+   }
+
+   reference AvZoneCodeRef(ZoneCd) to TaskZoneLov(ZoneCode);
+   reference AvPanelCodeRef(PanelCd) to TaskPanelLov(PanelCode);
+   reference AvAircraftPanelRef(AcPanelSeq) to AircraftPanelLov(AcPanelSeq);
+   reference PanelInstructionRef(AcPanelSeq, TaskClassCd) to TaskInstructionLov(AcPanelSeq, TaskClassCd);
+
+   array JtTaskStepSignOffArray(TaskSeq, TaskStepSeq) to JtTaskStepSignOff(TaskSeq, TaskStepSeq);
+   array MaintTasksForOpenTaskArray(TaskSeq, AcPanelSeq) to MaintTasksForPanelTasksQuery(OpenTaskSeq, AcPanelSeq);
+   array MaintTasksForCloseTaskArray(TaskSeq, AcPanelSeq) to MaintTasksForPanelTasksQuery(CloseTaskSeq, AcPanelSeq);
+}
+
+@Override
+entity JtTaskStepSignOff {
+   crud = Create, Delete, Read, Update;
+   ludependencies = WorkTask, JtTaskStep;
+
+   attribute Role Enumeration(SignOffReqType) {
+      fetch = "Jt_Task_Sign_Off_Req_API.Get_Sign_Off_Req_Type(task_seq, sign_off_req_seq)";
+      label = "Role";
+      maxlength = 20;
+   }
+   attribute SignOffStatus Text {
+      fetch = "Labour_Assignment_Util_API.Get_Step_Sign_Off_Status(task_seq, task_step_seq, sign_off_req_seq)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute ClassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Class_Code(task_seq)";
+   }
+
+   attribute SubclassCode Text {
+      fetch = "Av_Exe_Task_API.Get_Subclass_Code(task_seq)";
+   }
+   reference JtTaskStepRef(TaskSeq, TaskStepSeq) to JtTaskStep(TaskSeq, TaskStepSeq);
+   reference JtTaskSignOffReqRef(TaskSeq, SignOffReqSeq) to JtTaskSignOffReq(TaskSeq, SignOffReqSeq);
+
+   action DisconnectSignOffReq {
+      initialcheck none;
+      ludependencies = AvExeTask, JtTaskStepSignOff, JtTaskSignOffReq, JtTaskStep;
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+@Override
+enumeration SignOffReqType {
+   value = "Executor" {
+      identifier = "Executor";
+      label = "Executor";
+   }
+   value = "Inspector" {
+      identifier = "Inspector";
+      label = "Certifier";
+   }
+   value = "Independent" {
+      identifier = "Independent";
+      label = "Inspector";
+   }
+}
+
+@Override
+enumeration SignOffConnection {
+   value = "Task" {
+      identifier = "Task";
+      label = "Task";
+   }
+   value = "Task Step" {
+      identifier = "TaskStep";
+      label = "Task Step and Panel";
+   }
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+virtual AddStepVirtual {
+   attribute TaskSeq Number;
+   attribute Description LongText {
+      editable = [true];
+      inlined = [true];
+   }
+   attribute OrderNo Number;
+   attribute Objkey Text;
+   attribute Title Text;
+
+   array SignOffReqArray(TaskSeq) to AddStepSignOffVirtual(TaskSeq);
+}
+
+virtual AddStepSignOffVirtual {
+   attribute Objkey Text;
+   attribute TaskSeq Number;
+   attribute SignOffReqType Enumeration(SignOffReqType) {
+      label = "Role";
+      required = [true];
+   }
+   attribute LicenseId Text {
+      label = "Certificate ID";
+   }
+
+   reference LicenseIdRef(LicenseId) to JtTaskResourceLicense(LicenseId) {
+      label = "Certificate ID";
+   }
+}
+
+---------------------------------- ACTIONS ----------------------------------
+action AddStepWithSignOffs {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter StepDescription LongText;
+   parameter OrderNo Number;
+   parameter Objkey Text;
+
+   ludependencies = AvExeTask, JtTaskStepSignOff, JtTaskSignOffReq, JtTaskStep;
+}
+
+action DeleteStep {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter TaskStepSeq Number;
+
+   ludependencies = AvExeTask, JtTaskStepSignOff, JtTaskSignOffReq, JtTaskStep;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetLicenseId List < Entity(JtTaskResourceLicense) > {
+   parameter TaskSeq Number;
+   parameter SignOffReqType Enumeration(SignOffReqType);
+}

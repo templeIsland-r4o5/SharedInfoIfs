@@ -1,0 +1,258 @@
+-------------------------------------------------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  --------------------------------------------------------------------------------------------
+-- 2025-11-03  Saddlk  AVMXSOL-14021, Return Parts to Inventory assistant enhancements.
+-- 2025-09-02  Cpeilk  SCDEV-57031, Added commands ReturnLoanPartToSupplierCommand and ReceiptInfoCommand to return supplier loaned parts to supplier.
+-------------------------------------------------------------------------------------------------------------------
+
+client FlmComponentReturns;
+component FLMEXE;
+layer Core;
+projection FlmComponentReturnsHandling;
+description "Component Returns Client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment UserAllowedSiteLovSelector;
+include fragment FlmTaskReturnToInventoryAssistant;
+include fragment InventoryPartWoLovSelector;
+include fragment CustomerInfoCustcategoryPubSelector;
+include fragment JtTaskReturn;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry FlmCompReturnNavEntry parent MxCoreNavigator.RepairRouterNav at index 500 {
+   label = "Component Returns";
+   page FlmComponentReturns;
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page FlmComponentReturns using JtTaskReturnSet {
+   label = "Component Returns";
+   list ComponentReturnsList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+@Override
+command MoveRepairExchangeParttoInCommand for JtTaskReturn {
+   bulkexecute {
+      super;
+      assistant CompReturnAssistant(Selection, Rmb) {
+         when OK {
+            exit;
+         }
+      }
+   }
+}
+
+command MovetoServiceableLocationCommand clone MoveRepairExchangeParttoInCommand {
+   label = "Move to Serviceable Location";
+   enabled = [TaskPartRef.RemovalReasonCode != "UNSCHED" and TaskPartRef.RemovalReasonCode != "SOS"];
+}
+
+command MovetoUnserviceableLocationCommand clone MoveRepairExchangeParttoInCommand {
+   label = "Move to Unserviceable Location";
+   enabled = [TaskPartRef.RemovalReasonCode = "UNSCHED" or TaskPartRef.RemovalReasonCode = "SOS"];
+}
+
+command InventoryPartinStockCommand for JtTaskReturn {
+   label = "Inventory Part in Stock";
+   enabled = [PartType = null or PartType = "InventoryPart"];
+   bulkexecute {
+      bulknavigate "page/InventoryPartInStock/List?$filter=PartNo eq $[PartNo] and SerialNo eq $[SerialNo] and QtyOnhand gt 0";
+   }
+}
+
+command MatRequisitionLineCommand for JtTaskReturn {
+   label = "Material Requisition Lines";
+   mode = SelectedRecords;
+   enabled = [MtrlOrderNo != null and MtrlOrderLineNo != null];
+   bulkexecute {
+      bulknavigate "page/FlmTaskMaterialRequisition/FlmAvMaterialRequisition?$filter=MaintMaterialOrderNo eq $[MaintMaterialOrderNo]";
+   }
+}
+
+command CreateRepairMaterialCommand for JtTaskReturn {
+   bulkexecute {
+      bulknavigate "page/ComponentRepairOrder/Form?";
+   }
+   label = "Create CRO";
+}
+
+command InventoryPartAvailabilityPlaCommand for JtTaskReturn {
+   label = "Inventory Part Availability Planning";
+   mode = SelectedRecords;
+   bulkexecute {
+      bulknavigate "page/InventoryPartAvailabilityPlanning/Form?$filter=PartNo eq $[PartNo] and Contract eq $[Site] and ConfigurationId eq '*' ";
+   }
+}
+
+command SupplierperPartCommand for JtTaskReturn {
+   label = "Supplier per Part";
+   enabled = [PartType != "NoPart"];
+   mode = SelectedRecords;
+   bulkexecute {
+      bulknavigate "page/SupplierForPurchasePart/Form?$filter=PartNo eq $[PartNo] and Contract eq $[Site]";
+   }
+}
+
+@DynamicComponentDependency PURCH
+command ReturnLoanPartToSupplierCommand for JtTaskReturn {
+   label = "Return Loaned Part to Supplier";
+   mode = SelectedRecords;
+
+   enabled = [IsValidStatusForReturn = "TRUE" and QuantityToReturn > 0 and count(Site) = 1 and count(Owner) = 1 and PartOwnership = "SupplierLoaned" and ReturnSourceRef1 = null];
+   bulkexecute {
+      bulkcall ValidateReturnLine(PartNo, SerialNo, ConditionCodeUsage, ConditionCode, TaskSeq, "TRUE");
+      assistant ReturnPartsToSupplier.ReturnLoanedPartsToSupplier(Selection) {
+         when OK {
+            refresh;
+            exit;
+         }
+      }
+   }
+}
+
+@DynamicComponentDependency PURCH
+command ReceiptInfoCommand for JtTaskReturn {
+   label = "Receipt";
+   mode = SelectedRecords;
+
+   enabled = [PartOwnership = "SupplierLoaned" and ReturnSourceRef1 != null and ReturnSourceRefTypeDb = "PURCHASE_ORDER"];
+   bulkexecute {
+      bulknavigate "page/Receipts/List?$filter=SourceRef1 eq $[ReturnSourceRef1] and SourceRef2 eq $[ReturnSourceRef2] and SourceRef3 eq $[ReturnSourceRef3] and ReceiptNo eq $[ReturnSourceRef4]";
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list ComponentReturnsList clone JtTaskReturnList {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   lov AvExeTaskRef with AvExeTaskSelector {
+      label = "Task No";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+   field AvExeTaskRef.Barcode {
+      label = "Task Barcode";
+   }
+   field AircraftRef.AircraftDesc {
+      label = "Aircraft";
+   }
+   field TaskPartRef.RemovalReasonCode {
+      label = "Removal Reason";
+   }
+   field TaskPartRef.RemovedDate;
+   field PartSerialRef.OperationalCondition;
+   field PartAvailabilityControl {
+      editable = [false];
+   }
+   field LocationNo;
+   field LocationDescription;
+   @DynamicComponentDependency PDMCON
+   field EngPartRef.PartClass {
+      label = "SOS Part";
+      editable = [false];
+   }
+   field IsMainMatLineConnected {
+      label = "Material Requisition Line ";
+      size = Medium;
+      editable = [false];
+   }
+   field AvExeTaskRef.AircraftWpId {
+      label = "Work Package No";
+   }
+   @DynamicComponentDependency CROMFG
+   field IncludedInCro;
+
+   field LotBatchNoRef {
+      editable = [false];
+   }
+   field ConfigurationIdRef {
+      editable = [false];
+   }
+   field MtrlOrderNoRef {
+      editable = [false];
+
+   }
+   field MtrlOrderLineNoRef {
+      editable = [false];
+   }
+   field UnitOfMeasure {
+      editable = [false];
+   }
+   field AcquisitionValue {
+      editable = [false];
+   }
+   field DimensionQuality {
+      editable = [false];
+   }
+   field PartOwnership {
+      editable = [false];
+   }
+
+   exclude RepairPart, PartDescription, CondCodeDescription, OwnerName, TaskSeq, PartSerialCommand, PrintTagReportCommand;
+
+   fieldorder = AvExeTaskRef.AircraftWpId, TaskReturnLineSeq, AvExeTaskRef, AvExeTaskRef.Barcode, SiteRef, InventoryPartTaskReturnLovRef, SerialNo, LotBatchNoRef, AircraftRef.AircraftDesc,
+   TaskPartRef.RemovalReasonCode, TaskPartRef.RemovedDate, ConditionCodeRef, PartSerialRef.OperationalCondition, PartAvailabilityControl, ConfigurationIdRef, QtyToReturn, QuantityToReturn, QtyReturned,
+   LocationNo, LocationDescription, UnitOfMeasure, EngPartRef.PartClass, IncludedInCro, MainMatLine, MtrlOrderNoRef, MtrlOrderLineNoRef, Owner, PartOwnership, InventoryValue, TotalValue, AcquisitionValue,
+   DimensionQuality, TypeDesignation;
+
+   commandgroup CommandGroupCmdGroup {
+      command MovetoServiceableLocationCommand;
+      command MovetoUnserviceableLocationCommand;
+      @DynamicComponentDependency PURCH
+      command ReturnLoanPartToSupplierCommand;
+      @DynamicComponentDependency PURCH
+      command ReceiptInfoCommand;
+      command CreateRepairMaterialCommand;
+      command MatRequisitionLineCommand;
+   }
+   commandgroup CommandGroup2CmdGroup {
+      commandgroup PartInfoCmdGroup {
+         label = "Part Information";
+         command InventoryPartinStockCommand;
+         command InventoryPartAvailabilityPlaCommand;
+         command SupplierperPartCommand;
+      }
+   }
+}
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

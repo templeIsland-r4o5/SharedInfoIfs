@@ -1,0 +1,29 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Kanban View of all the task assignments assigned to the user.</DescriptiveText>
+    <LastModified>1/15/25, 1:24:27 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>My_Assignment_Navigation</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_My_Assignment_Navigation_First_Lobby</Name>
+    <ID>fc1a1229-d79c-46a1-a514-54880743c1d0</ID>
+    <WebUrl>page/FlmHmTechnicianMyAssignments/MyAssignmentsPage
+</WebUrl>
+    <ColorStyle>OK</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>MY ASSIGNMENT 
+BOARD</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>19.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

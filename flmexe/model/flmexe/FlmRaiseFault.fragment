@@ -1,0 +1,1747 @@
+ --------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+-- 250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+-- 250214  CAARLK  AD-14847, Added CreateTaskSignOffRequirement action and modified RaiseFault command.
+--  241216  SRLALK  AD- 15565 Reduce character limit to 200 in Description field in Raise Fault and Edit Fault
+-- 241206  BACHLK  AD-14743, Modified fetch method for FlightId.
+-- 241202  BACHLK  AD-14733, Added implementation to Raise Non Routine from Hangar Maintenance Supervisor lobby page.
+-- 241128  VAALLK  AD-14731, Added implementation to Raise Non Routine from Hangar Maintenance Technician lobby page.
+-- 241128  SILILK  AD-15620, Modified PreScheduledHour validation to appear OK button without outside click
+-- 241121  WEDILK  AD-14729, Added implementation to Raise Non Routine in Aircraft Turn Details and LOBBY pages
+-- 241126  OSNALK  AD-15711, Remove enumerationtype = Standard from enumeration in FLM and FLMEXE
+-- 241118  VAALLK  AD-14724, Added implementation to add labour to raised non-routine.
+-- 241118  BACHLK  AD-14727, Added Raise a Non Routine
+-- 241106  ALNILK  AD-15418, Added ValidateAndFormatHours and Modified LaborSkillGroup, RaiseFaultVirtual
+-- 241104  SILILK  AD-14828, Modified RaiseFaultVirtual with adding New fields.
+-- 241102  OSNALK  AD-14257, Refactor the code to use structures
+-- 241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+-- 240823  CAARLK  AD-13990, Added TaskAltId to the RaiseFaultResponse structure.
+-- 240722  RWELLK  AD-13779, Make logbook reference optional
+-- 240610  LAHNLK  AD-12996, removed RaiseFault action (plsvc)
+-- 240610  LAHNLK  AD-12996, set RaiseFaultService action to call when completing a raise fault
+-- 240320  WAISLK  AD-12446, modified displaytimezone property value in ReferenceAvFlightSelector
+-- 240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+-- 231123  majslk  AD-11884, Added lovswitch to FaultSourceCodeRef in RaiseFaultGroup
+-- 230601  majslk  AD-9575, Modified Raise Fault work flow
+-- 220712  DUWJLK  AD-7995, Removed AvExeTaskRef.AircraftWpId parameter from RaiseFault command and removed parameter AircraftWpId from RaiseFault action
+-- 220711  DUWJLK  AD-7995, Removed PhaseofFlightCode, FaultCode FoundOnId from null checking when RaiseFault command enabled and removed required = [true] command  from  AircraftFlightRef, PhaseofFlightCode  lov and FaultCode field in RaiseFaultGroup, also removed required = [true] command from PhaseOfFlightCode ,FaultCode and FoundOnId attribute in RaiseFaultVirtual
+-- 220602  majslk  AD-7000, Removed Duration field from AvFlightQuery.
+-- 220520  SPATLK  AD-7529, Added Mandortoy check for Raise fault client and Projection level.
+-- 220513  KAWJLK  AD-6822, Remove filter from AvFaultSourceSet.
+-- 211118  ASIGLK  AD-5002, AircraftTypeCode attribute change to AssemblyTypeCode in entire file(AvAircraftSubSystem, RaiseFaultGroup,AircraftLov, AvFlightQuery).
+--  210909  dildlk  AD-2392, Modified field max legnth values for fault code, description and logbook reference
+-- 210907  DILDLK  AD-2120, Added required for faultCode.
+-- 210323  LAHNLK  AD-1259, modified inorder to navigate from lobby page
+-- 210330  KAWJLK  AD-1256, Modified.
+-- 210323  LAHNLK  AD-1256, Created.
+-------------------------------------------------------------------------------------
+fragment FlmRaiseFault;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Raise fault assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment PanelLovSelector;
+include fragment ZoneLovSelector;
+include fragment FlmPanelTasks;
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@Overtake
+selector ReferenceAircraftLovSelector for AircraftLov {
+   label = "";
+   static AircraftMob;
+   static Manufacturer;
+   static CapabilityCode;
+}
+selector AvFaultSourceNewSelector for AvFaultSource {
+   label = "";
+   orderby = FaultSourceCode;
+   static FaultSourceCode;
+   static FaultSourceDesc;
+}
+@Overtake
+selector ReferenceAvFlightSelector for AvFlightQuery {
+   label = "";
+   orderby = ShedArrivalDateTime asc;
+   static LegNo {
+      label = "Flight";
+   }
+   badge Objstate {
+      editable = [false];
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary2 = [Objstate = "Planned"];
+      emphasis Primary = [Objstate = "Out"];
+      emphasis Complementary7 = [Objstate = "Off"];
+      emphasis Complementary3 = [Objstate = "In"];
+      emphasis Warning = [Objstate = "On"];
+      emphasis Neutral = [Objstate = "Canceled"];
+      emphasis Complementary9 = [Objstate = "Completed"];
+   }
+   static AvAirportRef.IataCode {
+      label = "Arrival Airport";
+   }
+   static OutboundStation {
+      label = "Departure Airport";
+   }
+   field ShedArrivalDateTime {
+      label = "Arrival Time";
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+}
+
+selector AircraftSubSystemSelector for AvAircraftSubSystem {
+   label = "";
+   orderby = SubSystemCode;
+   static SubSystemName;
+   static SubSystemCode;
+   static AssemblyTypeCode;
+}
+
+@Override
+selector ReferenceAvLogbookTypeSelector for AvLogbookType {
+   label = "";
+   orderby = LogbookTypeCode;
+   static LogbookTypeCode;
+   static LogbookTypeDesc;
+}
+
+selector ReferenceLaborSkillLovSelector for ResourceLov {
+   label = "";
+   static ResourceId;
+   static Description;
+   static ResourceType;
+}
+
+@Overtake
+selector ReferenceAvAirportForUserSelector for FndUser {
+   label = "";
+   orderby = Description;
+   static Description;
+   static Identity;
+}
+
+@Overtake
+selector AvExeTaskSelector for AvExeTask {
+   label = "";
+   orderby = Barcode;
+   static Barcode;
+   static Description {
+      label = "Name";
+   }
+}
+
+@Overtake
+selector WorkPackageSelector for AvAircraftWorkPackage {
+   label = "";
+   orderby = Barcode;
+   static Barcode {
+      label = "Work Package Barcode";
+   }
+   static WorkPackageName;
+}
+
+@Overtake
+selector AvMeasurementTypeFaultDetailsSelector for AvMeasurementType {
+   static MeasurementTypeCode;
+   static MeasurementCategoryCode;
+   static MeasurementTypeDesc;
+}
+
+
+@Overtake
+selector ReferenceMaintenancePrioritySelector for MaintenancePriority {
+   label = "";
+   orderby = PriorityId;
+   static PriorityId;
+   static Description;
+}
+selector MaintenanceLocationSelector for AvMaintenanceLocation {
+   static LocationCode;
+   static LocationTypeCode;
+}
+
+assistant RaiseFaultAssistant using RaiseFaultVirtualSet {
+   label = "${Title}";
+   input this;
+   output(FaultId);
+
+   setup SetDefaultValues {
+      variable DefSource Text;
+      variable DefWorkPackageId Number;
+      execute {
+         set Source = "${DefSource}";
+         set AircraftWpId = DefWorkPackageId;
+         if[Source = "LOBBY"] {
+            set Title = "Raise Logbook Fault" {
+               translatable = true;
+            }
+         }
+         if[Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY"] {
+            set Title = "Raise Non Routine" {
+               translatable = true;
+            }
+         }
+      }
+   }
+
+   init command {
+      execute {
+         call FetchDefaults(Source, AircraftWpId, FoundOnId, AircraftId) into FetchDefaultStruct;
+         set CurrentUser = FetchDefaultStruct.CurrentUser;
+         set CurrentUserAirportTimeZone = FetchDefaultStruct.CurrentUserAirportTimeZone;
+         set FoundSource = FetchDefaultStruct.FoundSource;
+         set FaultSourceCode = FetchDefaultStruct.FaultSourceCode;
+         set SubSystemId = FetchDefaultStruct.SubSystemId;
+         set PreScheduledFaultHours = FetchDefaultStruct.SchedHours;
+         set RaiseFaultOption = FetchDefaultStruct.RaiseFaultOption;
+         set FaultSeverityCode = FetchDefaultStruct.FaultSeverityCode;
+         set FoundOnDate = FetchDefaultStruct.FoundOnDate;
+         set ResourceSeq = FetchDefaultStruct.ResourceSeq;
+         set AircraftId = FetchDefaultStruct.AircraftId;
+         set RaiseFaultActionOption = FetchDefaultStruct.RaiseFaultActionOption;
+         set LocationCode = FetchDefaultStruct.LocationCode;
+         set EndTime = FetchDefaultStruct.FoundOnDate;
+         set SensitivityForFailedSys = null;
+
+      }
+   }
+   singlestep {
+      markdowntext {
+         visible = [SensitivityForFailedSys != null];
+         text = "${SensitivityForFailedSys} Sensitive - Refer to MPM for Details.";
+         emphasis Warning = [true];
+      }
+
+      group RaiseFaultOptionsGroup {
+         visible = [Source != "TASK" and Source != "HMLOBBY" and Source != "HMSLOBBY" and Source != "HMCLLOBBY"];
+      }
+      group RaiseFaultActionOptionsGroup;
+      group FaultRegistrationGroup;
+      group LaborRequirementGroup {
+         visible = [(RaiseFaultOption = "NonRoutine" and RaiseFaultActionOption = "RaiseAndOpen") or(RaiseFaultOption = "LogbookFault" and FoundOnId != null and RaiseFaultActionOption = "RaiseAndOpen")];
+      }
+      group CorrectiveActionGroup {
+         visible = [(RaiseFaultOption = "NonRoutine" and RaiseFaultActionOption = "RaiseAndClose") or(RaiseFaultOption = "LogbookFault" and RaiseFaultActionOption = "RaiseAndClose")];
+      }
+      group FaultDetailGroup {
+         collapsed = [true];
+      }
+      list FaultMeasurementsList(MeasurementTypeArray) {
+         visible = [RaiseFaultOption = "NonRoutine" or(RaiseFaultOption = "LogbookFault" and FoundOnId != null)];
+         collapsed = [component.FaultMeasurementsList.IsEmpty];
+      }
+      group RaiseNonRoutineZonePanel;
+
+   }
+   command RaiseFault;
+   command Cancel {
+      enabled = [Source = "FLIGHT" or Source = "TASK"];
+   }
+   command CancelBack;
+
+}
+
+assistant AddFaultMeasurementAssistant for MeasurementVirtual {
+   label = "Add Measurement";
+   savemode = OnLostFocus;
+
+   input(HeaderObjkey, RaiseFaultActionOption);
+   output(MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementOrder, MeasurementText, MeasurementBoolean, MeasurementValue, MeasurementType);
+
+   singlestep {
+      group AddFaultMeasurementGroup;
+   }
+   command AddMeasurement {
+      enabled = [(RaiseFaultActionOption = "RaiseAndOpen" and MeasurementTypeCodeRef != null) or
+      (RaiseFaultActionOption = "RaiseAndClose" and MeasurementTypeCodeRef != null and
+      ((MeasurementTypeCodeRef.MeasurementCategoryCode = "CH" and MeasurementValueRef != null) or
+      (MeasurementTypeCodeRef.MeasurementCategoryCode = "ME" and MeasurementQty != null) or
+      (MeasurementTypeCodeRef.MeasurementCategoryCode = "CME" and MeasurementDateTime != null) or
+      (MeasurementTypeCodeRef.MeasurementCategoryCode = "TEXT" and MeasurementText != null) or
+      (MeasurementTypeCodeRef.MeasurementCategoryCode = "CHK")))];
+   }
+}
+
+command  CancelBack for RaiseFaultVirtual {
+   label = "Cancel";
+   enabled = [Source = "LOBBY" or Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY"];
+   execute {
+      navigate back;
+   }
+}
+command  RaiseFault for RaiseFaultVirtual {
+   label = "OK";
+   enabled = [AircraftId != null and SubSystemId != null and FaultSourceCode != null and Description != null and(LogbookTypeCode != null or RaiseFaultOption = "NonRoutine") and(LogbookReference != null or RaiseFaultOption = "NonRoutine") and((ResourceSeq != null and PreScheduledFaultHours != null and(FoundOnId != null or AircraftWpId != null)) or(RaiseFaultOption = "LogbookFault" and Source = "LOBBY")) and FaultSeverityCode != null and FoundOnDate != null and CurrentUser != null and((CorrectiveAction != null and StartTime != null and EndTime != null and ActualHours != null and RaiseFaultActionOption = "RaiseAndClose") or RaiseFaultActionOption = "RaiseAndOpen")];
+   variable RaiseFaultResponse {
+      type = Structure(RaiseFaultResponse);
+   }
+   variable RequestInfo {
+      type = Structure(FaultMtxRequestData);
+   }
+   variable FoundOnAltIdVar Text;
+   variable HasExistingInWorkWP Boolean;
+   variable SignResponse {
+      type = Structure(EsigResponseStructure);
+   }
+   variable FinishTaskInfo Structure(FinishTaskInfoStructure);
+   variable Duration Number;
+   variable KeyRef Text;
+   variable LuName Text;
+   variable IsValidContractRule Boolean;
+   execute {
+      set IsRoutine = false;
+      if [FoundSource = "WorkPackage"] {
+         set FoundOnId = AvAircraftWorkPackageRef.AircraftWorkPackageId;
+         set FoundOnAltIdVar = AvAircraftWorkPackageRef.ExternalId;
+      }
+      if[FoundSource = "Task"] {
+         set FoundOnId = AvExeTaskRef.TaskSeq;
+         set FoundOnAltIdVar = AvExeTaskRef.ExternalId;
+      }
+      if[RaiseFaultOption = "LogbookFault"] {
+         set FoundOnId = AircraftFlightRef.FlightId;
+         set FlightId = AircraftFlightRef.FlightId;
+         if[FoundOnId = null] {
+            set ResourceSeq = null;
+            set ResourceId = null;
+         }
+      }
+      call ValidateFoundOnDate(FoundOnDate, AircraftWpId);
+      call FetchMaintenanceRequestInfo(AircraftId, SubSystemId, FoundOnDate) into RequestInfo;
+      if [FoundOnId != null and PreScheduledFaultHours != null] {
+         call ValidateAndFormatHours(PreScheduledFaultHours, "Scheduled Hours") into ScheduledFaultHours;
+      }
+      set DefaultResourceSeq = ResourceSeq;
+      if[RaiseFaultActionOption = "RaiseAndClose"] {
+         call CheckStartEndDates(StartTime, EndTime) into ActualHours;
+         call ConvertActualHours(ActualHours, "Actual Hours") into Duration;
+         set ScheduledFaultHours = "0";
+      }
+      call FaultProjectionService(AircraftId, SubSystemId, FaultCode, FaultSourceCode, LogbookTypeCode, Source, FoundOnId, Description, PhaseOfFlightCode, FailureTypeCode, LogbookReference, FaultSeverityCode, FoundSource, CurrentUser, RequestInfo.UtcFoundOnDate, FlightSafetyImpact, EtopsSignificant, FlightId, AvExeTaskRef.TaskSeq, RequestInfo.ConfigSlotAltId, RequestInfo.AircraftAltId, FoundOnAltIdVar, AircraftWpId, IsRoutine, ResourceSeq, ScheduledFaultHours, ResourceId, PriorityId, Objkey, DefaultResourceSeq, CertificationRequired, InspectionRequired, RaiseFaultOption, false, LongDescription, RaiseFaultActionOption, StartTime, EndTime, Duration, LocationCode, AcZoneSeq, AcPanelSeq) into RaiseFaultResponse;
+      @DynamicComponentDependency ADCON
+      call ValidateContractRule(RaiseFaultResponse.TaskSeq) into IsValidContractRule;
+      if [IsValidContractRule = false] {
+         info("The contract line of the parent task will not be applied to this non-routine you are raising as it excludes this non-routine's failed system.");
+      }
+      if [FoundOnId != null] {
+         call CreateTaskSignOffRequirement(EtopsSignificant, FlightSafetyImpact, RaiseFaultResponse.TaskSeq);
+      }
+      set FaultId = RaiseFaultResponse.FaultId;
+      set NewTaskSeq = RaiseFaultResponse.TaskSeq;
+      if [AircraftWpId = null] {
+         set AircraftWpId = RaiseFaultResponse.AircraftWorkPackageId;
+      }
+      set ExecutionInstanceSeq = RaiseFaultResponse.ExecTaskResSeq;
+      if[RaiseFaultActionOption = "RaiseAndClose"] {
+         call StartTask(NewTaskSeq);
+      }
+      call GenerateKeyRef(NewTaskSeq) into KeyRef;
+      set LuName = "AvExeTask";
+
+      copy this into FinishTaskInfo;
+      set FinishTaskInfo.FaultId = FaultId;
+      set FinishTaskInfo.AircraftWpId = AircraftWpId;
+      set FinishTaskInfo.AircraftId = AircraftId;
+      set FinishTaskInfo.AssignmentStatus = "ASSIGNED";
+      set FinishTaskInfo.TaskSeq = NewTaskSeq;
+      set FinishTaskInfo.TaskCardOption = "RaiseAndClose";
+      set FinishTaskInfo.LatestAction = CorrectiveAction;
+      set FinishTaskInfo.CloseFaultAssignActualHours = ActualHours;
+      set FinishTaskInfo.CloseFaultAssignStartTime = StartTime;
+      set FinishTaskInfo.CloseFaultAssignStopTime = EndTime;
+      set FinishTaskInfo.Source = "Finish";
+      set FinishTaskInfo.KeyRef = KeyRef;
+      set FinishTaskInfo.LuName = LuName;
+      set FinishTaskInfo.ExecutionInstanceSeq = ExecutionInstanceSeq;
+      set FinishTaskInfo.Objstate = "WORKSTARTED";
+
+      if [Remark != "Certifier"] {
+         set FinishTaskInfo.CertifyWorkPerformed = false;
+      }
+      if [Source = "TASK"] {
+         set FinishTaskInfo.NavigatedFrom = "Task";
+      }
+      if [Source = "FLIGHT"] {
+         set FinishTaskInfo.NavigatedFrom = "Flight";
+      }
+      if[Source = "LOBBY" and FoundOnId != null] {
+         if[RaiseFaultActionOption = "RaiseAndOpen"] {
+            navigate "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FoundOnId]";
+         }
+         else {
+            navigate "/assistant/FlmTaskDetail/RecordWorkAssistant?$action=SetDefaultValues{DefTaskCardOption:'RaiseAndClose',DefFaultId:'${FaultId}',DefAircraftId:'${AircraftId}',DefAircraftWpId:'${AircraftWpId}',DefAction:'${CorrectiveAction}',DefTaskSeq:'${NewTaskSeq}',DefActualHours:'${ActualHours}',DefStartTime:'${StartTime}',DefEndTime:'${EndTime}',DefSource:'Finish',DefAssignmentStatus:'ASSIGNED',DefExecutionInstanceSeq:'${ExecutionInstanceSeq}',DefKeyRef:'${KeyRef}',DefLuName:'${LuName}',DefObjstate: 'WORKSTARTED'}";
+         }
+      }
+
+      if[Source = "LOBBY" and FoundOnId = null] {
+         navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+      }
+
+      if[Source = "FLIGHT"] {
+         if[RaiseFaultActionOption = "RaiseAndOpen"] {
+            navigate back;
+         }
+         else {
+            assistant FlmTaskCard.RecordWorkAssistant(FinishTaskInfo) {
+               when CANCEL {
+                  exit;
+               }
+               when OK {
+                  navigate "page/FlmTaskDetail/MyWorkPage;$filter=TaskSeq eq $[NewTaskSeq]";
+               }
+            }
+         }
+      }
+
+      if[Source = "TASK" and FoundOnId != null] {
+         if[RaiseFaultActionOption = "RaiseAndOpen"] {
+            navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+         }
+         else {
+            assistant RecordWorkAssistant(FinishTaskInfo) {
+               when CANCEL {
+                  exit;
+               }
+            }
+         }
+      }
+
+      if[Source = "LOBBY" and RaiseFaultOption = "NonRoutine"] {
+         if[RaiseFaultActionOption = "RaiseAndOpen"] {
+            confirm("View the Non-Routine raised for Work Package: ${AvAircraftWorkPackageRef.Barcode}?") {
+               when OK {
+                  navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+               }
+               when CANCEL {
+                  navigate "lobby/32800a3e-6d9a-40a6-8ed5-d71f510ada05";
+               }
+            }
+         }
+         else {
+            navigate "/assistant/FlmTaskDetail/RecordWorkAssistant?$action=SetDefaultValues{DefTaskCardOption:'RaiseAndClose',DefFaultId:'${FaultId}',DefAircraftId:'${AircraftId}',DefAircraftWpId:'${AircraftWpId}',DefAction:'${CorrectiveAction}',DefTaskSeq:'${NewTaskSeq}',DefActualHours:'${ActualHours}',DefStartTime:'${StartTime}',DefEndTime:'${EndTime}',DefSource:'Finish',DefAssignmentStatus:'ASSIGNED',DefExecutionInstanceSeq:'${ExecutionInstanceSeq}',DefKeyRef:'${KeyRef}',DefLuName:'${LuName}',DefObjstate: 'WORKSTARTED'}";
+         }
+
+      }
+      if[Source = "HMLOBBY" or Source = "HMSLOBBY"  or Source = "HMCLLOBBY"] {
+         if[RaiseFaultActionOption = "RaiseAndOpen"] {
+            confirm("View the Non-Routine raised for Work Package: ${AvAircraftWorkPackageRef.Barcode}?") {
+               when OK {
+                  navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+               }
+               when CANCEL {
+                  if[Source = "HMLOBBY"] {
+                     navigate "lobby/60c9811f-595a-4025-a820-69e01c6e31b3?pageParams=WorkPackageId:$[AircraftWpId]";
+                  }
+                  if[Source = "HMCLLOBBY"] {
+                     navigate "lobby/825ea048-87c2-455f-807e-ed6ef203631d?pageParams=WorkPackageId:$[AircraftWpId]";
+                  }
+                  if[Source = "HMSLOBBY"] {
+                     navigate "lobby/c894acb6-caa1-4c76-883f-907712bc7097?pageParams=WorkPackageId:$[AircraftWpId]";
+                  }
+               }
+            }
+         }
+         else {
+            navigate "/assistant/FlmTaskDetail/RecordWorkAssistant?$action=SetDefaultValues{DefTaskCardOption:'RaiseAndClose',DefFaultId:'${FaultId}',DefAircraftId:'${AircraftId}',DefAircraftWpId:'${AircraftWpId}',DefAction:'${CorrectiveAction}',DefTaskSeq:'${NewTaskSeq}',DefActualHours:'${ActualHours}',DefStartTime:'${StartTime}',DefEndTime:'${EndTime}',DefSource:'Finish',DefAssignmentStatus:'ASSIGNED',DefExecutionInstanceSeq:'${ExecutionInstanceSeq}',DefKeyRef:'${KeyRef}',DefLuName:'${LuName}',DefObjstate: 'WORKSTARTED'}";
+         }
+      }
+      if [Source = "FLIGHT"] {
+         exit OK;
+      }
+   }
+}
+command AddMeasurement for MeasurementVirtual {
+   label = "OK";
+   execute {
+      exit OK;
+   }
+}
+
+command AddFaultMeasurementCommand for RaiseFaultVirtual {
+   label = "Add Measurement";
+   mode = Global;
+   variable NewMeasurementTypeCode Text;
+   variable NewMeasTypeValueCode Text;
+   variable NewMeasurementQty Number;
+   variable NewMeasurementDateTime Timestamp;
+   variable NewMeasurementOrder Number;
+   variable NewMeasurementText Text;
+   variable NewMeasurementBoolean Boolean;
+   variable NewMeasurementValue Text;
+   variable NewMeasurementType Text;
+
+   execute {
+      assistant AddFaultMeasurementAssistant(Objkey, RaiseFaultActionOption)into(NewMeasurementTypeCode, NewMeasTypeValueCode, NewMeasurementQty, NewMeasurementDateTime, NewMeasurementOrder, NewMeasurementText, NewMeasurementBoolean, NewMeasurementValue, NewMeasurementType) {
+         when OK {
+            call AddFaultMeasurement(Objkey, NewMeasurementTypeCode, NewMeasTypeValueCode, NewMeasurementQty, NewMeasurementDateTime, NewMeasurementText, NewMeasurementBoolean);
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+group RaiseFaultOptionsGroup for RaiseFaultVirtual {
+   label = "";
+   radiogroup RaiseFaultOption {
+      showlabel = false;
+      size = Large;
+      validate command {
+         execute {
+            if[RaiseFaultOption = "NonRoutine"] {
+               set FaultSourceCode = "MECH";
+               set Title = "Raise Non Routine" {
+                  translatable = true;
+               }
+            }
+            if[RaiseFaultOption = "LogbookFault"] {
+               set Title = "Raise Logbook Fault" {
+                  translatable = true;
+               }
+            }
+         }
+      }
+   }
+}
+group RaiseFaultActionOptionsGroup for RaiseFaultVirtual {
+   label = "${Title}";
+   radiogroup RaiseFaultActionOption {
+      showlabel = false;
+      size = Large;
+      editable = [AvAircraftWorkPackageRef.Objstate = "InWork" or AircraftWpId = null];
+      validate command {
+         execute {
+            if[RaiseFaultActionOption = "RaiseAndClose"] {
+               call GetUserTaskSignOffPermission(CurrentUser) into TaskSignOffPermission;
+               call GetESigPermission(CurrentUser) into ESigPermission;
+               if[TaskSignOffPermission = "No"] {
+                  error("Missing task sign-off permission. Contact system administrator.");
+                  set RaiseFaultActionOption = "RaiseAndOpen";
+               }
+               set FlightSafetyImpact = false;
+               set EtopsSignificant = false;
+            }
+            if[Source = "LOBBY"] {
+               set FoundOnId = null;
+               set AircraftWpId = null;
+            }
+         }
+      }
+   }
+}
+group FaultDetailGroup for RaiseFaultVirtual {
+   label = "Fault Details";
+   lov FailureTypeCodeRef with ReferenceAvFailureTypeSelector {
+      label = "Failure Type";
+      size = Large;
+      validate command {
+         execute {
+            call AddDefaultFaultMeasurement(Objkey, FailureTypeCodeRef.FailureTypeCode);
+         }
+      }
+   }
+   lov PriorityLovRef with ReferenceMaintenancePrioritySelector {
+      label = "Priority";
+      size = Large;
+   }
+   field FlightSafetyImpact {
+      label = "Flight Safety Impact";
+      editable = [RaiseFaultActionOption = "RaiseAndOpen"];
+      size = Large;
+      required = [true];
+   }
+   field EtopsSignificant {
+      label = "ETOPS Significant";
+      editable = [RaiseFaultActionOption = "RaiseAndOpen"];
+      size = Large;
+      required = [true];
+   }
+}
+group FaultRegistrationGroup for RaiseFaultVirtual {
+   label = "Fault Registration";
+   lov AircraftRef with ReferenceAircraftLovSelector {
+      label = "Aircraft";
+      size = Large;
+      hidekey = [true];
+      searchable = true;
+      search = AircraftRef.AircraftMob, AircraftRef.Manufacturer;
+      description = AircraftRef.AircraftMob;
+      required = [true];
+      editable = [Source = "LOBBY"];
+      validate command {
+         variable SensitivityResponse Structure(SensitivityResponseStructure);
+         execute {
+            set FoundOnId = null;
+            set AircraftWpId = null;
+            call GetAircraftAltId(AircraftRef.AircraftId) into AircraftAltId;
+            if [AircraftSubSystemLovRef != null and AircraftAltId != null] {
+               call GetFailedSystemSensitivity(AircraftSubSystemLovRef.AltId, AircraftAltId) into SensitivityResponse;
+               if [SensitivityResponse.UIFormattedSensitivities != null] {
+                  set SensitivityForFailedSys = SensitivityResponse.UIFormattedSensitivities;
+               }
+               else {
+                  set SensitivityForFailedSys = null;
+               }
+            }
+            else {
+               set SensitivityForFailedSys = null;
+            }
+         }
+      }
+   }
+   radiogroup FoundSource {
+      label = "Found During";
+      size = Medium;
+      visible = [RaiseFaultOption = "NonRoutine"];
+   }
+   field FoundOnId {
+      label = "Task";
+      visible = [FoundSource = "Task" and RaiseFaultOption = "NonRoutine"];
+      required = [true];
+      size = Medium;
+      searchable = true;
+      lovswitch {
+         when [not(Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY")] {
+            lov AvExeTaskRef with AvExeTaskSelector using GetTasksList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvExeTaskRef.Description;
+               search = AvExeTaskRef.Barcode, AvExeTaskRef.Description;
+               validate command {
+                  execute {
+                     set AircraftWpId = AvExeTaskRef.AircraftWpId;
+                     call GetWpLocationCode(AircraftWpId) into LocationCode;
+                  }
+               }
+            }
+         }
+         when [Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY"] {
+            lov AvExeTaskRef with AvExeTaskSelector using GetHangarTasksList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvExeTaskRef.Description;
+               search = AvExeTaskRef.Barcode, AvExeTaskRef.Description;
+               validate command {
+                  execute {
+                     set AircraftWpId = AvExeTaskRef.AircraftWpId;
+                     call GetWpLocationCode(AircraftWpId) into LocationCode;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   field AircraftWpId {
+      label = "Work Package";
+      visible = [FoundSource = "WorkPackage" and RaiseFaultOption = "NonRoutine" and RaiseFaultActionOption = "RaiseAndOpen"];
+      required = [true];
+      size = Medium;
+      searchable = true;
+      lovswitch {
+         when [not(Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY")] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector using GetWorkPackageList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvAircraftWorkPackageRef.Barcode;
+               search = AvAircraftWorkPackageRef.Barcode, AvAircraftWorkPackageRef.WorkPackageName;
+            }
+         }
+         when [Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY"] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector using GetHangarWorkPackageList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvAircraftWorkPackageRef.Barcode;
+               search = AvAircraftWorkPackageRef.Barcode, AvAircraftWorkPackageRef.WorkPackageName;
+            }
+         }
+      }
+   }
+   field AircraftWpId {
+      label = "Work Package";
+      visible = [FoundSource = "WorkPackage" and RaiseFaultOption = "NonRoutine" and RaiseFaultActionOption = "RaiseAndClose"];
+      required = [true];
+      size = Medium;
+      searchable = true;
+      lovswitch {
+         when [not(Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY")] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector using GetInWorkLineWpList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvAircraftWorkPackageRef.Barcode;
+               search = AvAircraftWorkPackageRef.Barcode, AvAircraftWorkPackageRef.WorkPackageName;
+               validate command {
+                  execute {
+                     call GetWpLocationCode(AircraftWpId) into LocationCode;
+                  }
+               }
+            }
+         }
+         when [Source = "HMLOBBY" or Source = "HMSLOBBY" or Source = "HMCLLOBBY"] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector using GetInWorkHangarWpList(AircraftRef.AircraftId) {
+               hidekey = [true];
+               description = AvAircraftWorkPackageRef.Barcode;
+               search = AvAircraftWorkPackageRef.Barcode, AvAircraftWorkPackageRef.WorkPackageName;
+               validate command {
+                  execute {
+                     call GetWpLocationCode(AircraftWpId) into LocationCode;
+                  }
+               }
+            }
+         }
+      }
+   }
+   field FoundOnId {
+      label = "Found During Flight";
+      visible = [Source != "TASK" and RaiseFaultOption = "LogbookFault"];
+      editable = [Source = "LOBBY"];
+      required = [Source = "LOBBY" and RaiseFaultOption = "LogbookFault" and RaiseFaultActionOption = "RaiseAndClose"];
+
+      size = Large;
+      searchable = true;
+      lovswitch {
+         when [RaiseFaultActionOption = "RaiseAndClose"] {
+            lov AircraftFlightRef with ReferenceAvFlightSelector using GetInWorkWpFlightList(AircraftId) {
+               hidekey = [true];
+               description = AircraftFlightRef.LegNo;
+               search = AircraftFlightRef.LegNo;
+               validate command {
+                  execute {
+                     call GetLocationCode(FoundOnId) into LocationCode;
+                  }
+               }
+            }
+         }
+         when [RaiseFaultActionOption = "RaiseAndOpen"] {
+            lov AircraftFlightRef with ReferenceAvFlightSelector using GetFlightList(AircraftId) {
+               hidekey = [true];
+               description = AircraftFlightRef.LegNo;
+               search = AircraftFlightRef.LegNo;
+            }
+         }
+      }
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+      size = FullWidth;
+      required = [true];
+      maxlength = 200;
+   }
+   lov AircraftSubSystemLovRef with AircraftSubSystemSelector using GetAircraftSubSystemList(AircraftRef.AssemblyTypeCode) {
+      label = "Failed System";
+      hidekey = [true];
+      searchable = true;
+      search = AircraftSubSystemLovRef.SubSystemCode, AircraftSubSystemLovRef.SubSystemName;
+      description = AircraftSubSystemLovRef.SubSystemCode;
+      required = [true];
+      size = Large;
+      validate command {
+         variable SensitivityResponse Structure(SensitivityResponseStructure);
+         execute {
+            if [AircraftSubSystemLovRef != null and AircraftAltId != null] {
+               call GetFailedSystemSensitivity(AircraftSubSystemLovRef.AltId, AircraftAltId) into SensitivityResponse;
+               if [SensitivityResponse.UIFormattedSensitivities != null] {
+                  set SensitivityForFailedSys = SensitivityResponse.UIFormattedSensitivities;
+               }
+               else {
+                  set SensitivityForFailedSys = null;
+               }
+            }
+            else {
+               set SensitivityForFailedSys = null;
+            }
+
+         }
+      }
+   }
+   lov FaultSeverityRef with ReferenceAvFaultSeveritySelector {
+      label = "Fault Severity";
+      required = [true];
+      size = Large;
+   }
+   field LogbookReference {
+      label = "Logbook Reference";
+      size = Large;
+      required = [RaiseFaultOption = "LogbookFault"];
+      maxlength = 80;
+   }
+   lov LogbookTypeCodeRef with ReferenceAvLogbookTypeSelector {
+      label = "Logbook Type";
+      required = [RaiseFaultOption = "LogbookFault"];
+      size = Large;
+   }
+   lov FaultSourceCodeRef with ReferenceAvFaultSourceSelector {
+      label = "Fault Source";
+      size = Large;
+   }
+   field FoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Large;
+      required = [true];
+   }
+   lov AvAirportForUserRef with ReferenceAvAirportForUserSelector using GetAirportUserList {
+      label = "Found By";
+      hidekey = [true];
+      searchable = true;
+      required = [true];
+      search = AvAirportForUserRef.Identity;
+      description = AvAirportForUserRef.Identity;
+      size = Large;
+      validate command {
+         execute {
+            if[RaiseFaultActionOption = "RaiseAndClose"] {
+               call GetUserTaskSignOffPermission(CurrentUser) into TaskSignOffPermission;
+               call GetESigPermission(CurrentUser) into ESigPermission;
+               if[TaskSignOffPermission = "No"] {
+                  error("Missing task sign-off permission. Contact system administrator.");
+                  set RaiseFaultActionOption = "RaiseAndOpen";
+               }
+            }
+         }
+      }
+   }
+   lov PhaseOfFlightCodeRef with ReferenceAvPhaseOfFlightSelector {
+      label = "Phase of Flight";
+      visible = [Source != "TASK" and RaiseFaultOption = "LogbookFault"];
+      size = Large;
+   }
+   field FaultCode {
+      label = "Fault Code";
+      maxlength = 80;
+      size = Large;
+   }
+   field LongDescription {
+      label = "Description";
+      multiline = true;
+      size = FullWidth;
+      maxlength = 500;
+   }
+}
+
+group LaborRequirementGroup for RaiseFaultVirtual {
+   label = "Labor Requirement";
+   lov LaborSkillLovRef with ReferenceLaborSkillLovSelector {
+      label = "Labor Skill";
+      hidekey = [true];
+      searchable = true;
+      search = LaborSkillLovRef.ResourceId;
+      description = LaborSkillLovRef.ResourceId;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            if [ResourceSeq != null] {
+               set ResourceId = LaborSkillLovRef.ResourceId;
+            }
+         }
+
+      }
+   }
+   field PreScheduledFaultHours {
+      label = "Scheduled Hours (HH:MM)";
+      format = decimal;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            call ValidateAndFormatHours(PreScheduledFaultHours, "Scheduled Hours") into ScheduledFaultHours;
+         }
+      }
+   }
+   field CertificationRequired {
+      size = Large;
+      validate command {
+         execute {
+            if [CertificationRequired = false] {
+               set InspectionRequired = false;
+            }
+         }
+      }
+   }
+   field InspectionRequired {
+      size = Large;
+      editable = [CertificationRequired = true];
+   }
+}
+
+group RaiseNonRoutineZonePanel for RaiseFaultVirtual {
+   label = "Zone and Panels";
+   visible = [FoundOnId != null or RaiseFaultOption = "NonRoutine"];
+   lov AircraftTaskZoneLovRef with ZoneCodeSelector using AircraftZoneLovFilter(AircraftId, NULL) {
+      label = "Zone";
+      hidekey = [true];
+      searchable = true;
+      search = AircraftTaskZoneLovRef.ZoneCode;
+      description = AircraftTaskZoneLovRef.ZoneDescription;
+      size = Large;
+   }
+
+   lov AircraftTaskPanelLovRef with PanelCodeSelector using AircraftPanelLovFilter(AircraftId, NULL) {
+      label = "Panel";
+      hidekey = [true];
+      searchable = true;
+      search = AircraftTaskPanelLovRef.PanelCode;
+      description = AircraftTaskPanelLovRef.PanelDescription;
+      size = Large;
+
+   }
+}
+@Override
+list AvAircraftSubSystemLovList for AvAircraftSubSystem {
+   label = "";
+   static SubSystemName;
+   static SubSystemCode;
+   exclude SystemId;
+   exclude AssemblyTypeCode;
+   exclude SubSystemId;
+}
+
+@Override
+list AircraftLovLovList for AircraftLov {
+   label = "";
+   static AircraftId {
+      searchable = false;
+      columnvisible = [false];
+   }
+   static AircraftMob;
+   static Manufacturer;
+   static CapabilityCode;
+}
+
+@Override
+list LaborSkillLovList for ResourceLov {
+   label = "";
+   static ResourceSeq {
+      searchable = false;
+      columnvisible = [false];
+   }
+   static ResourceId;
+   static Description;
+   static ResourceType;
+}
+group CorrectiveActionGroup for RaiseFaultVirtual {
+   label = "Corrective Action";
+   field CorrectiveAction {
+      label = "Corrective Action";
+      multiline = true;
+      size = FullWidth;
+      maxlength = 500;
+      required = [true];
+   }
+   lov LaborSkillLovRef with ReferenceLaborSkillLovSelector {
+      label = "Labor Skill";
+      hidekey = [true];
+      searchable = true;
+      search = LaborSkillLovRef.ResourceId;
+      description = LaborSkillLovRef.ResourceId;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            if [ResourceSeq != null] {
+               set ResourceId = LaborSkillLovRef.ResourceId;
+            }
+         }
+      }
+   }
+   field StartTime {
+      label = "Start Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            call CheckStartEndDates(StartTime, EndTime) into ActualHours;
+         }
+      }
+   }
+   field EndTime {
+      label = "End Time";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            call CheckStartEndDates(StartTime, EndTime) into ActualHours;
+         }
+      }
+   }
+   field ActualHours {
+      label = "Actual Hours Spent(HH:MM)";
+      format = decimal;
+      required = [true];
+      size = Large;
+      validate command {
+         execute {
+            call ValidateActualHours(ActualHours, "Actual Hours") into ActualHours;
+         }
+      }
+   }
+   field LocationCode {
+      label = "Repair Location";
+      size = Large;
+      searchable = true;
+      editable = [Source = "FLIGHT" and AircraftWpId = null];
+      lovswitch {
+         when [not(Source = "HMLOBBY" or Source = "HMSLOBBY")] {
+            lov MaintenanceLocationRef with MaintenanceLocationSelector using GetLineMainLocList(AvAirportForUserRef.Identity) {
+               hidekey = [true];
+               description = MaintenanceLocationRef.LocationCode;
+               search = MaintenanceLocationRef.LocationCode, MaintenanceLocationRef.LocationTypeCode;
+            }
+         }
+         when [Source = "HMLOBBY" or Source = "HMSLOBBY"] {
+            lov MaintenanceLocationRef with MaintenanceLocationSelector using GetHangarMainLocList(AvAirportForUserRef.Identity) {
+               hidekey = [true];
+               description = MaintenanceLocationRef.LocationCode;
+               search = MaintenanceLocationRef.LocationCode, MaintenanceLocationRef.LocationTypeCode;
+            }
+         }
+      }
+   }
+}
+
+group AddFaultMeasurementGroup for MeasurementVirtual {
+   lov MeasurementTypeCodeRef with AvMeasurementTypeFaultDetailsSelector using GetMeasurementTypeCodeForFault(HeaderObjkey) {
+      label = "Measurement Type";
+      description = MeasurementTypeCodeRef.MeasurementTypeDesc;
+      required = [true];
+   }
+   lov MeasurementValueRef with ReferenceAvMeasurementValueSelector using GetMeasurementValueForFault(MeasurementTypeCodeRef.MeasurementTypeCode) {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CH"];
+      required = [RaiseFaultActionOption != "RaiseAndOpen"];
+   }
+   field MeasurementQty {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "ME"];
+      required = [RaiseFaultActionOption != "RaiseAndOpen"];
+   }
+   field MeasurementTypeCodeRef.EngineeringUnitCode {
+      label = "Units";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "ME"];
+      required = [RaiseFaultActionOption != "RaiseAndOpen"];
+   }
+   field MeasurementDateTime {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CME"];
+      required = [RaiseFaultActionOption != "RaiseAndOpen"];
+   }
+   field MeasurementText {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "TEXT"];
+      required = [RaiseFaultActionOption != "RaiseAndOpen"];
+   }
+   field MeasurementBoolean {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CHK"];
+      required = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CHK"];
+   }
+
+}
+
+list FaultMeasurementsList for MeasurementVirtual {
+   label = "Measurements";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [true];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   lov MeasurementTypeCodeRef with AvMeasurementTypeFaultDetailsSelector {
+      label = "Parameter";
+      editable = [False];
+      description = MeasurementTypeCodeRef.MeasurementTypeDesc;
+   }
+   field Value {
+      label = "Value";
+   }
+   command AddFaultMeasurementCommand {
+      label = "";
+      icon = "new";
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset RaiseFaultVirtualSet for RaiseFaultVirtual;
+entityset AvFaultSourceSet for AvFaultSource;
+entityset AvAircraftSubSystemSet for AvAircraftSubSystem;
+entityset AvLogbookTypeSet for AvLogbookType;
+entityset AvPhaseOfFlightSet for AvPhaseOfFlight;
+entityset AvFailureTypeSet for AvFailureType;
+
+@Override
+query AircraftLov {
+   from = "aircraft_lov";
+   lu = none;
+   keys = AircraftId;
+   ludependencies = Aircraft;
+   attribute AircraftId Number {
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute AircraftMob Text {
+      label = "Aircraft";
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute Manufacturer Text {
+      lovcolumn = [true];
+   }
+   attribute CapabilityCode Text {
+      lovcolumn = [true];
+   }
+   attribute AssemblyTypeCode Text;
+}
+
+query ResourceLov {
+   from = "resource_lov";
+   keys = ResourceSeq;
+   ludependencies = Resource;
+   lu = none;
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_ID";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   attribute ResourceType Text {
+      lovcolumn = [true];
+      fetch = "RESOURCE_TYPE";
+      label = "ResourceType";
+   }
+   where = "resource_type_db = 'PERSON_GROUP' and used_in_maintenance_db ='TRUE'";
+   reference LaborSkillLovRef(ResourceSeq) to ResourceLov(ResourceSeq);
+}
+
+query SubSystemLov {
+   from = "av_aircraft_sub_system";
+   lu = none;
+   keys = SubSystemId;
+   ludependencies = AvAircraftSubSystem;
+   attribute SubSystemId Number;
+   attribute SubSystemName Text;
+   attribute SubSystemCode Text;
+   attribute AltId Text;
+}
+
+query AvFlightQuery {
+   timestamptzref = "server";
+
+   from = "MY_AIRCRAFT_TURNS";
+   keys = FlightId;
+   where = "flight_id IN (SELECT flight_id from FLIGHTS_FOR_USER) AND Arrival_Airport_Id IN (Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User()))";
+   lu = none;
+
+   attribute WorkPackageActualStart Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Actual_Start (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageActualEnd Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Actual_End (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageScheduledStart Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Scheduled_Start (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute WorkPackageScheduledEnd Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Func_Scheduled_End (aircraft_id, arrival_airport_id, flight_id)";
+   }
+   attribute DeptlegNo Text {
+      fetch = "Av_Flight_API.Get_Leg_No(dept_flight_id)";
+   }
+   attribute DepartureGate Text {
+      fetch = "Av_Flight_API.Get_Departure_Gate(aircraft_id, arrival_airport_id, shed_arrival_date_time)";
+   }
+   attribute DepartObjstate Text {
+      fetch = "Av_Flight_API.Get_Objstate(dept_flight_id)";
+   }
+   attribute AssemblyTypeName Text {
+      fetch = "Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id))";
+   }
+   attribute Objstate Enumeration(FlightStatusEnum) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute AircraftId Number;
+   attribute FlightId Number;
+   attribute LastReleaseDate Timestamp;
+   attribute WorkPackageId Number;
+   attribute ArrivalTimestamp Timestamp;
+   attribute DepartureTimestamp Timestamp;
+   attribute DeptFlightId Text;
+   attribute ShedDeptTime Text;
+   attribute GroundTime Text;
+   attribute AssemblyTypeCode Text;
+   attribute ArrivalTime Text;
+   attribute DepartureTime Text;
+   attribute FlightTurnStatus Enumeration(TurnStatusEnum);
+   attribute NoOfAssignedTasks Number;
+   attribute NoOfOpenedFaults Number;
+   attribute NoOfDeferredFaults Number;
+   attribute NoOfClosedFaults Number;
+   attribute OutboundStation Text;
+   attribute ReleaseSignedBy Text;
+   attribute ArrivalOffsetTime Timestamp;
+   attribute DepartureOffsetTime Timestamp;
+   attribute LegNo Text;
+   attribute ArrivalAirportId Number;
+   attribute DepartureAirportId Number;
+   attribute ShedArrivalDateTime Timestamp;
+
+   reference AvAircraftTypeRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+   reference FndUserRef(ReleaseSignedBy) to FndUser(Identity);
+   reference AvAirportForUserRef(ReleaseSignedBy) to AvAirportForUser(Identity);
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AircraftTypeRef(AircraftId) to Aircraft(AssemblyTypeCode);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   reference TaskRef(AircraftId) to AvExeTask(AircraftId);
+   reference DepartureAirportRef(DepartureAirportId) to AvAirport(AirportId);
+   array FaultArray(AircraftId) to AvFault(AircraftId);
+   array DeferredFaultArray(AircraftId) to DefferedFaultsQuery(AircraftId);
+   array TaskArray(WorkPackageId) to AvExeTask(AircraftWpId);
+   array CloseFaultArray(AircraftId) to ClosedFaultsQuery(AircraftId);
+}
+
+virtual RaiseFaultVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute AircraftId Number {
+      required = [true];
+   }
+   attribute SubSystemId Number {
+      required = [true];
+   }
+   attribute FaultSourceCode Text {
+      required = [true];
+   }
+   attribute LogbookTypeCode Text;
+   attribute LogbookReference Text;
+   attribute Description Text {
+      required = [true];
+   }
+   attribute FoundOnId Number;
+   attribute PhaseOfFlightCode Text;
+   attribute FailureTypeCode Text;
+   attribute FaultCode Text;
+   attribute FaultId Number;
+   attribute Source Text;
+   attribute FaultSeverityCode Text;
+   attribute ResourceSeq Number;
+   attribute DefaultResourceSeq Text;
+   attribute ScheduledHours Text;
+   attribute ResourceId Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute PreScheduledHours Text;
+   attribute RaiseFaultOption Enumeration(RaiseFaultOptions);
+   attribute FoundSource Enumeration(FoundSourceOptions);
+   attribute RaiseFaultActionOption Enumeration(RaiseFaultActionOptions);
+   attribute CurrentUserAirportTimeZone Text;
+   attribute CurrentUser Text;
+   attribute FlightSafetyImpact Boolean {
+      default = "false";
+   }
+   attribute EtopsSignificant Boolean {
+      default = "false";
+   }
+   attribute AircraftWpId Number;
+   attribute FoundOnDate Timestamp;
+   attribute FlightId Number {
+      fetch = "Av_Flight_API.Get_Flight_Id_By_Wp_Id(aircraft_wp_id)";
+   }
+   attribute TaskSeq Number;
+   attribute IsRoutine Boolean;
+   attribute PreScheduledFaultHours Text;
+   attribute ScheduledFaultHours Text;
+   attribute PriorityId Text;
+   attribute Title Text;
+   attribute CertificationRequired Boolean {
+      default = "false";
+      required = [true];
+   }
+   attribute InspectionRequired Boolean {
+      default = "false";
+      required = [true];
+   }
+   attribute LongDescription Text;
+   attribute CorrectiveAction Text;
+   attribute LocationCode Text;
+   attribute TaskSignOffPermission Text;
+   attribute ESigPermission Text;
+   attribute NewTaskSeq Number;
+   attribute ActualHours Text;
+   attribute StartTime Timestamp;
+   attribute EndTime Timestamp;
+   attribute ExecutionInstanceSeq Number;
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(Task_Seq)";
+   }
+   attribute AcZoneSeq Number;
+   attribute AcPanelSeq Number;
+   attribute SensitivityForFailedSys Text;
+   attribute AircraftAltId Text {
+      fetch = "Aircraft_API.Get_Alt_Id(aircraft_id)";
+   }
+
+
+   reference LaborSkillLovRef(ResourceSeq) to ResourceLov(ResourceSeq);
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference AircraftTaskPanelLovRef(AcPanelSeq) to TaskPanelLov(AcPanelSeq);
+   reference AircraftTaskZoneLovRef(AcZoneSeq) to TaskZoneLov(AcZoneSeq);
+   reference AircraftFlightRef(FoundOnId) to AvFlightQuery(FlightId);
+   reference AvExeTaskRef(FoundOnId) to AvExeTask(TaskSeq);
+   reference AircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference AircraftSubSystemLovRef(SubSystemId) to SubSystemLov(SubSystemId);
+   reference FaultSourceCodeRef(FaultSourceCode) to AvFaultSource(FaultSourceCode);
+   reference LogbookTypeCodeRef(LogbookTypeCode) to AvLogbookType(LogbookTypeCode);
+   reference PhaseOfFlightCodeRef(PhaseOfFlightCode) to AvPhaseOfFlight(PhaseOfFlightCode);
+   reference FailureTypeCodeRef(FailureTypeCode) to AvFailureType(FailureTypeCode);
+   reference FaultSeverityRef(FaultSeverityCode) to AvFaultSeverity(FaultSeverityCode);
+   reference AvAirportForUserRef(CurrentUser) to FndUser(Identity);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference PriorityLovRef(PriorityId) to MaintenancePriority(PriorityId);
+   reference MaintenanceLocationRef(LocationCode) to AvMaintenanceLocation(LocationCode);
+
+   array MeasurementTypeArray(Objkey) to MeasurementVirtual(ParentObjkey);
+
+   action RaiseFault Number {
+      ludependencies = AvFlight, AvFault, AvExeTask;
+   }
+}
+
+virtual MeasurementVirtual {
+   timestamptzref = "server";
+   attribute HeaderObjkey Text;
+   attribute TaskSeq Number;
+   attribute MeasurementTypeCode Text;
+   attribute MeasTypeValueCode Text;
+   attribute MeasurementQty Number;
+   attribute MeasurementDateTime Timestamp;
+   attribute MeasurementOrder Number;
+   attribute MeasurementText Text;
+   attribute MeasurementBoolean Boolean;
+   attribute MeasurementValue Text;
+   attribute MeasurementType Text;
+   attribute Value Text;
+   attribute RaiseFaultActionOption Text;
+
+   reference MeasurementTypeCodeRef(MeasurementTypeCode) to AvMeasurementType(MeasurementTypeCode);
+   reference MeasurementValueRef(MeasurementTypeCode, MeasTypeValueCode) to AvMeasurementValue(MeasurementTypeCode, MeasTypeValueCode);
+}
+
+action AddFaultMeasurement {
+   initialcheck none;
+   ludependencies = MeasurementVirtual;
+   timestamptzref = "server";
+   parameter ParentObjkey Text;
+   parameter MeasurementTypeCode Text;
+   parameter MeasTypeValueCode Text;
+   parameter MeasurementQty Number;
+   parameter MeasurementDateTime Timestamp;
+   parameter MeasurementText Text;
+   parameter MeasurementBoolean Boolean;
+}
+
+action ValidateFoundOnDate {
+   initialcheck none;
+   timestamptzref = "server";
+   parameter FoundOnDate Timestamp;
+   parameter AircraftWpId Number;
+}
+
+action CreateTaskSignOffRequirement {
+   initialcheck none;
+   parameter EtopsSignificant Boolean;
+   parameter FlightSafetyImpact Boolean;
+   parameter TaskSeq Number;
+}
+action StartTask {
+   initialcheck none;
+   parameter TaskSeq Number;
+   ludependencies = AvExeTask;
+}
+
+action AddDefaultFaultMeasurement {
+   initialcheck none;
+   ludependencies = MeasurementVirtual;
+   timestamptzref = "server";
+   parameter ParentObjkey Text;
+   parameter  FailureTypeCode Text;
+}
+
+function GetAircraftSubSystemList List < Entity(AvAircraftSubSystem) > {
+   parameter AssemblyTypeCode Text;
+   where = "system_id IN (SELECT System_Id FROM Av_Aircraft_System WHERE assembly_type_code = :AssemblyTypeCode)";
+}
+
+function GetMeasurementValueForFault List < Entity(AvMeasurementValue) > {
+   parameter MeasurementTypeCode Text;
+   where = "measurement_type_code = :MeasurementTypeCode";
+}
+
+function GetFlightList List < Entity(AvFlightQuery) > {
+   timestamptzref = "server";
+   parameter AircraftId Number;
+   where = "aircraft_id = :AircraftId";
+}
+
+function GetAirportUserList List < Entity(FndUser) > {
+   where = "identity IN (SELECT Identity FROM Av_Airport_For_User WHERE Airport_Id = (SELECT Airport_Id FROM Av_Airport_For_User WHERE identity = Fnd_Session_API.Get_Fnd_User()))";
+}
+
+function GetTasksList List < Entity(AvExeTask) > {
+   parameter AircraftId Number;
+   where = "task_seq IN (SELECT Task_Seq FROM Av_Exe_Task where aircraft_wp_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND objstate = 'InWork' AND is_heavy_maintenance = 0))";
+}
+
+function GetWorkPackageList List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "aircraft_work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND (objstate = 'InWork' OR objstate = 'Committed') AND is_heavy_maintenance = 0)";
+}
+
+function GetHangarTasksList List < Entity(AvExeTask) > {
+   parameter AircraftId Number;
+   where = "task_seq IN (SELECT Task_Seq FROM Av_Exe_Task where aircraft_wp_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND objstate = 'InWork' AND is_heavy_maintenance = 1))";
+}
+
+function GetHangarWorkPackageList List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "aircraft_work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND (objstate = 'InWork' OR objstate = 'Committed') AND is_heavy_maintenance = 1)";
+}
+function GetInWorkLineWpList List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "aircraft_work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND (objstate = 'InWork') AND is_heavy_maintenance = 0)";
+}
+function GetInWorkHangarWpList List < Entity(AvAircraftWorkPackage) > {
+   parameter AircraftId Number;
+   where = "aircraft_work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE aircraft_id = :AircraftId AND (objstate = 'InWork') AND is_heavy_maintenance = 1)";
+}
+function GetInWorkWpFlightList List < Entity(AvFlightQuery) > {
+   timestamptzref = "server";
+   parameter AircraftId Number;
+   where = "aircraft_id = :AircraftId AND work_package_id IN (SELECT Aircraft_Work_Package_Id FROM Av_Aircraft_Work_Package WHERE objstate = 'InWork')";
+}
+
+function FetchMaintenanceRequestInfo Structure(FaultMtxRequestData) {
+   timestamptzref = "server";
+
+   parameter AircraftId Number;
+   parameter SubSystemId Number;
+   parameter FoundOnDate Timestamp;
+}
+
+function ValidateAndFormatHours Number {
+   parameter Hours Text;
+   parameter TimeVarName Text;
+}
+
+function GetMeasurementTypeCodeForFault List < Entity(AvMeasurementType) > {
+   parameter ParentObjkey Text;
+   ludependencies = MeasurementVirtual;
+}
+
+function FetchDefaults Structure(FetchDefaultStruct) {
+   timestamptzref = "server";
+
+   parameter Source Text;
+   parameter AircraftWpId Number;
+   parameter FoundOnId Number;
+   parameter AircraftId Number;
+}
+function GetHangarMainLocList List < Entity(AvMaintenanceLocation) > {
+   parameter CurrentUser Text;
+   where = "location_type_code IN ('TRACK','HGR') AND airport_id = (select airport_id from Av_Airport_For_User where identity = :CurrentUser)";
+}
+function GetLineMainLocList List < Entity(AvMaintenanceLocation) > {
+   parameter CurrentUser Text;
+   where = "location_type_code = 'LINE' AND airport_id = (select airport_id from Av_Airport_For_User where identity = :CurrentUser)";
+}
+function GetUserTaskSignOffPermission  Text {
+   parameter UserId Text;
+}
+function CheckStartEndDates Text {
+   timestamptzref = "server";
+
+   parameter StartTime Timestamp;
+   parameter EndTime Timestamp;
+}
+function ValidateActualHours Text {
+   parameter Hours Text;
+   parameter VariableName Text;
+}
+function GetLocationCode Text {
+   parameter FlightId Number;
+}
+function GetUtcTimestamp Timestamp {
+}
+function ConvertActualHours Number {
+   parameter ActualHours Text;
+   parameter ParameterName Text;
+}
+function GenerateKeyRef Text {
+   parameter TaskSeq Number;
+}
+function GetWpLocationCode Text {
+   parameter AircraftWpId Number;
+}
+function GetFailedSystemSensitivity Structure(SensitivityResponseStructure) {
+   initialcheck none;
+   implementation = "Java";
+   parameter ConfigSlotAltId Text;
+   parameter AircraftAltId Text;
+
+}
+function GetAircraftAltId Text {
+   parameter AircraftId Number;
+}
+
+@DynamicComponentDependency ADCON
+function ValidateContractRule Boolean {
+   initialcheck none;
+   parameter TaskSeq Number;
+}
+
+structure RaiseFaultResponse {
+   attribute FaultId Number;
+   attribute AircraftWorkPackageId Number;
+   attribute TaskSeq Number;
+   attribute TaskAltId Text;
+   attribute ExecTaskResSeq Number;
+   attribute CertTaskResSeq Number;
+   attribute InspTaskResSeq Number;
+   attribute TaskResGroupId Text;
+}
+
+structure RaiseFaultAssistantDataStructure {
+   attribute SubSystemId Number;
+   attribute FaultSeverityCode Text;
+}
+structure FetchDefaultStruct {
+   timestamptzref = "server";
+
+   attribute CurrentUser Text;
+   attribute CurrentUserAirportTimeZone Text;
+   attribute FoundSource Text;
+   attribute FaultSourceCode Text;
+   attribute SubSystemId Number;
+   attribute SchedHours Text;
+   attribute RaiseFaultOption Enumeration(RaiseFaultOptions);
+   attribute FaultSeverityCode Text;
+   attribute FoundOnDate Timestamp;
+   attribute ResourceSeq Number;
+   attribute AircraftId Number;
+   attribute RaiseFaultActionOption Enumeration(RaiseFaultActionOptions);
+   attribute LocationCode Text;
+}
+structure FaultMtxRequestData {
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute ConfigSlotAltId Text;
+   attribute UtcFoundOnDate Timestamp;
+}
+structure FinishTaskInfoStructure {
+   timestamptzref = "server";
+
+   attribute FaultId Number;
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute AssignmentStatus Text;
+   attribute TaskSeq Number;
+   attribute TaskCardOption Text;
+   attribute LatestAction Text;
+   attribute CloseFaultAssignActualHours Text;
+   attribute CloseFaultAssignStartTime Timestamp;
+   attribute CloseFaultAssignStopTime Timestamp;
+   attribute Source Text;
+   attribute KeyRef Text;
+   attribute LuName Text;
+   attribute ExecutionInstanceSeq Number;
+   attribute Remark Text;
+   attribute CertifyWorkPerformed Boolean;
+   attribute NavigatedFrom Text;
+   attribute Objstate Text;
+}
+structure SensitivityResponseStructure {
+   attribute UIFormattedSensitivities Text;
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration RaiseFaultOptions {
+   value = "LogbookFault" {
+      identifier = "LogbookFault";
+      label = "Raise Logbook Fault";
+   }
+   value = "NonRoutine" {
+      identifier = "NonRoutine";
+      label = "Raise Non Routine";
+   }
+}
+enumeration RaiseFaultActionOptions {
+   value = "RaiseAndOpen" {
+      identifier = "RaiseAndOpen";
+      label = "Raise and leave open";
+   }
+   value = "RaiseAndClose" {
+      identifier = "RaiseAndClose";
+      label = "Raise and close";
+   }
+}
+
+enumeration FoundSourceOptions {
+   value = "WorkPackage" {
+      identifier = "WorkPackage";
+      label = "Work Package";
+   }
+   value = "Task" {
+      identifier = "Task";
+      label = "Task";
+   }
+}
+
+enumeration FlightStatusEnum {
+   value = "Planned" {
+      identifier = "Planned";
+      label = "Planned";
+   }
+   value = "Out" {
+      identifier = "Out";
+      label = "Out";
+   }
+   value = "Off" {
+      identifier = "Off";
+      label = "Off";
+   }
+   value = "On" {
+      identifier = "On";
+      label = "On";
+   }
+   value = "Canceled" {
+      identifier = "Canceled";
+      label = "Canceled";
+   }
+   value = "Diverted" {
+      identifier = "Diverted";
+      label = "Diverted";
+   }
+   value = "Returned" {
+      identifier = "Returned";
+      label = "Returned";
+   }
+   value = "In" {
+      identifier = "In";
+      label = "In";
+   }
+   value = "Completed" {
+      identifier = "Completed";
+      label = "Completed";
+   }
+}
+
+enumeration TurnStatusEnum {
+   value = "Inbound" {
+      identifier = "Inbound";
+      label = "Inbound";
+   }
+   value = "Arrived" {
+      identifier = "Arrived";
+      label = "Arrived";
+   }
+   value = "Departed" {
+      identifier = "Departed";
+      label = "Departed";
+   }
+   value = "InMaintenance" {
+      identifier = "InMaintenance";
+      label = "In Maintenance";
+   }
+   value = "Released" {
+      identifier = "Released";
+      label = "Released";
+   }
+   value = "NotApplicable" {
+      identifier = "NotApplicable";
+      label = "Not Applicable";
+   }
+}
+
+---------------------------------- QUERIES ----------------------------------
+query ClosedFaultsQuery {
+   from = "Av_Fault";
+   keys = FaultId;
+   where = "objstate IN ('Closed')";
+   lu = AvFault;
+   timestamptzref = "server";
+
+   attribute FaultId Number {
+      required = [false];
+   }
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute SubSystemId Number;
+   attribute AircraftId Number;
+   attribute FoundOnDate Timestamp {
+      fetch = "found_on_date";
+      label = "Found On";
+   }
+   attribute ClosedDate Timestamp {
+      fetch = "closed_date";
+      label = "Closed Date";
+   }
+   attribute LogbookTypeCode Text {
+      fetch = "logbook_type_code";
+      label = "Logbook Type";
+   }
+   attribute Action Text {
+      fetch = "Av_Fault_Action_API.Get_Latest_Correct_Fault_Act(fault_id)";
+   }
+   attribute Objstate Enumeration(FaultStatus) {
+      fetch = "objstate";
+      label = "State";
+      maxlength = 50;
+      editable = [false];
+      insertable = [false];
+      updatable = [false];
+   }
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id ,NULL)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+   reference AvAircraftSubSystemRef(SubSystemId) to AvAircraftSubSystem(SubSystemId);
+   reference CloseFaultRef(Barcode) to AvFault(Barcode);
+}

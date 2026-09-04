@@ -1,0 +1,28 @@
+<Text>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Kanban View of all the details of all the task assignments assigned to the user.</DescriptiveText>
+    <Keywords>Crew Lead, Hangar Maintenance</Keywords>
+    <LastModified>2/21/25, 4:26:28 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>MY ASSIGNMENT BOARD</Title>
+    <TitleVisible>false</TitleVisible>
+    <Background>#FF873E8D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_CREW_LEAD_ASSIGNMENT_BOARD</Name>
+    <ID>0a61c71d-f451-4ab9-9afa-1014aebe17b0</ID>
+    <WebUrl>page/FlmHmTechnicianMyAssignments/MyAssignmentsPage</WebUrl>
+    <ColorStyle>OK</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <BodyText>MY ASSIGNMENT BOARD</BodyText>
+    <FontWeight>Bold</FontWeight>
+    <FontSize>18.0</FontSize>
+    <HorizontalAlignment>Center</HorizontalAlignment>
+    <VerticalAlignment>Center</VerticalAlignment>
+</Text>

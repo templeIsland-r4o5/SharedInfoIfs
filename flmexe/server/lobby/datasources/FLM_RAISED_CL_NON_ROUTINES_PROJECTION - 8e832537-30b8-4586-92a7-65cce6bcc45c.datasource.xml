@@ -1,0 +1,35 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <LastModified>2/23/25, 11:47:14 PM</LastModified>
+    <Locked>false</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_RAISED_CL_NON_ROUTINES_PROJECTION</Name>
+    <ID>8e832537-30b8-4586-92a7-65cce6bcc45c</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>NonRoutinesCount</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

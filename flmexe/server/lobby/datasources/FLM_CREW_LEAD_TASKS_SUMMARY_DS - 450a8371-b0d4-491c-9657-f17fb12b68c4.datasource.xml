@@ -1,0 +1,52 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>4/7/25, 2:10:55 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_CREW_LEAD_TASKS_SUMMARY_DS</Name>
+    <ID>450a8371-b0d4-491c-9657-f17fb12b68c4</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>CrewCode</Column>
+            <Name>Crew Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Crew</Column>
+            <Name>Crew</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>WorkPackageId</Column>
+            <Name>Work Package Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>ActiveTasks</Column>
+            <Name>Active Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>InWorkTasks</Column>
+            <Name>In Work Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>CompletedTasks</Column>
+            <Name>Completed Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TotalTasks</Column>
+            <Name>Total Tasks</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHmCrewLeadLobbyHandling</Projection>
+    <EntitySet>CrewTaskSummaryQuerySet</EntitySet>
+    <EntityType>CrewLeadTaskSummaryQuery</EntityType>
+    <Filter>WorkPackageId eq $WorkPackageId$</Filter>
+    <Desc>false</Desc>
+    <Parameters/>
+</ProjectionDataSource>

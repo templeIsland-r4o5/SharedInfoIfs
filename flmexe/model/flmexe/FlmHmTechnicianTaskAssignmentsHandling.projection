@@ -1,0 +1,92 @@
+projection FlmHmTechnicianTaskAssignmentsHandling;
+component FLMEXE;
+layer Core;
+description "Manage Task Assignments for Hangar Maintenance Technician";
+category Users;
+include fragment FlmTaskAssignments;
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset HmTaskAssignmentsSet for TaskAssignmentEntity;
+
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity TaskAssignmentEntity {
+   where = "is_heavy = 1 AND task_status!='Completed' AND airport_id IN (SELECT au.airport_id
+        FROM   av_airport_for_user au
+        WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User()))";
+
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopSkill Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Skill(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute HandoverReason Text {
+      fetch = "Labour_Assignment_Util_API.Get_Handover_Reason";
+   }
+   attribute Routine Boolean {
+      fetch = "DECODE(Routine, 1, 'TRUE','FALSE')";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrObjstate Text {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Objstate_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   @DynamicComponentDependency ADCON
+   attribute ProceedAtRisk Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Proc_At_Risk_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NeedCommercialApproval Boolean("TRUE", "FALSE") {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Need_Com_Appr_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   reference AircraftDescRef(Aircraft) to AircraftLov(Aircraft);
+   reference WorkPackageRef(WpBarcode) to HangarWorkPackageLov(Barcode);
+   reference CrewRef(Crew) to HangarCrewLov(CrewCode);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+}
+
+@Override
+entity AvExeTask {
+   attribute IsNonRoutine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(Av_Exe_Task_API.Get_Task_Seq(fault_id))";
+   }
+}
+------------------------------- ENUMERATIONS --------------------------------
+---------------------------------- QUERIES ----------------------------------
+
+
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetDefaultSearchContext Structure(PageSearchContextStructure);
+function GetHmContractIdByBarcode Text {
+   parameter Barcode Text;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure PageSearchContextStructure {
+   attribute Shift Enumeration(ShiftType);
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

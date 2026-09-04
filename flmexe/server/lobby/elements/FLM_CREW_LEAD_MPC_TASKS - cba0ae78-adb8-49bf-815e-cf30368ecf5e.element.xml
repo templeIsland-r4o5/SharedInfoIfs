@@ -1,0 +1,36 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <LastModified>10/30/25, 10:23:22 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>10</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Master Open and Close Panel</Title>
+    <Footer>Tasks</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_CREW_LEAD_MPC_TASKS</Name>
+    <ID>cba0ae78-adb8-49bf-815e-cf30368ecf5e</ID>
+    <WebUrl>page/FlmHmCrewLeadTasks/HangarMaintenanceCrewLeadWPOverview?$filter=Aircraft eq $AircraftCode$ and WpBarcode eq $WorkPackageBarcode$ and ( TaskStatus eq 'Active' or TaskStatus eq 'In Work' ) and (ClassCode eq 'MPC' and (SubclassCode eq 'MPCOPEN' or SubclassCode eq 'MPCCLOSE'))</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <PassFilterToWebPage>false</PassFilterToWebPage>
+    <PassRawDataToNavUrl>false</PassRawDataToNavUrl>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <ElementConfig></ElementConfig>
+    <DataSourceId>056b5eed-6837-41e8-ab58-80a184678e97</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

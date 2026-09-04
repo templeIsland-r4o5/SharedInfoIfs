@@ -1,0 +1,53 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241217  wedulk  AD-15474, Created.
+-----------------------------------------------------------------------------
+projection FlmHmTechnicianMyAssignmentsHandling;
+component FLMEXE;
+layer Core;
+description "Manage My Assignments Kanban View for Hangar Maintenance Technician";
+category Users;
+include fragment FlmTaskAssignments;
+include fragment AircraftLovSelector;
+include fragment HangarWorkPackageLovSelector;
+include fragment HangarCrewLovSelector;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset HmMyTaskAssignmentsSet for TaskAssignmentEntity;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity TaskAssignmentEntity {
+   where = "is_heavy = 1 AND task_status!='Completed' AND airport_id IN (SELECT au.airport_id
+                                                                         FROM av_airport_for_user au
+                                                                         WHERE  (au.identity = Fnd_Session_API.Get_Fnd_User())) AND assigned_resource_id=Fnd_Session_API.Get_Fnd_User()";
+   reference AircraftDescRef(Aircraft) to AircraftLov(Aircraft);
+   reference WorkPackageRef(WpBarcode) to HangarWorkPackageLov(Barcode);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+action RefreshData {
+   initialcheck none;
+   ludependencies = JtTaskResource;
+}
+--------------------------------- FUNCTIONS ---------------------------------
+function GetAssignmentStatus Text;
+
+-------------------------------- STRUCTURES ---------------------------------
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

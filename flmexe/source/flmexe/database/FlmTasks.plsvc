@@ -1,0 +1,23 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmTasks
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Hm_Contract_Id_By_Barcode___ (
+   barcode_ IN VARCHAR2) RETURN VARCHAR2
+IS
+   temp_ av_aircraft_work_package_tab.hm_contract_id%TYPE;
+BEGIN
+	temp_ := Av_Aircraft_Work_Package_API.Get_Hm_Contract_Id_By_Barcode(barcode_);
+   
+   RETURN temp_;
+END Get_Hm_Contract_Id_By_Barcode___;

@@ -1,0 +1,163 @@
+fragment InventoryServiceManager;
+component FLMEXE;
+layer Core;
+description "Contains methods required to interact with Maintenix to retrieve and validate part level information";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant PartValidationWarningAssistant using CmsWarningVirtualSet {
+   label = "Part Validation Warnings";
+   input this;
+   output(CmsResponseSeverity);
+   singlestep {
+      list PartValidationWarningList using ListCmsDryRunWarningService(RemovalPartNumber, RemovalPartManufacturer, RemovalSerialNo, RemovalReasonCode, InstallationPartNumber, InstallationManufacturerCode, InstalledSerialNo, AircraftRegCode, AssmblConfSlotCode, AssmblConfSlotPosCode, ConfigSlot, ConfSlotPosCode, IsSubAssy, InventoryClassCode, PartChangeType);
+   }
+   command CloseWarning;
+   command ProceedAddPart;
+   command CancelWarning;
+}
+----------------------------------- LISTS -----------------------------------
+list PartValidationWarningList for CmsWarningStucture {
+   label = "";
+   field ErrorCode {
+      label = "Warning Code";
+      size = Medium;
+   }
+   field ErrorText {
+      label = "Warning Details";
+      size = FullWidth;
+      multiline = true;
+   }
+}
+--------------------------------- COMMANDS ----------------------------------
+command CloseWarning {
+   label = "Close";
+   visible = [CmsResponseSeverity = 1];
+
+   execute {
+      exit CANCEL;
+   }
+}
+command CancelWarning {
+   label = "Cancel";
+   visible = [CmsResponseSeverity = 0];
+   execute {
+      exit CANCEL;
+   }
+}
+command ProceedAddPart {
+   label = "Proceed with warnings";
+   visible = [CmsResponseSeverity = 0];
+   execute {
+      set CmsResponseSeverity = -1;
+      exit OK;
+   }
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+--------------------------------- FUNCTIONS ---------------------------------
+function GetRemovalInfoService Structure(InventorySearchResponseStructure) {
+   initialcheck none;
+   implementation = "Java";
+   parameter HighestInvId Text;
+   parameter ConfigSlotCode Text;
+   parameter ConfigSlotPosition Text;
+   parameter AssemblyConfigSlotCode Text;
+   parameter AssemblyConfigSlotPosition Text;
+}
+function ListCmsDryRunWarningService List < Structure(CmsWarningStucture) > {
+   initialcheck none;
+   implementation = "Java";
+   syncpolicy Online;
+   parameter RemovalPartNumber Text;
+   parameter RemovalManufacturerCode Text;
+   parameter RemovalSerialNumber Text;
+   parameter RemovalReason Text;
+   parameter InstallationPartNumber Text;
+   parameter InstallationManufacturerCode Text;
+   parameter InstallationSerialNumber Text;
+   parameter RegCode Text;
+   parameter AssmblConfSlotCode Text;
+   parameter AssmblConfSlotPosCode Text;
+   parameter ConfSlotCode Text;
+   parameter ConfSlotPosCode Text;
+   parameter IsSubAssy Text;
+   parameter InventoryTypeCode Text;
+   parameter PartChangeType Text;
+}
+function CmsDryRunResponseSeverityService Number {
+   initialcheck none;
+   implementation = "Java";
+   syncpolicy Online;
+   parameter RemovalPartNumber Text;
+   parameter RemovalManufacturerCode Text;
+   parameter RemovalSerialNumber Text;
+   parameter RemovalReason Text;
+   parameter InstallationPartNumber Text;
+   parameter InstallationManufacturerCode Text;
+   parameter InstallationSerialNumber Text;
+   parameter RegCode Text;
+   parameter AssmblConfSlotCode Text;
+   parameter AssmblConfSlotPosCode Text;
+   parameter ConfSlotCode Text;
+   parameter ConfSlotPosCode Text;
+   parameter IsSubAssy Text;
+   parameter InventoryTypeCode Text;
+   parameter PartChangeType Text;
+}
+function GetDefaultRemovalReason Text {
+   syncpolicy Online;
+}
+
+function GetMtxPartInventoryService Structure(InventorySearchResponseStructure) {
+   initialcheck none;
+   implementation = "Java";
+   syncpolicy Online;
+   parameter Barcode Text;
+}
+
+function IsPartFromValidAssembly Boolean {
+   syncpolicy Online;
+   parameter AircraftId Number;
+   parameter PartNumberAltId Text;
+}
+-------------------------------- STRUCTURES ---------------------------------
+structure InventorySearchResponseStructure {
+   attribute PartNumber Text;
+   attribute SerialNumber Text;
+   attribute PartGroupAltId Text;
+   attribute ManufacturerCode Text;
+   attribute Barcode Text;
+   attribute IsInventoryFound Boolean;
+   attribute AltId Text;
+}
+structure CmsWarningStucture {
+   attribute ErrorCode Text;
+   attribute ErrorText Text;
+}
+
+------------------------------ ENTITY DETAILS -------------------------------
+entityset CmsWarningVirtualSet for CmsWarningVirtual;
+--------------------------------- VIRTUALS ----------------------------------
+virtual CmsWarningVirtual {
+   attribute RemovalPartNumber Text;
+   attribute RemovalPartManufacturer Text;
+   attribute RemovalSerialNo Text;
+   attribute RemovalReasonCode Text;
+   attribute InstallationPartNumber Text;
+   attribute InstallationManufacturerCode Text;
+   attribute InstalledSerialNo Text;
+   attribute AircraftRegCode Text;
+   attribute AssmblConfSlotCode Text;
+   attribute AssmblConfSlotPosCode Text;
+   attribute ConfigSlot Text;
+   attribute ConfSlotPosCode Text;
+   attribute IsSubAssy Text;
+   attribute InventoryClassCode Text;
+   attribute PartChangeType Text;
+   attribute CmsResponseSeverity Number;
+}

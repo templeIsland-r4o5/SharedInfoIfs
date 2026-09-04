@@ -1,0 +1,38 @@
+projection FlmTaskMaterialLinesHandling;
+component FLMEXE;
+layer Core;
+description "Aviation Maintenance Material Lines Projection";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AvTaskMaterial;
+include fragment UserAllowedSiteLovSelector;
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFaultSet for AvFault;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,2216 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250821  ISSHLK  AD-19892, Introduced IsExecutionBlockedByCap attribute to JtTaskResourceDemandQuery.
+--  250703  SABOLK  AD-18377, Added PanelSignOffList. Modified JtTaskSignOffReqList, entity JtTaskSignOffReq, entity JtTaskStepSignOff.
+--  250314  SABOLK  AD-17745, Added HmCrwLdAssignToMe command
+--  250312  SILILK  AD-17923, change Total Assigned Tasks label to Total Assigned Assignments
+--  250307  SSIVLK  AD-17660, Added IsCompleted fetch attribute
+--  250228  SSIVLK  AD-14847, added iscertified condition
+--  270225  MAILLK  AD-17097, Change data type of Routine attribute in TaskAssignmentEntity.
+--  250224  SILILK  AD-15689, Add ModifyAssignmentAssistant.
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  250124  ALNILK  AD-16426, Modified JtTaskLaborSummaryTotal and JtTaskLaborSummaryBreakdown.
+--  250123  WAISLK  AD-16491, Implemented Proxy Job Stop.
+--  250120  ALNILK  AD-16446, Modified AssignmentsList and TaskAssignmentStatus.
+--  250116  NIRTLK  AD-15694, Added JtTaskLaborSummaryTotal and JtTaskLaborSummaryBreakdown.
+--  250101  NIRTLK  AD-15694, Modified JtTaskResourceDemandQuery and AssignmentsList.
+--  241219  WEDULK  AD-16093, Added TaskAssignmentEntity
+--  241217  NIRTLK  AD-15694, Added new state for assignmnet completion
+--  241211  SSIVLK  AD-15684, Added new state for assignmnet status & Current user attribute inside JtTaskResourceDemandQuery
+--  241210  DUWJLK  AD-14810, Added UnassignMeCommand.
+--  241210  KAWJLK  AD-15697, Added JtTaskResourceLicenseList to view certificates.
+--  241201  NIRTLK  AD-14819, added Enhancements on AddAssignmentAssistant
+--  241127  LAHNLK  AD-14808, added AssignToMeCommand
+--  241125  KAWJLK  AD-15247, Added AvTaskQuery
+--  241120  NIRTLK  AD-14819, Created, added AddAssignmentAssistant and related groups, list, command, functions, actions and virtual
+-----------------------------------------------------------------------------
+fragment FlmTaskAssignments;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Assignment assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ZoneLovSelector;
+include fragment PanelLovSelector;
+include fragment AircraftPanel;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+assistant AddAssignmentAssistant using AddAssignmentVirtualSet {
+   label = "Assignment";
+   savemode = OnLostFocus;
+
+   input(TaskSeq);
+
+   init command {
+      execute {
+         set PreExecutorScheduledHours = "00:00";
+         set PreCertifierScheduledHours = "00:00";
+         set PreInspectorScheduledHours = "00:00";
+      }
+   }
+   singlestep {
+      group AddExecutorGroup;
+      group AddCertifierGroup {
+         visible = [CertificationRequired = true];
+      }
+      group AddInspectorGroup {
+         visible = [InspectionRequired = true];
+      }
+   }
+   command SaveAssignment;
+   command Cancel;
+}
+assistant TaskAssignmentAssistant using TaskAssignmentsVirtualSet {
+   label = "Assignments";
+   input this;
+   singlestep {
+      group TaskDetailsGroup;
+      list ResourceDemandsList(ResourceDemandsArray);
+      list ResourcesList(ResourceArray) bind ResourceDemandsList;
+   }
+   command Ok {
+      enabled = [component.ResourceDemandsList.SelectionCount = 0];
+   }
+   command Cancel;
+}
+assistant ModifyAssignmentAssistant using ModifyAssignmentVirtualSet {
+   label = "Task Supervision";
+   savemode = OnLostFocus;
+
+   input this;
+   singlestep {
+      group ModifyTaskAssignmentGroup;
+   }
+   command ModifyTaskAssignment;
+   command Cancel;
+}
+----------------------------------- LISTS -----------------------------------
+list AssignmentsList for JtTaskResourceDemandQuery {
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field ResourceDemand;
+   field Remark;
+   field AssignedResourceId;
+   field UserResourceUsername {
+      label = "Assigned To";
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = AssignedResourceId;
+      }
+   }
+   badge Rowstate {
+      emphasis Complementary2 = [Rowstate = "ASSIGNED"];
+      emphasis Warning = [Rowstate = "WORKSTARTED"];
+      emphasis Success = [Rowstate = "COMPLETED"];
+      emphasis Neutral = [Rowstate = "CANCELLED"];
+   }
+   field PlannedHours;
+   field PlannedHoursFormat;
+   field SchedStart {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field SchedEnd {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignmentStart {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignmentFinish {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AllocatedHours;
+   field AllocatedStart;
+   field AllocatedFinish;
+   field FixedStart;
+   field WorkStart;
+   field JobStopReason {
+      editable = [false];
+   }
+   field ActionTaken;
+
+   command AddAssignmentCommand {
+      label = "";
+      icon = "new";
+   }
+   command AssignToMeCommand;
+   command UnassignMeCommand;
+}
+
+list JtTaskResourceLicenseList for JtTaskResourceLicense {
+   editmode = MultiRowEdit;
+   @DynamicComponentDependency STRACO
+   lov LicenseGroupIdRef with ReferenceLicenseGroupLovSelector {
+      search = LicenseGroupId, LicenseGroupName;
+      size = Medium;
+      editable = [true];
+   }
+   field LicenseGroupName {
+      size = Medium;
+   }
+   @DynamicComponentDependency STRACO
+   lov LicenseIdRef with ReferenceLicenseCompanyLovSelector {
+      search = LicenseId, LicenseName;
+      size = Medium;
+   }
+   field LicenseName {
+      size = Medium;
+   }
+   field LicenseDescription {
+      size = Medium;
+   }
+}
+list ResourceDemandsList for ResourceDemandsVirtual {
+   label = "Resource Demands";
+   multiselect = [false];
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field SkillDemand {
+      label = "Required Skill";
+   }
+   field Remark {
+      label = "Assignment Role";
+   }
+   field PlannedHours {
+      label = "Scheduled Hours";
+   }
+   field SchedStart {
+      label = "Scheduled Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field SchedEnd {
+      label = "Scheduled End";
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+}
+list ResourcesList for ResourceVirtual {
+   label = "Resources";
+   multiselect = [false];
+   orderby = ShiftStart asc;
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   field Description {
+      label = "Name";
+      contactwidget {
+         enabled = [true];
+         source = Person;
+      }
+   }
+   field LicenseId {
+      label = "Certificate";
+   }
+   field TotalAssignments {
+      label = "Total Assigned Assignments";
+   }
+   field TotalHours {
+      label = "Total Scheduled Hours";
+   }
+   field ShiftStart {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field ShiftEnd {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   command AssignToResource;
+}
+
+list JtTaskSignOffReqList for JtTaskSignOffReq {
+   label = "";
+   defaultfilter = [not(SignOffReqType = "Executor" and SignOffConnectionDb = "TASK")];
+   orderby = SignOffConnection;
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field SignOffReqType {
+      label = "Role";
+      size = Medium;
+   }
+   field LicenseId {
+      label = "Certificate ID";
+      size = Medium;
+   }
+   field SignOffConnection {
+      label = "Connection Type";
+      size = Medium;
+   }
+   badge OverallSignOffStatus {
+      label = "Overall sign-off status";
+      style = TextOnly;
+      size = Medium;
+
+      emphasis Warning = [OverallSignOffStatus = "Pending"];
+      emphasis OK = [OverallSignOffStatus = "Signed"];
+   }
+   field LastSignOffDate {
+      label = "Last Signed-off Date";
+      type = Date;
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   field SignOffConnectionDb {
+      columnexclude = [true];
+   }
+}
+
+list StepSignOffList for JtTaskStepSignOff {
+   label = "Steps";
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   field Step {
+      label = "Step";
+      size = Small;
+      editable = [false];
+   }
+   field JtTaskStepRef.OrderNo {
+      label = "Order Number";
+      size = Small;
+   }
+   field JtTaskStepRef.Description {
+      label = "Step Description";
+      size = Large;
+      editable = [false];
+      multiline = true;
+   }
+   field Identity {
+      label = "Signed By";
+      size = Small;
+   }
+   field SignOffDate {
+      label = "Signed-off Date";
+      type = Date;
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      size = Medium;
+   }
+   badge JtTaskStepRef.Objstate {
+      label = "Step Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Neutral = [JtTaskStepRef.Objstate = "NOTDONE"];
+      emphasis Warning = [JtTaskStepRef.Objstate = "PENDING"];
+      emphasis OK = [JtTaskStepRef.Objstate = "DONE"];
+   }
+
+   command RecordSignOffCommand;
+}
+
+list PanelSignOffList clone StepSignOffList {
+   label = "Panels";
+   crudactions {
+      edit {
+         enabled = [false];
+      }
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   lov AvPanelCodeRef with PanelCodeSelector {
+      label = "Panel Code";
+      details = "page/MxPanelDetails/PanelDetails?$filter=AdBrPanelId eq $[AvAircraftPanelRef.PanelAltId]";
+   }
+   field AvAircraftPanelRef.PanelDescription {
+      label = "Panel Name";
+      multiline = true;
+      size = FullWidth;
+   }
+   badge PanelStatus {
+      label = "Panel Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Neutral = [PanelStatus = "ToBeOpened"];
+      emphasis OK = [PanelStatus = "Opened"];
+      emphasis OK = [PanelStatus = "ReadyToClose"];
+      emphasis OK = [PanelStatus = "Closed"];
+   }
+   lov AvZoneCodeRef with ZoneCodeSelector {
+      label = "Panel Zone Code";
+      details = "page/MxZoneDetails/ZoneDetails?$filter=AdBrZoneId eq $[AvAircraftPanelRef.ZoneAltId]";
+   }
+   field AvAircraftPanelRef.ZoneDescription {
+      label = "Panel Zone Name";
+      multiline = true;
+      size = FullWidth;
+   }
+
+   fieldorder = AvPanelCodeRef, AvAircraftPanelRef.PanelDescription, PanelStatus, AvZoneCodeRef, AvAircraftPanelRef.ZoneDescription, Identity, SignOffDate;
+   exclude Step, JtTaskStepRef.OrderNo, JtTaskStepRef.Description, JtTaskStepRef.Objstate;
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group AddExecutorGroup for AddAssignmentVirtual {
+   label = "Add Executor";
+   lov SkillDemandLovRef with ReferenceResourceGroupLovSelector {
+      label = "Required Skill";
+      hidekey = [true];
+      searchable = true;
+      search = SkillDemandLovRef.ResourceId;
+      description = SkillDemandLovRef.ResourceId;
+      required = [true];
+      validate command {
+         execute {
+            set ExecutorResourceSeq = null;
+            set CertifierResourceSeq = null;
+            set InspectorResourceSeq = null;
+            set ExecutorScheduledStart = null;
+            set ExecutorScheduledEnd = null;
+            set CertifierScheduledStart = null;
+            set CertifierScheduledEnd = null;
+            set InspectorScheduledStart = null;
+            set InspectorScheduledEnd = null;
+         }
+      }
+   }
+   lov ExecutorAssignedLovRef with ReferenceNewLaborResourceLovSelector using GetPersonResources(SkillDemandLovRef.ResourceId, "-EXECUTOR") {
+      label = "Assigned to";
+      hidekey = [true];
+      searchable = true;
+      search = ExecutorAssignedLovRef.ResourceId;
+      description = ExecutorAssignedLovRef.Description;
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = ExecutorAssignedLovRef.ResourceId;
+      }
+      validate command {
+         execute {
+            if [ExecutorResourceSeq = InspectorResourceSeq and ExecutorResourceSeq != null] {
+               set ExecutorResourceSeq = null;
+               error("Inspector cannot be the same user assigned as the executor or certifier.");
+            }
+            call CheckActiveAssgmtForSkillRole(TaskSeq, SkillDemandResSeq, "Executor", ExecutorResourceSeq) into ExecActiveAssignments;
+            if [ExecActiveAssignments = true] {
+               set ExecutorResourceSeq = null;
+               error("Selected technician is already assigned to this task for the specified skill and role.");
+            }
+            if [ExecutorResourceSeq = null] {
+               set ExecutorScheduledStart = null;
+               set ExecutorScheduledEnd = null;
+            }
+            else {
+               call GetScheduleDateAndInterval(TaskSeq, PreExecutorScheduledHours, "Executor") into ExecTimeRangeIfAssigned;
+               set ExecutorScheduledStart = ExecTimeRangeIfAssigned.StartDate;
+               set ExecutorScheduledEnd = ExecTimeRangeIfAssigned.EndDate;
+               if [PreExecutorScheduledHours != ExecTimeRange.PreScheduleHours] {
+                  set PreExecutorScheduledHours = ExecTimeRange.PreScheduleHours;
+               }
+            }
+         }
+      }
+   }
+   field PreExecutorScheduledHours {
+      label = "Scheduled Hours (HH:MM)";
+      required = [true];
+      format = decimal;
+      validate command {
+         execute {
+            if [ExecutorResourceSeq != null] {
+               call GetScheduleDateAndInterval(TaskSeq, PreExecutorScheduledHours, "Executor") into ExecTimeRange;
+               set ExecutorScheduledStart = ExecTimeRange.StartDate;
+               set ExecutorScheduledEnd = ExecTimeRange.EndDate;
+               if [PreExecutorScheduledHours != ExecTimeRange.PreScheduleHours] {
+                  set PreExecutorScheduledHours = ExecTimeRange.PreScheduleHours;
+               }
+            }
+         }
+      }
+   }
+   field ExecutorScheduledStart {
+      label = "Scheduled Start";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [ExecutorResourceSeq != null];
+      required = [ExecutorResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, ExecutorScheduledStart, ExecutorScheduledEnd, "Executor") into ValExecutorScheduledHours;
+            set PreExecutorScheduledHours = ValExecutorScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field ExecutorScheduledEnd {
+      label = "Scheduled End";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [ExecutorResourceSeq != null];
+      required = [ExecutorResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, ExecutorScheduledStart, ExecutorScheduledEnd, "Executor") into ValExecutorScheduledHours;
+            set PreExecutorScheduledHours = ValExecutorScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field CertificationRequired {
+      validate command {
+         execute {
+            if [CertificationRequired = false] {
+               set InspectionRequired = false;
+            }
+         }
+      }
+   }
+   field InspectionRequired {
+      editable = [CertificationRequired = true];
+   }
+}
+
+group AddCertifierGroup for AddAssignmentVirtual {
+   label = "Add Certifier";
+   lov CertifierAssignedLovRef with ReferenceNewLaborResourceLovSelector using GetPersonResources(SkillDemandLovRef.ResourceId, "-CERTIFIER") {
+      label = "Assigned to";
+      hidekey = [true];
+      searchable = true;
+      search = CertifierAssignedLovRef.ResourceId;
+      description = CertifierAssignedLovRef.Description;
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = CertifierAssignedLovRef.ResourceId;
+      }
+      validate command {
+         execute {
+            if [CertifierResourceSeq = InspectorResourceSeq and CertifierResourceSeq != null] {
+               set CertifierResourceSeq = null;
+               error("Inspector cannot be the same user assigned as the executor or certifier.");
+            }
+            call CheckActiveAssgmtForSkillRole(TaskSeq, SkillDemandResSeq, "Certifier", CertifierResourceSeq) into CertActiveAssignments;
+            if [CertActiveAssignments = true] {
+               set CertifierResourceSeq = null;
+               error("Selected technician is already assigned to this task for the specified skill and role.");
+            }
+            if [CertifierResourceSeq = null] {
+               set CertifierScheduledStart = null;
+               set CertifierScheduledStart = null;
+            }
+            else {
+               call GetScheduleDateAndInterval(TaskSeq, PreCertifierScheduledHours, "Certifier") into CertTimeRange;
+               set CertifierScheduledStart = CertTimeRange.StartDate;
+               set CertifierScheduledEnd = CertTimeRange.EndDate;
+               if [PreCertifierScheduledHours != CertTimeRange.PreScheduleHours] {
+                  set PreCertifierScheduledHours = CertTimeRange.PreScheduleHours;
+               }
+            }
+         }
+      }
+   }
+   field PreCertifierScheduledHours {
+      label = "Scheduled Hours (HH:MM)";
+      required = [CertificationRequired = true];
+      format = decimal;
+      validate command {
+         execute {
+            if [CertifierResourceSeq != null] {
+               call GetScheduleDateAndInterval(TaskSeq, PreCertifierScheduledHours, "Certifier") into CertTimeRange;
+               set CertifierScheduledStart = CertTimeRange.StartDate;
+               set CertifierScheduledEnd = CertTimeRange.EndDate;
+               if [PreCertifierScheduledHours != CertTimeRange.PreScheduleHours] {
+                  set PreCertifierScheduledHours = CertTimeRange.PreScheduleHours;
+               }
+            }
+         }
+      }
+   }
+   field CertifierScheduledStart {
+      label = "Scheduled Start";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [CertifierResourceSeq != null];
+      required = [CertifierResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, CertifierScheduledStart, CertifierScheduledEnd, "Certifier") into ValCertifierScheduledHours;
+            set PreCertifierScheduledHours = ValCertifierScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field CertifierScheduledEnd {
+      label = "Scheduled End";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [CertifierResourceSeq != null];
+      required = [CertifierResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, CertifierScheduledStart, CertifierScheduledEnd, "Certifier") into ValCertifierScheduledHours;
+            set PreCertifierScheduledHours = ValCertifierScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+}
+
+group AddInspectorGroup for AddAssignmentVirtual {
+   label = "Add Inspector";
+   lov InspectorAssignedLovRef with ReferenceNewLaborResourceLovSelector using GetPersonResources(SkillDemandLovRef.ResourceId, "-INSPECTOR") {
+      label = "Assigned to";
+      hidekey = [true];
+      searchable = true;
+      search = InspectorAssignedLovRef.ResourceId;
+      description = InspectorAssignedLovRef.Description;
+      contactwidget {
+         enabled = [true];
+         source = Person;
+         key = InspectorAssignedLovRef.ResourceId;
+      }
+      validate command {
+         execute {
+            if [InspectorResourceSeq != null and((InspectorResourceSeq = ExecutorResourceSeq) or(InspectorResourceSeq = CertifierResourceSeq))] {
+               set InspectorResourceSeq = null;
+               error("Inspector cannot be the same user assigned as the executor or certifier.");
+            }
+            call CheckActiveAssgmtForSkillRole(TaskSeq, SkillDemandResSeq, "Inspector", InspectorResourceSeq) into InspActiveAssignments;
+            if [InspActiveAssignments = true] {
+               set InspectorResourceSeq = null;
+               error("Selected technician is already assigned to this task for the specified skill and role.");
+            }
+            if [InspectorResourceSeq = null] {
+               set InspectorScheduledStart = null;
+               set InspectorScheduledEnd = null;
+            }
+            else {
+               call GetScheduleDateAndInterval(TaskSeq, PreInspectorScheduledHours, "Inspector") into InspTimeRange;
+               set InspectorScheduledStart = InspTimeRange.StartDate;
+               set InspectorScheduledEnd = InspTimeRange.EndDate;
+               if [PreInspectorScheduledHours != InspTimeRange.PreScheduleHours] {
+                  set PreInspectorScheduledHours = InspTimeRange.PreScheduleHours;
+               }
+            }
+         }
+      }
+   }
+   field PreInspectorScheduledHours {
+      label = "Scheduled Hours (HH:MM)";
+      required = [InspectionRequired = true];
+      format = decimal;
+      validate command {
+         execute {
+            if [InspectorResourceSeq != null] {
+               call GetScheduleDateAndInterval(TaskSeq, PreInspectorScheduledHours, "Inspector") into InspTimeRange;
+               set InspectorScheduledStart = InspTimeRange.StartDate;
+               set InspectorScheduledEnd = InspTimeRange.EndDate;
+               if [PreInspectorScheduledHours != InspTimeRange.PreScheduleHours] {
+                  set PreInspectorScheduledHours = InspTimeRange.PreScheduleHours;
+               }
+
+            }
+         }
+      }
+   }
+   field InspectorScheduledStart {
+      label = "Scheduled Start";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [InspectorResourceSeq != null];
+      required = [InspectorResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, InspectorScheduledStart, InspectorScheduledEnd, "Inspector") into ValInspectorScheduledHours;
+            set PreInspectorScheduledHours = ValInspectorScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field InspectorScheduledEnd {
+      label = "Scheduled End";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      visible = [InspectorResourceSeq != null];
+      required = [InspectorResourceSeq != null];
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, InspectorScheduledStart, InspectorScheduledEnd, "Inspector") into ValInspectorScheduledHours;
+            set PreInspectorScheduledHours = ValInspectorScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+}
+group TaskDetailsGroup for TaskAssignmentsVirtual {
+   label = "Task Details";
+   field AvExeTaskRef.Description {
+      label = "Task Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   badge AvExeTaskRef.Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [AvExeTaskRef.Objstate = "RELEASED"];
+      emphasis StateInProgress = [AvExeTaskRef.Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [AvExeTaskRef.Objstate = "FINISHED"];
+      emphasis Alert = [AvExeTaskRef.Objstate = "REMOVED"];
+      emphasis Neutral = [AvExeTaskRef.Objstate = "CANCELLED"];
+      editable = [false];
+      size = Medium;
+   }
+   field Barcode {
+      editable = [false];
+   }
+   field Aircraft {
+      editable = [false];
+   }
+   field AvExeTaskRef.ClassCode {
+      label = "Class";
+      editable = [false];
+   }
+
+   field AvExeTaskRef.SubclassCode {
+      label = "Subclass";
+      editable = [false];
+   }
+   field WoNumber {
+      label = "Work Package";
+      editable = [false];
+   }
+}
+group ModifyTaskAssignmentGroup for ModifyAssignmentVirtual {
+
+   field SkillDemand {
+      label = "Required Skill";
+      required = [true];
+      editable = [false];
+   }
+   field Remark {
+      label = "Assignment Role";
+      editable = [false];
+   }
+   field UserResource {
+      label = "Assigned to";
+      contactwidget {
+         enabled = [true];
+         source = Person;
+      }
+      editable = [false];
+   }
+   badge ExecutionInstanceStatus {
+      emphasis Complementary5 = [ExecutionInstanceStatus = "Assigned"];
+      emphasis Complementary9 = [ExecutionInstanceStatus = "Completed"];
+      emphasis Complementary6 = [ExecutionInstanceStatus = "Work Started"];
+      editable = [false];
+   }
+   field SchedStart {
+      label = "Schedule Start";
+      editable = [not ExecutionInstanceStatus in("Completed", "Work Started")];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, SchedStart, SchedEnd, Remark) into ValScheduledHours;
+            set LaborScheduledHours = ValScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field SchedEnd {
+      label = "Schedule End";
+      editable = [not ExecutionInstanceStatus in("Completed", "Work Started")];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      validate command {
+         execute {
+            call ValidateScheduleDates(TaskSeq, SchedStart, SchedEnd, Remark) into ValScheduledHours;
+            set LaborScheduledHours = ValScheduledHours.PreScheduleHours;
+         }
+      }
+   }
+   field LaborScheduledHours {
+      label = "Schedule Hours";
+      format = decimal;
+      editable = [not ExecutionInstanceStatus in("Completed", "Work Started")];
+      validate command {
+         execute {
+            call GetScheduleDateAndInterval(TaskSeq, LaborScheduledHours, Remark) into ScheduleTimeRange;
+            set SchedStart = ScheduleTimeRange.StartDate;
+            set SchedEnd = ScheduleTimeRange.EndDate;
+            if [LaborScheduledHours != ScheduleTimeRange.PreScheduleHours] {
+               set LaborScheduledHours = ScheduleTimeRange.PreScheduleHours;
+            }
+         }
+      }
+   }
+   field AssignmentStart {
+      label = "Actual Start";
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field AssignmentFinish {
+      label = "Actual End";
+      editable = [false];
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field ActualHours {
+      label = "Actual Hours";
+      editable = [ExecutionInstanceStatus = "Completed"];
+      format = decimal;
+   }
+   field IncompletionCauseRef.Description {
+      editable = [false];
+      label = "Job Stop Reason";
+   }
+   field ActionTaken {
+      editable = [false];
+      label = "Job Stop Note";
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command  SaveAssignment for AddAssignmentVirtual {
+   label = "Save";
+   visible = [SkillDemandResSeq != null and PreExecutorScheduledHours != null and(PreCertifierScheduledHours != null or CertificationRequired = false) and(PreInspectorScheduledHours != null or InspectionRequired = false)];
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and AvExeTaskRef.IsNonRoutine = true and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and ExecutorResourceSeq != null and HmNonRoutineApprovalRef.Objstate != "Approved"] {
+         messagebox("", warning, "Free cap limit is exceeded. Do you still want to assign this?") {
+            when "Yes" {
+               call AddNewAssignment(TaskSeq, Site, SkillDemandResSeq, ExecutorResourceSeq, PreExecutorScheduledHours, ExecutorScheduledStart, ExecutorScheduledEnd, CertificationRequired, CertifierResourceSeq, PreCertifierScheduledHours, CertifierScheduledStart, CertifierScheduledEnd, InspectionRequired, InspectorResourceSeq, PreInspectorScheduledHours, InspectorScheduledStart, InspectorScheduledEnd);
+            }
+            when "No" {
+               set ExecutorResourceSeq = null;
+               call AddNewAssignment(TaskSeq, Site, SkillDemandResSeq, ExecutorResourceSeq, PreExecutorScheduledHours, ExecutorScheduledStart, ExecutorScheduledEnd, CertificationRequired, CertifierResourceSeq, PreCertifierScheduledHours, CertifierScheduledStart, CertifierScheduledEnd, InspectionRequired, InspectorResourceSeq, PreInspectorScheduledHours, InspectorScheduledStart, InspectorScheduledEnd);
+            }
+         }
+      }
+      else {
+         call AddNewAssignment(TaskSeq, Site, SkillDemandResSeq, ExecutorResourceSeq, PreExecutorScheduledHours, ExecutorScheduledStart, ExecutorScheduledEnd, CertificationRequired, CertifierResourceSeq, PreCertifierScheduledHours, CertifierScheduledStart, CertifierScheduledEnd, InspectionRequired, InspectorResourceSeq, PreInspectorScheduledHours, InspectorScheduledStart, InspectorScheduledEnd);
+      }
+   }
+}
+
+command AddAssignmentCommand for AvExeTask {
+   label = "Assignment";
+   enabled = [IsCertified = "PENDING"];
+   mode = Global;
+   variable AddAssignmentInfo Structure(AddAssignmentInfoStructure);
+   variable Site Text;
+
+   execute {
+      copy this into AddAssignmentInfo;
+      call GetSite(TaskSeq) into Site;
+      set AddAssignmentInfo.Site = Site;
+      assistant AddAssignmentAssistant(AddAssignmentInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command AssignToMeCommand for JtTaskResourceDemandQuery {
+   label = "Assign To Me";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = null and not(parent.Objstate in("FINISHED", "CANCELLED"))];
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.Objstate != "Approved"] {
+         messagebox("", warning, " Free cap limit is exceeded. Do you still want to assign this?") {
+            when "Yes" {
+               call AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+            }
+            when "No" {
+               exit;
+            }
+         }
+      }
+      else {
+         call AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+      }
+   }
+}
+
+command UnassignMeCommand for JtTaskResourceDemandQuery {
+   label = "Unassign Me";
+   mode = SingleRecord;
+
+   visible = [AssignedResourceId = parent.CurrentUser and Rowstate = "ASSIGNED"];
+
+   execute {
+      call Unassign(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command HmAssignToMe {
+   label = "Assign To Me";
+   enabled = [AssignedResourceId = null or AssignedResourceId = ""];
+   mode = SelectedRecords;
+   variable BarcodeOfOutOfShiftTasks Text;
+   variable AssignTaskConfirmed Number;
+
+   bulkexecute {
+      call ValidateTasksInMyShift(component.TaskAssignmentsList.Selection) into BarcodeOfOutOfShiftTasks;
+      set AssignTaskConfirmed = 1;
+      if[BarcodeOfOutOfShiftTasks != "0"] {
+         messagebox("Scheduled start of task(s) outside shift", warning, "Selected task(s) are scheduled to start outside the assignee's shift. Do you want to assign anyway?") {
+            when YES {
+               set AssignTaskConfirmed = 1;
+            }
+            when "No" {
+               set AssignTaskConfirmed = 0;
+            }
+         }
+      }
+      if[AssignTaskConfirmed = 1] {
+         call ValidateSessUserResourceSkills(component.TaskAssignmentsList.Selection) {
+            when SUCCESS {
+               ifany [WorkPackageRef.IsHeavy = true and AvExeTaskRef.IsNonRoutine = true and WorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.Objstate != "Approved"] {
+                  messagebox("", warning, "Free cap limit is exceeded. Do you still want to assign this?") {
+                     when "Yes" {
+                        bulkcall AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+                        messagebox("", information, "Do you want to view your assigned work?") {
+                           when YES {
+                              bulknavigate "page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=AssignedResourceId eq $[CurrentUser]";
+                              refresh;
+                           }
+                           when NO {
+                              exit;
+                           }
+                        }
+                     }
+                     when "No" {
+                        exit;
+                     }
+                  }
+               }
+               else {
+                  bulkcall AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+                  messagebox("", information, "Do you want to view your assigned work?") {
+                     when YES {
+                        bulknavigate "page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=AssignedResourceId eq $[CurrentUser]";
+                        refresh;
+                     }
+                     when NO {
+                        exit;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+command HmCrwLdAssignToMe {
+   label = "Assign To Me";
+   enabled = [AssignedResourceId = null or AssignedResourceId = ""];
+   mode = SelectedRecords;
+   variable BarcodeOfOutOfShiftTasks Text;
+   variable AssignTaskConfirmed Number;
+
+   bulkexecute {
+      call ValidateTasksInMyShift(component.TaskAssignmentsList.Selection) into BarcodeOfOutOfShiftTasks;
+      set AssignTaskConfirmed = 1;
+      if[BarcodeOfOutOfShiftTasks != "0"] {
+         messagebox("Scheduled start of task(s) outside shift", warning, "Selected task(s) are scheduled to start outside the assignee's shift. Do you want to assign anyway?") {
+            when YES {
+               set AssignTaskConfirmed = 1;
+            }
+            when "No" {
+               set AssignTaskConfirmed = 0;
+            }
+         }
+      }
+      if[AssignTaskConfirmed = 1] {
+         call ValidateSessUserResourceSkills(component.TaskAssignmentsList.Selection) {
+            when SUCCESS {
+               ifany [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and AvExeTaskRef.IsNonRoutine = true and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.Objstate != "Approved"] {
+                  messagebox("", warning, "Free cap limit is exceeded. Do you still want to assign this?") {
+                     when "Yes" {
+                        bulkcall AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+                     }
+                     when "No" {
+                        exit;
+                     }
+                  }
+               }
+               else {
+                  bulkcall AssignToMe(TaskSeq, TaskResourceSeq, PlannedHours, ResourceGroupSeq);
+               }
+            }
+         }
+      }
+   }
+}
+
+command AssignToResource for ResourceVirtual {
+   label = "Assign";
+   mode = SingleRecord;
+   variable OutOfShiftFound Number;
+   variable AssignTaskConfirmed Number;
+
+   execute {
+      set AssignTaskConfirmed = 1;
+      set OutOfShiftFound = 0;
+      if[ShiftStart != null and ShiftEnd != null] {
+         call ValidateShiftWhenAssignTaskToUser(TaskSeq, ResourceSeq) into OutOfShiftFound;
+      }
+      if[OutOfShiftFound != 0] {
+         messagebox("Selected task scheduled to start outside assignee's shift", warning, "The assignee's shift schedule differs from the scheduled start selected task. Do you want to assign this task anyway?") {
+            when "YES" {
+               set AssignTaskConfirmed = 1;
+            }
+            when "NO" {
+               set AssignTaskConfirmed = 0;
+            }
+         }
+      }
+      if[AssignTaskConfirmed = 1] {
+         if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and AvExeTaskRef.IsNonRoutine = true and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.Objstate != "Approved"] {
+            messagebox("", warning, "Free cap limit is exceeded. Do you still want to assign this?") {
+               when "Yes" {
+                  call AllocateResourceToLaborDemand(TaskSeq, TaskResourceSeq, ResourceSeq, ResourceGroupSeq, LbDemandSchedHours, component.ResourceDemandsList.Selection) {
+                     when SUCCESS {
+                        success("The resource demand was assigned.");
+                     }
+                  }
+               }
+               when "No" {
+                  exit;
+               }
+            }
+         }
+         else {
+            call AllocateResourceToLaborDemand(TaskSeq, TaskResourceSeq, ResourceSeq, ResourceGroupSeq, LbDemandSchedHours, component.ResourceDemandsList.Selection) {
+               when SUCCESS {
+                  success("The resource demand was assigned.");
+               }
+            }
+         }
+      }
+   }
+}
+command UnassignLaborResource {
+   label = "Unassign";
+   enabled = [AssignedResourceId != null and ExecutionInstanceStatus = "Assigned"];
+   mode = SelectedRecords;
+
+   bulkexecute {
+      bulkcall Unassign(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command HmUnassignMe {
+   label = "Unassign";
+   enabled = [AssignedResourceId != null and AssignedResourceId = CurrentUser and ExecutionInstanceStatus = "Assigned"];
+   mode = SelectedRecords;
+
+   bulkexecute {
+      bulkcall Unassign(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command  ModifyTaskAssignment for ModifyAssignmentVirtual {
+   label = "OK";
+   execute {
+      if[ExecutionInstanceStatus != "Completed"] {
+         call ModifyTaskAssignmentScheduleHour(TaskSeq, TaskResourceSeq, LaborScheduledHours, SchedStart, SchedEnd, Remark, Site);
+      }
+      else {
+         call ModifyTaskAssignmentActualHour(TaskSeq, TaskResourceSeq, ActualHours, ExecutionInstanceSeq, ResourceGroupSeq, Remark);
+      }
+   }
+}
+
+command RecordSignOffCommand for JtTaskStepSignOff {
+   bulkexecute {
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector ReferenceResourceGroupLovSelector for TaskResourceLov {
+   label = "";
+   static ResourceId;
+   static Description;
+}
+
+selector ReferenceNewLaborResourceLovSelector for LaborResourceLov {
+   label = "";
+   static ResourceId;
+   static Description;
+}
+
+@Overtake
+selector ReferenceLicenseGroupLovSelector for LicenseGroupLov {
+   static LicenseGroupId;
+   static LicenseGroupName;
+}
+
+@Overtake
+selector ReferenceLicenseCompanyLovSelector for LicenseCompanyLov {
+   orderby = LicenseName;
+   static LicenseId;
+   static LicenseName;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+------------------------------ ENTITY DETAILS -------------------------------
+entityset AddAssignmentVirtualSet for AddAssignmentVirtual;
+entityset TaskAssignmentsVirtualSet for TaskAssignmentsVirtual;
+entityset JtTaskSignOffReqSet for JtTaskSignOffReq;
+entityset ModifyAssignmentVirtualSet for ModifyAssignmentVirtual;
+
+@Override
+entity JtTaskResourceLicense {
+   from = "jt_task_res_license_av_uiv";
+   use attributes = LicenseGroupId, LicenseId, LicenseName, LicenseLevelName;
+   attribute TaskSeq Number {
+      editable = [false];
+   }
+   attribute TaskResourceSeq Number {
+      editable = [false];
+   }
+   attribute TaskResourceLicenseSeq Number {
+      label = "Task Resource Certificate Seq";
+   }
+   attribute LicenseGroupName Text {
+      fetch = "license_group_name";
+      label = "Certificate Group Name";
+      maxlength = 100;
+      editable = [false];
+   }
+   attribute LicenseDescription Text {
+      fetch = "license_description";
+      label = "Certificate Description";
+      maxlength = 100;
+      editable = [false];
+   }
+   attribute LicenseLevelName Text {
+      fetch = "license_level_name";
+      editable = [true];
+      insertable = [true];
+      updatable = [true];
+   }
+   attribute CompanyId Text {
+      fetch = "company_id";
+      label = "Company ID";
+      maxlength = 100;
+      editable = [false];
+   }
+   reference TaskResourceSeqRef(TaskSeq, TaskResourceSeq) to JtTaskResource(TaskSeq, TaskResourceSeq) {
+      label = "Demand Line No";
+   }
+   @DynamicComponentDependency STRACO
+   reference LicenseGroupIdRef(CompanyId, LicenseGroupId) to LicenseGroupLov(CompanyId, LicenseGroupId) {
+      label = "Certificate Group ID";
+      copy LicenseGroupName to LicenseGroupName;
+   }
+   @DynamicComponentDependency STRACO
+   reference LicenseIdRef(CompanyId, LicenseGroupId, LicenseId) to LicenseCompanyLov(CompanyId, LicenseGroupId, LicenseId) {
+      label = "Certificate ID";
+      copy LicenseGroupName to LicenseGroupName;
+      copy LicenseName to LicenseName;
+   }
+}
+@Override
+entity TaskAssignmentEntity using JtTaskResource {
+   from = "jt_task_resource_demand_av_uiv";
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+   ludependencies = AvAircraftWorkPackage, JtExecutionInstance;
+   crud = Read, Update;
+   keys = TaskSeq, TaskResourceSeq;
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute Rowstate Enumeration(TaskAssignmentStatus);
+   attribute ResourceDemand Text {
+      label = "Required Skill";
+   }
+   attribute TaskName Text;
+   attribute TaskStatus Text {
+      label = "Task Status";
+   }
+   attribute TaskDescription Text {
+      label = "Task Description";
+   }
+   attribute ClassCode Text {
+      label = "Class";
+   }
+   attribute SubclassCode Text {
+      label = "Subclass";
+   }
+   attribute TaskLocation Text;
+   attribute Crew Text;
+   attribute CrewName Text;
+   attribute Routine Boolean("TRUE", "FALSE");
+   attribute Priority Text {
+      label = "Priority";
+   }
+   attribute AssignedResourceId Text {
+      label = "Assigned To";
+   }
+   attribute UserResourceUsername Text {
+      fetch = "Pers_API.Get_Internal_Display_Name(assigned_resource_id)";
+   }
+   attribute ExecutionInstanceStatus Text {
+      label = "Assignment Status";
+   }
+   attribute SchedStart Timestamp {
+      label = "Scheduled Start";
+   }
+   attribute SchedEnd Timestamp {
+      label = "Scheduled End";
+   }
+   attribute AssignmentStart Timestamp {
+      label = "Actual Start";
+   }
+   attribute AssignmentFinish Timestamp {
+      label = "Actual End";
+   }
+   attribute ConfigPosition Text {
+      label = "Config Position";
+   }
+   attribute AircraftId Number {
+      label = "Aircraft ID";
+   }
+   attribute WorkPackageId Number;
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT(av_assembly_type_code, ' - '), TO_CHAR(av_reg_code))";
+      lovcolumn = [true];
+   }
+   attribute WpBarcode Text {
+      label = "Work Package";
+   }
+   attribute WpName Text {
+      label = "Work Package Name";
+   }
+   attribute WpStatus Text {
+      label = "Work Package Status";
+   }
+   attribute WpLocation Text {
+      label = "Work Package Location";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute ShiftType Enumeration(ShiftType) {
+      fetch = "Flmexe_Util_API.Get_Shift_By_Sched_Start(sched_start, execution_instance_status)";
+   }
+   attribute ResourceGroupSeq Number;
+   attribute PlannedHours Number;
+   attribute LaborScheduledHours Text {
+      label = "Scheduled Hours";
+      fetch = "Adcom_Util_API.Get_Text_Time(planned_hours)";
+   }
+   attribute ActualHours Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(Jt_Task_Transaction_API.Get_Tot_Personel_Reported_Hrs(task_seq,execution_instance_seq))";
+   }
+   attribute Remark Text;
+   attribute MaterialAvailability Text {
+      label = "Material Availability";
+   }
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopSkill Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Skill(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(Task_Seq)";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(Task_Seq)";
+   }
+
+   attribute IncompletionCause Text;
+   attribute ActionTaken Text;
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+
+   reference IncompletionCauseRef(IncompletionCause) to JtIncompletionCause(IncompletionCause);
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+}
+
+@Override
+entity JtTaskSignOffReq {
+   crud = Create, Read, Update, Delete;
+   ludependencies = JtTask;
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+
+   attribute SignOffReqType Enumeration(SignOffReqType) {
+      fetch = "Jt_Task_Sign_Off_Req_API.Get_Sign_Off_Req_Type(task_seq, sign_off_req_seq)";
+      required = [true];
+   }
+   attribute LicenseId Text {
+      fetch = "LICENSE_ID";
+      maxlength = 20;
+      format = uppercase;
+   }
+   attribute OverallSignOffStatus Text {
+      fetch = "Mm_Step_Sign_Off_Req_Util_API.Get_Overall_Sign_Off_Status(task_seq, sign_off_req_seq, sign_off_connection, identity)";
+      editable = [false];
+   }
+   attribute LastSignOffDate Timestamp {
+      fetch = "Mm_Step_Sign_Off_Req_Util_API.Get_Last_Sign_Off_Date(task_seq, sign_off_req_seq, sign_off_connection, identity)";
+      editable = [false];
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute SignOffConnectionDb Text {
+      fetch = "sign_off_connection_db";
+   }
+   attribute SignOffConnection Enumeration(SignOffConnection) {
+      fetch = "sign_off_connection";
+   }
+
+   array JtTaskStepSignOffArray(TaskSeq, SignOffReqSeq) to JtTaskStepSignOff(TaskSeq, SignOffReqSeq) {
+      where = "NVL(:child.StepObjConnLuNameDb, 'NULL') != 'AircraftPanel'";
+   }
+   array PanelSignOffArray(TaskSeq, SignOffReqSeq) to JtTaskStepSignOff(TaskSeq, SignOffReqSeq) {
+      where = ":child.StepObjConnLuNameDb = 'AircraftPanel'";
+   }
+}
+
+@Override
+entity JtTaskStepSignOff {
+   crud = Read;
+   ludependencies = JtTask, JtTaskStep;
+   attribute Role Enumeration(SignOffReqType) {
+      fetch = "Jt_Task_Sign_Off_Req_API.Get_Sign_Off_Req_Type(task_seq, sign_off_req_seq)";
+   }
+   attribute Step Text {
+      fetch = "Av_Exe_Task_Step_Util_API.Get_Order_No(Jt_Task_Step_API.Get_Order_No(task_seq, task_step_seq))";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(Task_Seq)";
+   }
+   attribute StepObjConnLuNameDb Enumeration(JtConnectedObject.EqObject) {
+      fetch = "Jt_Task_Step_API.Get_Object_Connection_Lu_Na_Db(task_seq, task_step_seq)";
+   }
+   attribute PanelCd Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Panel_Cd_By_Rowkey(Jt_Task_Step_API.Get_Object_Connection_Rowkey(task_seq, task_step_seq))";
+   }
+   attribute AcPanelSeq Number {
+      fetch = "Av_Aircraft_Panel_API.Get_Ac_Panel_Seq_By_Rowkey(Jt_Task_Step_API.Get_Object_Connection_Rowkey(task_seq, task_step_seq))";
+   }
+   attribute ZoneCd Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Zone_Cd_By_Panel_Rowkey(Jt_Task_Step_API.Get_Object_Connection_Rowkey(task_seq, task_step_seq))";
+   }
+   attribute PanelStatus Enumeration(PanelStatuses) {
+      fetch = "Av_Exe_Task_Panel_API.Get_Panel_Status(task_seq, task_step_seq)";
+   }
+
+   reference JtTaskStepRef(TaskSeq, TaskStepSeq) to JtTaskStep(TaskSeq, TaskStepSeq) {
+      label = "Task Step";
+   }
+   reference JtTaskSignOffReqRef(TaskSeq, SignOffReqSeq) to JtTaskSignOffReq(TaskSeq, SignOffReqSeq);
+   reference AvZoneCodeRef(ZoneCd) to TaskZoneLov(ZoneCode);
+   reference AvPanelCodeRef(PanelCd) to TaskPanelLov(PanelCode);
+   reference AvAircraftPanelRef(AcPanelSeq) to AircraftPanelLov(AcPanelSeq);
+}
+---------------------------------- QUERIES ----------------------------------
+query JtTaskResourceDemandQuery {
+   from = "jt_task_resource_demand_av_uiv";
+   where = "demand_type = 'Person'";
+   keys = TaskSeq, TaskResourceSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute PlannedHours Number;
+   attribute ExecutionInstanceStatus Text;
+   attribute PlannedHoursFormat Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(planned_hours)";
+      label = "Scheduled Hours";
+   }
+   attribute AllocatedHours Number;
+   attribute ResourceDemand Text {
+      label = "Required Skills";
+   }
+   attribute AssignedResourceId Text;
+   attribute AssignedResourceSeq Number;
+   attribute UserResourceUsername Text {
+      fetch = "Pers_API.Get_Internal_Display_Name(assigned_resource_id)";
+      label = "Assign To";
+
+   }
+   attribute AssignmentStart Timestamp {
+      label = "Actual Start";
+   }
+   attribute AssignmentFinish Timestamp {
+      label = "Actual End";
+   }
+   attribute AllocatedStart Timestamp {
+      label = "Start";
+      displaytimezone = UtcTimeZoneCode;
+   }
+   attribute AllocatedFinish Timestamp {
+      label = "End";
+      displaytimezone = UtcTimeZoneCode;
+   }
+   attribute FixedStart Timestamp;
+   attribute WorkStart Timestamp;
+   attribute Rowstate Enumeration(TaskAssignmentStatus) {
+      label = "Assignment Status";
+   }
+   attribute Remark Text {
+      label = "Assignment Role";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute AircraftId Number;
+   attribute WorkPackageId Number;
+   attribute IncompletionCause Text {
+      label = "Job Stop Reason Code";
+   }
+   attribute ActionTaken Text {
+      label = "Job Stop Note";
+   }
+   attribute Barcode Text;
+
+   attribute Aircraft Text {
+      label = "Aircraft";
+      fetch = "CONCAT(CONCAT(av_assembly_type_code, ' - '), TO_CHAR(av_reg_code))";
+      lovcolumn = [true];
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute CurrentUser Text {
+      fetch = "Fnd_Session_API.Get_Fnd_User()";
+   }
+   attribute JobStopReason Text {
+      fetch = "Labour_Assignment_Util_API.Get_Assignment_Job_Stop_Reason(incompletion_cause)";
+   }
+   attribute IsClockedIn Boolean("TRUE", "FALSE") {
+      fetch = "Jt_Task_Clocking_API.Is_Clocked_In(task_seq, execution_instance_seq)";
+   }
+   attribute SchedStart Timestamp {
+      label = "Scheduled Start";
+   }
+   attribute SchedEnd Timestamp {
+      label = "Scheduled End";
+   }
+   attribute Location Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Location_Code(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(task_seq)";
+   }
+   attribute IsNonRoutine Boolean("TRUE", "FALSE") {
+      fetch = "Av_Exe_Task_API.Is_Non_Routine(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   @DynamicComponentDependency ADCON
+   attribute IsExecutionBlockedByCap Boolean("TRUE", "FALSE") {
+      fetch = "Adcon_Util_API.Is_Execution_Blocked_By_Cap()";
+   }
+
+   array ResourceLicenceArray(TaskSeq, TaskResourceSeq) to JtTaskResourceLicense(TaskSeq, TaskResourceSeq);
+
+   reference AvAircraftWorkPackageRef(WorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+}
+
+query TaskResourceLov {
+   from = "resource_lov";
+   keys = ResourceSeq;
+   ludependencies = Resource;
+   lu = none;
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "Resource_Id";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   where = "resource_type = 'Person Group' and used_in_maintenance ='True'";
+   reference SkillDemandLovRef(ResourceSeq) to TaskResourceLov(ResourceSeq);
+}
+
+query LaborResourceLov {
+   from = "resource_join_parent";
+   keys = ResourceParentSeq, ResourceSeq;
+   ludependencies = Resource, ResourceParent;
+   lu = none;
+   attribute ResourceParentSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Parent_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceSeq Number {
+      lovcolumn = [true];
+      fetch = "Resource_Seq";
+      label = "ResourceSeq";
+   }
+   attribute ResourceId Text {
+      lovcolumn = [true];
+      fetch = "Resource_Id";
+      label = "ResourceId";
+   }
+   attribute Description Text {
+      lovcolumn = [true];
+      fetch = "Description";
+      label = "Description";
+   }
+   where = "resource_type = 'Person'";
+   reference ExecutorAssignedLovRef(ResourceParentSeq, ResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+   reference CertifierAssignedLovRef(ResourceParentSeq, ResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+   reference InspectorAssignedLovRef(ResourceParentSeq, ResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+}
+
+query AvTaskQuery {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   from = "Task_For_Airport_Offset_View";
+   lu = AvExeTask;
+   luname = "luname";
+   keyref = "keyref_value";
+   keys = TaskSeq, LegNo;
+   ludependencies = AvTaskQuery, TaskCompetencyQuery, ResourceGanttQuery;
+   attribute LegNo Text;
+   attribute TaskSeq Number {
+      label = "Task ID";
+   }
+   attribute AircraftId Number {
+      label = "Aircraft ID";
+   }
+   attribute AircraftWpId Number {
+      label = "Aircraft Workpackage ID";
+   }
+   attribute TaskCode Text {
+      label = "Task Code";
+   }
+   attribute ArrivalAirportId Number {
+      label = "Arrival Airport ID";
+   }
+   attribute Barcode Text;
+   attribute TaskName Text;
+   attribute Priority Text;
+   attribute Objstate Enumeration(AvExeTaskState) {
+      label = "State";
+   }
+   attribute Aircraft Text {
+      fetch = "Av_Exe_Task_API.Get_Aircraft(aircraft_id)";
+   }
+   attribute AircraftTypeName Text {
+      fetch = "Av_Assembly_API.Get_Assembly_Type_Name(Aircraft_API.Get_Assembly_Type_Code(aircraft_id))";
+   }
+   attribute AirportSite Text {
+      fetch = "Av_Airport_API.Get_Site(arrival_airport_id)";
+   }
+   attribute ShedArrivalDateTime Timestamp {
+      label = "Arrival Time";
+      fetch = "Av_Exe_Task_API.Get_Arrival_Time(task_seq)";
+   }
+   attribute ShedDepartureDateTime Timestamp {
+      label = "Departure Time";
+      fetch = "Av_Exe_Task_API.Get_Departure_Time(task_seq)";
+   }
+   attribute ResourceAssignmentStatus Number {
+      fetch = "Av_Exe_Task_API.Get_Resource_Assignment_Status(task_seq)";
+   }
+   attribute ResAssignDisplayStatus Enumeration(AssignmentStatus) {
+      label = "Assignment Status";
+      fetch = "DECODE(Av_Exe_Task_API.Get_Resource_Assignment_Status(task_seq),1,'NoReqSkill',2,'Unassigned',3,'ResourceConflict',4,'PartiallyAssigned','Assigned')";
+   }
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(fault_id , task_seq)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute ClassCode Text;
+   attribute SubclassCode Text;
+   attribute WorkType Text {
+      fetch = "Av_Work_Package_Work_Type_API.Get_Work_Types_For_Workpackage(aircraft_wp_id)";
+   }
+
+   attribute ConvertedDuration Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(duration)";
+   }
+   attribute OverallAssignmentsProgress Enumeration(OverallAssignmentStatuses) {
+      fetch = "Av_Exe_Task_API.Get_Overall_Assign_Progress(task_seq)";
+   }
+   attribute LatestJobStopReason Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Reason(task_seq)";
+   }
+   attribute LatestJobStopSkill Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Skill(task_seq)";
+   }
+   attribute LatestJobStopNote Text {
+      fetch = "Av_Exe_Task_API.Get_Latest_Jobstop_Note(task_seq)";
+   }
+   attribute IsCompleted Text {
+      fetch = "DECODE(Av_Exe_Task_API.Get_Approval_Number(task_seq), NULL, 'PENDING','SIGNED')";
+      editable = [false];
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvAirportRef(ArrivalAirportId) to AvAirport(AirportId);
+   reference AvAircraftRef(AircraftId) to Aircraft(AircraftId);
+   array ResourcesArray(AirportSite) to ResourceGanttQuery(Site) {
+      where = "((:parent.TaskSeq = :child.TaskSeq))";
+   }
+   array JtTaskResourceDemandArray(TaskSeq) to JtTaskResourceDemandQuery(TaskSeq);
+}
+
+query ResourceGanttQuery {
+   from = "Ad_Task_Resource_view";
+   where = "resource_type ='PERSON'";
+   keys = ResourceSeq;
+   lu = none;
+   ludependencies = ResourceGanttQuery, AvTaskQuery, JtTaskResourceQuery;
+
+   attribute ResourceSeq Number;
+   attribute ResourceId Text {
+      label = "Resource ID";
+   }
+   attribute ResourceType Enumeration(ResourceTypes) {
+      fetch = "resource_type_db";
+   }
+   attribute Description Text {
+      label = "Name";
+   }
+   attribute TaskSeq Number;
+   attribute Site Text;
+   attribute Assignment Text;
+   attribute SkillDemand Text {
+      label = "Skill Demand";
+   }
+   attribute IsAvailable Boolean("TRUE", "FALSE") {
+      fetch = "DECODE(avaiability,1,'TRUE','FALSE')";
+   }
+   attribute RowRank Number;
+   attribute GanttRow Text;
+   attribute ResType Text;
+   array ResourceShiftArray(GanttRow, ResType) to TaskCompetencyQuery(GanttRow, ResType);
+}
+
+query TaskCompetencyQuery {
+   from = "Ad_Task_Competency_View";
+   lu = none;
+   keys = TaskSeq, TaskResourceSeq, ExecutionInstanceSeq;
+   ludependencies = TaskCompetencyQuery, AvTaskQuery, JtTaskResourceQuery;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   attribute TaskSeq Number {
+      label = "Task ID";
+   }
+   attribute AssignmentId Text;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute AssignedUser Text;
+   attribute AssignedUserResSeq Number;
+   attribute StartStamp Timestamp;
+   attribute EndStamp Timestamp;
+   attribute ResType Text;
+   attribute SkillDemand Text {
+      label = "Skill Demand";
+   }
+   attribute GanttItemLabel Text {
+      fetch = " Aircraft_API.Get_Reg_Code(Av_Flight_API.Get_Aircraft_Id(Av_Aircraft_Work_Package_API.Get_Flight_Id(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)))) || '-' || skill_demand";
+   }
+
+
+   attribute GanttRow Text;
+   action AssignUserToCompetency Text {
+      parameter AssignedUser Text;
+      parameter StartStamp Timestamp;
+      parameter EndStamp Timestamp;
+      ludependencies = TaskCompetencyQuery, ResourceGanttQuery;
+   }
+}
+
+
+query LicenseGroupLov {
+   from = "license_group_lov";
+   lu = LicenseGroup;
+   keys = CompanyId, LicenseGroupId;
+   ludependencies = LicenseGroup;
+   attribute CompanyId Text {
+      lovcolumn = [false];
+   }
+   attribute LicenseGroupId Text {
+      label = "Certificate Group ID";
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute LicenseGroupName Text {
+      label = "Certificate Group Name";
+      lovcolumn = [true];
+   }
+}
+
+query LicenseCompanyLov {
+   from = "license_company_lov";
+   lu = LicenseCompany;
+   keys = CompanyId, LicenseGroupId, LicenseId;
+   ludependencies = LicenseCompany;
+   attribute CompanyId Text {
+      lovcolumn = [false];
+   }
+   attribute LicenseGroupId Text {
+      label = "Certificate Group ID";
+      lovcolumn = [false];
+   }
+   attribute LicenseId Text {
+      label = "Certificate ID";
+      lovcolumn = [true];
+   }
+   attribute LicenseName Text {
+      label = "Certificate Name";
+      lovcolumn = [true];
+   }
+   attribute LicenseGroupName Text {
+      label = "Certificate Group Name";
+      lovcolumn = [true];
+   }
+   attribute State Text {
+      lovcolumn = [true];
+   }
+}
+
+@Override
+query JtTaskLaborSummaryTotal {
+   from = "jt_task_trans_res_total_av_uiv";
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   keys = TaskSeq, ResourceSeq {
+      where = "TASK_SEQ = :TaskSeq";
+   }
+   lu = none;
+   attribute TaskSeq Number;
+   attribute ResourceSeq Number;
+   attribute Skill Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute ActualHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(actual_hours)";
+      label = "Actual Hours";
+   }
+   attribute ScheduledHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(scheduled_hours)";
+      label = "Scheduled Hours";
+   }
+}
+
+@Override
+query JtTaskLaborSummaryBreakdown {
+   from = "jt_task_trans_res_bdown_av_uiv";
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+   keys = TaskSeq, ResourceSeq, ResourceRemark {
+      where = "TASK_SEQ = :TaskSeq";
+   }
+   lu = none;
+   attribute TaskSeq Number;
+   attribute ResourceSeq Number;
+   attribute Skill Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_seq)";
+   }
+   attribute ResourceRemark Text {
+      label = "Assignment Role";
+   }
+   attribute ResourceRemarkRank Number;
+   attribute ActualHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(actual_hours)";
+      label = "Actual Hours";
+   }
+   attribute ScheduledHours Number {
+      fetch = "Adcom_Util_API.Hours_To_Milliseconds(scheduled_hours)";
+      label = "Scheduled Hours";
+   }
+}
+--------------------------------- VIRTUALS ----------------------------------
+virtual AddAssignmentVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute TaskSeq Number;
+   attribute SkillDemandResSeq  Number;
+   attribute ExecutorResourceSeq Number;
+   attribute CertifierResourceSeq Number;
+   attribute InspectorResourceSeq Number;
+   attribute PreExecutorScheduledHours Text;
+   attribute PreCertifierScheduledHours Text;
+   attribute PreInspectorScheduledHours Text;
+   attribute ExecutorScheduledHours Number;
+   attribute CertifierScheduledHours Number;
+   attribute InspectorScheduledHours Number;
+   attribute AssignedTo Text;
+   attribute ExecutorScheduledStart  Timestamp;
+   attribute ExecutorScheduledEnd  Timestamp;
+   attribute CertifierScheduledStart Timestamp;
+   attribute CertifierScheduledEnd Timestamp;
+   attribute InspectorScheduledStart Timestamp;
+   attribute InspectorScheduledEnd Timestamp;
+   attribute CertificationRequired Boolean {
+      default = "false";
+      required = [true];
+   }
+   attribute InspectionRequired Boolean {
+      default = "false";
+      required = [true];
+   }
+   attribute AssignedCertifier Text;
+   attribute AssignedInspector Text;
+
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute Site Text;
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   reference SkillDemandLovRef(SkillDemandResSeq) to TaskResourceLov(ResourceSeq);
+   reference ExecutorAssignedLovRef(SkillDemandResSeq, ExecutorResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+   reference CertifierAssignedLovRef(SkillDemandResSeq, CertifierResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+   reference InspectorAssignedLovRef(SkillDemandResSeq, InspectorResourceSeq) to LaborResourceLov(ResourceParentSeq, ResourceSeq);
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+}
+virtual TaskAssignmentsVirtual {
+   ludependencies = ResourceDemandsVirtual, ResourceVirtual;
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute AircraftId Number;
+   attribute Aircraft Text;
+   attribute WoNumber Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Wo_Number(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   attribute Sensitivities Text {
+      fetch = "Av_Exe_Task_Sens_API.Get_Sensitivities_By_Task_Seq(task_seq)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   array ResourceDemandsArray() to ResourceDemandsVirtual();
+}
+
+virtual ResourceDemandsVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute SkillDemand Text;
+   attribute Remark Text;
+   attribute PlannedHours Text;
+   attribute SchedStart Timestamp;
+   attribute SchedEnd Timestamp;
+   attribute LicenseId Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute ResourceGroupSeq Number;
+   attribute LbDemandSchedHours Number;
+   array ResourceArray(TaskSeq, TaskResourceSeq, LicenseId) to ResourceVirtual(TaskSeq, TaskResourceSeq, LicenseId);
+}
+
+virtual ResourceVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ResourceSeq Number;
+   attribute Description Text;
+   attribute LicenseId Text;
+   attribute TotalAssignments Number;
+   attribute TotalHours Number;
+   attribute ShiftStart Timestamp;
+   attribute ShiftEnd Timestamp;
+   attribute ResourceGroupSeq Number;
+   attribute LbDemandSchedHours Number;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+   }
+   @DynamicComponentDependency ADCON
+   attribute NrApprovalSeq Number {
+      fetch = "Hm_Non_Routine_Approval_API.Get_Approval_Seq_By_Fault_Id(Av_Exe_Task_API.Get_Fault_Id(task_seq))";
+   }
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   @DynamicComponentDependency ADCON
+   reference HmNonRoutineApprovalRef(NrApprovalSeq) to HmNonRoutineApproval(NrApprovalSeq);
+}
+
+virtual ModifyAssignmentVirtual {
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute SkillDemand Text;
+   attribute UserResource Text;
+   attribute UserResourceUsername Text;
+   attribute ExecutionInstanceStatus Text;
+   attribute SchedStart Timestamp;
+   attribute SchedEnd Timestamp;
+   attribute AssignmentStart Timestamp;
+   attribute AssignmentFinish Timestamp;
+   attribute ActualHours Text;
+   attribute PlannedHours Number;
+   attribute LaborScheduledHours Text;
+   attribute Remark Text;
+   attribute IncompletionCause Text;
+   attribute ActionTaken Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   attribute Site Text {
+      fetch = "Work_Task_API.Get_Site(Task_Seq)";
+   }
+
+   reference IncompletionCauseRef(IncompletionCause) to JtIncompletionCause(IncompletionCause);
+   reference JTTransactionRef(TaskSeq, TaskResourceSeq) to JtTaskTransaction(TaskSeq, TaskResourceSeq);
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+structure ScheduleRangeStructure {
+   timestamptzref = "server";
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+}
+
+structure ScheduleHoursStructure {
+   attribute PreScheduleHours Text;
+   attribute ScheduleHours Number;
+}
+
+structure ScheduleIntervalStructure {
+   timestamptzref = "server";
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+   attribute PreScheduleHours Text;
+}
+
+structure AddAssignmentInfoStructure {
+   attribute TaskSeq Number;
+   attribute Site Text;
+}
+
+---------------------------------- ACTIONS ----------------------------------
+action AddNewAssignment {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+
+   parameter TaskSeq Number;
+   parameter Site Text;
+   parameter SkillDemandResSeq Number;
+   parameter ExecutorResSeq Number;
+   parameter PreExecutorScheduledHours Text;
+   parameter ExecutorScheduledStart Timestamp;
+   parameter ExecutorScheduledEnd Timestamp;
+
+   parameter CertificationRequired Boolean;
+   parameter CertifierResSeq Number;
+   parameter PreCertifierScheduledHours Text;
+   parameter CertifierScheduledStart Timestamp;
+   parameter CertifierScheduledEnd Timestamp;
+
+   parameter InspectionRequired Boolean;
+   parameter InspectorResSeq Number;
+   parameter PreInspectorScheduledHours Text;
+   parameter InspectorScheduledStart Timestamp;
+   parameter InspectorScheduledEnd Timestamp;
+   ludependencies = AvExeTask, JtTaskResource, JtExecutionInstance, JtTaskResourceDemandQuery, JtTaskLaborSummaryTotal, JtTaskLaborSummaryBreakdown, AvTaskQuery, JtTaskStep;
+}
+action AssignToMe {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq   Number;
+   parameter PlannedHours Number;
+   parameter ResourceGroupSeq Number;
+   ludependencies = JtTaskResourceDemandQuery, AvTaskQuery, JtExecutionInstance, TaskAssignmentEntity;
+}
+
+action Unassign {
+   initialcheck none;
+   parameter TaskSeq               Number;
+   parameter ExecutionInstanceSeq  Number;
+
+   ludependencies = JtTaskResourceDemandQuery, AvExeTask, JtExecutionInstance, TaskAssignmentEntity, AvTaskQuery, TaskCompetencyQuery, ResourceGanttQuery;
+}
+
+action ValidateSessUserResourceSkills {
+   initialcheck none;
+   parameter Selection Text;
+}
+
+action ProxyJobStop {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+
+   parameter TaskSeq              Number;
+   parameter TaskResourceSeq      Number;
+   parameter ExecutionInstanceSeq Number;
+   parameter ResourceGroupSeq     Number;
+   parameter AssignmentRole       Text;
+   parameter CurrAssignmentStatus Text;
+   parameter StartTime            Timestamp;
+   parameter ScheduledHours       Number;
+   parameter Site                 Text;
+
+   ludependencies = TaskAssignmentEntity, AvExeTask, JtTaskResource, JtExecutionInstance, JtTaskResourceDemandQuery;
+
+}
+action AllocateResourceToLaborDemand {
+   initialcheck none;
+   ludependencies = JtExecutionInstance, ResourceVirtual, ResourceDemandsVirtual, AvTaskQuery, JtTaskResourceDemandQuery, TaskAssignmentEntity, ResourceGanttQuery, TaskCompetencyQuery;
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+   parameter ResourceSeq Number;
+   parameter ResourceGroupSeq Number;
+   parameter LbDemandSchedHours Number;
+   parameter Selection Text;
+}
+
+action PauseAssignment {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+   ludependencies = JtTaskResourceDemandQuery, TaskAssignmentEntity, JtExecutionInstance, JtTaskTransaction, JtTaskLaborSummaryTotal, JtTaskLaborSummaryBreakdown;
+}
+
+action ContinueAssignment {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+   ludependencies = JtTaskResourceDemandQuery, TaskAssignmentEntity, JtExecutionInstance;
+}
+
+action ModifyTaskAssignmentScheduleHour {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+
+   parameter TaskSeq             Number;
+   parameter TaskResourceSeq     Number;
+   parameter LaborScheduledHours Text;
+   parameter SchedStart          Timestamp;
+   parameter SchedEnd            Timestamp;
+   parameter Remark              Text;
+   parameter Site                Text;
+
+   ludependencies = TaskAssignmentEntity, JtTaskResource, JtTaskResourceDemandQuery, AvExeTask, ModifyAssignmentVirtual;
+}
+
+action ModifyTaskAssignmentActualHour {
+   initialcheck none;
+   parameter TaskSeq                Number;
+   parameter TaskResourceSeq        Number;
+   parameter ActualHours            Text;
+   parameter ExecutionInstanceSeq   Number;
+   parameter ResourceGroupSeq       Number;
+   parameter Remark                 Text;
+
+   ludependencies = TaskAssignmentEntity, JtTaskResource, JtTaskResourceDemandQuery, JTTaskTransaction, AvExeTask, ModifyAssignmentVirtual;
+}
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetScheduleTimeRange Structure(ScheduleRangeStructure) {
+   timestamptzref = "server";
+
+   parameter TaskSeq Number;
+   parameter DurationHours Number;
+}
+
+function GetScheduleDateAndInterval Structure(ScheduleIntervalStructure) {
+   timestamptzref = "server";
+
+   parameter TaskSeq Number;
+   parameter DurationHhmm Text;
+   parameter Field Text;
+}
+
+function ValidateScheduleDates Structure(ScheduleHoursStructure) {
+   timestamptzref = "server";
+
+   parameter TaskSeq Number;
+   parameter StartDate Timestamp;
+   parameter EndDate Timestamp;
+   parameter Field Text;
+}
+
+function ValidateTasksInMyShift Text {
+   initialcheck none;
+   parameter Selection Text;
+}
+
+function ValidateShiftWhenAssignTaskToUser Number {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter ResourceSeq Number;
+}
+
+function GetPersonResources List < Entity(LaborResourceLov) > {
+   parameter SkillDemandResourceId Text;
+   parameter LicenseSuffix Text;
+   where = "Pers_License_Profile_API.Check_Exist(resource_id, CONCAT(:SkillDemandResourceId,:LicenseSuffix))='TRUE'";
+}
+
+function CheckActiveAssgmtForSkillRole Boolean {
+   initialcheck none;
+   parameter TaskSeq Number;
+   parameter SkillResSeq Number;
+   parameter AssignmentRole Text;
+   parameter UserResSeq Number;
+}
+
+function ValidateAssignments Boolean {
+   initialcheck none;
+   parameter Selection Text;
+   parameter TaskSeqNo Number;
+}
+
+function GetSite Text {
+   parameter TaskSeq Number;
+}
+------------------------------- ENUMERATIONS --------------------------------
+enumeration AssignmentStatus {
+   value = "NoReqSkill" {
+      label = "No Required Skills";
+   }
+   value = "Unassigned" {
+      label = "Unassigned";
+   }
+   value = "Assigned" {
+      label = "Assigned";
+   }
+   value = "PartiallyAssigned" {
+      label = "Partially Assigned";
+   }
+   value = "ResourceConflict" {
+      label = "Resource Conflict";
+   }
+}
+
+enumeration TaskAssignmentStatus {
+   value = "ASSIGNED" {
+      label = "Assigned";
+   }
+   value = "WORKSTARTED" {
+      label = "Work Started";
+   }
+   value = "COMPLETED" {
+      label = "Completed";
+   }
+   value = "CANCELLED" {
+      label = "Cancelled";
+   }
+}
+
+enumeration OverallAssignmentStatuses {
+   value = "NotStarted" {
+      label = "Not Started";
+   }
+   value = "InProgress" {
+      label = "In Progress";
+   }
+   value = "Paused" {
+      label = "Paused";
+   }
+   value = "Finished" {
+      label = "Finished";
+   }
+}

@@ -1,0 +1,33 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>1/8/25, 3:14:24 PM</LastModified>
+    <Component>FLMEXE</Component>
+    <Name>FLM_ASSIGNED_TO_ME_COUNT</Name>
+    <ID>a4550ced-6321-432a-af38-b7aa12216a6d</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Value</Column>
+            <Name>Value</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <FunctionMetadata>
+        <Name>GetAssignedCountByShift</Name>
+        <ContentType>Function</ContentType>
+        <ReturnType>
+            <Attributes>
+                <Column>Value</Column>
+                <DataType>Number</DataType>
+            </Attributes>
+        </ReturnType>
+        <Parameters>
+            <Attributes>
+                <Column>WorkPackageId</Column>
+                <DataType>Number</DataType>
+                <Value>$WorkPackageId$</Value>
+            </Attributes>
+        </Parameters>
+    </FunctionMetadata>
+</ProjectionDataSource>

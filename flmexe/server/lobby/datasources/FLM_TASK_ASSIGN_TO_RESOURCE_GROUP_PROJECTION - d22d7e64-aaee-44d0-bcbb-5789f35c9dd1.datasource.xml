@@ -1,0 +1,25 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <Keywords>Line Work, Supervisor, FLM, Assignments</Keywords>
+    <DescriptiveText>Details of tasks assign to resource group o logged supervisor</DescriptiveText>
+    <LastModified>30/05/2024, 16:13:57</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_TASK_ASSIGN_TO_RESOURCE_GROUP_PROJECTION</Name>
+    <ID>d22d7e64-aaee-44d0-bcbb-5789f35c9dd1</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>TaskSeq</Column>
+            <Name>Task Seq</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmLineWorkManagementLobbyHandling</Projection>
+    <EntitySet>TasksAssignedToResGroupQuerySet</EntitySet>
+    <EntityType>TasksAssignedToResGroupQuery</EntityType>
+</ProjectionDataSource>

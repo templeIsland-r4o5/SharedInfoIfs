@@ -1,0 +1,261 @@
+--  Date        Sign    History
+--  ----------  ------  -----------------------------------------------------
+--  251002  ARDMLK  AVMXSOL-14461, Updated size of client controls in AvMaterialReqGroup.
+--  250825  GAGRLK  AVMXSOL-12731, Updated the navigation entry FlmTaskMatReqNavEntry and updated page label.
+--  250908  BADHLK  AVMXSOL-11649, Enabled Pick List Options.
+-----------------------------------------------------------------------------
+client FlmTaskMaterialRequisition;
+component FLMEXE;
+layer Core;
+projection FlmTaskMaterialRequisitionHandling;
+
+
+description "Manage Aviation Maintenance Material Requisition";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AvCreatePickList;
+include fragment AvTaskMaterial;
+include fragment UserAllowedSiteLovSelector;
+include fragment MaintMaterialRequisition;
+
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry FlmTaskMatReqNavEntry parent MxCoreNavigator.MaterialControllerNav at index 400 {
+   label = "Maintenance Material Requisition";
+   page FlmAvMaterialRequisition;
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page FlmAvMaterialRequisition using MaintMaterialReqSet {
+   label = "Maintenance Material Requisition";
+   startupmode = search;
+   stateindicator MaintMaterialRequisitionStateIndicator;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+   selector MaintMaterialRequisitionSelector;
+   group AvMaterialReqGroup;
+   list AvMatReqLineList(MainMaterialReqLineArray) bind MaintMaterialRequisitionSelector;
+
+   commandgroup CommandGroupCmdGroup {
+
+      commandgroup StatusCmdGroup {
+         label = "Status";
+         command PlanCommand;
+         command ReleaseCommand;
+         command CloseCommand;
+      }
+   }
+   commandgroup CommandGroup2CmdGroup {
+
+      command UnreserveAllLinesCommand;
+      command MoveAllReservationsCommand;
+   }
+   commandgroup CommandGroup5CmdGroup {
+
+      command ViewTransportTaskLinesCommand;
+   }
+
+   commandgroup CommandGroup3CmdGroup {
+
+      commandgroup PickListCmdGroup {
+         label = "Pick List";
+         command CreateAvPickListCommand;
+         command ViewAvPickListCommand;
+      }
+   }
+
+}
+
+
+--------------------------------- COMMANDS ----------------------------------
+
+--------------------------------- SELECTORS ---------------------------------
+@Override
+selector MaintMaterialRequisitionSelector for MaintMaterialRequisition {
+   label = "${MaintMaterialOrderNo} - ${AircraftWpId} - ${AvAircraftWorkPackageRef.Barcode} - ${AircraftRef.AircraftDesc} - ${AvAircraftWorkPackageRef.LocationCode}";
+   static MaintMaterialOrderNo;
+   static AircraftWpId {
+      label = "Work Package No";
+   }
+   static AvAircraftWorkPackageRef.Barcode {
+      label = "Barcode";
+   }
+   static AircraftRef.AircraftDesc {
+      label = "Aircraft";
+   }
+   static AvAircraftWorkPackageRef.LocationCode {
+      label = "Work Location";
+   }
+   badge Objstate {
+      emphasis StatePlanned = [Objstate = "Planned"];
+      emphasis StateReleased = [Objstate = "Released"];
+      emphasis StateClosed = [Objstate = "Closed"];
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group AvMaterialReqGroup for MaintMaterialRequisition {
+   label = "";
+   field MaintMaterialOrderNo;
+   lov ContractRef with ReferenceUserAllowedSiteLovSelector {
+      search = Contract, ContractDesc;
+      preview = UserAllowedSiteLovCard;
+   }
+   field AircraftWpId {
+      label = "Work Package No";
+      editable = [false];
+      lovswitch {
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = true] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[AvAircraftWorkPackageRef.Barcode]";
+            }
+         }
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = false] {
+            lov AvAircraftWorkPackageRef with WorkPackageSelector {
+               hidekey = [true];
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=FlightId eq $[FlightId]";
+            }
+         }
+      }
+   }
+   field AvAircraftWorkPackageRef.WorkPackageName;
+   field AvAircraftWorkPackageRef.Barcode {
+      label = "Work Package Barcode";
+   }
+   field AvExeTaskRef.Site {
+      label = "Work Package Site";
+   }
+   badge AvAircraftWorkPackageRef.Objstate {
+      label = "Work Package Status";
+      editable = [false];
+      emphasis StateCreated = [AvAircraftWorkPackageRef.Objstate = "Active"];
+      emphasis StatePlanned = [AvAircraftWorkPackageRef.Objstate = "Committed"];
+      emphasis StateInProgress = [AvAircraftWorkPackageRef.Objstate = "InWork"];
+      emphasis StateCompleted = [AvAircraftWorkPackageRef.Objstate = "Completed"];
+      emphasis StateClosed = [AvAircraftWorkPackageRef.Objstate = "Canceled"];
+   }
+   field AircraftRef.AircraftDesc {
+      label = "Aircraft";
+   }
+   field AvAircraftWorkPackageRef.LocationCode {
+      label = "Work Location";
+   }
+   field WorkTypes {
+      label = "Work Type";
+      editable = [false];
+      multiline = true;
+      size = Medium;
+   }
+   lov SignatureRef with ReferenceEmployeeLovSelector {
+      search = PersonId, Name;
+
+      preview = EmployeeLovCard;
+      contactwidget {
+         enabled = [true];
+         source = Person;
+      }
+   }
+   field Entered {
+      editable = [false];
+   }
+   lov IntDestinationIdRef with ReferenceInternalDestinationLovSelector {
+      search = DestinationId, Description;
+
+      preview = InternalDestinationLovCard;
+      editable = [Objstate != "Closed"];
+   }
+   field IntDestinationIdRef.Description {
+      label = "Int Destination ID Description";
+   }
+   field AvAircraftWorkPackageRef.SchedStartDateTime {
+      label = "Work Package Scheduled Date";
+   }
+   field TransportTaskExists;
+}
+
+
+----------------------------------- LISTS -----------------------------------
+
+list AvMatReqLineList clone AvMatReqAllList {
+   crudactions {
+      new {
+         enabled = [true];
+      }
+      duplicate {
+         enabled = [true];
+      }
+   }
+   field AircraftWorkPackageId {
+      columnexclude = [true];
+   }
+   field AvWorkPackageRef.WorkPackageName {
+      columnexclude = [true];
+   }
+   field AvWorkPackageRef.Barcode {
+      columnexclude = [true];
+   }
+   badge AvWorkPackageRef.Objstate {
+      columnexclude = [true];
+   }
+   field AvWorkPackageRef.LocationCode {
+      columnexclude = [true];
+   }
+   field WorkTypes {
+      columnexclude = [true];
+   }
+   field AvWorkPackageRef.AircraftId {
+      columnexclude = [true];
+   }
+   field IntDestinationId {
+      columnexclude = [true];
+   }
+   field IntDestinationDesc {
+      columnexclude = [true];
+   }
+   field OrderState {
+      columnexclude = [true];
+   }
+   fieldorder = MaintMatOrderNoRef, LineItemNo, AvExeTaskRef.Barcode, TaskSeq, AvExeTaskRef.Description, PartNo, PlanQty, DateRequired, PromisedReceiptDate,
+   SenderType, SenderId, SupplySite, SpareContractRef, SupplyCode, PurchaseMethod, ServiceTypeRef, Delivery, TaskPlanLineSeq, PeggedQty, ConsumedQty, Uom,
+   BuyUnitMeas, Qty, QtyShort, QuantityOnHand, QuantityAvailable, QtyAssigned, QtyReturned, ConditionCodeRef, ConditionCodeRef.Description, PartOwnership,
+   OwnerCustomerRef, SerialPart, HasStructure, AlternatePartsExist, Rental, RentalTaskResSeq, InventoryPartRef.DimQuality, CatalogContract, CatalogNo, SalesPartDescription,
+   PriceListNo, PriceSource, PriceSourceId, ListPrice, ListPriceCurr, Discount, SalesPriceAmount, PriceAmountCurr, CurrentInventoryCost, Cost, IssuedCostAmount, Markup, SupplySourceRef1,
+   SupplySourceRef2, SupplySourceRef3, SupplySourceRef4, SupplySourceRefType, RepairPartNo, QtyChanged, ChangesLineItemNo, ChangeReason, AltPartChangeReasonRef.ChangeReasonDesc, IsClosed,
+   TransportTaskExists, PriceEffectiveDate;
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

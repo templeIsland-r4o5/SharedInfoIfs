@@ -1,0 +1,63 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     AvCreatePickList
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ------------------------------------------------------------------
+--  250908  BADHLK  AVMXSOL-11649, Created new fuctions for aviation picklist creation
+--------------------------------------------------------------------------------------
+
+layer Core;
+
+FUNCTION Get_Av_Pick_List_Source_Ref___ (
+   source_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   condition_url_ VARCHAR2(32000);
+BEGIN
+   condition_url_ := Get_Av_Pick_List_Source_Ref_By_Oder_No___(source_id_);
+
+   condition_url_ := 'page/PickLists/List?' || condition_url_;
+   
+   RETURN condition_url_;
+END Get_Av_Pick_List_Source_Ref___;
+
+FUNCTION Get_Av_Pick_List_Source_Ref_By_Oder_No___(
+   source_id_ IN NUMBER)RETURN VARCHAR2
+IS
+    CURSOR Get_pick_list_source_ref (source_id_ IN NUMBER) IS
+      SELECT DISTINCT pick_list_source_ref, pick_list_source_db
+      FROM pick_list
+      WHERE pick_list_no IN (SELECT m.pick_list_no 
+                             FROM pick_list_line m 
+                             WHERE m.pick_list_line_source_id1 = source_id_);
+   condition_ VARCHAR2(32000);
+   additional_condition_ BOOLEAN;
+   inv_url_ EXCEPTION;
+ BEGIN
+    
+   condition_ := NULL;
+   additional_condition_ := FALSE;
+   
+   FOR source_ref_ IN Get_pick_list_source_ref(source_id_) LOOP 
+      additional_condition_ := TRUE;
+      IF condition_ IS NULL THEN 
+         condition_ := '$filter=((PickListSourceRef eq ''' || source_ref_.pick_list_source_ref || '''';
+      ELSE
+         condition_ := condition_ || ' or PickListSourceRef eq ''' || source_ref_.pick_list_source_ref || '''' ;
+      END IF;
+      IF (LENGTH(condition_)> 30000) THEN
+         RAISE inv_url_;
+      END IF;
+   END LOOP;
+   IF condition_ IS NOT NULL AND additional_condition_ = TRUE THEN
+      condition_ := condition_ || ') and PickListSource eq IfsApp.PickListsHandling.PickListSource''MaintenanceMaterialOrder'')';
+   END IF;
+   RETURN condition_;
+   
+EXCEPTION 
+   WHEN inv_url_ THEN
+      Error_SYS.Appl_General(lu_name_, 'EXCCEDCHARLIMITPLSR: Query cannot handle this amount of data, try querying with lesser number of pick list source references via the Pick Lists page.');
+END Get_Av_Pick_List_Source_Ref_By_Oder_No___;

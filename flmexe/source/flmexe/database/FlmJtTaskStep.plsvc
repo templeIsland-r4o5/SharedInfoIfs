@@ -1,0 +1,488 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmJtTaskStep
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Next_Grouping_No___(
+   task_seq_ IN NUMBER) RETURN NUMBER
+IS
+   grouping_no_  jt_task_sign_off_req_tab.grouping_no%TYPE :=0;
+   
+   CURSOR max_grouping_no(task_seq_ IN NUMBER) IS
+      SELECT max(grouping_no) 
+      FROM jt_task_sign_off_req_tab
+      WHERE task_seq = task_seq_;
+BEGIN
+   OPEN max_grouping_no(task_seq_);
+   FETCH max_grouping_no INTO grouping_no_;
+   CLOSE max_grouping_no;
+   
+   RETURN NVL(grouping_no_,0) + 1;
+END Get_Next_Grouping_No___;
+
+
+PROCEDURE Validate_Sign_Offs_List___(
+   objkey_         IN VARCHAR2,
+   sign_off_type_  IN VARCHAR2,
+   certificate_id_ IN VARCHAR2)
+IS 
+   sign_off_skill_                  VARCHAR2(100);
+   same_certificate_id_row_count_   NUMBER := 0;
+   exe_row_count_no_certificate_    NUMBER := 0;
+   exe_row_count_with_certificate_  NUMBER := 0;
+   cert_row_count_no_certificate_   NUMBER := 0;
+   cert_row_count_with_certificate_ NUMBER := 0;
+
+   FUNCTION Exists_Executor_With_Certificate(skill_ VARCHAR2) RETURN NUMBER IS
+      dummy_ NUMBER;
+   BEGIN
+      SELECT 1 INTO dummy_
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t
+      WHERE t.parent_objkey = objkey_
+        AND t.sign_off_req_type = 'Executor'
+        AND t.license_id LIKE '%' || skill_ || '%-EXECUTOR'
+        AND ROWNUM = 1;
+      RETURN 1;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN RETURN 0;
+   END Exists_Executor_With_Certificate;
+
+   FUNCTION Exists_Inspector_With_Certificate(skill_ VARCHAR2) RETURN NUMBER IS
+      dummy_ NUMBER;
+   BEGIN
+      SELECT 1 INTO dummy_
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t
+      WHERE t.parent_objkey = objkey_
+        AND t.sign_off_req_type = 'Inspector'
+        AND t.license_id LIKE '%' || skill_ || '%-CERTIFIER'
+        AND ROWNUM = 1;
+      RETURN 1;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN RETURN 0;
+   END Exists_Inspector_With_Certificate;
+
+   FUNCTION Exists_Executor_No_Certificate RETURN NUMBER IS
+      dummy_ NUMBER;
+   BEGIN
+      SELECT 1 INTO dummy_
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t
+      WHERE t.parent_objkey = objkey_
+        AND t.sign_off_req_type = 'Executor'
+        AND t.license_id IS NULL
+        AND ROWNUM = 1;
+      RETURN 1;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN RETURN 0;
+   END Exists_Executor_No_Certificate;
+
+   FUNCTION Exists_Inspector_No_Certificate RETURN NUMBER IS
+      dummy_ NUMBER;
+   BEGIN
+      SELECT 1 INTO dummy_
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t
+      WHERE t.parent_objkey = objkey_
+        AND t.sign_off_req_type = 'Inspector'
+        AND t.license_id IS NULL
+        AND ROWNUM = 1;
+      RETURN 1;
+   EXCEPTION
+      WHEN NO_DATA_FOUND THEN RETURN 0;
+   END Exists_Inspector_No_Certificate;
+
+   FUNCTION Get_Duplicate_Certificate_Count(cert_id_ VARCHAR2) RETURN NUMBER IS
+      cnt_ NUMBER := 0;
+   BEGIN
+      SELECT COUNT(t.license_id) INTO cnt_
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t
+      WHERE t.parent_objkey = objkey_
+        AND t.license_id = cert_id_;
+      RETURN cnt_;
+   END Get_Duplicate_Certificate_Count;
+BEGIN
+   IF certificate_id_ IS NOT NULL THEN
+      -- Check duplicates for the exact certificate id
+      same_certificate_id_row_count_ := Get_Duplicate_Certificate_Count(certificate_id_);
+      IF same_certificate_id_row_count_ > 1 THEN
+         Error_SYS.Record_General(lu_name_, 'SAMECERTDUPLICATEERROR: The certificate ID :P1 you entered is already added for this step.', certificate_id_);
+      END IF;
+
+      -- Derive sign off skill based on certificate id
+      sign_off_skill_ := TRIM(SUBSTR(certificate_id_, 1, INSTR(certificate_id_, '-') - 1));
+
+      cert_row_count_with_certificate_ := Exists_Inspector_With_Certificate(sign_off_skill_);      
+      exe_row_count_with_certificate_  := Exists_Executor_With_Certificate(sign_off_skill_);
+      
+      IF(sign_off_type_ = 'Independent' ) THEN
+         exe_row_count_no_certificate_  := Exists_Executor_No_Certificate;
+         cert_row_count_no_certificate_ := Exists_Inspector_No_Certificate;
+      END IF;   
+   ELSE
+      exe_row_count_no_certificate_  := Exists_Executor_No_Certificate;
+      cert_row_count_no_certificate_ := Exists_Inspector_No_Certificate;
+   END IF;
+
+   IF sign_off_type_ = 'Executor' THEN
+      IF certificate_id_ IS NOT NULL THEN
+         IF cert_row_count_with_certificate_ = 0 THEN
+            Error_SYS.Record_General(lu_name_, 'NOCERTFOUNDERROR: A corresponding certifier certificate ID is mandatory for any executor certificate ID.');
+         END IF;
+      ELSE
+         IF cert_row_count_no_certificate_ = 0 THEN
+            Error_SYS.Record_General(lu_name_, 'NOCERTWITHOUTCERTIDERROR: An executor role without a certificate ID must also have a corresponding certifier role without a certificate ID.');
+         END IF;
+      END IF;
+   ELSIF sign_off_type_ = 'Inspector' THEN
+      IF certificate_id_ IS NOT NULL THEN
+         IF exe_row_count_with_certificate_ = 0 THEN
+            Error_SYS.Record_General(lu_name_, 'NOEXEFOUNDERROR: A corresponding executor certificate ID is mandatory for any certifier certificate ID.');
+         END IF;
+      ELSE
+         IF exe_row_count_no_certificate_ = 0 THEN
+            Error_SYS.Record_General(lu_name_, 'NOEXEWITHOUTCERTIDERROR: A certifier role without a certificate ID must also have a corresponding executor role without a certificate ID.');
+         END IF;
+      END IF;
+   ELSIF sign_off_type_ = 'Independent' THEN
+      IF certificate_id_ IS NOT NULL THEN
+         IF (exe_row_count_no_certificate_ = 1 AND cert_row_count_no_certificate_ = 1) THEN
+            Error_SYS.Record_General(lu_name_, 'NOEXECERTWITHCERT: An Executor role without a certificate ID must also have corresponding Inspector and Certifier roles without certificate IDs.');         
+         ELSIF ((exe_row_count_no_certificate_ = 0 AND exe_row_count_with_certificate_ != 1) AND (exe_row_count_no_certificate_ = 0 AND cert_row_count_no_certificate_ != 1)) THEN
+            Error_SYS.Record_General(lu_name_, 'NOEXECERT: A sign-off requirement with an Inspector certificate ID requires a corresponding Certifier and Executor with certificate IDs of the same skill.');            
+         END IF;
+      ELSE
+         Error_SYS.Record_General(lu_name_, 'INSPNOCERTIDERROR: The certificate ID is mandatory for the inspector of the required skill.');
+      END IF;
+   END IF;
+END Validate_Sign_Offs_List___;
+
+
+PROCEDURE Add_Step_With_Sign_Offs___ (
+   task_seq_         IN NUMBER,
+   step_description_ IN CLOB,
+   order_no_         IN NUMBER,
+   objkey_           IN VARCHAR2)
+IS
+   task_step_seq_            NUMBER;
+   exec_sign_off_req_seq_    NUMBER;
+   cert_sign_off_req_seq_    NUMBER;
+   inspec_sign_off_req_seq_  NUMBER;
+   is_record_exist_          NUMBER;
+   grouping_no_              NUMBER;
+   resource_group_seq_       NUMBER;
+   group_no_                 NUMBER;
+   cert_group_no_            NUMBER;
+   sign_offs_count_          NUMBER;   
+   sign_off_type_            VARCHAR2(100);
+   certificate_id_           VARCHAR2(100);
+   skill_                    VARCHAR2(100);
+   exe_license_              VARCHAR2(100);
+   sign_off_req_             VARCHAR2(100);
+   cert_license_             VARCHAR2(100);
+   trunc_step_description_   VARCHAR2(500);   
+
+   CURSOR get_signoffs_count_(objkey_ VARCHAR2) IS
+      SELECT count(t.task_seq)
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t 
+      WHERE t.parent_objkey = objkey_;
+      
+   CURSOR get_order_no_exist IS
+      SELECT 1
+      FROM jt_task_step_tab
+      WHERE order_no = order_no_ 
+      AND task_seq = task_seq_;  
+           
+   CURSOR get_signoff_details(objkey_ VARCHAR2) IS
+      SELECT * 
+      FROM ${PROJECTION}_add_step_sign_off_virtual_vrt t 
+      WHERE t.parent_objkey = objkey_
+      ORDER BY 
+      CASE 
+         WHEN t.sign_off_req_type = 'Executor' THEN 1
+         WHEN t.sign_off_req_type = 'Inspector' THEN 2
+         WHEN t.sign_off_req_type = 'Independent' THEN 3
+      END;
+      
+   CURSOR get_resource_seq(license_id_ IN VARCHAR2) IS
+      SELECT resource_seq 
+      FROM resource_attribute_tab
+      WHERE attribute_text = license_id_;  
+      
+   CURSOR get_cert_sign_off_req_seq(license_id_ VARCHAR2, grouping_no_ NUMBER) IS
+      SELECT sign_off_req_seq
+      FROM Jt_Task_Sign_Off_Req_tab
+      WHERE task_seq = task_seq_ AND license_id = license_id_ AND sign_off_req_type = 'INSPECTOR' AND sign_off_connection = 'TASK_STEP' AND grouping_no = grouping_no_;
+      
+   CURSOR get_cert_grouping_no IS
+      SELECT grouping_no
+      FROM Jt_Task_Sign_Off_Req_tab
+      WHERE task_seq = task_seq_ AND license_id IS NULL AND sign_off_req_type = 'INSPECTOR' AND sign_off_connection = 'TASK_STEP';
+BEGIN
+   OPEN get_signoffs_count_(objkey_);
+   FETCH get_signoffs_count_ INTO sign_offs_count_;
+   CLOSE get_signoffs_count_;
+   
+   IF sign_offs_count_ = 0 THEN
+      Error_SYS.Record_General(lu_name_, 'NOSIGNOFFSEXISTERROR: You need at least one sign-off requirement of both executor and certifier roles to create this step.');  
+   END IF;
+   
+   IF task_seq_ IS NOT NULL THEN
+      OPEN get_order_no_exist;
+      FETCH get_order_no_exist INTO is_record_exist_;
+      CLOSE get_order_no_exist;
+   
+      IF is_record_exist_ >0 THEN
+         Error_SYS.Record_General(lu_name_, 'ORDERNOEXISTERROR: The order number you entered is already in use. Enter a new one for this step.');     
+      ELSE
+         trunc_step_description_ := DBMS_LOB.SUBSTR(step_description_, 500, 1);
+         Jt_Task_Step_API.New_Task_Step(
+            task_step_seq_ => task_step_seq_,
+            task_seq_      => task_seq_,
+            description_   => trunc_step_description_,
+            order_no_      => order_no_,
+            instructions_  => step_description_);
+      END IF;
+   END IF;
+   
+   FOR rec_ IN get_signoff_details(objkey_) LOOP 
+      Validate_Sign_Offs_List___(objkey_, rec_.sign_off_req_type, rec_.license_id);
+   END LOOP;
+
+   -- Add Signoff requirements of the step
+   FOR rec_ IN get_signoff_details(objkey_) LOOP 
+      sign_off_type_  := rec_.sign_off_req_type;
+      certificate_id_ := rec_.license_id;
+        
+      OPEN get_resource_seq(rec_.license_id);
+      FETCH get_resource_seq INTO resource_group_seq_;
+      CLOSE get_resource_seq;
+                  
+      IF rec_.sign_off_req_type = 'Executor' THEN 
+          IF certificate_id_ IS NOT NULL THEN
+                 skill_         := trim(SUBSTR(certificate_id_, 1, INSTR(certificate_id_, '-') - 1));
+                 exe_license_   := skill_ || '-EXECUTOR';
+                 cert_license_  := skill_ || '-CERTIFIER';
+                 sign_off_req_  := Mm_Step_Sign_Off_Req_Util_API.Get_Task_Sign_Off_Req_Seq(task_seq_,Sign_Off_Req_Type_API.DB_EXECUTOR,exe_license_,NULL); 
+                 group_no_      := Jt_Task_Sign_Off_Req_API.Get_Grouping_No(task_seq_, sign_off_req_);
+             IF group_no_ IS NOT NULL THEN
+                grouping_no_ := group_no_;
+             ELSE
+                grouping_no_ := Get_Next_Grouping_No___(task_seq_);
+             END IF;
+          ELSE
+             OPEN get_cert_grouping_no;
+             FETCH get_cert_grouping_no INTO cert_group_no_;
+             CLOSE get_cert_grouping_no;
+             
+             IF cert_group_no_ IS NOT NULL THEN
+                grouping_no_ := cert_group_no_;
+             ELSE
+                grouping_no_ := Get_Next_Grouping_No___(task_seq_);
+             END IF;
+          END IF; 
+          
+         exec_sign_off_req_seq_   := Mm_Step_Sign_Off_Req_Util_API.Get_Task_Sign_Off_Req_Seq(task_seq_,Sign_Off_Req_Type_API.DB_EXECUTOR,certificate_id_,NULL);
+         
+         OPEN get_cert_sign_off_req_seq(cert_license_, grouping_no_);
+         FETCH get_cert_sign_off_req_seq INTO cert_sign_off_req_seq_;
+         CLOSE get_cert_sign_off_req_seq;
+        
+         IF (exec_sign_off_req_seq_ IS NOT NULL AND rec_.license_id IS NOT NULL) THEN         
+            Jt_Task_Step_Sign_Off_API.Connect_Step_To_Sign_Off_Req(task_seq_, task_step_seq_, exec_sign_off_req_seq_);
+            Jt_Task_Step_Sign_Off_API.Connect_Step_To_Sign_Off_Req(task_seq_, task_step_seq_, cert_sign_off_req_seq_);   
+         ELSE
+            IF rec_.license_id IS NULL THEN
+               Av_Exe_Task_Step_Util_API.Create_Task_Step_Sign_Off_Reqs(task_seq_, task_step_seq_, grouping_no_, NULL);
+            ELSE
+               Mm_Step_Sign_Off_Req_Util_API.Create_Task_Step_Sign_Off_Req(exec_sign_off_req_seq_, task_seq_, task_step_seq_, resource_group_seq_, 'EXECUTOR-CERTIFICATE', Sign_Off_Req_Type_API.DB_EXECUTOR, grouping_no_, NULL);
+               Mm_Step_Sign_Off_Req_Util_API.Create_Task_Step_Sign_Off_Req(cert_sign_off_req_seq_, task_seq_, task_step_seq_, resource_group_seq_, 'CERTIFIER-CERTIFICATE', Sign_Off_Req_Type_API.DB_INSPECTOR, grouping_no_, NULL);
+            END IF;
+         END IF;
+         
+      ELSIF rec_.sign_off_req_type = 'Independent' THEN
+         inspec_sign_off_req_seq_ := Mm_Step_Sign_Off_Req_Util_API.Get_Task_Sign_Off_Req_Seq(task_seq_,Sign_Off_Req_Type_API.DB_INDEPENDENT,certificate_id_,NULL);     
+         IF (inspec_sign_off_req_seq_ IS NOT NULL AND rec_.license_id IS NOT NULL) THEN
+            Jt_Task_Step_Sign_Off_API.Connect_Step_To_Sign_Off_Req(task_seq_, task_step_seq_, inspec_sign_off_req_seq_);
+         ELSE 
+            Mm_Step_Sign_Off_Req_Util_API.Create_Task_Step_Sign_Off_Req (inspec_sign_off_req_seq_, task_seq_, task_step_seq_, resource_group_seq_, 'INSPECTOR-CERTIFICATE', Sign_Off_Req_Type_API.DB_INDEPENDENT, grouping_no_, NULL);
+         END IF;
+      END IF;
+   END LOOP;
+END Add_Step_With_Sign_Offs___;
+
+
+PROCEDURE Delete_Step___ (
+   task_seq_      IN NUMBER,
+   task_step_seq_ IN NUMBER)
+IS
+   CURSOR get_step_sign_offs(task_seq_ NUMBER, task_step_seq_ NUMBER) IS
+     SELECT t.task_seq, t.task_step_seq, t.sign_off_req_seq
+     FROM jt_task_step_sign_off_tab t
+     INNER JOIN jt_task_sign_off_req_tab r 
+     ON t.task_seq = r.task_seq 
+     AND t.sign_off_req_seq = r.sign_off_req_seq
+     WHERE t.task_seq = task_seq_ AND t.task_step_seq = task_step_seq_
+     ORDER BY
+     CASE 
+         WHEN r.sign_off_req_type = 'INDEPENDENT' THEN 1
+         WHEN r.sign_off_req_type = 'INSPECTOR' THEN 2
+         WHEN r.sign_off_req_type = 'EXECUTOR' THEN 3
+      END;
+BEGIN
+   -- Disconnect all the signoffs of the step before deleting the step
+   FOR rec_ IN get_step_sign_offs(task_seq_,task_step_seq_) LOOP
+      Jt_Task_Step_Sign_Off_API.Disconnect_Step_From_Sign_Off(rec_.task_seq, rec_.task_step_seq, rec_.sign_off_req_seq);
+   END LOOP;
+   
+   Jt_Task_Step_API.Remove_Task_Step(task_seq_,task_step_seq_); 
+END Delete_Step___;
+
+
+PROCEDURE Disconnect_Sign_Off_Req___ (
+   key_              IN Jt_Task_Step_Sign_Off_Key)
+IS 
+   sign_off_type_            VARCHAR2(100);
+   certificate_id_           VARCHAR2(100); 
+   existing_sign_off_type_   VARCHAR2(20);
+   skill_                    VARCHAR2(100);
+   executor_sign_off_count_  NUMBER := 0;
+   certifier_sign_off_count_ NUMBER := 0;
+   
+   CURSOR get_step_sign_offs(task_seq_ NUMBER, task_step_seq_ NUMBER) IS
+     SELECT task_seq, sign_off_req_seq
+     FROM jt_task_step_sign_off_tab
+     WHERE task_seq = task_seq_ AND task_step_seq = task_step_seq_;
+      
+   CURSOR get_all_sign_offs_for_skill(skill_ VARCHAR2) IS  
+      SELECT t.task_seq, t.task_step_seq, t.sign_off_req_seq
+      FROM jt_task_step_tab s
+      INNER JOIN jt_task_step_sign_off_tab t
+      ON s.task_seq = t.task_seq
+      AND s.task_step_seq = t.task_step_seq
+      INNER JOIN jt_task_sign_off_req_tab r 
+      ON t.task_seq = r.task_seq 
+      AND t.sign_off_req_seq = r.sign_off_req_seq
+      WHERE r.license_id LIKE skill_ || '%'
+      AND s.task_seq= key_.task_seq
+      AND s.task_step_seq=key_.task_step_seq
+      ORDER BY 
+      CASE 
+         WHEN r.sign_off_req_type = 'INDEPENDENT' THEN 1
+         WHEN r.sign_off_req_type = 'INSPECTOR' THEN 2
+         WHEN r.sign_off_req_type = 'EXECUTOR' THEN 3
+      END;
+      
+   CURSOR get_all_sign_offs_with_no_skill IS  
+      SELECT t.task_seq, t.task_step_seq, t.sign_off_req_seq
+      FROM jt_task_step_tab s
+      INNER JOIN jt_task_step_sign_off_tab t
+      ON s.task_seq = t.task_seq
+      AND s.task_step_seq = t.task_step_seq
+      INNER JOIN jt_task_sign_off_req_tab r 
+      ON t.task_seq = r.task_seq 
+      AND t.sign_off_req_seq = r.sign_off_req_seq
+      WHERE r.license_id IS NULL
+      AND s.task_seq= key_.task_seq
+      AND s.task_step_seq=key_.task_step_seq
+      ORDER BY 
+      CASE 
+         WHEN r.sign_off_req_type = 'INDEPENDENT' THEN 1
+         WHEN r.sign_off_req_type = 'INSPECTOR' THEN 2
+         WHEN r.sign_off_req_type = 'EXECUTOR' THEN 3
+      END;
+BEGIN
+   sign_off_type_     := Jt_Task_Sign_Off_Req_API.Get_Sign_Off_Req_Type(key_.task_seq, key_.sign_off_req_seq);
+   certificate_id_    := Jt_Task_Sign_Off_Req_API.Get_License_Id(key_.task_seq, key_.sign_off_req_seq);
+     
+   FOR rec_ IN get_step_sign_offs(key_.task_seq, key_.task_step_seq) LOOP 
+      existing_sign_off_type_ := Jt_Task_Sign_Off_Req_API.Get_Sign_Off_Req_Type(rec_.task_seq, rec_.sign_off_req_seq);
+
+      IF existing_sign_off_type_ = 'Executor' THEN
+         executor_sign_off_count_ := executor_sign_off_count_ + 1;
+      ELSIF existing_sign_off_type_ = 'Inspector' THEN
+         certifier_sign_off_count_ := certifier_sign_off_count_ + 1;
+      END IF;
+   END LOOP;
+   
+   IF sign_off_type_ = 'Executor' AND  executor_sign_off_count_ = 1 THEN
+      Error_SYS.Record_General(lu_name_, 'LASTEXECERROR: This step must have at least one executor sign-off requirement to disconnect it.'); 
+   ELSIF sign_off_type_ = 'Inspector' AND  certifier_sign_off_count_ = 1 THEN
+      Error_SYS.Record_General(lu_name_, 'LASTCERTERROR: This step must have at least one certifier sign-off requirement to disconnect it.'); 
+   END IF;
+   
+   IF certificate_id_ IS NOT NULL THEN
+      skill_ := trim(SUBSTR(certificate_id_, 1, INSTR(certificate_id_, '-') - 1));
+      
+      IF sign_off_type_ IN ('Executor','Inspector') THEN   
+         FOR rec_ IN get_all_sign_offs_for_skill(skill_) LOOP 
+            Jt_Task_Step_Sign_Off_API.Disconnect_Step_From_Sign_Off(rec_.task_seq, rec_.task_step_seq, rec_.sign_off_req_seq);
+         END LOOP;
+      ELSIF sign_off_type_ = 'Independent' THEN
+         Jt_Task_Step_Sign_Off_API.Disconnect_Step_From_Sign_Off(key_.task_seq, key_.task_step_seq, key_.sign_off_req_seq);  
+      END IF;
+   ELSE
+      FOR rec_ IN get_all_sign_offs_with_no_skill() LOOP 
+          Jt_Task_Step_Sign_Off_API.Disconnect_Step_From_Sign_Off(rec_.task_seq, rec_.task_step_seq, rec_.sign_off_req_seq);
+      END LOOP;
+   END IF; 
+END Disconnect_Sign_Off_Req___;
+
+
+FUNCTION Get_License_Id___ (
+   task_seq_          IN NUMBER,
+   sign_off_req_type_ IN VARCHAR2) RETURN Objid_Arr
+IS
+   executor_collection_  Objid_Arr := Objid_Arr();
+   certifier_collection_ Objid_Arr := Objid_Arr();
+   inspector_collection_ Objid_Arr := Objid_Arr();
+   role_type_            VARCHAR2(20);
+
+   CURSOR get_license_ids IS
+      SELECT license_id, objid
+      FROM (
+            SELECT license_id, objid, ROW_NUMBER() OVER (PARTITION BY license_id ORDER BY objid) AS rn
+            FROM  jt_task_resource_license
+            WHERE task_seq = task_seq_
+           ) 
+      WHERE rn = 1;
+BEGIN
+   IF sign_off_req_type_ IS NULL THEN
+      Error_SYS.Record_General(lu_name_, 'NOROLESELECTEDERROR: Select a role before selecting a certificate ID.'); 
+   END IF;
+   
+   FOR rec_ IN get_license_ids LOOP
+      role_type_  := SUBSTR(rec_.license_id, INSTR(rec_.license_id, '-') + 1);
+      
+      IF sign_off_req_type_ = 'Executor' THEN
+         IF role_type_ = 'EXECUTOR' THEN
+            executor_collection_.extend;
+            executor_collection_(executor_collection_.last) := rec_.objid;
+         END IF;
+      ELSIF sign_off_req_type_ = 'Inspector' THEN
+         IF role_type_ = 'CERTIFIER' THEN
+            certifier_collection_.extend;
+            certifier_collection_(certifier_collection_.last) := rec_.objid;
+         END IF; 
+      ELSIF sign_off_req_type_ = 'Independent' THEN
+         IF role_type_ = 'INSPECTOR' THEN
+            inspector_collection_.extend;
+            inspector_collection_(inspector_collection_.last) := rec_.objid;
+         END IF; 
+      END IF;
+   END LOOP;
+   
+   IF sign_off_req_type_ = 'Executor' THEN  
+      RETURN executor_collection_;
+   ELSIF sign_off_req_type_ = 'Inspector' THEN
+      RETURN certifier_collection_;
+   ELSIF sign_off_req_type_ = 'Independent' THEN
+      RETURN inspector_collection_;
+   END IF;
+END Get_License_Id___;

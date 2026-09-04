@@ -1,0 +1,61 @@
+<ProjectionDataSource>
+    <Author>IFS RnD</Author>
+    <LastModified>8/25/25, 2:37:13 PM</LastModified>
+    <Locked>true</Locked>
+    <Component>FLMEXE</Component>
+    <Name>FLM_HANGAR_TECH_MY_ASSIGNMENTS_PROJECTION</Name>
+    <ID>58d4de95-9bed-4e47-be06-5d0cebf0c192</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>Barcode</Column>
+            <Name>Barcode</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskName</Column>
+            <Name>Task Name</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Remark</Column>
+            <Name>Remark</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>TaskStatus</Column>
+            <Name>Task Status</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>MaterialAvailability</Column>
+            <Name>Material Availability</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>Aircraft</Column>
+            <Name>Aircraft</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>SchedStart</Column>
+            <Name>Sched Start</Name>
+            <DataType>DateTime</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>AircraftCode</Column>
+            <Name>Aircraft Code</Name>
+            <DataType>Text</DataType>
+        </DataColumn>
+        <DataColumn>
+            <Column>IsSensExist</Column>
+            <Name>Is Sens Exist</Name>
+            <DataType>Text</DataType>
+            <Value></Value>
+        </DataColumn>
+    </Select>
+    <Projection>FlmHangarTechnicianLobbyHandling</Projection>
+    <EntitySet>MyAssignmentsSet</EntitySet>
+    <EntityType>UserTaskAssignmentsQuery</EntityType>
+    <OrderBy>SchedStart</OrderBy>
+</ProjectionDataSource>

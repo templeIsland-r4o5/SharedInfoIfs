@@ -1,0 +1,92 @@
+---------------------------------------------------------------------------------
+--  Date          Sign    History
+--  ----------    ------  -------------------------------------------------------
+--  240221        waislk  AD-11841, Modified code to support known server timezone changes
+--  230904        psualk  AD-10510, introduce UTC badge infront of timestamps
+--  211130        bhbalk  AD-4130, Created.
+---------------------------------------------------------------------------------
+
+projection FlmFluidServicingRecordHandling;
+component FLMEXE;
+layer Core;
+description "API for handling Fluid Service Records";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvHistFluidServiceSet for AvHistFluidService;
+entityset AvHistFldServiceDetSet for AvHistFldServiceDet;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvHistFluidService {
+   timestamptzref = "server";
+
+   attribute ArrivalTime Timestamp {
+      label = "Arrival Time";
+      fetch = "Av_Flight_API.Get_Arrival_Timestamp(flight_id)";
+   }
+   attribute ServiceName Text {
+      label = "Service Name";
+   }
+   attribute RecordedDate Timestamp {
+      label = "Recorded Date";
+   }
+   attribute AircraftLegNo Text {
+      label = "Inbound Flight No";
+      fetch = "Av_Flight_API.Get_Leg_No(flight_id)";
+   }
+   attribute AircraftIataCode Text {
+      label = "Airport";
+      fetch = "Av_Airport_API.Get_Iata_Code(Av_Flight_API.Get_Arrival_Airport_Id(flight_id))";
+   }
+   attribute AircraftRegCode Text {
+      label = "Aircraft";
+      fetch = "Aircraft_API.Get_Reg_Code(aircraft_id)||' ('||Aircraft_API.Get_Aircraft_Type_Code(aircraft_id)||')'";
+   }
+
+   attribute RecordedDateUtc Timestamp {
+      fetch = "Av_Hist_Fluid_Service_API.Get_Recorded_Date(fluid_service_id)";
+   }
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   array AvHistFldServiceDetailArray(FluidServiceId) to AvHistFldServiceDet(FluidServiceId);
+   reference FndUserRef(RecordedBy) to FndUser(Identity);
+}
+
+@Override
+entity AvHistFldServiceDet {
+   attribute AssemblyTypeCode Text {
+      label = "Assembly";
+   }
+   attribute UptakeAmount Number {
+      label = "Quantity Added";
+   }
+   reference ConfigSlotPositionRef(ConfigSlotPositionId) to  AvConfigSlotPosition(ConfigSlotPositionId);
+   reference FluidDefinitionRef(AssemblyTypeCode, FluidDefinitionId) to AvFluidDefinition(AssemblyTypeCode, FluidDefinitionId);
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

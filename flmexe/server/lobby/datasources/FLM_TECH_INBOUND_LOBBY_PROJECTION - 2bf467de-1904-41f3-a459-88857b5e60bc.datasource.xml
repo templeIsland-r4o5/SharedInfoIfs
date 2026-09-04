@@ -1,0 +1,23 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/26/24, 4:15:57 PM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_TECH_INBOUND_LOBBY_PROJECTION</Name>
+    <ID>2bf467de-1904-41f3-a459-88857b5e60bc</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>FlightId</Column>
+            <Name>Flight Id</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmTechnicianLobbyHandling</Projection>
+    <EntitySet>AvFlightSet</EntitySet>
+    <EntityType>AvFlight</EntityType>
+    <Filter>FlightTurnStatus eq IfsApp.FlmTechnicianLobbyHandling.AircraftTurnStatus'Inbound'</Filter>
+</ProjectionDataSource>

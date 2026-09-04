@@ -1,0 +1,58 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Number of tasks that are currently active, in-work, and completed.</DescriptiveText>
+    <LastModified>1/28/25, 12:29:58 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>1</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>2</ColumnSpan>
+    <Title>Task Count By Status</Title>
+    <TitleVisible>true</TitleVisible>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_CRW_LD_TASK_COUNT_BY_STATUS</Name>
+    <ID>7c5e04d1-b1e9-4510-a981-1b808702f7be</ID>
+    <ColorStyle>Info</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>2a366842-d255-486a-aa25-84b0cd64e66b</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>ActiveTasks</Column>
+                <Name>Active Tasks</Name>
+                <DisplayName>Active Tasks</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>ActiveTasks</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>InWorkTasks</Column>
+                <Name>In Work Tasks</Name>
+                <DisplayName>In Work Tasks</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>InWorkTasks</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>CompletedTasks</Column>
+                <Name>Completed Tasks</Name>
+                <DisplayName>Completed Tasks</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>CompletedTasks</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+        <Transpose>true</Transpose>
+    </ColumnMapping>
+</List>

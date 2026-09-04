@@ -1,0 +1,631 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmReleaseAircraft
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241125  CAARLK  AD-15663, Changed objstate of get_uncompleted_task_count_ cursor from Completed to FINISHED in Get_Uncompleted_Tasks_Status___ function.
+--  240320  WAISLK  AD-12447, Added UTC timezone code to Get_Open_Faults___ function.
+--  240221  majslk  AD-12016, Added annotation to Get_Neardue_Tasks___. 
+--  240220  majslk  AD-12017, Updated Release Status Details assistant to show neardue tasks.
+--  240219  MAILLK  AD-12014, Updated Release Status Details assistant to show overdue tasks.
+--  240217  SATGLK  AD-10947, Updated Load_Compliance_Info___  method to load override rights of the logged user
+--  240216  SATGLK  AD-12170, Extracted content into CRUD_Create___ to Load_Compliance_Info___ to make the logic testable 
+--  240127  SATGLK  AD-11727, Updated Release Status Details assistant to show neardue faults.
+--  240127  SATGLK  AD-10950, Updated Release Status Details assistant to show overdue faults.
+--  240111  SATGLK  AD-10936, Updated Release Status Details assistant to show missing mandatory components.
+--  231026  rosdlk  AD-10255, Added e-sig release aircraft related file name changes.
+--  230905  KAWJLK  AD-10253, Modified Release Aircraft workflow with e-signature security remediation changes.
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230404  KAWJLK  AD-7387, Added Update_User___
+--  221004  waislk  AD-8716, Removed Complete_WP procedure call.
+--  220719  MAILLK  AD-8002, Added function Get_Open_Tasks_Status___
+--  220718  PSUALK  AD-8003, Update Release Status Details fetch Tasks for workpackage.
+--  220712  KAPALK  AD-8103, Implementd the function Get_Signed_By_User___ 
+--  220712  PSUALK  AD-8003, Update Release Status Details on Faults and Tasks.
+--  220623  majslk  AD-7804, Removed ReleaseToService boolean from ReleaseAircraft
+--  220610  majslk  AD-7145, Added check to Get_Release_Number___, Get_Release_Remarks___ methods
+--  220602  majslk  AD-7000, Modified duration when completing work package.
+--  220128  KAWJLK  AD-5799, Added FUNCTION Get_E_Sig_Permission___
+--  210616  supklk  AD-2122, Implemented Get_Uncompleted_Tasks_Status___
+--  210512  supklk  AD-1762, Modified Complete_Work_Package___ to save SIGNED_USER 
+--  210507  supklk  AD-1570, Implemented Get_Open_Faults_Status___ and Get_Overdue_Faults_Status___
+--  210429  supklk  AD-1570, Implemented Get_Open_Faults___ and Get_Overdue_Faults___
+--  210429  sevhlk  Added the Complete_Work_Package, Send_Aircraft_Release_Data and Get_Is_Wp_Complete methods.
+--  210420  sevhlk  Added the functions related to ReleaseAircraftAssistant. 
+--  210419  sevhlk  Created the file. 
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest MethodOverride
+@Override
+PROCEDURE CRUD_Create___ (
+   rec_ IN Release_Aircraft_Virtual_Rec )
+IS 
+   new_rec_                   Release_Aircraft_Virtual_Rec;
+BEGIN
+   new_rec_ := rec_;
+   Load_Compliance_Info___(new_rec_);
+   super(new_rec_);
+END CRUD_Create___;
+
+--UT Blocked due to DXDEV-3640
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Missing_Mandatory_Components___ (
+   aircraft_id_ IN NUMBER) RETURN Missing_Mandatory_Details_Arr
+IS
+   result_      Aircraft_API.Missing_Mandatory_Details_Arr := Aircraft_API.Missing_Mandatory_Details_Arr();
+   ui_result_   Missing_Mandatory_Details_Arr := Missing_Mandatory_Details_Arr();   
+BEGIN
+   result_ := Aircraft_API.Get_Missing_Manda_Components(aircraft_id_);
+
+   FOR i IN 1 .. result_.COUNT LOOP
+      ui_result_.extend;
+      ui_result_(i).config_slot := result_(i).config_slot;
+      ui_result_(i).config_slot_position := result_(i).config_slot_position;
+      ui_result_(i).assembly_config_slot := result_(i).assembly_config_slot;      
+      ui_result_(i).assembly_config_slot_position := result_(i).assembly_config_slot_position;
+      ui_result_(i).assembly := result_(i).assembly;
+      ui_result_(i).part_number := result_(i).part_number;
+      ui_result_(i).part_name := result_(i).part_name;      
+   END LOOP;
+   
+   RETURN ui_result_;
+END Get_Missing_Mandatory_Components___;
+
+FUNCTION Get_Release_Number___ (
+   aircraft_id_ IN NUMBER,
+   flight_id_   IN NUMBER) RETURN VARCHAR2
+IS
+   release_number_      VARCHAR2(80);
+   flight_turn_status_  VARCHAR2(30);
+   
+BEGIN
+	flight_turn_status_ := Av_flight_API.Get_Turn_Status(flight_id_);
+   
+   IF flight_turn_status_ != 'Released' THEN 
+      release_number_ := null;
+   ELSE 
+      release_number_ := Aircraft_API.Get_Release_Number(aircraft_id_);
+   END IF;
+	
+   RETURN release_number_;
+END Get_Release_Number___;
+
+FUNCTION Get_Release_Remarks___ (
+   aircraft_id_ IN NUMBER,
+   flight_id_   IN NUMBER) RETURN VARCHAR2
+IS
+   release_remarks_     VARCHAR2(4000);
+   flight_turn_status_  VARCHAR2(30);
+BEGIN
+   flight_turn_status_ := Av_flight_API.Get_Turn_Status(flight_id_);
+
+   IF flight_turn_status_ != 'Released' THEN 
+      release_remarks_ := null;
+   ELSE 
+      release_remarks_ := Aircraft_API.Get_Release_Remarks(aircraft_id_);
+   END IF;
+	
+   RETURN release_remarks_;
+END Get_Release_Remarks___;
+
+
+FUNCTION Get_Release_Status___ (
+   aircraft_wp_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   aircraft_wp_status_   VARCHAR2(50);
+BEGIN
+	aircraft_wp_status_ := Av_Aircraft_Work_Package_API.Get_Objstate(aircraft_wp_id_);
+   RETURN aircraft_wp_status_;
+END Get_Release_Status___;
+
+
+
+FUNCTION Get_Open_Faults___ (
+   aircraft_id_ IN NUMBER) RETURN Release_Status_Details_Struct_Arr
+IS
+   CURSOR get_open_fault_recs_ IS
+      SELECT      sub_system.sub_system_name,fault.barcode,fault.description,fault.logbook_type_code,fault.found_on_date , fault.logbook_reference
+      FROM        av_fault_tab fault
+      INNER JOIN  av_aircraft_sub_system sub_system ON
+                  sub_system.sub_system_id = fault.sub_system_id
+      WHERE       fault.aircraft_id = aircraft_id_ AND fault.rowstate = 'Open';
+        
+   result_        Release_Status_Details_Struct_Arr := Release_Status_Details_Struct_Arr();
+   i_             NUMBER := 1;
+BEGIN
+   FOR rec_ IN get_open_fault_recs_ LOOP
+      result_.extend();
+      result_(i_).barcode := rec_.barcode;
+      result_(i_).description := rec_.description;
+      result_(i_).sub_system_name := rec_.sub_system_name;
+      result_(i_).logbook_type_code := rec_.logbook_type_code;
+      result_(i_).logbook_reference := rec_.logbook_reference;
+      result_(i_).found_on_date := rec_.found_on_date;
+      result_(i_).utc_time_zone_code := 'UTC';
+      i_ := i_ + 1;
+   END LOOP;
+   RETURN  result_;
+END Get_Open_Faults___;
+
+--UT Blocked due to DXDEV-3640
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Overdue_Faults___ (
+   aircraft_id_ IN NUMBER) RETURN Overdue_Fault_Details_Arr
+IS 
+   result_      Av_Fault_Deadline_API.Overdue_Fault_Details_Arr := Av_Fault_Deadline_API.Overdue_Fault_Details_Arr();
+   ui_result_   Overdue_Fault_Details_Arr := Overdue_Fault_Details_Arr();   
+BEGIN
+   result_ := Av_Fault_Deadline_API.Get_Overdue_Faults(aircraft_id_);
+
+   FOR i IN 1 .. result_.COUNT LOOP
+      ui_result_.extend;
+      ui_result_(i).barcode := result_(i).barcode;
+      ui_result_(i).fault_id := result_(i).fault_id;      
+      ui_result_(i).description := result_(i).description;
+      ui_result_(i).failed_system := result_(i).failed_system;      
+      ui_result_(i).deferral_class_code := result_(i).deferral_class_code;  
+   END LOOP;
+   
+   RETURN ui_result_;
+END Get_Overdue_Faults___;
+
+--UT Blocked due to DXDEV-3640
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Overdue_Tasks___ (
+   aircraft_id_ IN NUMBER) RETURN Overdue_Task_Details_Arr
+IS 
+   result_      Av_Exe_Task_Deadline_API.Overdue_Task_Details_Arr := Av_Exe_Task_Deadline_API.Overdue_Task_Details_Arr();
+   ui_result_   Overdue_Task_Details_Arr := Overdue_Task_Details_Arr();   
+BEGIN
+   result_ := Av_Exe_Task_Deadline_API.Get_Overdue_Tasks(aircraft_id_);
+   
+   FOR i IN 1 .. result_.COUNT LOOP
+      ui_result_.extend;
+      ui_result_(i).barcode := result_(i).barcode;
+      ui_result_(i).task_seq := result_(i).task_seq;      
+      ui_result_(i).description := result_(i).description; 
+   END LOOP;
+   
+   RETURN ui_result_;
+END Get_Overdue_Tasks___;
+
+
+FUNCTION Get_Sys_Date___ RETURN DATE
+IS
+BEGIN
+	RETURN Time_Util_API.Get_Sysdate_In_Utc;
+END Get_Sys_Date___;
+
+
+FUNCTION Get_Signed_User___ RETURN VARCHAR2
+IS
+BEGIN
+	RETURN Fnd_Session_API.Get_Fnd_User();
+END Get_Signed_User___;
+
+FUNCTION Get_Signed_By_User___ (
+   aircraft_wp_id_ IN NUMBER) RETURN VARCHAR2 
+IS 
+BEGIN
+   RETURN Av_Aircraft_Work_Package_API.Get_Signed_User(aircraft_wp_id_); 
+END Get_Signed_By_User___;
+
+PROCEDURE Complete_Work_Package___ (
+   aircraft_wp_id_ IN NUMBER,
+   actual_end_date_time_ IN DATE)
+IS
+   info_          VARCHAR2(4000);
+   attr_          VARCHAR2(4000);
+   objid_         VARCHAR2(2000);
+   objversion_    VARCHAR2(2000);
+   wp_duration_   NUMBER;
+
+   CURSOR get_wp IS
+      SELECT  ROWID,to_char(rowversion,'YYYYMMDDHH24MISS')
+      FROM    Av_Aircraft_Work_Package_tab
+      WHERE   aircraft_work_package_id = aircraft_wp_id_;
+      
+BEGIN
+   -- Change the state to complete in the database.
+   Av_Aircraft_Work_Package_API.Change_State(aircraft_wp_id_, 'Completed');
+   
+   -- Modify the work package entity.
+   Av_Aircraft_Work_Package_API.Update_Actual_End_Date_Time(aircraft_wp_id_, actual_end_date_time_);
+   
+   OPEN get_wp;
+   FETCH get_wp INTO objid_, objversion_;
+   CLOSE get_wp;
+   
+   wp_duration_ := Adcom_Util_API.Validate_Hours(Av_Aircraft_Work_Package_API.Get_Completed_Wp_Duration(aircraft_wp_id_)); 
+   
+   Client_SYS.Add_To_Attr('IS_RELEASE_TO_SERVICE', 'True', attr_);
+   Client_SYS.Add_To_Attr('SIGNED_USER',Fnd_Session_API.Get_Fnd_User(),attr_);
+   Client_SYS.Add_To_Attr('IS_HISTORIC', 'True', attr_);
+   Client_SYS.Add_To_Attr('DURATION', wp_duration_, attr_);
+   
+   IF actual_end_date_time_ IS NOT NULL THEN
+      Client_SYS.Add_To_Attr('ACTUAL_END_DATE_TIME', actual_end_date_time_, attr_);
+   END IF;
+   
+   Av_Aircraft_Work_Package_API.Modify__(info_, objid_, objversion_, attr_, 'DO'); 
+END Complete_Work_Package___;
+
+PROCEDURE Send_Aircraft_Release_Data___ (
+   aircraft_id_ IN NUMBER,
+   release_number_ IN VARCHAR2,
+   release_remarks_ IN VARCHAR2,
+   date_signed_ IN DATE,
+   flight_id_ IN NUMBER,
+   bind_signature_id_ IN VARCHAR2)
+IS
+   info_       VARCHAR2(4000);
+   attr_       VARCHAR2(4000);
+   objid_      VARCHAR2(2000);
+   objversion_ VARCHAR2(2000);
+   e_sig_permission_ VARCHAR2(20);
+   
+   CURSOR get_aircraft IS
+      SELECT  ROWID,to_char(rowversion,'YYYYMMDDHH24MISS')
+      FROM    Aircraft_tab
+      WHERE   aircraft_id = aircraft_id_;
+ 
+   CURSOR get_e_sig_user IS
+      SELECT permission 
+      FROM av_e_sig_user_permission_tab
+      WHERE identity = Fnd_Session_API.Get_Fnd_User();
+      
+BEGIN
+   
+   OPEN get_e_sig_user;
+   FETCH get_e_sig_user INTO e_sig_permission_;
+   CLOSE get_e_sig_user;
+   
+   IF ((e_sig_permission_ IS NULL OR e_sig_permission_ = 'Yes')AND bind_signature_id_ IS NULL) THEN
+      Error_SYS.Record_General(lu_name_, 'ESIGERRORRERA: Failed to record electronic signature. Review changes and try again.');
+   END IF;
+   info_ := NULL;
+   objid_ := NULL;
+   objversion_ :=NULL;
+   
+   IF bind_signature_id_ IS NOT NULL THEN
+      Client_SYS.Add_To_Attr('AIRCRAFT_ID', aircraft_id_, attr_);
+      Client_SYS.Add_To_Attr('FLIGHT_ID', flight_id_, attr_);
+      Client_SYS.Add_To_Attr('RELEASE_NUMBER', release_number_, attr_);
+      Client_SYS.Add_To_Attr('RELEASE_REMARKS', release_remarks_, attr_);
+      Client_SYS.Add_To_Attr('RELEASE_DATE', date_signed_, attr_);
+      Client_SYS.Add_To_Attr('SIGNED_USER', Fnd_Session_API.Get_Fnd_User(), attr_);
+      Client_SYS.Add_To_Attr('BIND_SIGNATURE_ID', bind_signature_id_, attr_);
+      Av_Aircraft_Release_API.New__(info_, objid_, objversion_, attr_, 'DO');  
+   END IF;
+   
+   Client_SYS.Clear_Attr(attr_);
+	OPEN get_aircraft;
+   FETCH get_aircraft INTO objid_, objversion_;
+   CLOSE get_aircraft;
+   
+   Client_SYS.Add_To_Attr('RELEASE_NUMBER', release_number_, attr_);
+   Client_SYS.Add_To_Attr('RELEASE_REMARKS', release_remarks_, attr_);
+   Client_SYS.Add_To_Attr('RELEASE_DATE', date_signed_, attr_);
+   Aircraft_API.Modify__(info_, objid_, objversion_, attr_, 'DO'); 
+END Send_Aircraft_Release_Data___;
+
+
+FUNCTION Get_Is_Wp_Complete___(
+   aircraft_wp_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   aircraft_wp_status_ VARCHAR2(50);
+BEGIN
+	aircraft_wp_status_ := Av_Aircraft_Work_Package_API.Get_Objstate(aircraft_wp_id_);
+   IF aircraft_wp_status_ = 'Completed' THEN 
+      RETURN TRUE;
+   ELSE 
+      RETURN FALSE;
+   END IF;
+END Get_Is_Wp_Complete___;
+
+FUNCTION Get_Signed_Date___ (
+   aircraft_wp_id_ IN NUMBER) RETURN DATE
+IS
+BEGIN
+ RETURN	Av_Aircraft_Work_Package_API.Get_Actual_End_Date_Time(aircraft_wp_id_);
+END Get_Signed_Date___;
+
+
+FUNCTION Get_Open_Faults_Status___ (
+   aircraft_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   CURSOR get_open_fault_count_ IS
+      SELECT      COUNT(fault_id)
+      FROM        av_fault_tab fault
+      WHERE       fault.aircraft_id = aircraft_id_ AND fault.rowstate = 'Open';
+   open_faults_count_   NUMBER;
+BEGIN
+	OPEN get_open_fault_count_;
+   FETCH get_open_fault_count_ INTO open_faults_count_;
+   CLOSE get_open_fault_count_;
+   
+   IF (open_faults_count_>0) THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END IF;   
+END Get_Open_Faults_Status___;
+
+
+FUNCTION Get_Overdue_Faults_Status___ (
+   aircraft_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   CURSOR get_overdue_fault_count_ IS
+      SELECT      COUNT(fault.fault_id)
+      FROM        av_fault_tab fault
+      INNER JOIN  av_fault_deadline_tab fault_deadline ON
+                  fault_deadline.fault_id = fault.fault_id
+      WHERE       fault.aircraft_id = aircraft_id_ 
+                  AND fault.rowstate = 'Deferred' 
+                  AND fault_deadline.deadline_date < Time_Util_API.Get_Sysdate_In_Utc;
+   overdue_faults_count_   NUMBER;
+BEGIN
+	OPEN get_overdue_fault_count_;
+   FETCH get_overdue_fault_count_ INTO overdue_faults_count_;
+   CLOSE get_overdue_fault_count_;
+   
+   IF (overdue_faults_count_>0) THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END IF;   
+END Get_Overdue_Faults_Status___;
+
+FUNCTION Get_Uncompleted_Tasks_Status___ (
+   aircraft_wp_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   CURSOR get_uncompleted_task_count_ IS
+      SELECT      COUNT(task.task_seq)
+      FROM        av_exe_task task
+      INNER JOIN  av_aircraft_work_package_tab aircraft_wp ON
+                  aircraft_wp.aircraft_work_package_id = task.aircraft_wp_id
+      WHERE       aircraft_wp.aircraft_work_package_id = aircraft_wp_id_ 
+                  AND task.objstate != 'FINISHED';
+   uncompleted_tasks_count_   NUMBER;
+BEGIN
+	OPEN get_uncompleted_task_count_;
+   FETCH get_uncompleted_task_count_ INTO uncompleted_tasks_count_;
+   CLOSE get_uncompleted_task_count_;
+   
+   IF (uncompleted_tasks_count_>0) THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END IF;   
+END Get_Uncompleted_Tasks_Status___;
+
+
+FUNCTION Get_E_Sig_Permission___ (
+   user_id_ IN VARCHAR2) RETURN VARCHAR2
+IS
+   permission_ av_e_sig_user_permission_tab.permission%TYPE;
+BEGIN
+   permission_ := Av_E_Sig_User_Permission_API.Get_Permission(user_id_);
+   RETURN permission_;
+END Get_E_Sig_Permission___;
+
+FUNCTION Get_Pending_Tasks___ (
+   aircraft_wp_id_ IN NUMBER) RETURN Release_Status_Details_Struct_Arr
+IS
+   CURSOR get_open_task_recs_ IS
+      SELECT task.task_code , task.description, task.config_position  
+      FROM av_exe_task task
+      WHERE task.aircraft_wp_id = aircraft_wp_id_ AND task.objstate IN ('RELEASED', 'WORKSTARTED') ;
+   
+   result_        Release_Status_Details_Struct_Arr := Release_Status_Details_Struct_Arr();
+   i_             NUMBER := 1;
+BEGIN
+   FOR rec_ IN get_open_task_recs_ LOOP
+      result_.extend();
+      result_(i_).task_name := rec_.description;
+      result_(i_).task_code := rec_.task_code;
+      result_(i_).config_slot := rec_.config_position;
+      i_ := i_ + 1;
+   END LOOP;
+   RETURN  result_;
+END Get_Pending_Tasks___;
+
+
+FUNCTION Get_Open_Tasks_Status___ (
+   aircraft_wp_id_ IN NUMBER) RETURN BOOLEAN
+IS
+   CURSOR get_open_task_count_ IS
+      SELECT      COUNT(task_seq)
+      FROM        av_exe_task task
+      WHERE       task.aircraft_wp_id = aircraft_wp_id_ AND task.objstate IN ('RELEASED','WORKSTARTED');
+   open_tasks_count_   NUMBER;
+BEGIN
+	OPEN get_open_task_count_;
+   FETCH get_open_task_count_ INTO open_tasks_count_;
+   CLOSE get_open_task_count_;
+   
+   IF (open_tasks_count_>0) THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END IF;   
+END Get_Open_Tasks_Status___;
+
+
+
+PROCEDURE Update_User___ (
+   key_ IN Release_Aircraft_Virtual_Key)
+IS
+   sign_by_ VARCHAR2(200) := Fnd_Session_API.Get_Fnd_User();
+   parent_rec_             Release_Aircraft_Virtual_Rec;
+   parent_new_rec_         Release_Aircraft_Virtual_Rec; 
+BEGIN
+
+   parent_rec_          := Get_Record___(key_);
+   parent_new_rec_      := parent_rec_;
+
+   parent_new_rec_.signed_by  := sign_by_;
+   CRUD_Update___(parent_rec_, parent_new_rec_);  
+END Update_User___;
+
+
+FUNCTION Get_Esig_File_Name_For_Release_Acft___ (
+   aircraft_id_    IN NUMBER,
+   aircraft_wp_id_ IN NUMBER) RETURN VARCHAR2
+IS
+   file_name_   VARCHAR2(100);
+   wo_number_   VARCHAR2(80);
+   reg_code_    VARCHAR2(10);
+   signed_user_ VARCHAR2(40);
+   formatted_wo_number_ VARCHAR2(80);
+   
+   CURSOR get_reg_code IS
+      SELECT reg_code
+      FROM aircraft_tab
+      WHERE aircraft_id = aircraft_id_;
+      
+   CURSOR get_wo_number IS
+      SELECT wo_number
+      FROM av_aircraft_work_package_tab
+      WHERE aircraft_work_package_id = aircraft_wp_id_;
+BEGIN
+	OPEN  get_reg_code;
+   FETCH get_reg_code INTO reg_code_;
+   CLOSE get_reg_code;
+   
+   OPEN  get_wo_number;
+   FETCH get_wo_number INTO wo_number_;
+   CLOSE get_wo_number;
+   
+   signed_user_ := Fnd_Session_API.Get_Fnd_User();
+   formatted_wo_number_ := REPLACE(wo_number_, 'WO - ', 'WO-');
+   
+   IF (reg_code_ IS NOT NULL AND wo_number_ IS NOT NULL) THEN 
+      file_name_ := reg_code_ || '_' || formatted_wo_number_ || '_' || signed_user_;
+      RETURN file_name_;
+   END IF;
+END Get_Esig_File_Name_For_Release_Acft___;
+
+--UT Blocked due to DXDEV-3640
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Neardue_Faults___ (
+   aircraft_id_ IN NUMBER) RETURN Neardue_Fault_Details_Arr
+IS
+   result_      Av_Fault_Deadline_API.Neardue_Fault_Details_Arr := Av_Fault_Deadline_API.Neardue_Fault_Details_Arr();
+   ui_result_   Neardue_Fault_Details_Arr := Neardue_Fault_Details_Arr();    
+BEGIN
+   result_ := Av_Fault_Deadline_API.Get_Neardue_Faults(aircraft_id_);
+   
+   FOR i IN 1 .. result_.COUNT LOOP
+      ui_result_.extend;
+      ui_result_(i).barcode := result_(i).barcode;
+      ui_result_(i).fault_id := result_(i).fault_id;      
+      ui_result_(i).description := result_(i).description;
+      ui_result_(i).failed_system := result_(i).failed_system;      
+      ui_result_(i).deferral_class_code := result_(i).deferral_class_code;
+      ui_result_(i).is_soft_deadline := result_(i).is_soft_deadline;  
+      ui_result_(i).usage_remaining := result_(i).usage_remaining;      
+   END LOOP;
+   
+   RETURN ui_result_;
+END Get_Neardue_Faults___;
+
+PROCEDURE Load_Compliance_Info___ (
+   rec_ IN OUT Release_Aircraft_Virtual_Rec)
+IS
+   missing_comp_count_        NUMBER;
+   missing_mand_parm_value_   VARCHAR2(200);
+   neardue_fault_count_       NUMBER;
+   overdue_fault_count_       NUMBER;  
+   overdue_fault_parm_value_  VARCHAR2(200); 
+   overdue_task_count_        NUMBER;  
+   overdue_task_parm_value_   VARCHAR2(200); 
+   neardue_task_count_        NUMBER;
+BEGIN
+   rec_.is_flm_standalone := (Adcom_Util_API.Is_FLM_Standalone() = 'TRUE');
+   rec_.missing_component_status := 'OK';
+   rec_.is_mandatory_components_missing := FALSE;
+   rec_.overdue_fault_status := 'OK';
+   rec_.has_overdue_faults := FALSE;
+   rec_.has_neardue_faults := FALSE; 
+   rec_.overdue_task_status := 'OK';
+   rec_.has_overdue_tasks := FALSE;  
+   rec_.has_release_override_rights := FALSE;
+   rec_.has_neardue_tasks := FALSE;     
+
+   IF (NOT rec_.is_flm_standalone) THEN
+      -- override permission
+      rec_.has_release_override_rights := Adcom_Util_API.Has_Release_Override_Rights;      
+      
+      -- missing mandatory
+      missing_comp_count_ := Aircraft_API.Get_Missing_Manda_Comp_Count(rec_.aircraft_id);
+      IF (missing_comp_count_ > 0) THEN
+         rec_.is_mandatory_components_missing := TRUE;
+         missing_mand_parm_value_ := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_MISSING_COMPONENT');
+         IF (missing_mand_parm_value_ IS NOT NULL) THEN
+            rec_.missing_component_status := missing_mand_parm_value_;
+         END IF;
+      END IF;
+
+      -- overdue
+      overdue_fault_count_ := Av_Fault_Deadline_API.Get_Overdue_Fault_Count(rec_.aircraft_id);
+      IF (overdue_fault_count_ > 0) THEN
+         rec_.has_overdue_faults := TRUE;
+         overdue_fault_parm_value_ := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_FAULT');
+         IF (overdue_fault_parm_value_ IS NOT NULL) THEN
+            rec_.overdue_fault_status := overdue_fault_parm_value_;
+         END IF;
+      END IF;      
+
+      --neardue
+      neardue_fault_count_ := Av_Fault_Deadline_API.Get_Neardue_Fault_Count(rec_.aircraft_id);
+      IF (neardue_fault_count_ > 0) THEN
+         rec_.has_neardue_faults := TRUE;
+      END IF; 
+      
+      -- overdue task
+      overdue_task_count_ := Av_Exe_Task_Deadline_API.Get_Overdue_Task_Count(rec_.aircraft_id);
+      IF (overdue_task_count_ > 0) THEN
+         rec_.has_overdue_tasks := TRUE;
+         overdue_task_parm_value_ := Adcom_Util_API.Get_Mx_Parm_Value('RELEASE_OVERDUE_TASK');
+         IF (overdue_task_parm_value_ IS NOT NULL) THEN
+            rec_.overdue_task_status := overdue_task_parm_value_;
+         END IF;
+      END IF;      
+      
+      -- neardue task
+      neardue_task_count_ := Av_Exe_Task_Deadline_API.Get_Neardue_Task_Count(rec_.aircraft_id);
+      IF (neardue_task_count_ > 0) THEN
+         rec_.has_neardue_tasks := TRUE;
+      END IF; 
+   END IF;    
+END Load_Compliance_Info___;
+
+--UT Blocked due to DXDEV-3640
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Neardue_Tasks___ (
+   aircraft_id_ IN NUMBER) RETURN Neardue_Task_Details_Arr
+IS
+   result_      Av_Exe_Task_Deadline_API.Neardue_Task_Details_Arr := Av_Exe_Task_Deadline_API.Neardue_Task_Details_Arr();
+   ui_result_   Neardue_Task_Details_Arr := Neardue_Task_Details_Arr();    
+BEGIN
+	result_ := Av_Exe_Task_Deadline_API.Get_Neardue_Tasks(aircraft_id_);
+   
+   FOR i IN 1 .. result_.COUNT LOOP
+      ui_result_.extend;
+      ui_result_(i).barcode := result_(i).barcode;
+      ui_result_(i).task_seq := result_(i).task_seq;      
+      ui_result_(i).description := result_(i).description;
+      ui_result_(i).is_soft_deadline := result_(i).is_soft_deadline;  
+      ui_result_(i).usage_remaining := result_(i).usage_remaining;      
+   END LOOP;
+   
+   RETURN ui_result_;
+
+END Get_Neardue_Tasks___;

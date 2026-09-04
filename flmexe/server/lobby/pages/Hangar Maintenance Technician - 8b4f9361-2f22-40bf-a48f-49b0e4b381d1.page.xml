@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+  <DescriptiveText>Starting lobby designed for Hangar Maintenance Technicians to access all functionalities.</DescriptiveText>
+  <LastModified>2025-08-20-10.14.40</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="c1c6aede-d6cd-41da-bf7b-c7767cc2deea" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="101ec434-a27c-4a19-863e-f0bf77e5183c" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="e35f17ed-d382-4337-8205-a32d24b4ca55" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="fc1a1229-d79c-46a1-a514-54880743c1d0" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters>
+    <Parameter>
+      <Name>AircraftCode</Name>
+      <Description>Aircraftcode</Description>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageBarcode</Name>
+      <Description>Workpackagebarcode</Description>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+  </Parameters>
+  <PageTitle>Hangar Maintenance Technician</PageTitle>
+  <PageId>8b4f9361-2f22-40bf-a48f-49b0e4b381d1</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

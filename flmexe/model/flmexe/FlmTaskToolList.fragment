@@ -1,0 +1,154 @@
+fragment FlmTaskToolList;
+component FLMEXE;
+layer Core;
+description "This contains the resources required for tool list";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+----------------------------------- LISTS -----------------------------------
+
+list ToolDemandsList for ToolDemandQuery {
+   orderby = Barcode, CreatedDate asc;
+
+   field Barcode;
+   field TaskName;
+   field ResourceDemand;
+   field ResourceDemandDescription;
+   field ActualToolEquipment {
+      size = Medium;
+   }
+   field ParentResourceId;
+   field SerialNumber;
+   field BatchNo;
+   badge Rowstate {
+      emphasis Complementary2 = [Rowstate = "ASSIGNED"];
+      emphasis Warning = [Rowstate = "WORKSTARTED"];
+      emphasis Success = [Rowstate = "COMPLETED"];
+      emphasis Neutral = [Rowstate = "CANCELLED"];
+   }
+   field CheckedOutTo;
+   field PlannedHoursFormat;
+   field ActualHours;
+   badge CurrentCheckOutStatus {
+      emphasis On = [CurrentCheckOutStatus = "NotApplicable"];
+      emphasis Ok = [CurrentCheckOutStatus = "CheckedIn"];
+      emphasis Danger = [CurrentCheckOutStatus = "CheckedOut"];
+   }
+   badge SignedStatus {
+      label = "Signed Status";
+      style = TextOnly;
+      size = Small;
+      editable = [false];
+
+      emphasis Warning = [SignedStatus = "Pending"];
+      emphasis OK = [SignedStatus = "Signed"];
+   }
+   field SignedBy;
+   field SignedDate;
+   field CreatedBy;
+   field CreatedDate;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+query ToolDemandQuery {
+   from = "jt_task_resource_demand_av_uiv";
+   where = "demand_type = 'Tool/Equipment'";
+   keys = TaskSeq, TaskResourceSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+
+   attribute TaskSeq Number;
+   attribute Barcode Text {
+      label = "Task ID";
+   }
+   attribute TaskName Text;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ResourceDemand Text {
+      label = "Tool/Equipment Group";
+   }
+   attribute AssignedResourceId Text;
+   attribute ActualToolEquipment Text {
+      label = "Tool Equipment";
+      fetch = "Av_Exe_Task_Tool_Util_API.Get_Actual_Tool_Equipment(Av_Exe_Task_Tool_Util_API.Get_Actual_Resource_Seq(task_seq, task_resource_seq, execution_instance_seq))";
+   }
+   attribute AssignedResourceDescription Text;
+   attribute AssignedResourceSeq Number;
+   attribute ResourceDemandDescription Text {
+      label = "Tool/Equipment Group Description";
+   }
+   attribute ToolEquipment Text {
+      label = "Tool/Equipment";
+      fetch = "CONCAT(CONCAT(assigned_resource_id, '-'), assigned_resource_description)";
+   }
+   attribute BatchNo Text;
+   attribute SerialNo Text;
+   attribute SerialNumber Text {
+      label = "Serial No";
+      fetch = "Resource_Tool_Equip_API.Get_Serial_No(Av_Exe_Task_Tool_Util_API.Get_Actual_Resource_Seq(task_seq, task_resource_seq, execution_instance_seq))";
+   }
+   attribute CheckedOutTo Text {
+      fetch = "Av_Exe_Task_Tool_Util_API.Get_Latest_Check_Out_To(task_seq, execution_instance_seq, assigned_resource_seq)";
+   }
+   attribute CreatedBy Text;
+   attribute PlannedHours Number;
+   attribute CreatedDate Timestamp;
+   attribute Rowstate Enumeration(TaskToolAssignmentStatus) {
+      label = "Assignment Status";
+   }
+   attribute AllocatedStart Timestamp;
+   attribute AllocatedFinish Timestamp;
+   attribute ParentResourceId Text {
+      label = "Part No";
+      fetch = "Resource_API.Get_Resource_Id(Resource_Parent_API.Get_Parent_Seq(Av_Exe_Task_Tool_Util_API.Get_Actual_Resource_Seq(task_seq, task_resource_seq, execution_instance_seq)))";
+   }
+   attribute PlannedHoursFormat Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(planned_hours)";
+      label = "Allocated Hours";
+   }
+   attribute ActualHours Text {
+      fetch = "Adcom_Util_API.Get_Text_Time(Adcom_Util_API.Get_Latest_Transaction_Qty(task_seq, execution_instance_seq))";
+      label = "Actual Hours";
+   }
+   attribute CurrentCheckOutStatus Enumeration(ToolCheckoutStatus) {
+      fetch = "Resource_Tool_Equip_API.Get_Check_Out_Status_Db(assigned_resource_seq)";
+      label = "Check Out Status";
+   }
+   attribute SignedBy Text {
+      fetch = "Adcom_Util_API.Get_Latest_Transaction_User(task_seq, execution_instance_seq)";
+   }
+   attribute SignedStatus Text {
+      fetch = "Adcom_Util_API.Get_Transaction_Status(task_seq, execution_instance_seq)";
+   }
+   attribute SignedDate Timestamp {
+      fetch = "Adcom_Util_API.Get_Latest_Transaction_Date(task_seq, execution_instance_seq)";
+   }
+   attribute TaskSite Text {
+      fetch = "Work_Task_API.Get_Site(task_seq)";
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+enumeration TaskToolAssignmentStatus {
+   value = "ASSIGNED" {
+      label = "Assigned";
+   }
+   value = "WORKSTARTED" {
+      label = "Work Started";
+   }
+   value = "COMPLETED" {
+      label = "Completed";
+   }
+   value = "CANCELLED" {
+      label = "Cancelled";
+   }
+}

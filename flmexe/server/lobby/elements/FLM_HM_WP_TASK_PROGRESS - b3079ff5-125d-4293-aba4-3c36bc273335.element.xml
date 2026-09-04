@@ -1,0 +1,55 @@
+<PieChart>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <DescriptiveText>Progress of the currently active tasks displayed in a pie chart.</DescriptiveText>
+    <LastModified>1/24/25, 1:47:56 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Task Progress</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_WP_TASK_PROGRESS</Name>
+    <ID>b3079ff5-125d-4293-aba4-3c36bc273335</ID>
+    <ColorStyle>Default</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>64605fd9-e3c2-4fac-8768-a5db6f3aad89</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Count</Column>
+                <Name>Count</Name>
+                <DisplayName>Count</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>TaskStatus</Column>
+                <Name>TaskStatus</Name>
+                <DisplayName>TaskStatus</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+    <DisplayNullValueAs>Zero</DisplayNullValueAs>
+    <GroupedDataSeries>
+        <TopNOptions>
+            <ShowOthers>false</ShowOthers>
+        </TopNOptions>
+        <GroupsColumn>
+            <Name>TaskStatus</Name>
+            <Aggregate>NA</Aggregate>
+        </GroupsColumn>
+        <ValuesColumn>
+            <Name>Count</Name>
+            <Aggregate>NA</Aggregate>
+        </ValuesColumn>
+    </GroupedDataSeries>
+</PieChart>

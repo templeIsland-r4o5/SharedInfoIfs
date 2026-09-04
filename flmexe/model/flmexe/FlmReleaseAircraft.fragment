@@ -1,0 +1,789 @@
+--------------------------------------------------------------------------------------
+-- Date    Sign    History
+-- ------  ------  ---------------------------------------------------------------
+-- 241102  OSNALK  AD-14257, Refactor the code to use structures.
+-- 240430  KAWJLK  AD-10914, Added headerlogo and MediaObject attribute.
+-- 240405  SATGLK  AD-12558, Updated the attribute for Aircraft Release assistant End Date
+-- 240320  WAISLK  AD-12447, Removed fetch statement from ReleaseStatusDetailsStruct.
+-- 240229  SATGLK  AD-12204, Cosmetic changes
+-- 240226  SATGLK  AD-12235, Removed the old overdue fault check from Record Release visible check.
+-- 240221  majslk  AD-12016, Updated the field lables of Release Status Details assistant.
+-- 240221  MAILLK  AD-12015, Updated the field lables of Release Status Details assistant.
+-- 240220  majslk  AD-12017, Updated Release Status Details assistant to show neardue tasks.
+-- 240219  MAILLK  AD-12014, Updated Release Status Details assistant to show overdue tasks.
+-- 240217  SATGLK  AD-10947, Added HasReleaseOverrideRights condition to RecordRelease command to determine if the current logged user has override rights
+-- 240126  WAISLK  AD-11838, Modified code to support known server timezone changes.
+-- 240127  SATGLK  AD-11727, Updated Release Status Details assistant to show neardue faults.
+-- 240127  SATGLK  AD-10950, Updated Release Status Details assistant to show overdue faults.
+-- 240111  SATGLK  AD-10936, Updated Release Status Details assistant to show missing mandatory components.
+--  231026  rosdlk  AD-10255, Added e-sig release aircraft related file name changes.
+-- 230925  KAWJLK  AD-10793, Modified AircraftWorkPackage group and add ActualStartDateTime
+-- 230905  KAWJLK  AD-10253, Modified Release Aircraft workflow with e-signature security remediation changes.
+-- 230804  majslk  AD-10387, Modified labels to support time zone changes
+-- 230801  KAWJLK  AD-10341, Modified signdocument responce type to Structure and include FndEsignature fragment
+-- 230614  majslk  AD-9584, Modified code to support time zone changes
+-- 230404  KAWJLK  AD-7387, Modified RecordRelease and ReleaseAircraftVirtual
+-- 230110  LAHNLK  AD-9056, added CMS warning badges to release to service assistant
+-- 220819  KAWJLK  AD-8414, Modified Finish command, Sign command, ReleaseAircraftVirtual, GetSysDate, GetSignedDate, CompleteWorkPackage and SendAircraftReleaseData.
+-- 220725  MAILLK  AD-8002, Modified ReleaseStatus group to replace OverdueFault indicator with Open Tasks indicator for workpackage
+-- 220721  DUWJLK  AD-8003, Updated OpenTaskList label name as Open Tasks.
+-- 220718  PSUALK  AD-8003, Update Release Status Details fetch Tasks for workpackage.
+-- 220712  KAPALK  AD-8103, Called fucntion GetSignedByUser() in release aircraft assistant.
+-- 220712  PSUALK  AD-8003, Update Release Status Details on Faults and Tasks.
+-- 220623  majslk  AD-7804, Removed ReleaseToService boolean from ReleaseAircraft
+-- 220610  majslk  AD-7145, Modified GetReleaseNumber, GetReleaseRemarks methods
+-- 220224  KAWJLK  AD-6705, Modified SignCommand.
+-- 220128  KAWJLK  AD-5799, Modified command Sign for ReleaseAircraftVirtual, command Complete for ReleaseAircraftVirtual, ReleaseAircraftAssistant, ReleaseAircraftVirtual and Added function GetESigPermission.
+-- 210702  himklk  AD-2278, Added ludependencies to ReleaseAircraftVirtual and SendAircraftReleaseData action.
+-- 210701  himklk  AD-2278, Added multiline = true to fields which can contain long text and removed leading checkboxes in OpenFaultList and OverdueFaultList.
+-- 210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+-- 210507  SUPKLK  AD-1570, Added Group to display Release Status with Open Faults and Overdue Faults in ReleaseAircraftAssistant
+-- 210429  SUPKLK  AD-1570, Created ReleaseStatusDetailstAssistant and added OpenFaultList and OverdueFaultList
+-- 210429  SEVHLK  AD-1594, Added logic for sign functionality for release aircraft.
+-- 210420  SEVHLK  AD-1196, Created the fragment and implemented the ReleaseAircraftAssistant and AddReleaseDetailstAssistant.
+-------------------------------------------------------------------------------------
+fragment FlmReleaseAircraft;
+component FLMEXE;
+layer Core;
+description "Here all the things related to Release aircraft is included";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FndEsignature;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+command RecordRelease for ReleaseAircraftVirtual {
+   label = "Record Release";
+   enabled = [true];
+   visible = [(IsWpComplete = false or(IsWpComplete = false and Status = "Completed")) and
+   (UncompletedTasksStatus = false and OpenFaultsStatus = false) and
+   (IsFlmStandalone or(IsFlmStandalone = false and(HasReleaseOverrideRights or((IsMandatoryComponentsMissing = false or MissingComponentStatus != "ERROR") and
+   (HasOverdueFaults = false or OverdueFaultStatus != "ERROR") and(HasOverdueTasks = false or OverdueTaskStatus != "ERROR")))))];
+   variable AddReleaseDetailsInfo Structure(AddReleaseDetailsInfoStructure);
+   execute {
+      copy this into AddReleaseDetailsInfo;
+      assistant AddReleaseDetailstAssistant(AddReleaseDetailsInfo) into(ReleaseToService, ReleaseNumber, ReleaseRemarks) {
+         when OK {
+            call UpdateUser();
+            if [ReleaseToService = null] {
+               set ReleaseToService = false;
+            }
+            set Status = "Completed";
+            call GetSysDate() into DateSigned;
+            set WpActualEndDateTimeUtc = DateSigned;
+            exit;
+         }
+         when CANCEL {
+            exit;
+         }
+
+      }
+   }
+}
+
+command ReleaseStatusDetails for ReleaseAircraftVirtual {
+   label = "Release Status Details";
+   enabled = [true];
+   visible = [true];
+   variable ReleaseStatusDetailsInfo Structure(ReleaseStatusDetailsInfoStructure);
+   execute {
+      copy this into ReleaseStatusDetailsInfo;
+      assistant ReleaseStatusDetailstAssistant(ReleaseStatusDetailsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command Finish for AddReleaseDetailsVirtual {
+   label = "Save";
+   execute {
+      exit OK;
+   }
+}
+
+command Cancel for ReleaseAircraftVirtual {
+   label = "Close";
+   execute {
+      exit CANCEL;
+   }
+}
+
+command Sign for ReleaseAircraftVirtual {
+   visible = [IsWpComplete = false and Status = "Completed" and(ESigPermission = "Yes" or ESigPermission = null)];
+   variable SignResponse {
+      type = Structure(EsigResponseStructure);
+   }
+   execute {
+      signdocument into SignResponse {
+         headerlogo = MediaObject;
+         keyref = KeyRef;
+         luname = LuName;
+         filenameprefix = "${FileName}";
+         documenttype = pdf;
+      }
+      if [SignResponse.State = "SUCCESS" or SignResponse.State = "FAIL"] {
+         if [SignResponse.State = "SUCCESS"] {
+            call CompleteWorkPackage(AircraftWpId, WpActualEndDateTimeUtc);
+            call SendAircraftReleaseData(AircraftId, ReleaseNumber, ReleaseRemarks, WpActualEndDateTimeUtc, FlightId, SignResponse.Guid);
+            navigate {
+               page AircraftTurnDetails {
+                  filter(FlightId, FlightId);
+               }
+            }
+         }
+         if [SignResponse.State = "FAIL"] {
+            error("Failed to record electronic signature. Review changes and try again.");
+         }
+      }
+      else {
+         exit;
+      }
+   }
+}
+command Complete for ReleaseAircraftVirtual {
+   label = "Finish";
+   visible = [IsWpComplete = false and Status = "Completed" and ESigPermission = "No"];
+   execute {
+      call CompleteWorkPackage(AircraftWpId, WpActualEndDateTimeUtc);
+      call SendAircraftReleaseData(AircraftId, ReleaseNumber, ReleaseRemarks, WpActualEndDateTimeUtc, FlightId, Null);
+   }
+}
+
+group AircraftWorkPackage for ReleaseAircraftVirtual {
+   label = "Work Package Details";
+   field AircraftRef.AircraftMob {
+      label = "Aircraft";
+      editable = [false];
+   }
+   field AvAircraftWpRef.LocationCode {
+      label = "Location";
+      editable = [false];
+   }
+   field AvAircraftWpRef.WoNumber {
+      label = "WO#";
+      editable = [false];
+   }
+   field AvAircraftWpRef.SchedStartDateTimeUtc {
+      label = "Scheduled Start";
+      visible = [AvAircraftWpRef.ActualStartDateTimeUtc = null];
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field AvAircraftWpRef.ActualStartDateTimeUtc {
+      label = "Actual Start";
+      visible = [AvAircraftWpRef.ActualStartDateTimeUtc != null];
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field AvAircraftWpRef.ActualEndDateTimeUtc {
+      label = "End Date";
+      editable = [false];
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+}
+
+group ReleaseStatus for ReleaseAircraftVirtual {
+   label = "Release Status";
+
+   field OpenFaultsStatus {
+      label = "Open Faults";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      emphasis Ok = [OpenFaultsStatus = false];
+      emphasis Failure = [OpenFaultsStatus = true];
+   }
+
+   field OpenTasksStatus {
+      label = "Open Tasks";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      emphasis Ok = [OpenTasksStatus = false];
+      emphasis Failure = [OpenTasksStatus = true];
+   }
+      --red or green badge for Configuration Warning
+   field CmsFailedWarnings {
+      label = "Configuration Warning";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [(CmsFailedWarnings = true) or(CmsFailedWarnings = false and CmsPendingWarnings = false)];
+      emphasis Failure = [CmsFailedWarnings = true];
+      emphasis Ok = [CmsFailedWarnings = false and CmsPendingWarnings = false];
+   }
+    -- yellow badge for Configuration Warning
+   field CmsPendingWarnings {
+      label = "Configuration Warning";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [CmsFailedWarnings = false and CmsPendingWarnings = true];
+      emphasis Pending = [CmsPendingWarnings = true];
+   }
+   field IsMandatoryComponentsMissing {
+      label = "Mandatory Components Missing";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [not IsFlmStandalone];
+      emphasis Ok = [MissingComponentStatus = "OK"];
+      emphasis Warning = [MissingComponentStatus = "WARN"];
+      emphasis Failure = [MissingComponentStatus = "ERROR"];
+   }
+   field HasOverdueFaults {
+      label = "Overdue Faults";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [not IsFlmStandalone];
+      emphasis Ok = [OverdueFaultStatus = "OK"];
+      emphasis Warning = [OverdueFaultStatus = "WARN"];
+      emphasis Failure = [OverdueFaultStatus = "ERROR"];
+   }
+   field HasOverdueTasks {
+      label = "Overdue Tasks";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [not IsFlmStandalone];
+      emphasis Ok = [OverdueTaskStatus = "OK"];
+      emphasis Warning = [OverdueTaskStatus = "WARN"];
+      emphasis Failure = [OverdueTaskStatus = "ERROR"];
+   }
+   field HasNeardueFaults {
+      label = "Near Due Faults";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [not IsFlmStandalone];
+      emphasis Ok = [HasNeardueFaults = false];
+      emphasis Warning = [HasNeardueFaults = true];
+   }
+   field HasNeardueTasks {
+      label = "Near Due Tasks";
+      type = Boolean;
+      truelabel = "Yes";
+      falselabel = "No";
+      editable = [false];
+      visible = [not IsFlmStandalone];
+      emphasis Ok = [HasNeardueTasks = false];
+      emphasis Warning = [HasNeardueTasks = true];
+   }
+}
+
+list ReleaseDetails for ReleaseAircraftVirtual {
+   disable = Create, Delete, Update;
+   digitalsignature for AvAircraftRelease {
+      hashcontent = [SignedBy != null];
+   }
+   toolbar {
+      enabled = [false];
+   }
+   field ReleaseNumber {
+      label = "Release Number";
+      editable = [false];
+   }
+   field ReleaseRemarks {
+      type = LongText;
+      label = "Release Remarks";
+      size = Large;
+      editable = [false];
+      multiline = true;
+   }
+   field Status {
+      label = "Status";
+      editable = [false];
+      excludefromsignaturemapping = true;
+   }
+   field DateSigned {
+      label = "Date";
+      editable = [false];
+      signaturemappingattribute = RELEASE_DATE;
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+   field SignedBy {
+      label = "Signed By";
+      editable = [false];
+      signaturemappingattribute = SIGNED_USER;
+   }
+   conditionalformat {
+      when [IsWpComplete = false and Status = "Completed"] {
+         backgroundformat {
+            emphasis Validityhidden = [true];
+         }
+      }
+   }
+}
+
+list OpenFaultList for ReleaseStatusDetailsStruct {
+   label = "Open Faults";
+   multiselect = [false];
+   field Description {
+      label = "Name";
+      size = Large;
+      multiline = true;
+   }
+   field LogbookReference;
+   field SubSystemName {
+      label = "Failed System";
+   }
+   field FoundOnDate {
+      label = "Found On Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+   }
+}
+
+list OpenTaskList for ReleaseStatusDetailsStruct {
+   label = "Open Tasks";
+   multiselect = [false];
+   field TaskCode;
+   field TaskName {
+      size = Large;
+      label = "Name";
+      multiline = true;
+   }
+   field ConfigSlot {
+      label = "Config Position";
+
+   }
+
+}
+list MissingMandComponentList for MissingMandatoryDetails {
+   label = "Mandatory Components Missing ";
+   orderby = ConfigSlot, ConfigSlotPosition;
+   multiselect = [false];
+
+   field Assembly;
+   field AssemblyConfigSlotPosition {
+      label = "Assembly Position";
+   }
+   field ConfigSlot;
+   field ConfigSlotPosition {
+      label = "Position";
+   }
+   field PartNumber {
+      label = "Standard Part Number";
+   }
+   field PartName {
+      label = "Part Name";
+   }
+}
+
+list OverdueFaultList for OverdueFaultDetails {
+   label = "Overdue Maintenance Faults";
+   multiselect = [false];
+
+   field Barcode {
+      label = "Maintenix Barcode";
+   }
+   field FaultId {
+      label = "Fault ID";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   field FailedSystem {
+      multiline = true;
+   }
+   field DeferralClassCode {
+      label = "Deferral Class";
+   }
+}
+
+list OverdueTaskList for OverdueTaskDetails {
+   label = "Overdue Maintenance Tasks";
+   multiselect = [false];
+
+   field Barcode {
+      label = "Maintenix Barcode";
+   }
+   field TaskSeq {
+      label = "Task ID";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+}
+
+list NeardueFaultList for NeardueFaultDetails {
+   label = "Near Due Faults";
+   multiselect = [false];
+
+   field Barcode {
+      label = "Maintenix Barcode";
+   }
+   field FaultId {
+      label = "Fault ID";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   field FailedSystem {
+      multiline = true;
+   }
+   field DeferralClassCode {
+      label = "Deferral Class";
+   }
+   field IsSoftDeadline {
+      label = "Soft Deadline";
+   }
+   field UsageRemaining {
+      multiline = true;
+   }
+}
+
+list NeardueTaskList for NeardueTaskDetails {
+   label = "Near Due Tasks";
+   multiselect = [false];
+
+   field Barcode {
+      label = "Maintenix Barcode";
+   }
+   field TaskSeq {
+      label = "Task ID";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   field IsSoftDeadline {
+      label = "Soft Deadline";
+   }
+   field UsageRemaining {
+      multiline = true;
+   }
+}
+
+group AddReleaseDetails for ReleaseAircraftVirtual {
+   field ReleaseNumber {
+      editable = [true];
+   }
+   field ReleaseRemarks {
+      editable = [true];
+      multiline = true;
+      size = Large;
+   }
+}
+assistant ReleaseAircraftAssistant using ReleaseAircraftVirtualSet {
+   label = "Aircraft Release";
+   savemode = OnLostFocus;
+   input this;
+   output(AircraftWpId, AircraftId);
+   init command {
+      execute {
+         call GetSignedUser() into LoginUser;
+         call GetESigPermission(LoginUser) into ESigPermission;
+         call GetReleaseNumber(AircraftId, FlightId) into ReleaseNumber;
+         call GetReleaseRemarks(AircraftId, FlightId) into ReleaseRemarks;
+         call GetReleaseStatus(AircraftWpId) into Status;
+         call GetIsWpComplete(AircraftWpId) into IsWpComplete;
+         call GetOpenFaultsStatus(AircraftId) into OpenFaultsStatus;
+         call GetOpenTasksStatus(AircraftWpId) into OpenTasksStatus;
+         call GetOverdueFaultsStatus(AircraftId) into OverdueFaultsStatus;
+         call GetUncompletedTasksStatus(AircraftWpId) into UncompletedTasksStatus;
+         set WpActualEndDateTimeUtc = AvAircraftWpRef.ActualEndDateTimeUtc;
+         call GetEsigFileNameForReleaseAcft(AircraftId, AircraftWpId) into FileName;
+
+         if [IsWpComplete = true] {
+            call GetSignedDate(AircraftWpId) into DateSigned;
+            call GetSignedByUser(AircraftWpId) into SignedBy;
+         }
+
+
+      }
+   }
+
+   singlestep {
+      group AircraftWorkPackage;
+      group ReleaseStatus;
+      list ReleaseDetails using ReleaseAircraftVirtualSet;
+   }
+   command RecordRelease;
+   command ReleaseStatusDetails;
+   command Cancel {
+      visible = [false];
+   }
+   command Sign;
+   command Complete;
+}
+
+assistant AddReleaseDetailstAssistant using AddReleaseDetailsVirtualSet {
+   label = "Record Release Details";
+   savemode = OnLostFocus;
+   input this;
+   output(ReleaseToService, ReleaseNumber, ReleaseRemarks);
+   singlestep {
+      group AddReleaseDetails;
+   }
+   command Finish;
+   command Cancel;
+}
+
+assistant ReleaseStatusDetailstAssistant using ReleaseAircraftVirtualSet {
+   label = "Release Status Details";
+   input this;
+   singlestep {
+      list OpenFaultList using GetOpenFaults(AircraftId);
+      list OpenTaskList using GetPendingTasks(AircraftWpId);
+      list MissingMandComponentList using GetMissingMandatoryComponents(AircraftId) {
+         visible = [not IsFlmStandalone];
+      }
+      list OverdueFaultList using GetOverdueFaults(AircraftId) {
+         visible = [not IsFlmStandalone];
+      }
+      list OverdueTaskList using GetOverdueTasks(AircraftId) {
+         visible = [not IsFlmStandalone];
+      }
+      list NeardueFaultList using GetNeardueFaults(AircraftId) {
+         visible = [not IsFlmStandalone];
+      }
+      list NeardueTaskList using GetNeardueTasks(AircraftId) {
+         visible = [not IsFlmStandalone];
+      }
+   }
+   command Cancel;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+entityset ReleaseAircraftVirtualSet for ReleaseAircraftVirtual;
+entityset AddReleaseDetailsVirtualSet for AddReleaseDetailsVirtual;
+
+virtual ReleaseAircraftVirtual {
+   timestamptzref = "server";
+
+   ludependencies = AvFlight;
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute ReleaseNumber Text;
+   attribute ReleaseRemarks Text;
+   attribute Status Text;
+   attribute DateSigned Timestamp;
+   attribute SignedBy Text;
+   attribute IsWpComplete Boolean;
+   attribute OpenFaultsStatus Boolean;
+   attribute OpenTasksStatus Boolean;
+   attribute OverdueFaultsStatus Boolean;
+   attribute UncompletedTasksStatus Boolean;
+   attribute FlightId Number;
+   attribute LoginUser Text;
+   attribute ESigPermission Text;
+   attribute CmsFailedWarnings Boolean;
+   attribute CmsPendingWarnings Boolean;
+   attribute WpActualEndDateTimeUtc Timestamp;
+   attribute FileName Text;
+   attribute MissingComponentStatus Text;
+   attribute IsMandatoryComponentsMissing Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute HasOverdueFaults Boolean;
+   attribute HasNeardueFaults Boolean;
+   attribute HasOverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute HasNeardueTasks Boolean;
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE");
+   attribute HasReleaseOverrideRights Boolean;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute MediaObject Stream {
+      implementation = "Java";
+   }
+
+   reference AircraftRef(AircraftId) to AircraftLov(AircraftId);
+   reference AvAircraftWpRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+
+   action UpdateUser {
+      ludependencies = AvExeTask, AvFault, AvFlight, AvAircraftWorkPackage, ReleaseAircraftVirtual;
+   }
+}
+
+virtual AddReleaseDetailsVirtual {
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute ReleaseToService Boolean;
+   attribute ReleaseNumber Text;
+   attribute ReleaseRemarks Text;
+}
+
+structure ReleaseStatusDetailsStruct {
+   timestamptzref = "server";
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute LogbookTypeCode Text;
+   attribute LogbookReference Text;
+   attribute FoundOnDate Timestamp;
+   attribute DeadlineDate Timestamp;
+   attribute SubSystemName Text;
+   attribute TaskCode Text;
+   attribute TaskName Text;
+   attribute ConfigSlot Text;
+   attribute UtcTimeZoneCode Text;
+}
+structure MissingMandatoryDetails {
+   attribute ConfigSlot Text;
+   attribute ConfigSlotPosition Text;
+   attribute AssemblyConfigSlot Text;
+   attribute AssemblyConfigSlotPosition Text;
+   attribute Assembly Text;
+   attribute PartNumber Text;
+   attribute PartName Text;
+}
+structure OverdueFaultDetails {
+   attribute Barcode Text;
+   attribute FaultId Text;
+   attribute Description Text;
+   attribute FailedSystem Text;
+   attribute DeferralClassCode Text;
+}
+structure NeardueFaultDetails {
+   attribute Barcode Text;
+   attribute FaultId Text;
+   attribute Description Text;
+   attribute FailedSystem Text;
+   attribute DeferralClassCode Text;
+   attribute IsSoftDeadline Text;
+   attribute UsageRemaining Text;
+}
+structure OverdueTaskDetails {
+   attribute Barcode Text;
+   attribute TaskSeq Text;
+   attribute Description Text;
+}
+structure NeardueTaskDetails {
+   attribute Barcode Text;
+   attribute TaskSeq Text;
+   attribute Description Text;
+   attribute IsSoftDeadline Text;
+   attribute UsageRemaining Text;
+}
+structure AddReleaseDetailsInfoStructure {
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+}
+structure ReleaseStatusDetailsInfoStructure {
+   attribute AircraftId Number;
+   attribute AircraftWpId Number;
+   attribute IsFlmStandalone Boolean("TRUE", "FALSE");
+}
+
+function GetOpenFaults List < Structure(ReleaseStatusDetailsStruct) > {
+   timestamptzref = "server";
+   parameter AircraftId Number;
+}
+
+function GetOverdueFaults List < Structure(OverdueFaultDetails) > {
+   timestamptzref = "server";
+   parameter AircraftId Number;
+
+}
+function GetNeardueFaults List < Structure(NeardueFaultDetails) > {
+   parameter AircraftId Number;
+}
+function GetOverdueTasks List < Structure(OverdueTaskDetails) > {
+   parameter AircraftId Number;
+}
+function GetNeardueTasks List < Structure(NeardueTaskDetails) > {
+   parameter AircraftId Number;
+}
+function GetPendingTasks List < Structure(ReleaseStatusDetailsStruct) > {
+   timestamptzref = "server";
+   parameter AircraftWpId Number;
+}
+function GetMissingMandatoryComponents List < Structure(MissingMandatoryDetails) > {
+   parameter AircraftId Number;
+}
+function GetReleaseNumber Text {
+   parameter AircraftId Number;
+   parameter FlightId Number;
+}
+
+function GetReleaseRemarks Text {
+   parameter AircraftId Number;
+   parameter FlightId Number;
+}
+
+function GetReleaseStatus Text {
+   parameter AircraftWpId Number;
+}
+
+function GetUncompletedTasksStatus Boolean {
+   parameter AircraftWpId Number;
+}
+
+function GetSysDate Timestamp {
+   timestamptzref = "server";
+}
+
+function GetSignedUser Text {
+
+}
+
+function GetSignedByUser Text {
+   parameter AircraftWpId Number;
+}
+
+function GetIsWpComplete Boolean {
+   parameter AircraftWpId Number;
+}
+
+function GetSignedDate Timestamp {
+   timestamptzref = "server";
+   parameter AircraftWpId Number;
+}
+
+function GetOpenFaultsStatus Boolean {
+   parameter AircraftId Number;
+}
+
+function GetOverdueFaultsStatus Boolean {
+   parameter AircraftId Number;
+}
+
+function GetESigPermission  Text {
+   parameter UserId Text;
+}
+
+function GetOpenTasksStatus Boolean {
+   parameter AircraftWpId Number;
+}
+
+function GetEsigFileNameForReleaseAcft Text {
+   parameter AircraftId Number;
+   parameter AircraftWpId Number;
+}
+
+action CompleteWorkPackage {
+   initialcheck none;
+   ludependencies = AvFlight, ReleaseAircraftVirtual, AvAircraftWorkPackage;
+   timestamptzref = "server";
+   parameter AircraftWpId Number;
+   parameter ActualEndDateTime Timestamp;
+}
+
+action SendAircraftReleaseData {
+   initialcheck none;
+   ludependencies = AvFlight, ReleaseAircraftVirtual, AvAircraftWorkPackage;
+   timestamptzref = "server";
+   parameter AircraftId Number;
+   parameter ReleaseNumber Text;
+   parameter ReleaseRemarks Text;
+   parameter DateSigned Timestamp;
+   parameter FlighId Number;
+   parameter BindSignatureId Text;
+}

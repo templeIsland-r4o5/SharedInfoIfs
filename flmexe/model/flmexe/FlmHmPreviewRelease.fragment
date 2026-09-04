@@ -1,0 +1,991 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251030  SABOLK  AD-22080, Added and modified changes to improve performance.
+--  250825  SABOLK  AD-20013, Removed GetSummaryValues and modified PreviewReleaseCommand.
+--  250820  PSUALK  AD-20005, Add Missing Component data to preview release
+--  250821  SABOLK  AD-20015, Added open, near due and overdue faults to the preview release assistant
+--  250815  KAPALK  AD-20001, Added open, near due and overdue faults to the preview release assistant
+--  250813  SABOLK  AD-20013, Added CompleteWorkPackageCommand and included FlmHmCompleteWorkPackage fragment.
+--  250811  SRLALK  AD-20004, Add open panel data to preview release
+--  250807  SRLALK  AD-20003, Add task part warning data to preview release
+--  250806  RAFALK  AD-20002, Added task task lists and updated respective summary badges
+--  250725  RAFALK  AD-20000, Created
+-----------------------------------------------------------------------------
+fragment FlmHmPreviewRelease;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for Preview Release assistant";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment AircraftPanel;
+include fragment PanelLovSelector;
+include fragment FlmHmCompleteWorkPackage;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+-------------------------------- ASSISTANTS ---------------------------------
+
+assistant PreviewReleaseAssistant using PreviewReleaseVirtualSet {
+   label = "Preview Release";
+   savemode = OnLostFocus;
+
+   input(WpId, AircraftId, AircraftAltId);
+   setup InitAssistant {
+      variable WpIdVar Number;
+      variable AircraftIdVar Number;
+      variable AircraftAltIdVar Text;
+
+      execute {
+         set AircraftWorkPackageId = WpIdVar;
+         set AircraftId = AircraftIdVar;
+         set AircraftAltId = AircraftAltIdVar;
+      }
+   }
+
+   init command {
+      variable PrevReleaseSummaryVar Structure(PreviewReleaseInfoStructure);
+
+      execute {
+         call GetPrevReleaseSummaryInfo(AircraftWorkPackageId, AircraftId, AircraftAltId) into PrevReleaseSummaryVar;
+         set CmsWarningExist = PrevReleaseSummaryVar.CmsWarningExist;
+         set CmsStatus = PrevReleaseSummaryVar.CmsStatus;
+         set CmsWarningCount = PrevReleaseSummaryVar.CmsWarningCount;
+         set AogFaultStatus = PrevReleaseSummaryVar.AogFaultStatus;
+         set AogFaultsCount = PrevReleaseSummaryVar.AogFaultsCount;
+         set AogFaults = PrevReleaseSummaryVar.AogFaults;
+         set OpenFaultStatus = PrevReleaseSummaryVar.OpenFaultStatus;
+         set OpenFaultsCount = PrevReleaseSummaryVar.OpenFaultsCount;
+         set OpenFaults = PrevReleaseSummaryVar.OpenFaults;
+         set OverdueFaultStatus = PrevReleaseSummaryVar.OverdueFaultStatus;
+         set OverdueFaultsCount = PrevReleaseSummaryVar.OverdueFaultsCount;
+         set OverdueFaults = PrevReleaseSummaryVar.OverdueFaults;
+         set NeardueFaultStatus = PrevReleaseSummaryVar.NeardueFaultStatus;
+         set NeardueFaultsCount = PrevReleaseSummaryVar.NeardueFaultsCount;
+         set NeardueFaults = PrevReleaseSummaryVar.NeardueFaults;
+         set IncompleteTasks = PrevReleaseSummaryVar.IncompleteTasks;
+         set IncompleteTasksCount = PrevReleaseSummaryVar.IncompleteTasksCount;
+         set OverdueTasks = PrevReleaseSummaryVar.OverdueTasks;
+         set OverdueTaskStatus = PrevReleaseSummaryVar.OverdueTaskStatus;
+         set OverdueTasksCount = PrevReleaseSummaryVar.OverdueTasksCount;
+         set NeardueTasks = PrevReleaseSummaryVar.NeardueTasks;
+         set NeardueTaskStatus = PrevReleaseSummaryVar.NeardueTaskStatus;
+         set NeardueTasksCount = PrevReleaseSummaryVar.NeardueTasksCount;
+         set OpenPanels = PrevReleaseSummaryVar.OpenPanels;
+         set ShowOpenPanels = PrevReleaseSummaryVar.ShowOpenPanels;
+         set OpenPanelCount = PrevReleaseSummaryVar.OpenPanelCount;
+         set ProceedToComplete = PrevReleaseSummaryVar.ProceedToComplete;
+         set ReleaseNotifyIntvl = PrevReleaseSummaryVar.ReleaseNotifyIntvl;
+      }
+   }
+
+   singlestep {
+      group SummaryGroup;
+      list MissingMandaCompList(MissingMandaCompArray);
+      list TaskPartList(TaskPartDetailsArray);
+      list OpenFaultsList(OpenFaultsArray);
+      list OverdueFaultsList(OverdueFaultsArray);
+      list NeardueFaultsList(NeardueFaultsArray);
+      list IncompleteTasksList(IncompleteTasksArray);
+      list OverdueTasksList(OverdueTasksArray);
+      list NeardueTasksList(NeardueTasksArray);
+      list OpenPanelList(OpenPanelDetailsArray) {
+         visible = [ShowOpenPanels];
+      }
+   }
+
+   command CompleteWpInPrevReleaseCommand;
+   command CancelPrevRelease;
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group SummaryGroup for PreviewReleaseVirtual {
+   label = "Summary";
+
+   badge MissingMandaComps {
+      label = "Mandatory Components Missing";
+      editable = [false];
+      emphasis Ok = [MissingMandaStatus = "OK"];
+      emphasis Warning = [MissingMandaStatus = "WARN"];
+      emphasis Failure = [MissingMandaStatus = "ERROR"];
+   }
+   badge CmsWarningExist {
+      label = "Configuration Warnings";
+      editable = [false];
+      emphasis Failure = [CmsStatus = 1];
+      emphasis Ok = [CmsStatus = -1];
+      emphasis Warning = [CmsStatus = 0];
+   }
+   badge AogFaults {
+      label = "AOG Faults";
+      editable = [false];
+      emphasis Ok = [AogFaultStatus = "OK"];
+      emphasis Warning = [AogFaultStatus = "WARN"];
+      emphasis Failure = [AogFaultStatus = "ERROR"];
+   }
+   badge OpenFaults {
+      editable = [false];
+      emphasis Ok = [OpenFaultStatus = "OK"];
+      emphasis Warning = [OpenFaultStatus = "WARN"];
+      emphasis Failure = [OpenFaultStatus = "ERROR"];
+   }
+   badge OverdueFaults {
+      editable = [false];
+      emphasis Ok = [OverdueFaultStatus = "OK"];
+      emphasis Warning = [OverdueFaultStatus = "WARN"];
+      emphasis Failure = [OverdueFaultStatus = "ERROR"];
+   }
+   badge NeardueFaults {
+      label = "Near Due Faults";
+      editable = [false];
+      emphasis Ok = [NeardueFaultStatus = "OK"];
+      emphasis Warning = [NeardueFaultStatus = "WARN"];
+      emphasis Failure = [NeardueFaultStatus = "ERROR"];
+   }
+   badge IncompleteTasks {
+      label = "Incomplete Tasks in This WP";
+      editable = [false];
+      emphasis Ok = [IncompleteTasks = false];
+      emphasis Failure = [IncompleteTasks = true];
+   }
+   badge OverdueTasks {
+      editable = [false];
+      emphasis Ok = [OverdueTaskStatus = "OK"];
+      emphasis Warning = [OverdueTaskStatus = "WARN"];
+      emphasis Failure = [OverdueTaskStatus = "ERROR"];
+   }
+   badge NeardueTasks {
+      label = "Near Due Tasks";
+      editable = [false];
+      emphasis Ok = [NeardueTaskStatus = "OK"];
+      emphasis Warning = [NeardueTaskStatus = "WARN"];
+      emphasis Failure = [NeardueTaskStatus = "ERROR"];
+   }
+   badge OpenPanels {
+      label = "Open Panels in This WP";
+      editable = [false];
+      visible = [ShowOpenPanels];
+      emphasis Failure = [OpenPanelCount > 0];
+      emphasis Ok = [OpenPanelCount = 0];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+
+list IncompleteTasksList for IncompleteTaskQuery {
+   label = "Incomplete Tasks in This Work Package (${parent.IncompleteTasksCount})";
+
+   lov AvExeTaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[AvExeTaskRef.Barcode]";
+      editable = [false];
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+   }
+   field ConfigPosition {
+      label = "Config Slot";
+   }
+   field AircraftRef.AssemblyTypeCode {
+      label = "Parent Assembly";
+   }
+   badge Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [Objstate = "RELEASED"];
+      emphasis StateInProgress = [Objstate = "WORKSTARTED"];
+   }
+   field ClassCode {
+      label = "Class";
+   }
+   field AvAircraftWpRef.Barcode {
+      label = "Assigned To WP";
+   }
+   field AvAircraftWpRef.WorkPackageName {
+      label = "Assigned To WP Name";
+      multiline = true;
+   }
+}
+
+list OverdueTasksList for OverdueTaskQuery {
+   label = "Overdue Tasks (${parent.OverdueTasksCount})";
+
+   lov OverdueTaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/MxTaskDetails/TaskDetails?$filter=TaskId eq $[TaskBarcode]";
+      editable = [false];
+   }
+   field TaskName {
+      label = "Name";
+      multiline = true;
+   }
+   field ConfigSlot;
+   field Inventory;
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "ACTV"];
+      emphasis StateInProgress = [TaskStatus = "IN WORK"];
+   }
+   field ClassCode {
+      label = "Class";
+   }
+   field WorkType {
+      label = "Work Type(s)";
+   }
+   field SchedulePriority;
+   field DueDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field AssignedToWpId {
+      label = "Assigned To WP";
+   }
+   field AssignedToWpName {
+      label = "Assigned To WP Name";
+      multiline = true;
+   }
+}
+
+list NeardueTasksList for NeardueTaskQuery {
+   label = "Near Due Tasks (${parent.NeardueTasksCount})";
+
+   lov NeardueTaskRef with AvExeTaskSelector {
+      label = "Barcode";
+      details = "page/MxTaskDetails/TaskDetails?$filter=TaskId eq $[TaskBarcode]";
+      editable = [false];
+   }
+   field TaskName {
+      label = "Name";
+      multiline = true;
+   }
+   field ConfigSlot;
+   field Inventory;
+   badge TaskStatus {
+      emphasis StatePreliminary = [TaskStatus = "ACTV"];
+      emphasis StateInProgress = [TaskStatus = "IN WORK"];
+      emphasis Default = [TaskStatus = "FORECAST"];
+   }
+   field ClassCode {
+      label = "Class";
+   }
+   field DueDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field WorkType {
+      label = "Work Type(s)";
+   }
+   field SchedulePriority;
+   field AssignedToWpId {
+      label = "Assigned To WP";
+   }
+   field AssignedToWpName {
+      label = "Assigned To WP Name";
+      multiline = true;
+   }
+}
+
+list TaskPartList for ConfigurationWarningQuery {
+   label = "Configuration Warnings (${parent.CmsWarningCount})";
+
+   lov AvExeTaskRef with AvExeTaskSelector {
+      label = "Task Barcode";
+      hidekey = [true];
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+      description = AvExeTaskRef.Barcode;
+   }
+   field AvExeTaskRef.Description {
+      label = "Name";
+      multiline = true;
+   }
+   badge AvExeTaskRef.Objstate {
+      label = "Task Status";
+      emphasis StatePreliminary = [AvExeTaskRef.Objstate = "RELEASED"];
+      emphasis StateInProgress = [AvExeTaskRef.Objstate = "WORKSTARTED"];
+      emphasis StateCompleted = [AvExeTaskRef.Objstate = "FINISHED"];
+      emphasis Alert = [AvExeTaskRef.Objstate = "REMOVED"];
+   }
+   field ConfigSlotCode {
+      label = "Config Slot";
+   }
+   field PartNumber {
+      label = "Part No";
+   }
+   field PartSerialNo {
+      label = "Serial No";
+   }
+   field AvTaskPartWarningRef.Warning {
+      label = "Warning Details";
+   }
+   field AvTaskPartWarningRef.Code {
+      label = "Warning Code";
+   }
+   field AvWorkPackageRef.Barcode {
+      label = "Assigned to WP";
+   }
+   field AvWorkPackageRef.WorkPackageName {
+      label = "Assigned to WP Name";
+      multiline = true;
+   }
+}
+
+list OpenPanelList for OpenedPanelQuery {
+   label = "Open Panels in This Work Package (${parent.OpenPanelCount})";
+
+   lov AvPanelCodeRef with PanelCodeSelector {
+      label = "Panel Code";
+      details = "page/MxPanelDetails/PanelDetails?$filter=AdBrPanelId eq $[AvAircraftPanelRef.PanelAltId]";
+   }
+   field AvAircraftPanelRef.PanelDescription {
+      label = "Panel Name";
+      multiline = true;
+      size = Large;
+   }
+   lov MpcCloseTaskRef with AvExeTaskSelector {
+      label = "MPC Close Task Barcode";
+      hidekey = [true];
+      details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[CloseTaskSeq]";
+      description = MpcCloseTaskRef.Barcode;
+   }
+   field MpcCloseTaskRef.Description {
+      label = "MPC Close Task Name";
+      size = Large;
+   }
+}
+
+list OpenFaultsList for OpenFaultQuery {
+   label = "Open Faults (${parent.OpenFaultsCount})";
+
+   lov OpenFaultRef with AvFaultSelector {
+      label = "Fault Barcode";
+      details = "page/MxOpenFaultDetails/OpenFaultDetails?$filter=Barcode eq $[FaultBarcode]";
+      editable = [false];
+
+   }
+   field FaultName {
+      label = "Name";
+      multiline = true;
+   }
+   field FailedSystem;
+   field FaultSeverity;
+   field FoundOnDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field FoundOnFlight;
+   field FailureType;
+   field FaultPriority;
+   field DeferralClass;
+   field DeferralReference;
+   field DueDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field AssignedToWpId {
+      label = "Assigned to WP";
+   }
+   field AssignedToWpName {
+      label = "Assigned to WP Name";
+      multiline = true;
+   }
+}
+
+list OverdueFaultsList for OverdueFaultQuery {
+   label = "Overdue Faults (${parent.OverdueFaultsCount})";
+
+   lov OverdueFaultRef with AvFaultSelector {
+      label = "Fault Barcode";
+      details = "page/MxOpenFaultDetails/OpenFaultDetails?$filter=Barcode eq $[FaultBarcode]";
+      editable = [false];
+
+   }
+   field FaultName {
+      label = "Name";
+      multiline = true;
+   }
+   field FailedSystem;
+   field FaultSeverity;
+   field FoundOnDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field FoundOnFlight;
+   field FailureType;
+   field FaultPriority;
+   field DeferralClass;
+   field DeferralReference;
+   field DueDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field AssignedToWpId {
+      label = "Assigned to WP";
+   }
+   field AssignedToWpName {
+      label = "Assigned to WP Name";
+      multiline = true;
+   }
+}
+
+list NeardueFaultsList for NeardueFaultQuery {
+   label = "Near Due Faults (${parent.NeardueFaultsCount})";
+
+   lov NeardueFaultRef with AvFaultSelector {
+      label = "Fault Barcode";
+      details = "page/MxOpenFaultDetails/OpenFaultDetails?$filter=Barcode eq $[FaultBarcode]";
+      editable = [false];
+
+   }
+   field FaultName {
+      label = "Name";
+      multiline = true;
+   }
+   field FailedSystem;
+   field FaultSeverity;
+   field FoundOnDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field FoundOnFlight;
+   field FailureType;
+   field FaultPriority;
+   field DeferralClass;
+   field DeferralReference;
+   field DueDate {
+      displaytimezone = CurrentUserAirportTimeZone;
+   }
+   field AssignedToWpId {
+      label = "Assigned to WP";
+   }
+   field AssignedToWpName {
+      label = "Assigned to WP Name";
+      multiline = true;
+   }
+}
+
+list MissingMandaCompList for MissingMandaCompVirtual {
+   label = "Mandatory Components Missing (${parent.MissingMandaCount})";
+
+   field ParentInvSdesc {
+      label = "Parent Inventory";
+      lovswitch {
+         when [ParentInvClassCd = "ACFT"] {
+            lov MissingMandaCompVirtualRef with AssemblySelector {
+               details = "page/MxAircraftDetails/AircraftDetails;$filter=InventoryAltId eq $[ParentInvAltId] ";
+            }
+         }
+         when [ParentInvClassCd = "ASSY" or ParentInvClassCd = "TRK"] {
+            lov MissingMandaCompVirtualRef with AssemblySelector {
+               details = "page/MxInventoryDetails/InventoryDetailsPage;$filter=InventoryAltId eq $[ParentInvAltId]";
+            }
+         }
+      }
+   }
+   field Assembly;
+   field AssemblyPos {
+      label = "Assembly Position";
+   }
+   field ConfigSlot;
+   field ConfigSlotPos {
+      label = "Config Slot Position";
+   }
+   field PartNumber {
+      label = "Standard Part Number";
+   }
+   field PartName {
+      multiline = true;
+   }
+   lov AvTaskBarcodeRef with AvExeTaskSelector {
+      label = "Assigned To Task";
+      editable = [false];
+      details = "page/MxTaskDetails/TaskDetails?$filter=TaskId eq $[TaskBarcode]";
+   }
+   field TaskName {
+      label = "Assigned To Task Name";
+      multiline = true;
+   }
+   field WpBarcode {
+      label = "Assigned To WP";
+   }
+   field WpName {
+      label = "Assigned To WP Name";
+      multiline = true;
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+command PreviewReleaseCommand for AvAircraftWorkPackage {
+   label = "Preview Release";
+   enabled = [Objstate in("Committed", "Active", "InWork")];
+
+   execute {
+      navigate "assistant/FlmHmPreviewRelease/PreviewReleaseAssistant?$action=InitAssistant{WpIdVar: $[AircraftWorkPackageId], AircraftIdVar: $[AircraftId], AircraftAltIdVar: $[AircraftRef.AircraftAltId]}";
+   }
+}
+
+command CompleteWorkPackageCommand for AvAircraftWorkPackage {
+   label = "Complete Work Package";
+   mode = Global;
+   enabled = [Objstate = "InWork" and not OngoingTasksExist];
+   variable ReleaseBlockersInfo Structure(ReleaseBlockersInfoStructure);
+   variable CompleteWorkPackageInfo Structure(CompleteWorkPackageInfoStruct);
+
+   execute {
+      call ValidateReleaseBlockers(AircraftWorkPackageId, AircraftId) into ReleaseBlockersInfo;
+      if [ReleaseBlockersInfo.HasReleaseBlockers] {
+         navigate "assistant/FlmHmPreviewRelease/PreviewReleaseAssistant?$action=InitAssistant{WpIdVar: $[AircraftWorkPackageId], AircraftIdVar: $[AircraftId], AircraftAltIdVar: $[AircraftRef.AircraftAltId]}";
+      }
+      else {
+         call SetCompleteWorkPackageValues(AircraftId, AircraftWorkPackageId, AircraftRef.AircraftAltId, ReleaseBlockersInfo) into CompleteWorkPackageInfo;
+         assistant CompleteWorkPackageAssistant(CompleteWorkPackageInfo) {
+            when OK {
+               exit;
+            }
+            when CANCEL
+               {
+               exit;
+            }
+         }
+      }
+   }
+}
+
+command CompleteWpInPrevReleaseCommand for PreviewReleaseVirtual {
+   label = "Complete Work Package";
+   mode = Global;
+   enabled = [ProceedToComplete];
+   variable CompleteWorkPackageInfo Structure(CompleteWorkPackageInfoStruct);
+
+   execute {
+      copy this into CompleteWorkPackageInfo;
+      set CompleteWorkPackageInfo.Source = "PREVIEWRELEASE";
+      assistant CompleteWorkPackageAssistant(CompleteWorkPackageInfo) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command CancelPrevRelease for PreviewReleaseVirtual {
+   label = "Cancel";
+
+   execute {
+      navigate back;
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+selector AssemblySelector for MissingMandaCompVirtual {
+   static ParentInvAltId;
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset PreviewReleaseVirtualSet for PreviewReleaseVirtual;
+
+--------------------------------- VIRTUALS ----------------------------------
+
+virtual PreviewReleaseVirtual {
+   attribute WpId Number;
+   attribute AircraftWorkPackageId Number;
+   attribute AircraftId Number;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute CmsWarningCount Number;
+   attribute AogFaultStatus Text;
+   attribute AogFaultsCount Number;
+   attribute AogFaults Boolean;
+   attribute OpenFaultsCount Number;
+   attribute OpenFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OverdueFaultsCount Number;
+   attribute OverdueFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute NeardueFaultsCount Number;
+   attribute NeardueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute IncompleteTasks Boolean;
+   attribute OverdueTasks Boolean;
+   attribute NeardueTasks Boolean;
+   attribute OpenPanels Boolean;
+   attribute AircraftAltId Text;
+   attribute OverdueTaskStatus Text;
+   attribute NeardueTaskStatus Text;
+   attribute IncompleteTasksCount Number;
+   attribute OverdueTasksCount Number;
+   attribute NeardueTasksCount Number;
+   attribute ShowOpenPanels Boolean;
+   attribute OpenPanelCount Number;
+   attribute MissingMandaStatus Text;
+   attribute MissingMandaCount Number;
+   attribute MissingMandaComps Boolean;
+   attribute ProceedToComplete Boolean {
+      default = "false";
+   }
+   attribute ReleaseNotifyIntvl Number;
+
+   array MissingMandaCompArray() to MissingMandaCompVirtual();
+   array TaskPartDetailsArray(AircraftId) to ConfigurationWarningQuery(AircraftId);
+   array OpenFaultsArray(AircraftAltId) to OpenFaultQuery(AircraftAltId) {
+      where = "(:child.ExtSchedDeadDt >= SYSDATE + :parent.ReleaseNotifyIntvl OR :child.ExtSchedDeadDt IS NULL)";
+   }
+   array OverdueFaultsArray(AircraftAltId) to OverdueFaultQuery(AircraftAltId);
+   array NeardueFaultsArray(AircraftAltId) to NeardueFaultQuery(AircraftAltId) {
+      where = "(:child.ExtSchedDeadDt < SYSDATE + :parent.ReleaseNotifyIntvl)";
+   }
+   array IncompleteTasksArray(AircraftWorkPackageId) to IncompleteTaskQuery(AircraftWpId);
+   array OverdueTasksArray(AircraftAltId) to OverdueTaskQuery(AircraftAltId);
+   array NeardueTasksArray(AircraftAltId) to NeardueTaskQuery(AircraftAltId) {
+      where = "(:child.ExtendedDueDt < SYSDATE + :parent.ReleaseNotifyIntvl)";
+   }
+   array OpenPanelDetailsArray(AircraftWorkPackageId) to OpenedPanelQuery(AircraftWpId) {
+      where = ":child.PanelStatus IN('Opened', 'ReadyToClose')";
+   }
+}
+
+virtual MissingMandaCompVirtual {
+   crud = None;
+
+   attribute ParentAssembly Text;
+   attribute Assembly Text;
+   attribute AssemblyPos Text;
+   attribute ConfigSlot Text;
+   attribute ConfigSlotPos Text;
+   attribute PartNumber Text;
+   attribute PartName Text;
+   attribute TaskBarcode Text;
+   attribute TaskName Text;
+   attribute WpBarcode Text;
+   attribute WpName Text;
+   attribute ParentInvClassCd Text;
+   attribute ParentInvAltId Text;
+   attribute ParentInvSdesc Text;
+
+   reference AvTaskBarcodeRef(TaskBarcode) to AvExeTask(Barcode);
+   reference MissingMandaCompVirtualRef(ParentInvAltId) to MissingMandaCompVirtual(ParentInvAltId);
+}
+-------------------------------- STRUCTURES ---------------------------------
+
+structure PreviewReleaseInfoStructure {
+   attribute MissingMandaStatus Text;
+   attribute MissingMandaCount Number;
+   attribute MissingMandaComps Boolean;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute CmsWarningCount Number;
+   attribute AogFaultStatus Text;
+   attribute AogFaultsCount Number;
+   attribute AogFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OpenFaultsCount Number;
+   attribute OpenFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute OverdueFaultsCount Number;
+   attribute OverdueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute NeardueFaultsCount Number;
+   attribute NeardueFaults Boolean;
+   attribute IncompleteTasks Boolean;
+   attribute IncompleteTasksCount Number;
+   attribute OverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute OverdueTasksCount Number;
+   attribute NeardueTasks Boolean;
+   attribute NeardueTaskStatus Text;
+   attribute NeardueTasksCount Number;
+   attribute OpenPanels Boolean;
+   attribute ShowOpenPanels Boolean;
+   attribute OpenPanelCount Number;
+   attribute ProceedToComplete Boolean;
+   attribute HasReleaseBlockers Boolean;
+   attribute ReleaseNotifyIntvl Number;
+}
+
+
+structure CompleteWorkPackageInfoStruct {
+   attribute Source Text;
+   attribute AircraftWorkPackageId Number;
+   attribute AircraftId Number;
+   attribute AircraftAltId Text;
+   attribute Aircraft Text;
+   attribute MissingMandaComps Boolean;
+   attribute MissingMandaStatus Text;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute AogFaults Boolean;
+   attribute AogFaultStatus Text;
+   attribute OpenFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OverdueFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute NeardueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute IncompleteTasks Boolean;
+   attribute OverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute NeardueTasks Boolean;
+   attribute NeardueTaskStatus Text;
+   attribute OpenPanels Boolean;
+   attribute ShowOpenPanels Boolean;
+}
+
+structure ReleaseBlockersInfoStructure {
+   attribute HasReleaseBlockers Boolean;
+   attribute MissingMandaComps Boolean;
+   attribute MissingMandaStatus Text;
+   attribute CmsWarningExist Boolean;
+   attribute CmsStatus Number;
+   attribute AogFaults Boolean;
+   attribute AogFaultStatus Text;
+   attribute OpenFaults Boolean;
+   attribute OpenFaultStatus Text;
+   attribute OverdueFaults Boolean;
+   attribute OverdueFaultStatus Text;
+   attribute NeardueFaults Boolean;
+   attribute NeardueFaultStatus Text;
+   attribute IncompleteTasks Boolean;
+   attribute OverdueTasks Boolean;
+   attribute OverdueTaskStatus Text;
+   attribute NeardueTasks Boolean;
+   attribute NeardueTaskStatus Text;
+   attribute OpenPanels Boolean;
+   attribute ShowOpenPanels Boolean;
+}
+
+---------------------------------- QUERIES ----------------------------------
+
+query OpenedPanelQuery {
+   from = "av_exe_task_panel";
+   lu = AvExeTaskPanel;
+
+   attribute TaskSeq Number;
+   attribute AcPanelSeq Number;
+   attribute PanelCode Text {
+      fetch = "Av_Aircraft_Panel_API.Get_Panel_Code_From_Seq(ac_panel_seq)";
+   }
+   attribute OpenTaskSeq Number;
+   attribute OpenTaskStepSeq Number;
+   attribute CloseTaskSeq Number;
+   attribute AircraftWpId Number {
+      fetch = "Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq)";
+   }
+   attribute PanelStatus Text {
+      fetch = "Av_Exe_Task_Panel_API.Get_Panel_Status(open_task_seq, open_task_step_seq)";
+   }
+
+   reference AvPanelCodeRef(PanelCode) to TaskPanelLov(PanelCode);
+   reference MpcCloseTaskRef(CloseTaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftPanelRef(AcPanelSeq) to AircraftPanelLov(AcPanelSeq);
+}
+
+query ConfigurationWarningQuery {
+   from = "TASK_PART_INST_RMV_UIV";
+   lu = AvExeTaskPartWarning;
+   where = "task_part_id in
+            (select task_part_id from av_exe_task_part_warning group by task_part_id)";
+
+   attribute Code Text;
+   attribute Warning Text;
+   attribute TaskSeq Number;
+   attribute TaskPartId Number;
+   attribute Barcode Text;
+   attribute ConfigSlotCode Text;
+   attribute PartNumber Text;
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+   attribute PartSerialNo Text {
+      fetch = "Av_Exe_Task_Part_API.Get_Pt_Serial_No_By_Task_Pt_Id(task_part_id)";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvTaskPartWarningRef(TaskPartId) to AvExeTaskPartWarning(TaskPartId);
+}
+
+query IncompleteTaskQuery {
+   from = "AV_EXE_TASK";
+   lu = AvExeTask;
+   where = "Objstate in ('WORKSTARTED', 'RELEASED')";
+
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute ConfigPosition Text;
+   attribute Objstate Enumeration(AvExeTaskState);
+   attribute ClassCode Text;
+   attribute AircraftWpId Number;
+   attribute AircraftId Number;
+
+   reference AvExeTaskRef(Barcode) to AvExeTask(Barcode);
+   reference AvAircraftWpRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+}
+
+query OpenFaultQuery {
+   from = "Preview_Release_Fault_Details";
+   keys = AircraftAltId, FaultBarcode;
+   lu = none;
+   where = "status_cd IN ('Open', 'Deferred') AND (ext_sched_dead_dt >= SYSDATE OR ext_sched_dead_dt IS NULL)";
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute FaultBarcode Text;
+   attribute FaultName Text;
+   attribute FailedSystem Text;
+   attribute FaultSeverity Text;
+   attribute FoundOnDate Timestamp;
+   attribute FoundOnFlight Text;
+   attribute FailureType Text;
+   attribute FaultPriority Text;
+   attribute DeferralClass Text;
+   attribute DeferralReference Text;
+   attribute DueDate Timestamp;
+   attribute ExtSchedDeadDt Timestamp;
+   attribute AssignedToWpName Text;
+   attribute AssignedToWpId Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference OpenFaultRef(FaultBarcode) to AvFault(Barcode);
+}
+
+query OverdueFaultQuery {
+   from = "Preview_Release_Fault_Details";
+   keys = AircraftAltId, FaultBarcode;
+   lu = none;
+   where = "status_cd IN ('Open', 'Deferred')
+            AND ((usage_rem_domain_type_cd = 'CA' AND ext_sched_dead_dt < sysdate)
+                  OR (usage_rem_domain_type_cd != 'CA' AND ((sched_dead_usage_rem_qt + sched_dead_deviation_qt) <=0))) ";
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute FaultBarcode Text;
+   attribute FaultName Text;
+   attribute FailedSystem Text;
+   attribute FaultSeverity Text;
+   attribute FoundOnDate Timestamp;
+   attribute FoundOnFlight Text;
+   attribute FailureType Text;
+   attribute FaultPriority Text;
+   attribute DeferralClass Text;
+   attribute DeferralReference Text;
+   attribute DueDate Timestamp;
+   attribute ExtSchedDeadDt Timestamp;
+   attribute AssignedToWpName Text;
+   attribute AssignedToWpId Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference OverdueFaultRef(FaultBarcode) to AvFault(Barcode);
+}
+
+query NeardueFaultQuery {
+   from = "Preview_Release_Fault_Details";
+   keys = AircraftAltId, FaultBarcode;
+   lu = none;
+   where = "status_cd IN ('Open', 'Deferred') AND (ext_sched_dead_dt >= sysdate) ";
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute FaultBarcode Text;
+   attribute FaultName Text;
+   attribute FailedSystem Text;
+   attribute FaultSeverity Text;
+   attribute FoundOnDate Timestamp;
+   attribute FoundOnFlight Text;
+   attribute FailureType Text;
+   attribute FaultPriority Text;
+   attribute DeferralClass Text;
+   attribute DeferralReference Text;
+   attribute DueDate Timestamp;
+   attribute ExtSchedDeadDt Timestamp;
+   attribute AssignedToWpName Text;
+   attribute AssignedToWpId Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference NeardueFaultRef(FaultBarcode) to AvFault(Barcode);
+}
+
+query OverdueTaskQuery {
+   from = "Preview_Release_Task_Details";
+   keys = AircraftAltId, TaskBarcode;
+   lu = none;
+   where = "hist_bool = 0 AND (fault_db_id IS NULL AND fault_id IS NULL) AND is_driving_deadline = 'TRUE'
+            AND ((domain_type_cd = 'CA' AND extended_due_dt < sysdate) OR (domain_type_cd != 'CA' AND usage_rem_qt_plus_dev <= 0))";
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute TaskBarcode Text;
+   attribute TaskName Text;
+   attribute ConfigSlot Text;
+   attribute Inventory Text;
+   attribute TaskStatus Text;
+   attribute ClassCode Text;
+   attribute WorkType Text;
+   attribute SchedulePriority Text;
+   attribute DueDate Timestamp;
+   attribute ExtendedDueDt Timestamp;
+   attribute AssignedToWpId Text;
+   attribute AssignedToWpName Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference OverdueTaskRef(TaskBarcode) to AvExeTask(Barcode);
+}
+
+query NeardueTaskQuery {
+   from = "Preview_Release_Task_Details";
+   keys = AircraftAltId, TaskBarcode;
+   lu = none;
+   where = "hist_bool = 0 AND (fault_db_id IS NULL AND fault_id IS NULL)
+            AND (is_driving_deadline = 'TRUE' AND extended_due_dt >= sysdate)";
+   timestamptzref = "server";
+
+   attribute AircraftAltId Text;
+   attribute TaskBarcode Text;
+   attribute TaskName Text;
+   attribute ConfigSlot Text;
+   attribute Inventory Text;
+   attribute TaskStatus Text;
+   attribute ClassCode Text;
+   attribute WorkType Text;
+   attribute SchedulePriority Text;
+   attribute DueDate Timestamp;
+   attribute ExtendedDueDt Timestamp;
+   attribute AssignedToWpId Text;
+   attribute AssignedToWpName Text;
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+
+   reference NeardueTaskRef(TaskBarcode) to AvExeTask(Barcode);
+}
+
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+function GetPrevReleaseSummaryInfo Structure(PreviewReleaseInfoStructure) {
+   parameter AircraftWorkPackageId Number;
+   parameter AircraftId Number;
+   parameter AircraftAltId Text;
+}
+
+function SetCompleteWorkPackageValues Structure(CompleteWorkPackageInfoStruct) {
+   initialcheck none;
+   parameter AircraftId Number;
+   parameter AircraftWorkPackageId Number;
+   parameter AircraftAltId Text;
+   parameter ReleaseBlockersInfo Structure(ReleaseBlockersInfoStructure);
+}
+
+action ValidateReleaseBlockers Structure(ReleaseBlockersInfoStructure) {
+   initialcheck implementation;
+   parameter WorkPackageId Number;
+   parameter AircraftId Number;
+}

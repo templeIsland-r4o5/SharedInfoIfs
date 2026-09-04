@@ -1,0 +1,574 @@
+-------------------------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250804  WEDILK  AD-20242, Create FlmTool fragment and implemented add tool functionality.
+--  250812  WEDILK  AD-20254, Implement assign/unassign functionlity.
+-----------------------------------------------------------------------------
+
+fragment FlmTaskTool;
+component FLMEXE;
+layer Core;
+description "This contains all the resources required for tool execution";
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ResourceGroupSiteLovSelector;
+include fragment FlmTaskToolList;
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+--------------------------------- SELECTORS ---------------------------------
+
+@Override
+selector ReferenceResourceGroupSiteLovSelector for ResourceGroupSiteLov {
+   label = "";
+   static ResourceId {
+      label = "Tool/Equipment Group";
+   }
+   static Description {
+      label = "Tool/Equipment Group Description";
+   }
+}
+
+-------------------------------- ASSISTANTS ---------------------------------
+
+assistant AddToolAssistant using AddToolDemandVirtualSet {
+   label = "${Title}";
+   savemode = OnLostFocus;
+   input this;
+
+   init command {
+      execute {
+         call GetDefaultValues(TaskSeq, Source, Site, AllocatedHours, AllocatedStart, AllocatedFinish) into FetchDefaultValueStrcture;
+         set Title = FetchDefaultValueStrcture.Title;
+         set CommandName = FetchDefaultValueStrcture.CommandName;
+         set IsInventorySearchVisible = FetchDefaultValueStrcture.IsInventorySearchVisible;
+         set AllocatedHours = FetchDefaultValueStrcture.AllocatedHours;
+         set AllocatedStart = FetchDefaultValueStrcture.AllocatedStart;
+         set AllocatedFinish = FetchDefaultValueStrcture.AllocatedFinish;
+      }
+   }
+
+   singlestep {
+      group BarcodeToolSerachGroup;
+      group ToolDetailsGroup;
+      list ToolInventorySeachList(ToolInventorySearchVirtualArray) {
+         visible = [IsInventorySearchVisible = "TRUE"];
+      }
+   }
+
+   command SaveToolCommand;
+   command AddToolAndSearchAgainCommand;
+   command Cancel;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+command AddTaskToolCommand for AvExeTask {
+   label = "Add Tools/Equipment";
+   enabled = [IsCertified = "PENDING"];
+   mode = Global;
+   variable AddToolInfo Structure(AddToolInfo);
+
+   execute {
+      copy this into AddToolInfo;
+      set AddToolInfo.Site = TaskSite;
+      set AddToolInfo.Source = "ADD";
+      assistant AddToolAssistant(AddToolInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command AssignTaskToolCommand for ToolDemandQuery {
+   label = "Assign";
+   enabled = [parent.IsCertified = "PENDING" and ExecutionInstanceSeq = null and SignedStatus != "Signed" and not(Rowstate in("WORKSTARTED", "COMPLETED", "CANCELLED"))];
+   mode = SingleRecord;
+   variable AssignToolInfo Structure(AssignToolInfo);
+
+   execute {
+      copy this into AssignToolInfo;
+      set AssignToolInfo.Site = TaskSite;
+      set AssignToolInfo.Source = "ASSIGN";
+      set AssignToolInfo.ToolResourceGroupSeq = ResourceGroupSeq;
+      set AssignToolInfo.ToolResourceGroupId = ResourceDemand;
+      set AssignToolInfo.ToolResourceGroupDesc = ResourceDemandDescription;
+      set AssignToolInfo.AllocatedHours = PlannedHoursFormat;
+
+      assistant AddToolAssistant(AssignToolInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditTaskToolCommand for ToolDemandQuery {
+   label = "Edit";
+   enabled = [parent.IsCertified = "PENDING" and SignedStatus != "Signed" and not(Rowstate in("WORKSTARTED", "COMPLETED", "CANCELLED"))];
+   mode = SingleRecord;
+   variable EditToolInfo Structure(EditToolInfo);
+
+   execute {
+      copy this into EditToolInfo;
+      set EditToolInfo.Site = TaskSite;
+      set EditToolInfo.Source = "EDIT";
+      set EditToolInfo.ToolResourceGroupSeq = ResourceGroupSeq;
+      set EditToolInfo.ToolResourceGroupId = ResourceDemand;
+      set EditToolInfo.ToolResourceGroupDesc = ResourceDemandDescription;
+      set EditToolInfo.ToolResourceSeq = AssignedResourceSeq;
+      set EditToolInfo.ToolResourceId = AssignedResourceId;
+      set EditToolInfo.AllocatedHours = PlannedHoursFormat;
+
+      assistant AddToolAssistant(EditToolInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveToolCommand for AddToolDemandVirtual {
+   label = "${CommandName}";
+   enabled = [ToolResourceGroupSeq != null and(Source in("ADD", "EDIT") or(ToolResourceSeq != null and Source = "ASSIGN"))];
+
+   execute {
+      call SaveTool(Objkey, TaskSeq, TaskResourceSeq, ExecutionInstanceSeq, Site, ToolResourceGroupSeq, ToolResourceSeq, AllocatedHours, AllocatedStart, AllocatedFinish, Source);
+      success("The tool requirement has been added");
+      exit OK;
+   }
+}
+
+command AddToolAndSearchAgainCommand for AddToolDemandVirtual {
+   label = "Add and Search Again";
+   enabled = [ToolResourceGroupSeq != null and Source = "ADD"];
+
+   execute {
+      call SaveTool(Objkey, TaskSeq, TaskResourceSeq, ExecutionInstanceSeq, Site, ToolResourceGroupSeq, ToolResourceSeq, AllocatedHours, AllocatedStart, AllocatedFinish, Source);
+
+      call GetDefaultAllocatedStart(Site) into AllocatedStart;
+      set ToolResourceGroupSeq = null;
+      set ToolResourceGroupId = null;
+      set ToolResourceGroupDesc = null;
+      set ToolResourceSeq = null;
+      set AllocatedHours = "00:00";
+      set AllocatedFinish = AllocatedStart;
+      success("The tool requirement has been added");
+   }
+}
+
+command AssignSpecificToolCommand for ToolInventorySearchVirtual {
+   label = "Assign Specific Tool";
+   enabled = [parent.ToolResourceGroupId != null];
+   mode = SingleRecord;
+
+   execute {
+      call AssignSpecificTool(ParentObjkey, ResourceSeq, ResourceId, Site, SerialNo);
+   }
+}
+
+command UnassignTaskToolCommand for ToolDemandQuery {
+   label = "Unassign";
+   enabled = [parent.IsCertified = "PENDING" and ExecutionInstanceSeq != null and SignedStatus != "Signed" and not(Rowstate in("WORKSTARTED", "COMPLETED", "CANCELLED"))];
+   mode = SelectedRecords;
+
+   bulkexecute {
+      bulkcall UnassignTool(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command DeleteTaskToolCommand for ToolDemandQuery {
+   label = "Delete Tool";
+   enabled = [parent.IsCertified = "PENDING" and SignedStatus != "Signed" and not(Rowstate in("WORKSTARTED", "COMPLETED", "CANCELLED"))];
+   mode = SelectedRecords;
+
+   bulkexecute {
+      bulkcall DeleteTool(TaskSeq, TaskResourceSeq, ExecutionInstanceSeq);
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+
+group BarcodeToolSerachGroup for AddToolDemandVirtual {
+   label = "Barcode Tool Search";
+
+   field Barcode {
+      size = Medium;
+   }
+}
+
+group ToolDetailsGroup for AddToolDemandVirtual {
+   label = "Tool Details";
+
+   field ToolResourceGroupId {
+      label = "Tool/Equipment Group";
+      editable = [Source != "ASSIGN"];
+      lovswitch {
+         when [true] {
+            lov ToolResourceGroupLovRef with ReferenceResourceGroupSiteLovSelector using ResourceGroupSiteLovFunction(Site) {
+               hidekey = [true];
+               searchable = true;
+               search = ResourceId, Description;
+               description = ToolResourceGroupId;
+               required = [true];
+               validate command {
+                  execute {
+                     set ToolResourceSeq = null;
+                     set ToolResourceId = null;
+                     call UpdateToolInventorySearchList(Objkey, ToolResourceGroupSeq, Site);
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   field ToolResourceGroupDesc {
+      label = "Tool/Equipment Group Description";
+      editable = [false];
+   }
+
+   field ToolResourceId {
+      label = "Tool/Equipment ID";
+      visible = [ToolResourceSeq != null];
+      editable = [false];
+   }
+
+   field SerialNo {
+      visible = [ToolResourceSeq != null];
+      editable = [false];
+   }
+
+   field AllocatedHours {
+      label = "Allocated Hours(HH:MM)";
+      format = decimal;
+      required = [true];
+      validate command {
+         execute {
+            if [AllocatedStart = null] {
+               call GetDefaultAllocatedStart(Site) into AllocatedStart;
+            }
+            call GetAllocatedFinishDate(TaskSeq, AllocatedHours, AllocatedStart) into AllocatedFinish;
+         }
+      }
+   }
+
+   field AllocatedStart {
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      required = [ToolResourceSeq != null];
+      visible = [ToolResourceSeq != null];
+      validate command {
+         execute {
+            call GetAllocatedHoursByAllocatedDates(AllocatedStart, AllocatedFinish) into AllocatedHours;
+         }
+      }
+   }
+
+   field AllocatedFinish {
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      required = [ToolResourceSeq != null];
+      visible = [ToolResourceSeq != null];
+      validate command {
+         execute {
+            call GetAllocatedHoursByAllocatedDates(AllocatedStart, AllocatedFinish) into AllocatedHours;
+         }
+      }
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list ToolInventorySeachList for ToolInventorySearchVirtual {
+   label = "Inventory Search";
+   multiselect = [false];
+
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   field ToolEquipment {
+      size = Large;
+   }
+   field ResourceParentId;
+   field SerialNo;
+   field BatchNo;
+   field ToolCondition;
+   badge CheckOutStatus {
+      emphasis On = [CheckOutStatus = "NotApplicable"];
+      emphasis Ok = [CheckOutStatus = "CheckedIn"];
+      emphasis Danger = [CheckOutStatus = "CheckedOut"];
+   }
+   field ToolOwner;
+
+   command AssignSpecificToolCommand;
+}
+
+@Override
+list ToolDemandsList for ToolDemandQuery {
+   exclude Barcode, TaskName;
+
+   command AddTaskToolCommand {
+      label = "";
+      icon = "new";
+   }
+   command EditTaskToolCommand {
+      label = "";
+      icon = "edit";
+   }
+   command DeleteTaskToolCommand {
+      label = "";
+      icon = "delete";
+   }
+   command AssignTaskToolCommand;
+   command UnassignTaskToolCommand;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+
+entityset AddToolDemandVirtualSet for AddToolDemandVirtual;
+
+---------------------------------- QUERIES ----------------------------------
+@Override
+query ResourceGroupSiteLov {
+   attribute ResourceId Text {
+      label = "Part Group/Part No";
+      format = uppercase;
+      lovcolumn = [true];
+   }
+   attribute Description Text {
+      label = "Part Group/Part Description";
+      lovcolumn = [true];
+   }
+
+   attribute ResourceSeq Number;
+
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+virtual AddToolDemandVirtual {
+   timestamptzref = "site(Site)";
+   ludependencies = ToolInventorySearchVirtual;
+
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute ToolResourceGroupSeq Number;
+   attribute ToolResourceGroupId Text;
+   attribute ToolResourceGroupDesc Text;
+   attribute ToolResourceSeq Number;
+   attribute ToolResourceId Text;
+   attribute SerialNo Text;
+   attribute AllocatedHours Text;
+   attribute AllocatedStart Timestamp;
+   attribute AllocatedFinish Timestamp;
+   attribute IsInventorySearchVisible Text;
+   attribute Barcode Text;
+   attribute Site Text;
+   attribute UtcTimeZoneCode Text {
+      fetch = "'UTC'";
+   }
+   attribute Source Text;
+   attribute Title Text;
+   attribute CommandName Text;
+
+
+   reference ToolResourceGroupLovRef(ToolResourceGroupId) to ResourceGroupSiteLov(ResourceId) {
+      copy ResourceSeq to ToolResourceGroupSeq;
+      copy Description to ToolResourceGroupDesc;
+   }
+
+   array ToolInventorySearchVirtualArray(ToolResourceGroupSeq) to ToolInventorySearchVirtual(ToolResourceGroupSeq);
+}
+
+virtual ToolInventorySearchVirtual {
+   ludependencies = AddToolDemandVirtual;
+
+   attribute ToolResourceGroupSeq Number;
+   attribute ToolEquipment Text {
+      label = "Tool/Equipment";
+   }
+   attribute ResourceId Text;
+   attribute Description Text;
+   attribute ResourceParentId Text {
+      label = "Part No";
+   }
+   attribute ResourceSeq Number;
+   attribute ResourceParentSeq Number;
+   attribute CheckOutStatus Enumeration(ToolCheckoutStatus) {
+      label = "Status";
+   }
+   attribute SerialNo Text;
+   attribute BatchNo Text;
+   attribute ToolCondition Enumeration(ToolCondition) {
+      label = "Condition";
+   }
+   attribute ToolOwner Text {
+      label = "Owner";
+   }
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+structure AddToolInfo {
+   attribute TaskSeq Number;
+   attribute Site Text;
+   attribute Source Text;
+}
+
+structure AssignToolInfo {
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute Site Text;
+   attribute Source Text;
+   attribute ToolResourceGroupSeq Number;
+   attribute ToolResourceGroupId Text;
+   attribute ToolResourceGroupDesc Text;
+   attribute AllocatedHours Text;
+}
+
+structure EditToolInfo {
+   attribute TaskSeq Number;
+   attribute TaskResourceSeq Number;
+   attribute ExecutionInstanceSeq Number;
+   attribute Site Text;
+   attribute Source Text;
+   attribute ToolResourceGroupSeq Number;
+   attribute ToolResourceGroupId Text;
+   attribute ToolResourceGroupDesc Text;
+   attribute ToolResourceSeq Number;
+   attribute ToolResourceId Text;
+   attribute AllocatedHours Text;
+   attribute AllocatedStart Timestamp;
+   attribute AllocatedFinish Timestamp;
+}
+
+structure FetchDefaultValueStrcture {
+   timestamptzref = "site(Site)";
+
+   attribute Title Text;
+   attribute CommandName Text;
+   attribute IsInventorySearchVisible Text;
+   attribute AllocatedHours Text;
+   attribute AllocatedStart Timestamp;
+   attribute AllocatedFinish Timestamp;
+   attribute Site Text;
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+action AssignSpecificTool {
+   initialcheck none;
+   ludependencies = AddToolDemandVirtual, ToolInventorySearchVirtual;
+
+   parameter ParentObjkey Text;
+   parameter ToolResourceSeq Number;
+   parameter ToolResourceId Text;
+   parameter Site Text;
+   parameter SerialNo Text;
+}
+
+action UpdateToolInventorySearchList {
+   initialcheck none;
+   ludependencies = ToolInventorySearchVirtual;
+
+   parameter Objkey Text;
+   parameter ToolResourceGroupSeq Number;
+   parameter Site Text;
+}
+
+action UnassignTool {
+   initialcheck none;
+   ludependencies = ToolDemandQuery;
+
+   parameter TaskSeq Number;
+   parameter ExecutionInstanceSeq Number;
+}
+
+action SaveTool {
+   initialcheck none;
+   timestamptzref = "site(Site)";
+   ludependencies = ToolDemandQuery, AvExeTask, AvFault;
+
+   parameter Objkey Text;
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+   parameter ExecutionInstanceSeq Number;
+   parameter Site Text;
+   parameter ToolResourceGroupSeq Number;
+   parameter ToolResourceSeq Number;
+   parameter AllocatedHours Text;
+   parameter AllocatedStart Timestamp;
+   parameter AllocatedFinish Timestamp;
+   parameter Source Text;
+}
+
+action DeleteTool {
+   initialcheck none;
+   ludependencies = ToolDemandQuery, AvExeTask, AvFault;
+
+   parameter TaskSeq Number;
+   parameter TaskResourceSeq Number;
+   parameter ExecutionInstanceSeq Number;
+}
+--------------------------------- FUNCTIONS ---------------------------------
+
+function ResourceGroupSiteLovFunction List < Entity(ResourceGroupSiteLov) > {
+   parameter Site Text;
+   where = "resource_type_db = 'EQUIPMENT_GROUP' and used_in_maintenance_db = 'TRUE' and site = :Site";
+}
+
+function GetAllocatedFinishDate Timestamp {
+   timestamptzref = "server";
+
+   parameter TaskSeq Number;
+   parameter AllocatedHours Text;
+   parameter AllocatedStart Timestamp;
+}
+
+function GetAllocatedHoursByAllocatedDates Text {
+   timestamptzref = "server";
+   parameter AllocatedStart Timestamp;
+   parameter AllocatedFinish Timestamp;
+}
+
+function GetDefaultAllocatedStart Timestamp {
+   timestamptzref = "server";
+   parameter Site Text;
+}
+
+function GetDefaultValues Structure(FetchDefaultValueStrcture) {
+   timestamptzref = "site(Site)";
+
+   parameter TaskSeq Number;
+   parameter Source Text;
+   parameter Site Text;
+   parameter AllocatedHours Text;
+   parameter AllocatedStart Timestamp;
+   parameter AllocatedFinish Timestamp;
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration ToolCondition {
+   value = "OPERATIONAL" {
+      label = "SRV";
+   }
+   value = "NON_OPERATIONAL" {
+      label = "INREP";
+   }
+   value = "NOT_APPLICABLE" {
+      label = "N/A";
+   }
+}

@@ -1,0 +1,32 @@
+<Counter>
+    <Author>IFS Application owner</Author>
+    <LastModified>4/5/24, 6:30:42 PM</LastModified>
+    <Locked>false</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>My Work</Title>
+    <Background>#FFE53527</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_Task_Count</Name>
+    <ID>a96e013f-7fe8-4471-9ed1-08495fbb29d2</ID>
+    <WebUrl>page/FlmMyWorks/MyWorksPage</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>34c1c07c-bc87-4c9f-9784-2d3f22950d0d</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>TaskCount</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+    <DisplayNullValueAs>Zero</DisplayNullValueAs>
+</Counter>

@@ -1,0 +1,22 @@
+<ProjectionDataSource>
+    <Author>IFSAPP</Author>
+    <LastModified>4/5/24, 7:13:34 PM</LastModified>
+    <Component>CONFIG</Component>
+    <Name>FLM_TECH_MY_WORK_LOBBY_PROJECTION</Name>
+    <ID>34c1c07c-bc87-4c9f-9784-2d3f22950d0d</ID>
+    <Type>projection</Type>
+    <Select>
+        <DataColumn>
+            <Column>TaskCount</Column>
+            <Name>Task Count</Name>
+            <DataType>Number</DataType>
+        </DataColumn>
+    </Select>
+    <TimeZoneAwareness>
+        <Enabled>true</Enabled>
+        <Type>SERVER</Type>
+    </TimeZoneAwareness>
+    <Projection>FlmTechnicianLobbyHandling</Projection>
+    <EntitySet>MyWorkSet</EntitySet>
+    <EntityType>MyWork</EntityType>
+</ProjectionDataSource>

@@ -1,0 +1,145 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250515  WIJCLK   AD-18366, Added MpcPanelTasksCount.
+--  250225  ROERLK   AD-17530, Added GetHandoverTasksCount.
+--  250218  RAFALK   AD-14571, Added SupervisorCrewTaskSummaryQuery.
+--  250218  WEDULK   AD-17068, Modified UserTaskAssignmentsQuery, Added AircraftCode attribute.
+--  250210  SABOLK   AD-14575, Modifed HmAircraftsAtUserAirportQuery, Added StartDate attribute.
+--  250120  SABOLK   AD-16454, Added HmWpTaskProgressByStatusQuery.
+-----------------------------------------------------------------------------
+
+fragment FlmHangarMaintenanceLobby;
+component FLMEXE;
+layer Core;
+description "This contains resources required for Hangar Maintenance Lobbies";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+@Override
+entity MaintMaterialReqLine {
+   from = "maint_material_req_line_av_uiv";
+   where = "(Av_Exe_Task_API.Get_State(TASK_SEQ) IN ('In Work', 'Active')
+   AND (Av_Exe_Task_Util_API.Get_Task_Assign_To_Me_Status(TASK_SEQ) = 'Yes'
+   OR created_by = Fnd_Session_API.Get_Fnd_User()))";
+   crud = Read;
+
+   attribute OrderLineNo Text {
+      fetch = "CONCAT(CONCAT(TO_CHAR(Maint_Material_Order_No), ' - '),TO_CHAR(Line_Item_No))";
+   }
+}
+
+query HmAircraftsAtUserAirportQuery {
+   from = "Hm_Aircraft_At_My_Airport";
+   lu = none;
+   timestamptzref = "server";
+
+   attribute Aircraft Text;
+   attribute WorkPackageId Number;
+   attribute WorkPackage Text;
+   attribute Location Text;
+   attribute Status Text;
+   attribute StartDateInAirportTz Timestamp {
+      fetch = "Time_SYS.Convert_Timezone(start_date,'UTC', Av_Airport_For_User_API.Get_User_Time_Zone())";
+   }
+   attribute DaysSinceStart Text;
+   attribute DaysToFinish Text;
+   attribute ActiveTasks Text;
+   attribute InWorkTasks Text;
+   attribute CompletedTasks Text;
+   attribute AircraftCode Text;
+   attribute WorkPackageBarcode Text;
+   attribute WorkPackageName Text;
+}
+
+query UserTaskAssignmentsQuery {
+   from = "jt_task_resource_demand_av_uiv";
+   where = "is_heavy = 1
+            AND task_status != 'Completed'
+            AND assigned_resource_id = Fnd_Session_API.Get_Fnd_User()
+            AND airport_id IN (SELECT  au.airport_id
+                              FROM     av_airport_for_user au
+                              WHERE    (au.identity = Fnd_Session_API.Get_Fnd_User()))";
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(task_seq))";
+
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute TaskName Text;
+   attribute Remark Text;
+   attribute TaskStatus Text;
+   attribute MaterialAvailability Text;
+   attribute AircraftId Text;
+   attribute SchedStart Timestamp;
+   attribute Aircraft Text {
+      fetch = "Aircraft_API.Get_Aircraft_Desc(AIRCRAFT_ID)";
+   }
+   attribute AircraftCode Text {
+      fetch = "CONCAT(CONCAT(av_assembly_type_code, ' - '), TO_CHAR(av_reg_code))";
+   }
+   attribute SchedStartAirportTimezone Timestamp {
+      fetch = "Time_SYS.Convert_Timezone(sched_start, Av_Airport_For_User_API.Get_User_Time_Zone(), 'UTC')";
+   }
+   attribute IsSensExist Text {
+      fetch = "Av_Exe_Task_Sens_API.Is_Task_Sens_Exist(task_seq)";
+   }
+}
+
+query CrewLeadTaskSummaryQuery {
+   from = "Crew_Lead_Task_Summary_Lobby";
+   lu = none;
+   attribute CrewCode Text;
+   attribute Crew Text;
+   attribute WorkPackageId Number;
+   attribute ActiveTasks Number;
+   attribute TotalTasks Number;
+   attribute InWorkTasks Number;
+   attribute CompletedTasks Number;
+}
+
+query CrewTaskSummaryQuery {
+   from = "Crew_Task_Summary_Lobby_View";
+   lu = none;
+   attribute CrewCode Text;
+   attribute Crew Text;
+   attribute WorkPackageId Number;
+   attribute ActiveTasks Number;
+   attribute AssignedTasks Number;
+   attribute InWorkTasks Number;
+   attribute CompletedTasks Number;
+   attribute PendingTasks Number;
+}
+
+query HmWpTaskProgressByStatusQuery {
+   from = "Hm_Wp_Task_Progress_By_Status";
+   lu = none;
+   attribute TaskStatus Text;
+   attribute Aircraft Text;
+   attribute WorkPackage Text;
+   attribute Count Number;
+}
+
+query SupervisorCrewTaskSummaryQuery {
+   from = "Sup_Crew_Task_Summary_Lobby";
+   lu = none;
+   attribute CrewCode Text;
+   attribute Crew Text;
+   attribute WorkPackageId Number;
+   attribute ActiveTasks Number;
+   attribute TotalTasks Number;
+   attribute InWorkTasks Number;
+   attribute CompletedTasks Number;
+}
+
+function GetHandoverTasksCount Number {
+   parameter WorkPackageId Number;
+}
+
+function MpcTasksCount Number {
+   parameter WorkPackageId Number;
+}

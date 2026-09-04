@@ -1,0 +1,132 @@
+<List>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Details of all the task assignments assigned to the user.</DescriptiveText>
+    <LastModified>8/21/25, 11:27:00 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>8</ColumnSpan>
+    <Title>MY ASSIGNMENTS</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_CREW_LEAD_ASSIGNMENTS</Name>
+    <ID>5851ea24-cd26-4941-a7ab-70395c0fd783</ID>
+    <WebUrl>page/FlmTaskDetail/MyWorkPage?$filter=Barcode eq $[Barcode]</WebUrl>
+    <ColorStyle>Default</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>75105eac-3395-4dde-9d3c-d467da18bcac</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>ICON_COLUMN1</Column>
+                <Name>Icon 1</Name>
+                <Width>4</Width>
+                <ConditionalFormats>
+                    <ConditionalFormatting>
+                        <ColumnName>IsSensExist</ColumnName>
+                        <Value>1</Value>
+                        <Foreground>Info</Foreground>
+                        <Comparer>EQUAL</Comparer>
+                        <Icon>Icon12</Icon>
+                        <IconColor>Attention</IconColor>
+                        <IconText>Sensitive system involved</IconText>
+                    </ConditionalFormatting>
+                </ConditionalFormats>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Barcode</Column>
+                <Name>Barcode</Name>
+                <DisplayName>Barcode</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Barcode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>TaskName</Column>
+                <Name>Task Name</Name>
+                <DisplayName>Task Name</DisplayName>
+                <Width>45</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>TaskName</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Remark</Column>
+                <Name>Assignment Role</Name>
+                <DisplayName>Assignment Role</DisplayName>
+                <Width>20</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Remark</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>TaskStatus</Column>
+                <Name>Task Status</Name>
+                <DisplayName>Task Status</DisplayName>
+                <Width>15</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>TaskStatus</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>MaterialAvailability</Column>
+                <Name>Material Availability</Name>
+                <DisplayName>Material Availability</DisplayName>
+                <Width>22</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>MaterialAvailability</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>Aircraft</Column>
+                <Name>Aircraft</Name>
+                <DisplayName>Aircraft</DisplayName>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>Aircraft</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>AircraftCode</Column>
+                <Name>Aircraft Code</Name>
+                <DisplayName>Aircraft </DisplayName>
+                <Width>35</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>AircraftCode</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>SchedStartAirportTimezone</Column>
+                <Name>Sched Start Airport Timezone</Name>
+                <DisplayName>Scheduled Start</DisplayName>
+                <Width>25</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>SchedStartAirportTimezone</NavigateTarget>
+                <DataType>DateTime</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>IsSensExist</Column>
+                <Name>Is Sens Exist</Name>
+                <Width>0</Width>
+                <IsNavigateParam>true</IsNavigateParam>
+                <NavigateTarget>IsSensExist</NavigateTarget>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+        <ShowColumnHeaders>true</ShowColumnHeaders>
+    </ColumnMapping>
+</List>

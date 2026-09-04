@@ -1,0 +1,21 @@
+fragment HangarCrewLovSelector;
+component FLMEXE;
+layer Core;
+description "Lis of Values fragment for Hanger Crew selector";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+@Overtake
+selector HangarCrewLovSelector for HangarCrewLov {
+   static CrewCode;
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+query HangarCrewLov {
+   from = "Task_Unique_Crew_View";
+   attribute CrewCode Text {
+      lovcolumn = [true];
+   }
+}

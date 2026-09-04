@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Supervisor</Keywords>
+  <DescriptiveText>The second lobby designed for Hangar Maintenance Supervisors to access all functionalities related to work packages.</DescriptiveText>
+  <LastModified>2025-05-16-13.01.01</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="038088fa-c923-4667-81b8-97d0948ed859" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="782c5415-8f2f-4e7c-82f8-4c40dd22a5ec" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="65695c58-fe9d-4b09-81ec-82d5224811cd" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="34c50d2f-5aea-443c-bbed-6427cc896706" column="4" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="61d0fe82-2e4f-4079-986f-529e3fcb3bcc" column="7" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="9c09eecf-ff04-4689-a865-77b164b82937" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="9c1aa177-7a65-4340-a30f-faa27dccc1c2" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="0997512a-8514-4c15-a62a-b2b38141cd6b" column="5" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="adf84855-1030-4fbc-81c8-1b1c27b3861b" column="6" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="e44e7304-a4ed-4fa9-8bfb-535f02e4bfec" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="6033f272-cafc-46e4-b241-baebc6b1d4c7" column="1" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="6077dcdb-e248-4f6a-9c39-b69f4e59ccd2" column="2" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="dd377e16-e3a5-4206-b47a-a3d32230182e" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements/>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters>
+    <Parameter>
+      <Name>WorkPackageId</Name>
+      <Description>Workpackageid</Description>
+      <DataType>Number</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageBarcode</Name>
+      <Description>Workpackagebarcode</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>AircraftCode</Name>
+      <Description>Aircraft</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>Aircraft</Name>
+      <Description>Aircraft</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackage</Name>
+      <Description>Workpackage</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>COMPANY_ID</Name>
+      <Description>Company_id</Description>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>REVIEW_PERIOD</Name>
+      <Description>Review_period</Description>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+  </Parameters>
+  <PageTitle>Supervisor Work Package Overview</PageTitle>
+  <PageId>c894acb6-caa1-4c76-883f-907712bc7097</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

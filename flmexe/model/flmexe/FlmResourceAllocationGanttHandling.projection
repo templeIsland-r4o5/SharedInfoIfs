@@ -1,0 +1,248 @@
+-----------------------------------------------------------------------------
+-- Date        Sign    History
+-- ----------  ------  ------------------------------------------------------
+--  250218  DISULK  AMDEV-18859, Replaced Work_Task_Util_API.Get_Site calls with Work_Task_API.Get_Site.
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+-- 2023-07-10  majslk  AD-9585, Modified code to support time zone changes
+-- 2022-08-01  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode.
+-- 2022-01-12  NaLrlk  AD-4705, Created.
+-----------------------------------------------------------------------------
+
+projection FlmResourceAllocationGanttHandling;
+component FLMEXE;
+layer Core;
+description "Use this API to allocate resource gantt";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ResourceGroupMaintLovSelector;
+@DynamicComponentDependency TOOLEQ
+include fragment ResourceToolEquipJoinLovSelector;
+include fragment PartCatalogLovSelector;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+
+entityset AvResourceToolEquipmentSet for AvResourceToolEquipment {
+   where = "aircraft_wp_id IS NOT NULL";
+}
+
+entityset ResourceSet for ResourceGanttQuery;
+
+------------------------------ ENTITY DETAILS -------------------------------
+
+
+@Override
+entity AvResourceToolEquipment {
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   crud = Read;
+   from = "Av_Task_Resource_Tool_Equip";
+   ludependencies = AvResourceToolEquipment, ResourceGanttQuery, AllocateGanttResourceQuery;
+   attribute TaskSeq Number {
+      fetch = "task_seq";
+   }
+   attribute TaskCode Text {
+      fetch = "task_code";
+   }
+   attribute Barcode Text {
+      fetch = "barcode";
+   }
+   attribute TaskName Text {
+      fetch = "task_name";
+   }
+   attribute Priority Text {
+      fetch = "priority";
+   }
+   attribute AircraftWpId Number {
+      fetch = "aircraft_wp_id";
+   }
+   attribute AircraftId Text {
+      fetch = "aircraft_id";
+   }
+   attribute Objstate Enumeration(AvExeTaskState) {
+      fetch = "task_objstate";
+      label = "State";
+   }
+   attribute SchedStartDateTime Timestamp {
+      label = "Scheduled Start";
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_Start_Date_Time(aircraft_wp_id)";
+   }
+   attribute SchedEndDateTime Timestamp {
+      label = "Scheduled End";
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(aircraft_wp_id)";
+   }
+   attribute AircraftTypeName Text {
+      label = "Aircraft";
+      fetch = "Av_Exe_Task_API.Get_Aircraft(aircraft_id)";
+   }
+   attribute AirportId Number {
+      fetch = "Av_Maintenance_Location_API.Get_Airport_Id(Av_Aircraft_Work_Package_API.Get_Location_Code(aircraft_wp_id))";
+   }
+   attribute ResourceId Text {
+      fetch = "resource_id";
+   }
+   attribute ResourceGroupId Text {
+      fetch = "resource_group_id";
+   }
+   attribute ScheduleTime Text {
+      label = "Scheduled Hours (HH:MM) ";
+      fetch = "Adcom_Util_API.Get_Text_Time(sched_duration)";
+   }
+   attribute ResourceActAllocSeq Number {
+      fetch = "resource_act_alloc_seq";
+   }
+   reference TaskSeqRef(TaskSeq) to AvExeTask(TaskSeq) {
+      label = "Task ID";
+   }
+   attribute RecordId Text {
+      fetch = "Adcom_Util_API.Record_Id_For_Fault_And_Task(Av_Exe_Task_API.Get_Fault_Id(task_seq), task_seq)";
+   }
+   attribute CurrentUserAirportTimeZone Text {
+      fetch = "Av_Airport_For_User_API.Get_User_Time_Zone()";
+   }
+   reference AvAircraftWorkPackageRef(AircraftWpId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AvAirportRef(AirportId) to AvAirport(AirportId);
+   reference ResourceGroupIdRef(ResourceGroupId) to ResourceGroupMaintLov(ResourceId) {
+      label = "Tool/Equipment Group";
+   }
+   @DynamicComponentDependency TOOLEQ
+   reference ResourceIdRef(ResourceId) to ResourceToolEquipJoinLov(ResourceId) {
+      label = "Tool/Equipment";
+   }
+   reference PartCatalogRef(PartNo) to PartCatalogLov(PartNo) {
+      label = "Part No";
+   }
+   reference PartSerialCatalogRef(PartNo, SerialNo) to PartSerialCatalog(PartNo, SerialNo) {
+      label = "Serial No";
+   }
+   array ResourcesArray(TaskSeq, ToolId) to ResourceGanttQuery(TaskSeq, ToolId) {
+      where = "((:child.ResourceId IS NULL OR (:parent.PartNo IS NULL OR :parent.PartNo = :child.PartNo)))";
+   }
+   action RemoveAllocation;
+}
+
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+
+query ResourceGanttQuery {
+   from = "Resource_Load_Tool_Equip";
+   keys = ResourceSeq, TaskSeq, ToolId;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = AvResourceToolEquipment, ResourceGanttQuery, AllocateGanttResourceQuery;
+   attribute ResourceSeq Number;
+   attribute ResourceGroupSeq Number;
+   attribute ResourceId Text {
+      format = uppercase;
+   }
+   attribute PartNo Text {
+      format = uppercase;
+   }
+   attribute SerialNo Text;
+   attribute Description Text;
+   attribute TaskSeq Number;
+   attribute ToolId Number;
+   attribute WpStartDate Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_Start_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   attribute WpEndDate Timestamp {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Sched_End_Date_Time(Av_Exe_Task_API.Get_Aircraft_Wp_Id(task_seq))";
+   }
+   array ResourceItemArray(TaskSeq, ToolId, ResourceSeq) to AllocateGanttResourceQuery(TaskSeq, ToolId, ResourceSeq);
+   array AllocItemArray(ResourceSeq) to AllocatedResourceQuery(ResourceSeq) {
+      where = "((:child.OriginLuDb = 'JtTaskResource' OR (:child.OriginLuDb = 'AvResourceToolEquipment' AND :parent.TaskSeq <> :child.TaskSeq OR :parent.ToolId <> :child.ToolId)) AND :child.StartDate < :parent.WpEndDate AND  :child.EndDate > :parent.WpStartDate)";
+   }
+}
+query AllocateGanttResourceQuery {
+   from = "Resource_Allocation_Tool_Equip";
+   keys = ResourceActAllocSeq, TaskSeq, ToolId;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   ludependencies = AvResourceToolEquipment, ResourceGanttQuery, AllocateGanttResourceQuery;
+   attribute ResourceActAllocSeq Number;
+   attribute ResourceSeq Number;
+   attribute TaskSeq Number;
+   attribute ToolId Number;
+   attribute Duration Number;
+   attribute StartDate Timestamp {
+      label = "Start Date";
+   }
+   attribute EndDate Timestamp {
+      label = "End Date";
+   }
+   attribute ResourceDetail Text {
+      fetch = "Resource_API.Get_Resource_Id(resource_group_seq)";
+   }
+   action CreateAllocation Text {
+      parameter AllocResourceSeq Number;
+      parameter StartDate Timestamp;
+      parameter EndDate Timestamp;
+      parameter Duration Number;
+      ludependencies = AvResourceToolEquipment, ResourceSet;
+   }
+   action ModifyAllocation {
+      parameter AllocResourceSeq Number;
+      parameter StartDate Timestamp;
+      parameter EndDate Timestamp;
+      ludependencies = ResourceGanttQuery;
+   }
+}
+
+query AllocatedResourceQuery {
+   from = "resource_tool_equip_alloc";
+   keys = ResourceActAllocSeq;
+   lu = none;
+   timestamptzref = "site(Work_Task_API.Get_Site(Task_Seq))";
+
+   attribute ResourceActAllocSeq Number;
+   attribute ResourceSeq Number;
+   attribute ToolId Number;
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute OriginLuDb Text;
+   attribute StartDate Timestamp {
+      label = "Allocated Start Date";
+   }
+   attribute EndDate Timestamp {
+      label = "Allocated End Date";
+   }
+   attribute FlmWorkTaskDetail Text {
+      fetch = "Language_SYS.Translate_Constant('AvResourceToolEquipment', 'FLMWORKTASKDESC: FLM Work Task -') || barcode";
+   }
+   attribute WoWorkTaskDetail Text {
+      fetch = "Language_SYS.Translate_Constant('AvResourceToolEquipment', 'WOWORKTASKDESC: WO Work Task -') || task_seq";
+   }
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+function GetTimeRange Structure(TimeRangeStructure) {
+   timestamptzref = "server";
+   parameter TaskSeq Number;
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+structure TimeRangeStructure {
+   timestamptzref = "server";
+   
+   attribute StartDate Timestamp;
+   attribute EndDate Timestamp;
+}
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

@@ -1,0 +1,40 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmSupervisorAirportLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250218  RAFALK  AD-14571, Created.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Get_Current_Shift_Task_Count___ (
+   work_package_id_ IN NUMBER,
+   shift_           IN VARCHAR2) RETURN NUMBER
+IS
+   tasks_count_ NUMBER := 0;
+   
+   CURSOR get_tasks_count IS
+   SELECT COUNT(DISTINCT t.task_seq)
+   FROM jt_task_resource_demand_av_uiv t
+   INNER JOIN av_exe_task wt
+   ON t.task_seq = wt.task_seq
+   WHERE t.work_package_id = work_package_id_
+   AND Flmexe_Util_API.Get_Shift_By_Sched_Start(wt.planned_start,NULL) = shift_
+   AND wt.objstate IN ('RELEASED','WORKSTARTED');
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      OPEN get_tasks_count;
+      FETCH get_tasks_count INTO tasks_count_;
+      IF(get_tasks_count%NOTFOUND) THEN
+         tasks_count_ := 0;
+      END IF;
+      CLOSE get_tasks_count;
+   END IF;
+   RETURN tasks_count_;
+END Get_Current_Shift_Task_Count___;

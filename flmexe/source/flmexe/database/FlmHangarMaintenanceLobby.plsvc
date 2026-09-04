@@ -1,0 +1,76 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     FlmHangarMaintenanceLobby
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250515  WIJCLK   AD-18366, Added Mpc_Panel_Tasks_Count___ Function.
+--  250225  ROERLK   AD-17530, Created and added Get_Handover_Tasks_Count___.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+ 
+FUNCTION Get_Handover_Tasks_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   handover_tasks_count_ NUMBER := 0;
+   latest_reason_        VARCHAR2(200);   
+   handover_reason_      VARCHAR2(100);
+   
+    CURSOR get_in_work_tasks IS
+      SELECT task_seq
+      FROM av_exe_task 
+      WHERE objstate = 'WORKSTARTED'
+      AND aircraft_wp_id = work_package_id_;
+   
+   CURSOR get_latest_js_reason(task_seq_ IN NUMBER) IS
+      SELECT incompletion_cause
+      FROM jt_execution_instance_tab
+      WHERE task_seq = task_seq_
+      AND rowstate = 'COMPLETED'
+      AND incompletion_cause IS NOT NULL
+      ORDER BY changed_date DESC
+      FETCH FIRST 1 ROW ONLY;   
+BEGIN
+   handover_reason_ := Av_Flm_Parameter_API.Get_Parameter_Value('HANDOVER_REASON');   
+   
+   IF work_package_id_ IS NOT NULL THEN
+      FOR tasks_ IN get_in_work_tasks LOOP
+         OPEN get_latest_js_reason(tasks_.task_seq);
+         FETCH get_latest_js_reason INTO latest_reason_;
+         CLOSE get_latest_js_reason;
+         IF latest_reason_ = handover_reason_ THEN
+            handover_tasks_count_ := handover_tasks_count_ + 1;
+         END IF;      
+         latest_reason_ := NULL;
+      END LOOP;
+   END IF;
+   
+   RETURN handover_tasks_count_;
+END Get_Handover_Tasks_Count___;
+
+FUNCTION Mpc_Tasks_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   mpc_task_count_ NUMBER := 0;
+   
+   CURSOR get_master_panel_task_count IS
+   SELECT COUNT(*)
+   FROM av_exe_task t
+   WHERE t.aircraft_wp_id = work_package_id_
+   AND t.state IN ('Active', 'In Work')
+   AND t.Class_Code = Av_Exe_Task_API.TASK_CLASS_MPC
+   AND t.Subclass_Code IN (Av_Exe_Task_API.TASK_SUBCLASS_MPCOPEN, Av_Exe_Task_API.TASK_SUBCLASS_MPCCLOSE);
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      OPEN get_master_panel_task_count ;
+      FETCH get_master_panel_task_count  INTO mpc_task_count_;
+      CLOSE get_master_panel_task_count ;
+   END IF;
+
+   RETURN mpc_task_count_;
+END Mpc_Tasks_Count___;

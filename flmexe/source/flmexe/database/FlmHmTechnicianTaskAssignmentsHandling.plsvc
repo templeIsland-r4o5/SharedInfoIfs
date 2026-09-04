@@ -1,0 +1,34 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHmTechnicianTaskAssignmentsHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241204  SABOLK  AD-14563, Added Assign_Labour_Requirement_To_Me___ to assign labor demand to the session user.
+--  241128  ROERLK  AD-14561, Created
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Default_Search_Context___ RETURN Page_Search_Context_Structure_Rec
+IS
+   rec_ Page_Search_Context_Structure_Rec;
+BEGIN
+    rec_.shift := '';
+    RETURN rec_;
+END Get_Default_Search_Context___;
+
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Hm_Contract_Id_By_Barcode___ (
+   barcode_ IN VARCHAR2) RETURN VARCHAR2
+IS
+ temp_ av_aircraft_work_package_tab.hm_contract_id%TYPE;
+BEGIN
+	temp_ := Av_Aircraft_Work_Package_API.Get_Hm_Contract_Id_By_Barcode(barcode_);  
+   RETURN temp_;
+END Get_Hm_Contract_Id_By_Barcode___;

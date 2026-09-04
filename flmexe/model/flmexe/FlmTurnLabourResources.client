@@ -1,0 +1,121 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ------------------------------------------------------------------
+--  250324  KASTLK  AVMXSOL-5616, Re-ordering the Aviation Maintenance sub-menus into Alphabetical order
+--  250303  GAKOLK  AVMXSOL-5848, Change parent of TurnLabourResNavEntry to AdcomNavigator.BasicData
+--  241121  DUWJLK  AD-14803, Made neccessaray changes to replace CompetencyId from resourceSeq.
+--  211115  rjoslk  AD-3950, Changed lov labels and page label.
+--  211108  rjoslk  AD-3950, Created.
+--------------------------------------------------------------------------------------
+client FlmTurnLabourResources;
+component FLMEXE;
+layer Core;
+projection FlmTurnLabourResourceHandling;
+description "This client is for the Turn Labour Resource page";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+entry TurnLabourResNavEntry parent AdcomNavigator.BasicData  at index 1170 {
+   label = "Default Turn Resource Requirements";
+   page List home AvTurnLabourResource;
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page List using TurnLabourResourceSet {
+   label = "Default Turn Resource Requirements";
+   list TurnLabourResourceList;
+}
+
+list TurnLabourResourceList for AvTurnLabourResource {
+   lov AssemblyTypeRef with AssemblyLovSelector {
+      label = "Aircraft Type";
+      description = AssemblyTypeRef.AssemblyTypeName;
+      search = AssemblyTypeRef.AssemblyTypeCode, AssemblyTypeRef.AssemblyTypeName;
+      size = Large;
+   }
+   lov WorkTypeRef with AvWorkTypeSelector {
+      label = "Work Type";
+      description = WorkTypeRef.WorkTypeDescription;
+      search = WorkTypeRef.WorkTypeDescription;
+      size = Medium;
+   }
+   lov ResourceTypeLovRef with ResourceTypeSelector {
+      label = "Skill";
+      editable = [true];
+      size = Large;
+      hidekey = [true];
+      searchable = true;
+      search = ResourceTypeLovRef.ResourceId;
+      description = ResourceTypeLovRef.ResourceId;
+      required = [true];
+   }
+   field Quantity {
+      validate command {
+         execute {
+            if [Quantity <= 0] {
+               set Quantity = null;
+               error("Quantity should be greater than 0.");
+            }
+         }
+      }
+   }
+   field Duration {
+      label = "Duration (h)";
+      validate command {
+         execute {
+            if [Duration <= 0] {
+               set Duration = null;
+               error("Duration should be greater than 0.");
+            }
+
+         }
+      }
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+
+
+--------------------------------- SELECTORS ---------------------------------
+selector AssemblyLovSelector for AvAssembly {
+   static AssemblyTypeCode;
+   static AssemblyTypeName;
+}
+
+selector ResourceTypeSelector for ResourceTypeLov {
+   label = "";
+   static ResourceId;
+   static Description;
+}
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

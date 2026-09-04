@@ -1,0 +1,156 @@
+-----------------------------------------------------------------------------
+--
+--  Filename:      FlmManualPeggingAvMaterialLineHandling.projection
+--  Component:     FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  251219  ISASLK  AVMXSOL-15380, Created. Manual Pegging of Maintenance Material Requisition Line handling.
+-----------------------------------------------------------------------------
+
+projection FlmManualPeggingAvMaterialLineHandling;
+component FLMEXE;
+layer Core;
+description "Manual Pegging of Maintenance Material Requisition Line";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment ManualPeggingMaterialLine;
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity MaintMaterialReqLine {
+   from = "maint_material_req_line_av_uiv";
+
+   attribute TaskSeq Number {
+      label = "Task No";
+   }
+
+   attribute AircraftWorkPackageId Number {
+      label = "Work Package No";
+   }
+
+   attribute WpBarcode Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Barcode(aircraft_work_package_id)";
+      label = "Work Package Barcode";
+   }
+
+   attribute WorkPackageName Text {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Work_Package_Name(aircraft_work_package_id)";
+      label = "Work Package Name";
+   }
+
+   attribute FlightId Number {
+      fetch = "Av_Aircraft_Work_Package_API.Get_Flight_Id(aircraft_work_package_id)";
+      label = "Flight ID";
+      editable = [false];
+   }
+
+   attribute TaskBarcode Text {
+      fetch = "Av_Exe_Task_API.Get_Barcode(task_seq)";
+      label = "Task Barcode";
+   }
+
+   @DynamicComponentDependency WO
+   attribute TaskDescription Text {
+      fetch = "Jt_Task_API.Get_Description(task_seq)";
+      label = "Task Description";
+   }
+
+   @DynamicComponentDependency WO
+   attribute TaskSite Text {
+      fetch = "Jt_Task_API.Get_Site(task_seq)";
+      label = "Task Site";
+   }
+
+   attribute AircraftId Text {
+      label = "Aircraft No";
+   }
+
+   @DynamicComponentDependency WO
+   attribute DemandSite Text {
+      fetch = "Maint_Material_Requisition_API.Get_Contract(maint_material_order_no)";
+      label = "Demand Site";
+   }
+
+   reference AvExeTaskRef(TaskSeq) to AvExeTask(TaskSeq);
+   reference AvAircraftWorkPackageRef(AircraftWorkPackageId) to AvAircraftWorkPackage(AircraftWorkPackageId);
+   reference AircraftRef(AircraftId) to Aircraft(AircraftId);
+   @DynamicComponentDependency WO
+   reference JtTaskRef(TaskSeq) to JtTask(TaskSeq);
+   @DynamicComponentDependency WO
+   reference MaintMaterialRequisitionRef(MaintMaterialOrderNo) to MaintMaterialRequisition(MaintMaterialOrderNo);
+}
+
+@Override
+@DynamicComponentDependency PURCH
+entity PurchaseOrderLinePart {
+   attribute VendorNo Text {
+      fetch = "Purchase_Order_API.Get_Vendor_No(order_no)";
+      label = "Supplier Code";
+      maxlength = 20;
+      editable = [false];
+   }
+
+   attribute SupplierName Text {
+      fetch = "Supplier_API.Get_Vendor_Name(Purchase_Order_API.Get_Vendor_No(order_no))";
+      label = "Supplier Name";
+      maxlength = 200;
+      editable = [false];
+   }
+
+   attribute SupplierNameAndCode Text {
+      fetch = "Supplier_API.Get_Vendor_Name(Purchase_Order_API.Get_Vendor_No(order_no)) || ' , ' || Purchase_Order_API.Get_Vendor_No(order_no)";
+      label = "Supplier Name and Code";
+      maxlength = 250;
+      editable = [false];
+   }
+
+   attribute PlannedDeliveryDate Timestamp {
+      label = "Planned Delivery Date";
+      editable = [false];
+   }
+
+   attribute PlannedReceiptDate Timestamp {
+      label = "Planned Receipt Date";
+      editable = [false];
+   }
+
+   attribute PlannedArrivalDate Timestamp {
+      label = "Planned Arrival Date";
+      editable = [false];
+   }
+
+   attribute Coordinator Text {
+      fetch = "Person_Info_API.Get_Name(Purchase_Order_API.Get_Authorize_Code(order_no))";
+      label = "Coordinator";
+      maxlength = 100;
+      editable = [false];
+   }
+
+   reference SupplierRef(VendorNo) to Supplier(VendorNo) {
+      label = "Supplier";
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+---------------------------------- QUERIES ----------------------------------
+
+---------------------------------- ACTIONS ----------------------------------
+
+--------------------------------- FUNCTIONS ---------------------------------
+
+-------------------------------- STRUCTURES ---------------------------------
+
+--------------------------------- VIRTUALS ----------------------------------
+
+--------------------------------- SUMMARIES ---------------------------------
+
+-------------------------------- SINGLETONS ---------------------------------
+
+--------------------------------- CHECKLIST ---------------------------------

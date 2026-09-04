@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone='yes'?>
+<Page>
+  <Author>IFS RnD</Author>
+  <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+  <DescriptiveText>The second lobby designed for Hangar Maintenance Crew Leads to access all functionalities related to work packages.</DescriptiveText>
+  <LastModified>2025-05-15-12.15.13</LastModified>
+  <Locked>true</Locked>
+  <ClientTypesPage>Web</ClientTypesPage>
+  <Component>FLMEXE</Component>
+  <Layout>
+    <Groups>
+      <Group>
+        <Elements>
+          <Element id="ab0e40a1-c345-4b7b-b0d2-f2fcb59bb3e8" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="adb42759-53b5-4533-a84f-d4636d01ae13" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="5940de04-d192-4936-937f-3e048c120d49" column="1" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="61887bb3-f4f4-42ac-af9f-f9545e263498" column="4" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="2fad02dc-ef40-4b1c-b48c-2c7bb245588c" column="6" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="0c093692-e2f5-4ea3-af10-2d7fff890d98" column="7" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="4da866af-03ef-49a4-aa0d-bca8775431a2" column="8" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="cba0ae78-adb8-49bf-815e-cf30368ecf5e" column="10" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="9016ebb1-e999-4d5b-af09-42e679bc9fe0" column="2" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="6e1fa426-20f9-4611-9960-4c18be2b633c" column="3" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="e3347045-e10c-4bfe-981f-319d79d041fa" column="5" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+          <Element id="69f99ca6-4d23-46b8-992f-7df34f9358a3" column="9" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="e777321c-bfb1-41a3-8f5b-7cb2a13ca76a" column="0" row="0" columnspan="8" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements>
+          <Element id="7c5e04d1-b1e9-4510-a981-1b808702f7be" column="1" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="0bb1aa6b-0011-4e1d-9b38-3a4d885c280f" column="2" row="0" columnspan="2" rowspan="1" unifiedelement="false"/>
+          <Element id="90249a8a-7ccc-400e-9fe7-37609353c254" column="0" row="0" columnspan="1" rowspan="1" unifiedelement="false"/>
+        </Elements>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+      <Group>
+        <Elements/>
+        <DynamicWidthElements/>
+        <GroupLayout>default</GroupLayout>
+        <GroupColumns>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+          <GroupColumn>
+            <Elements/>
+          </GroupColumn>
+        </GroupColumns>
+      </Group>
+    </Groups>
+  </Layout>
+  <DataSources/>
+  <Parameters>
+    <Parameter>
+      <Name>Barcode</Name>
+      <Description>Work package barcode</Description>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>AircraftCode</Name>
+      <Description>Aircraft</Description>
+      <DefaultValue/>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageId</Name>
+      <Description>Work package id </Description>
+      <DataType>Number</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackageBarcode</Name>
+      <Description>WorkPackage</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>Aircraft</Name>
+      <Description>Aircraft</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>false</ShowPageParameter>
+    </Parameter>
+    <Parameter>
+      <Name>WorkPackage</Name>
+      <Description>WorkPackage</Description>
+      <DefaultValue/>
+      <DataType>Text</DataType>
+      <ShowPageParameter>true</ShowPageParameter>
+    </Parameter>
+  </Parameters>
+  <PageTitle>Crew Lead Work Package Overview</PageTitle>
+  <PageId>825ea048-87c2-455f-807e-ed6ef203631d</PageId>
+  <AurenaLobby>true</AurenaLobby>
+  <Translations/>
+</Page>

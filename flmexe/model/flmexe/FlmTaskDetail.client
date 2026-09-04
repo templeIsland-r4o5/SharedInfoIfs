@@ -1,0 +1,2545 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250821  ISSHLK  AD-19892, Added new markdown texts. Add new validations to StartTask, FinishCommand and FinalSignOff commands .
+--  250820  SSIVLK  AD-19199, Introduced cancel button in part installtion tab
+--  250804  WEDILK  AD-20242, Include FlmTool fragment and create new AddTaskToolCommand command
+--  250711  SSIVLK  AD-19194, Introduced Part Search button
+--  250703  SABOLK  AD-18377, Connected PanelSignOffList as a nested list to the Sign-Off list.
+--  250616  BACHLK  AD-18262, Added Cap Exceeded banner.
+--  250613  RAFALK  AD-18376, Set TaskType for RecordWorkInfo
+--  250612  KAPALK  AD-18371, Added a command to delete zones and its related panels
+--  250612  SABOLK  AD-18875, Modified list AvExeTaskPanelListAdd to accommodate add and remove panels in a maintenance task.
+--  250604  KOSRUS  AD-18211, Add Critical Items on Task Details
+--  250602  DNMALK  AMDEV-22449, Commented Use of HmContractNo since Attribute not in Core.
+--  250604  SABOLK  AD-18384, Added MpcTasksForMaintenanceTaskList to display mpc tasks for a maintenance task panel.
+--  250528  RAFALK  AD-18301, Added Panels tab
+--  250527  SSIVLK  AD-18622, Restructured the PartInstallation list
+--  250527  SRLALK  AD-18264, Implemented NonRoutinesAprrovalGroup
+--  250521  KAPALK  AD-18300, Added the zones tab
+--  250310  SSIVLK  AD-17814, Added Certfieruser condition in final signoff button
+--  250302  SSIVLK  AD-14847, Added HasStartedExecutionInstances condition in final signoff button
+--  250228  SSIVLK  AD-14847, Added final sign off button
+--  250224  SILILK  AD-15689, Added CreatedBy field to TimeReportList.
+--  250220  DUWJLK  AD-14798, Removed labour skill related data to remove skill tab.
+--  250124  ALNILK  AD-16426, Modified LaborSummaryTotalList and LaborSummaryBreakdownList.
+--  250212  VAALLK  AD-16478, Added OverallAssignmentsProgress, LatestJobStopReason , LatestJobStopNote.
+--  250109  NIRTLK  AD-15507, Modified LaborSummaryTotalList and LaborSummaryBreakdownList.
+--  250107  NIRTLK  AD-15798, Added new fields to TimeReportsList.
+--  250107  WAISLK  AD-14598, Added scheduled/actual routine/non-routine hours
+--  250105  SSIVLK  AD-15896, Renamed the column Completed Date to Actual Date
+--  241220  CAARLK  AD-14589, Modified FinishCommand, added RecordWorkAssignmentCommand and added RecordWorkAssignmentCommand into AssignmentsList.
+--  241217  NIRTLK  AD-15694, Added Finish Command in Assignmnet Tab.
+--  241217  SSIVLK  AD-15684, Start Command enhancements
+--  241213  WIHALK  AD-14739, Added Fields to fault Details and UI enhancements.
+--  241211  SSIVLK  AD-15684, Added Start Command in Assignmnet Tab
+--  241210  KAWJLK  AD-15697, Added JtTaskResourceLicenseList to view certificates.
+--  241126  WEDILK  AD-14735, Added Non Routine tab
+--  241121  WAISLK  AD-14604, Added LaborSummaryTotalList and LaborSummaryBreakdownList.
+--  241121  WEDILK  AD-14729, Update input parameters in RaiseFaultAssistant
+--  241112  WEDILK  AD-14795, Introduce new fragment and leverage JTTaskStep to populate Task/Fault Step records
+--  241120  NIRTLK  AD-14819, Added Assignments Tab
+--  241118  BACHLK  AD-14727, Added Raise a Non Routine
+--  241104  WEDILK  AD-15053, Change Client, Projection, plsvc, plsvt, fragments according to JtTask state diagram
+--  241031  KAWJLK  AD-14602, Added TimeReportsList.
+--  241015  LAWALK  AD-14586, Added RecordWorkStartTime for RecordWorkAssistant as a parameter.
+--  241008  WEDILK  AD-14582, Change TaskId to the TaskSeq
+--  240905  CAARLK  AD-14182, Added conditions to visibility of the RequestDeferral command.
+--  240830  WIHALK  AD-14020, Added new variable called IsMocRequired and passed into fault deferral assistant
+--  240826  SSIVLK  AD-14021, Added condition to visibility of the Deferral Information Group.
+--  240710  WEDILK  AD-13614, Task details updated with barcode
+--  240715  RWELLK  AD-13037, Added aSource parameeter to the select reference URL.
+--  240628  RAFALK  AD-13039, Added deferral request details to Task and Fault Details pages.
+--  240626  RWELLK  AD-13037, Enhance the deferal request command.
+--  240622  RWELLK  AD-13037, Added deferal request command.
+--  240214  DUWJLK  AD-11480, Updated content of show missing mandatory component warning markdown and confirm message of defercommand.
+--  240208  majslk  AD-11481, Added markdown text to show missing mandatory component warning
+--  240124  RAFALK  AD-11819,Changed the visibility of Task Assignment button in TaskAssignmentCommand
+--  240117  ROERLK  AD-11359, Added Fault Search command
+--  240117  majslk  AD-10940, Modified Defer command to show warning
+--  240104  majslk  AD-10938, Implemented surfacing is mandatory config slot in add and view parts
+--  231209  ROSDLK  AD-11190, Display deferral request details in Task Detail page.
+--  231204  ROSDLK  AD-11190, Added resubmission deferral request workflow after rejecting a deferral request.
+--  231130  LAHNLK  AD-11185, disabled defer command when the deferral request status is rejected
+--  231127  LAHNLK  AD-11185, Modified command RequestDeferral
+--  231108  MAILLK  AD-9566, Add UnstartTask command
+--  230926  MAILLK  AD-10783, Changed size of fields LastFaultActTaken and LastTaskActTaken and Removed the size of Last Action date fields
+--  230920  DUWJLK  AD-10708, Changed field Obstate as a badge Objstate with relevant emphasis and Label changes in the AvExeTaskStepList
+--  230828  bhsilk  AD-10359, Modified StartTask command
+--  230614  majslk  AD-9584, Modified code to support time zone changes
+--  230428  ROSDLK  AD-9808, Order the task actions by ActionOrd field.
+--  230307  SEVHLK  AD-9615, Added a condition for the visibility of find inventory button
+--  230110  ROSDLK  AD-9301, Change the order of the fields in intallation and removal part lists to diplay the CMS warning field.
+--  230104  ROSDLK  AD-8891, Set size attribute for the warning code and warning details fields in the list and changed markdowntext message.
+--  221215  ROSDLK  AD-8891, Added warning code field.
+--  221222  SUPKLK  AD-9166, Made Warning field multiline = true
+--  221220  SEVHLK  AD-8999, Removed code snippets related to AvDeferralClass, AvDeferralReference, AvDeferralRefStatus and AvFaultDeferralRequest entities
+--  221130  LAWALK  AD-9113, Updated RequestDeferral command.
+--  221215  ROSDLK  AD-8891, Added markdowntext to display the banner for failed state warnings and display warnings in a nested list.
+--  221213  SUPKLK  AD-8858, Added markdowntext to display Part Changes not validated banner
+--  221205  ROSDLK  AD-9045, Set visibility to show RequestDeferral command only for Open faults.
+--  221202  LAWALK  AD-9113, Updated RequestDeferral command and remove duplicates.
+--  221125  LAWALK  AD-9113, Added RequestDeferral command to Task Details page.
+--  221115  RWELLK  AD-8701, Removed code snipits related to Enable Standalone Deferral Management Solution in Co-Deployed Solution
+--  221104  RWELLK  AD-9028, changed variable name in FindInventory command.
+--  221101  LAHNLK  AD-8655, Removed Request part feature related source code
+--  221005  RWELLK  AD-8649, Added FindInventory command.
+--  221004  LAWALK  AD-8462, Update visible condition with checking fault status is deferred in DeferCommand.
+--  220901  MAILLK  AD-7984, Hide Sync Related Fields in UI.
+--  220816  JIWELK  AD-8440, Added a new field for FaultSourceCode in AvFaultGroup to display Fault Source in Fault Information in the task detail page
+--  220728  PSUALK  AD-7649, Replace Barcode from FLM GUI in Standalone Mode
+--  220726  DIDLK   AD-8056, Addded AddTaskPartsCommand, RemoveRemovalPartCommand, RemoveInstallPartCommand and RemoveRemovalPartCommand
+--  220714  SPATLK  AD-8074, Updated Skill selecter and remove skill status.
+--  220711  VAALLK  AD-7909, Modified DeferCommand to support standalone mode fuctionality
+--  220620  SUPKLK  AD-6816, Modified RecordWorkCommand to visible when Objstate is not Completed
+--  220616  vaallk  AD-7820, Modified Completed Date & Completed By field's visibility when Objstate is Completed
+--  220525  LAHNLK  AD-7683, removed stepOrder from TaskMeasurementsList
+--  220315  ROSDLK  AD-7114, Set user's identity as the action user.
+--  220310  kapalk  AD-7002, Added completed date and Completed by fields to the AvExeTaskGroup
+--  220303  SUPKLK  AD-6653, Correlation Id and Request Status labels renamed to Correlation ID and Synchronization Status
+--  220224  KAPALK  AD-6794, Added the Steps tab and created a list to show steps
+--  220128  KAWJLK  AD-5799, Modified DeferCommand and RecordWorkCommand.
+--  220125  LaDelk  AD-6395, Added CheckOutCommand and crud enabled conditions to AvExeResourceToolEquipmentList;
+--  220114  LaDelk  AD-5775, Added AllocateResourceCommand to allocate a tool to a tool requirement.
+--  220113  majslk  AD-5956, Moved update of ActualStartDateTime in Start command from this file to AvExeTask plsql file.
+--  220107  nignlk  AD-5733, Added AssemblyPosition to TaskSkillsList, TaskMeasurementsList and AvExeTaskPartInstallationList lists.
+--  220104  LaDelk  AD-4695, Modified visibility of tools tabs depending on USE_MAINTENIX_TOOL_REGISTRY property in mx configurations.
+--  211216  LaDelk  AD-4694, Moved Resource Tools list to FlmResourceToolEquipmentTab fragment.
+--  211201  LaDelk  AD-5167, Modified serial no lov and format of scheduled hours field in resource tools.
+--  211125  AyAmlk  AD-4724, Added validations for the AvExeTaskResourceToolEquipmentList.
+--  211122  chdslk  AD-3954, Moved assignee and related functionality from Task level to TaskLabour level.
+--  211122  WAISLK  AD-4643, Added Assembly Type to ReferenceAvPartNumberSelector.
+--  211008  majslk  AD-3807, Added RequestStateCd, RequestCorrelationId to AvExeTaskGroup.
+--  211117  lavwlk  AD-5002, Modified AvExeTaskGroup by replacing AssemblyTypeName instead of AircraftTypeName.
+--  211115  ladelk  AD-4693, Added Tool Requirements tab.
+--  211005  sevhlk  AD-4041, Removed config_slot_code, config_slot_position_code and aircraft_type_code from AvExeTaskPartTab, AvFaultPartTab, AvExeTaskPartRequestTab and AvFaultPartRequestTab and added config_slot_position_id to these entity sets.
+--  210730  SEVHLK  AD-2216, Modified the call to PartRequestAssistant.
+--  210719  nignlk  AD-2212, Added AircraftAppCode as a parameter to PartRequestAssistant.
+--  210702  LAHNLK  AD-2270, Done min0r changes
+--  210701  himklk  AD-2278, Change label of Measurement tab to 'Measurements'.
+--  210629  SUPKLK  AD-2134, Set Multiline true on Action Taken field
+--  210621  himklk  AD-1262, Enabled RecordWorkCommand to all users.
+--  210617  LAHNLK  AD-1278, modified, removed entry TaskNavEntry
+--  210618  sevhlk  AD-2011, Modified the availability status attribute.
+--  210615  SUPKLK  AD-2122, Aurena Screen Enhancements
+--  210607  kawjlk  AD-1281, Added command RemovePartReq.
+--  210607  SEVHLK  AD-1258, Added AddTaskPartRequestCommand and overrided the ReferenceAvPartNumberSelector.
+--  210604  kawjlk  AD-1198, Added command RemoveMeasurement.
+--  210604  nignlk  AD-1210, Added DeleteTaskSkillCommand.
+--  210604  SUPKLK  AD-1275, Made measurement value an optional field.
+--  210602  lahnlk  AD-1138, added RemoveToolCommand
+--  210602  SUPKLK  AD-1275, Added SaveMeasurement Command, AddMeasurementGroup and AddMeasurementAssistant
+--  210430  lahnlk  AD-1271, added ModifyTaskSkillCommand,ModifyTaskSkillGroup,ModifyTaskSkillAssistant
+--  210422  KAWJLK  AD-1672, Modefied DeferCommand
+--  210420  KAWJLK  AD-1128, added call ClearFaultDefMainVirtual()
+--  210329  siydlk  AD-1157, Added StartTask command to MyWorkPage.
+--  210329  lahnlk  AD-1282, Overidden AvPartNumberSelector and AvPartNumberLovList
+--  210323  siydlk  LMM2020R1-1588, Modified NewReferenceCompetencySelector to add CompetencyId.TaskSkillsList, modified TaskSkillsList to replace value for Required Hours and modified SaveTaskSkill command.
+--  210320  Jihalk  LMM2020R1-1580, Added ConvertSchedTime and ConvertAccTime fields.
+--  210319  lahnlk  AD-1282, added AddTaskToolCommand,TaskToolGroup,AddTaskToolAssistant
+--  210309  Jihalk  LMM2020R1-1571, edit was disable from the task page.
+--  210308  Jihalk  LMM2020R1-1742, Removed TaskRemovedParts and TaskInstalledParts query.
+--  210304  tprelk  LMM2020R1-1576, Change name of part number in Part Requests Tab .
+--  210304  Jihalk  LMM2020R1-1742, Added AvExeTaskPartRemoveList.
+--  210304  Jihalk  LMM2020R1-1750, Rename badge label in AvExeTaskPartInstallationList.
+--  210303  Jihalk  LMM2020R1-1750, Added AvExeTaskPartInstallationList.
+--  210303  tprelk  LMM2020R1-1576, Added List of parts / part requests.
+--  210302  siydlk  LMM2020R1-1600, Added AddTaskSkillCommand to TaskSkillsList.
+--  210302  tprelk  LMM2020R1-1585, Added Measurements tab.
+--  210225  siydlk  LMM2020R1-1571, Added TaskCode for the AvExeTaskGroup and changed the position of Required Hours and Skill fields in TaskSkillsList.
+--  210223  siydlk  LMM2020R1-1588, Added orderby for TaskSkillsList.
+--  210219  HasRLK  LMM2020R1-1588, Last action taken will be hidden if there are no data.
+--  210217  Jihalk  LMM2020R1-1580, Added AvExeTaskToolList.
+--  210217  HasRLK  LMM2020R1-1588, Labour Skills Tab.
+--  210210  HasRLK  LMM2020R1-1571, Modification for AvTaskActionGroup field sizes.
+--  210208  HasRLK  LMM2020R1-1582, Added the actions taken tab.
+--  210208  HasRLK  LMM2020R1-1571, Created.
+-----------------------------------------------------------------------------
+client FlmTaskDetail;
+component FLMEXE;
+layer Core;
+projection FlmTaskDetailHandling;
+description "Task Details Client";
+
+
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment FlmFaultDeferral;
+include fragment FlmRecordWork;
+include fragment FlmResourceToolEquipmentTab;
+include fragment FlmParts;
+include fragment FlmRaiseFault;
+include fragment FlmTaskAssignments;
+include fragment FlmJtTaskStep;
+include fragment AvTaskMaterial;
+include fragment AvTaskReturns;
+include fragment FlmPanelTasks;
+include fragment AvCriticalItem;
+@DynamicComponentDependency ADCON
+include fragment HeavyMaintenanceInfo;
+include fragment FlmTaskTool;
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+page MyWorkPage using AvExeTaskSet {
+   label = "Task Details";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+
+   selector AvExeTaskDetailsSelector;
+   markdowntext {
+      visible = [RequestStateCd = "Sent"];
+      text = "Part changes have not been validated.";
+      emphasis Complementary7 = [true];
+   }
+
+   markdowntext {
+      visible = [RequestStateCd = "Failed"];
+      text = "Configuration warnings have been identified for some part changes in this task.";
+      emphasis Alert = [true];
+   }
+
+   markdowntext {
+      visible = [MissingComponentWarning != null];
+      text = "This task removed a mandatory component with config slot ${MissingComponentWarning} and there is no matching installation in the work package.";
+      emphasis Warning = [true];
+   }
+
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval and not(HmNonRoutineApprovalRef.ProceedAtRisk) and HmNonRoutineApprovalRef.ApprovalStatus != "Approved" and IsExecutionBlockedByCap];
+      text = "Free CAP limit exceeded. Commercial approval is required before proceeding.";
+      emphasis Complementary6 = [true];
+   }
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and HmNonRoutineApprovalRef.NeedCommercialApproval and not(HmNonRoutineApprovalRef.ProceedAtRisk) and HmNonRoutineApprovalRef.ApprovalStatus != "Approved" and not IsExecutionBlockedByCap];
+      text = "Free CAP limit is exceeded. Commercial approval is required. However, you are allowed to proceed based on the current system configurations.";
+      emphasis Complementary6 = [true];
+   }
+   markdowntext {
+      visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and HmNonRoutineApprovalRef.NeedCommercialApproval and HmNonRoutineApprovalRef.ProceedAtRisk and HmNonRoutineApprovalRef.ApprovalStatus != "Approved"];
+      text = "Free CAP limit is exceeded. Commercial approval is required. However, you are allowed to proceed as 'proceed at risk' is authorized.";
+      emphasis Complementary6 = [true];
+   }
+   markdowntext {
+      visible = [Sensitivities != null];
+      text = "This task is marked as sensitive. Ensure all required regulatory and safety checks are completed before execution.";
+      emphasis Warning = [true];
+   }
+   markdowntext {
+      visible = [AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and HmContractLineNo = null];
+      text = "Task must be connected to a contract line to proceed.";
+      emphasis Complementary6 = [true];
+   }
+
+   group AvExeTaskGroup bind AvExeTaskDetailsSelector;
+   group TimeSummaryGroup bind AvExeTaskDetailsSelector;
+   group AvFaultGroup bind AvExeTaskDetailsSelector;
+   group DeferralRequestDetailGroup;
+   group AvTaskActionGroup bind AvExeTaskDetailsSelector;
+   @DynamicComponentDependency ADCON
+   group HmContractInfoGroup;
+   @DynamicComponentDependency ADCON
+   group NonRoutinesAprrovalGroup;
+
+   tabs {
+      tab {
+         label = "Assignments";
+         list AssignmentsList(JtTaskResourceDemandArray) bind AvExeTaskDetailsSelector;
+         list JtTaskResourceLicenseList(ResourceLicenceArray) bind AssignmentsList {
+            label = "Certificate";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Material";
+         list AvMatReqDetailList(MaintMaterialRequisitionArray);
+      }
+      tab {
+         label = "Part Removals";
+         list AvExeTaskPartRemoveList(PartRemoveArray);
+         list TaskPartWarningsList(TaskPartRemovalWarningArray) bind AvExeTaskPartRemoveList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Part Installations";
+         list AvExeTaskPartInstallationList(PartInstallArray);
+         list TaskPartWarningsList(TaskPartInstallationWarningArray) bind AvExeTaskPartInstallationList {
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Returns";
+         list AvTaskReturnList(AvTaskReturnArray);
+      }
+      tab {
+         label = "Tools";
+         list ToolDemandsList(TaskToolDemandQueryArray);
+      }
+      tab {
+         label = "Measurements";
+         list TaskMeasurementsList(MeasurementArray) bind AvExeTaskDetailsSelector;
+      }
+      tab {
+         label = "Actions Taken";
+         list AvExeTaskActionOnlineList(TaskArray) bind AvExeTaskDetailsSelector;
+      }
+      tab {
+         label = "Zones";
+         list AvExeTaskZoneList(TaskZoneArray) bind AvExeTaskDetailsSelector;
+      }
+      tab {
+         label = "Panels";
+         visible = [not ClassCode in("MPC")];
+         list AvExeTaskPanelList(TaskPanelArray) bind AvExeTaskDetailsSelector;
+         list MpcTasksForMaintenanceTaskList(MpcTasksArray) bind AvExeTaskPanelList {
+            label = "MPC Tasks";
+            display = Nested;
+            details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+         }
+         list JtTaskOpenPanelSignOffList(JtTaskOpenPanelSignOffArray) bind AvExeTaskPanelList {
+            label = "OPEN PANEL SIGN-OFF";
+            display = Nested;
+         }
+         list JtTaskClosePanelSignOffList(JtTaskClosePanelSignOffArray) bind AvExeTaskPanelList {
+            label = "CLOSE PANEL SIGN-OFF";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Panels";
+         visible = [ClassCode in("MPC")];
+         list JtTaskPanelList(JtTaskPanelArray) bind AvExeTaskDetailsSelector;
+
+         list JtTaskStepSignOffList(JtTaskStepSignOffArray) bind JtTaskPanelList {
+            label = "PANEL SIGN-OFF";
+            display = Nested;
+         }
+         list MaintTaskForPanelTasksList(MaintTasksForOpenTaskArray) bind JtTaskPanelList {
+            visible = [ClassCode = "MPC" and SubclassCode = "MPCOPEN"];
+            label = "Maintenance Tasks";
+            display = Nested;
+            details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+         }
+         list MaintTaskForPanelTasksList(MaintTasksForCloseTaskArray) bind JtTaskPanelList {
+            visible = [ClassCode = "MPC" and SubclassCode = "MPCCLOSE"];
+            label = "Maintenance Tasks";
+            display = Nested;
+            details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[TaskSeq]";
+         }
+      }
+      tab {
+         label = "Steps";
+         list JtTaskStepList(JtTaskStepArray) bind AvExeTaskDetailsSelector {
+            label = "";
+         }
+         list JtTaskStepSignOffList(JtTaskStepSignOffArray) bind JtTaskStepList {
+            label = "STEP SIGN-OFF";
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Non Routines";
+         list NonRoutinesList(NonRoutinesArray) bind AvExeTaskDetailsSelector {
+            details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+         }
+      }
+      tab {
+         label = "Sign-Off";
+         list JtTaskSignOffReqList(JtTaskSignOffReqArray) {
+            label = "";
+         }
+         list StepSignOffList(JtTaskStepSignOffArray) bind JtTaskSignOffReqList {
+            label = "Steps";
+            visible = [selection.JtTaskSignOffReqList.SignOffConnectionDb = "TASK_STEP"];
+            display = Nested;
+         }
+         list PanelSignOffList(PanelSignOffArray) bind JtTaskSignOffReqList {
+            label = "Panels";
+            visible = [selection.JtTaskSignOffReqList.SignOffConnectionDb = "TASK_STEP"];
+            display = Nested;
+         }
+      }
+      tab {
+         label = "Time Reports";
+         list TimeReportsList(JtTaskTransactionArray) bind AvExeTaskDetailsSelector;
+      }
+      tab {
+         label = "Labor Summary";
+         list LaborSummaryTotalList(JtTaskLaborSummaryTotalArray) bind AvExeTaskDetailsSelector;
+         list LaborSummaryBreakdownList(JtTaskLaborSummaryBreakdownArray) bind AvExeTaskDetailsSelector;
+      }
+      tab {
+         label = "Critical Items";
+         list CriticalItemsList(CriticalItemsArray) bind AvExeTaskDetailsSelector;
+      }
+   }
+   command FinalSignOff;
+   command RequestDeferral;
+   command StartTask {
+      visible = [(Objstate = "RELEASED" and(not AvAircraftWorkPackageRef.IsHeavyMaintenance or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId = null) or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null)))];
+   }
+   command UnstartTask {
+      visible = [Objstate = "WORKSTARTED" and CurrentUser = StartedUser and OverallAssignmentsProgress = "NotStarted"];
+   }
+   command DeferCommand;
+   command TaskAssignmentCommand;
+   command AddTaskPartsCommand;
+   command AddTaskToolCommand;
+   command EditTaskCardCommand;
+   command EvaluateNonRoutineCommand;
+   command FaultSearchCommand;
+   command RaiseNonRoutineFromTaskDetailsCommand;
+   command IpcPartSearch;
+   commandgroup PartSearch {
+      commandgroup PartsSearch {
+         label = "Part Search";
+         command AviationParts;
+         command AviationInventories;
+      }
+   }
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command FindInventory {
+
+   label = "Find Inventory";
+
+   visible = [IsFlmStandalone = false and IsCertified = "PENDING" and Objstate != "FINISHED"];
+
+   variable FindInventoryURL Text;
+   variable ExternalPagePath Text;
+   variable SearchType Text;
+   variable TaskNameRef Text;
+
+   execute {
+      set ExternalPagePath = "/maintenix/web/inventory/InventorySearchByType.jsp";
+      set SearchType = "INSTALLABLEINVENTORY";
+      set TaskNameRef = "Mobile Maintenance Task Record ID ${RecordId}";
+      call GetFindInventoryUrl(ExternalPagePath, SearchType, AircraftRegCode, IataCode, TaskNameRef) into FindInventoryURL;
+      navigate "${FindInventoryURL}";
+   }
+
+}
+
+command TaskAssignmentCommand {
+   label = "Task Assignment";
+   visible = [AvFaultRef.UserRole = "MM_SUPERVISOR"  and Objstate != "Completed"];
+   execute {
+      navigate "/page/FlmTaskWorkAssignment/WorkTaskAssignmentPage?$filter=TaskSeq eq $[TaskSeq]";
+   }
+}
+
+command AddMeasurementCommand for AvExeTask {
+   label = "Add Measurement";
+   enabled = [IsCertified = "PENDING"];
+   mode = Global;
+   execute {
+      assistant AddMeasurementAssistant(TaskSeq, TaskSite) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+
+command SaveMeasurement for AddMeasurementVirtual {
+   label = "OK";
+   enabled = [MeasurementTypeCodeRef.MeasurementCategoryCode != null];
+   execute {
+      call AddMeasurement(TaskSeq, MeasurementTypeCodeRef.MeasurementCategoryCode, MeasurementTypeCode, MeasTypeValueCode, MeasurementQty, MeasurementDateTime, MeasurementText, MeasurementBoolean, TaskSite);
+   }
+}
+
+command OldAddTaskToolCommand for AvExeTask {
+   label = "Add Tool";
+   enabled = [IsCertified = "PENDING"];
+   mode = Global;
+   execute {
+      assistant AddTaskToolAssistant(TaskSeq) {
+         when OK {
+            exit;
+         }
+         when CANCEL
+            {
+            exit;
+         }
+      }
+   }
+}
+command  SaveTaskTool for AddTaskToolVirtual {
+   label = "OK";
+   execute {
+      call AddTaskTool(TaskSeq, ToolSpecificationCode, PartNoId, SchedDuration);
+   }
+}
+command StartTask for AvExeTask {
+   label = "Start";
+   variable HasExistingInWorkWP Boolean;
+   variable IsPanelValidationOk Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidationOk;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+      if [IsPanelValidationOk = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [HmNonRoutineApprovalRef.ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      if[HasExistingInWorkWP = false] {
+         call UpdateTaskStart(TaskSeq, TaskSite);
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to start another one.");
+      }
+   }
+}
+
+command UnstartTask for AvExeTask {
+   label = "Unstart";
+   execute {
+      call UpdateTaskUnstart(TaskSeq);
+   }
+}
+
+command DeferCommand for AvExeTask {
+   label = "Defer";
+   visible = [FaultId != null and Objstate in("RELEASED") and AvFaultRef.Objstate != "Deferred" and(AvDeferralRequestRef.DeferralRequestStatus = "Approved" or AvDeferralRequestRef = null or AvDeferralRequestRef.MocRequired = false) and AvDeferralRequestRef.DeferralReferenceName != null];
+
+   variable Warning Text;
+   variable FaultDeferralMainPageInfo Structure(FaultDeferralMainPageInfoTaskDetailStructure);
+   variable HasExistingInWorkWP Boolean;
+
+   execute {
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      if[HasExistingInWorkWP = false] {
+         call ClearFaultDefMainVirtual();
+         call ShowWarning(TaskSeq, AircraftWpId) into Warning;
+         copy this into FaultDeferralMainPageInfo;
+         set FaultDeferralMainPageInfo.ParentKeyRef = keyref;
+         set FaultDeferralMainPageInfo.ParentLuName = luname;
+         set FaultDeferralMainPageInfo.DeferralAuthorization = AvDeferralRequestRef.DeferralAuthorization;
+         set FaultDeferralMainPageInfo.DeferralReferenceName = AvDeferralRequestRef.DeferralReferenceName;
+         set FaultDeferralMainPageInfo.DeferralReqReasonCode = AvDeferralRequestRef.DeferralReqReasonCode;
+         set FaultDeferralMainPageInfo.DeferralClassCode = AvDeferralRequestRef.DeferralClassCode;
+         set FaultDeferralMainPageInfo.Note = AvDeferralRequestRef.Note;
+         set FaultDeferralMainPageInfo.WorkPackageAltId = AvAircraftWorkPackageRef.ExternalId;
+         set FaultDeferralMainPageInfo.IsMocRequired = AvDeferralRequestRef.MocRequired;
+         set FaultDeferralMainPageInfo.FaultAltId = AvFaultRef.AltId;
+         if [Warning != null] {
+
+            messagebox("Warning", warning, "This fault removed a mandatory component with config slot ${Warning} and there is no matching installation in the work package. Do you want to defer the fault?") {
+               when "OK" {
+                  assistant FaultDeferralMainPage(FaultDeferralMainPageInfo) {
+                     when CANCEL
+                        {
+                        exit;
+                     }
+                  }
+               }
+               when "Cancel" {
+                  exit;
+               }
+            }
+         }
+         else {
+            assistant FaultDeferralMainPage(FaultDeferralMainPageInfo) {
+               when CANCEL
+                  {
+                  exit;
+               }
+            }
+         }
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to defer the fault.");
+      }
+   }
+}
+command RemoveMeasurement for AvExeTaskMeasurement {
+   label = "";
+   mode = SingleRecord;
+   enabled = [MxUniqueKey = null and MeasuredUser = null];
+   execute {
+      confirm("Do you want to remove the measurement?") {
+         when OK {
+            call DeleteMeasurement(MeasurementId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+command RemoveToolCommand for AvExeTaskTool {
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [ToolStatus = "Pending"];
+   execute {
+      confirm("Do you want to remove the tool requirement?") {
+         when OK {
+            call DeleteTaskTool(TaskToolId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RemoveRemovalPartCommand for AvRemovedParts {
+
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [true];
+   execute {
+      confirm("Do you want to remove the part removal requirement?") {
+         when OK {
+            call RemovePart(TaskPartId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+
+command RemoveInstallPartCommand for AvInstalledParts {
+
+   label = "Remove";
+   mode = SingleRecord;
+   enabled = [true];
+   execute {
+      confirm("Do you want to remove the part installation requirement?") {
+         when OK {
+            call RemovePart(TaskPartId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command CreateReturnLineCommand for AvRemovedParts {
+   enabled = [TaskReturnLineSeq = null and parent.Objstate in("RELEASED", "WORKSTARTED") and RemovalReasonCode != "ACCESS" and RemovalStates != "Cancelled"];
+   label = "Create Return Line";
+   mode = SingleRecord;
+   execute {
+      call CreateReturnLine(TaskPartId, TaskSeq, RemovedPartNo, RemovedQuantity, RemovedSerialNo, RemovedBatchNo);
+   }
+}
+
+command CancelRemovelCommand for AvRemovedParts {
+   enabled = [RemovalStates = "Pending" and parent.Objstate in("RELEASED", "WORKSTARTED") and TaskControlAuthorityEnabled = "Yes"];
+   label = "Cancel";
+   mode = SingleRecord;
+   execute {
+      call CancelPart(TaskPartId);
+      if[AvExeTaskRef.ClassCode = "CORR" and Sensitivities != null] {
+         call SaveOverallTaskSensitivity(parent.AircraftRef.AltId, parent.FaultId, parent.EtopsSignificant, parent.FailedSystemAltId, TaskPartId);
+      }
+   }
+}
+
+command RequestDeferral for AvExeTask {
+   visible = [IsCertified = "PENDING" and Objstate != "WORKSTARTED" and(AvDeferralRequestRef = null or AvDeferralRequestRef.DeferralRequestStatus = "Rejected" or AvDeferralRequestRef.DeferralRequestStatus = "Pending" or AvDeferralRequestRef.MocRequired = false)];
+   label = "Request Deferral";
+   enabled = [AvFaultRef.UserRole != "MM_MAINT_OPERATIONS_CONTROLLER" and AvFaultRef.Objstate = "Open"];
+   variable SelectReferenceURL Text;
+   variable ExternalPagePath Text;
+   variable AType Text;
+   variable ASource Text;
+   variable ATaskId Text;
+   variable IsDeferAllowed Boolean;
+   execute {
+      if[IsNonRoutine = true] {
+         call CheckDeferNr(FaultId) into IsDeferAllowed;
+         if[IsDeferAllowed = true] {
+            set ExternalPagePath = "/lmocweb/select-reference/index.html";
+            set AType = "DEFERRAL";
+            set ASource = "MM";
+            set ATaskId = ExternalId;
+            call GetSelectReferenceUrl(ExternalPagePath, ATaskId, AType, ASource) into SelectReferenceURL;
+            navigate "${SelectReferenceURL}";
+         }
+         else {
+            confirm("Add the Logbook Reference to defer the Non-Routine") {
+               when OK {
+                  navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FaultId]";
+               }
+               when CANCEL {
+                  refresh;
+               }
+            }
+         }
+      }
+      else {
+         set ExternalPagePath = "/lmocweb/select-reference/index.html";
+         set AType = "DEFERRAL";
+         set ASource = "MM";
+         set ATaskId = ExternalId;
+         call GetSelectReferenceUrl(ExternalPagePath, ATaskId, AType, ASource) into SelectReferenceURL;
+         navigate "${SelectReferenceURL}";
+      }
+   }
+}
+
+command SaveResubmitReason for ResubmitDeferralRequestVirtual {
+   label = "OK";
+   enabled = [ReauthorizationReason != null];
+   execute {
+      call ResubmitDeferral(FaultId, ReauthorizationReason);
+      success("Deferral request resubmitted.");
+      exit OK;
+   }
+}
+
+command FaultSearchCommand {
+   label = "Fault Search";
+
+   execute {
+      navigate "page/FlmFaultSearch/FlmFaultSearch?$filter=(AircraftTypeCode eq $[AircraftRef.AircraftTypeCode]) and (RegCode eq $[AircraftRef.RegCode])";
+   }
+}
+
+command RaiseNonRoutineFromTaskDetailsCommand for AvExeTask {
+   label = "Raise Non Routine";
+   enabled = [AvAircraftWorkPackageRef.Objstate = "InWork"];
+   variable FaultIdVar Number;
+   variable RaiseNonRoutineFromTaskDetailsInfo Structure(RaiseNonRoutineFromTaskDetailsInfoStructure);
+   execute {
+      copy this into RaiseNonRoutineFromTaskDetailsInfo;
+      set RaiseNonRoutineFromTaskDetailsInfo.FoundOnId = TaskSeq;
+      set RaiseNonRoutineFromTaskDetailsInfo.Source = "TASK";
+      set RaiseNonRoutineFromTaskDetailsInfo.Title = "Raise Non Routine" {
+         translatable = true;
+      }
+      assistant RaiseFaultAssistant(RaiseNonRoutineFromTaskDetailsInfo) into(FaultIdVar) {
+         when OK {
+            navigate {
+               page FaultDetailsPage {
+                  filter(FaultIdVar, FaultId);
+               }
+            }
+         }
+      }
+   }
+}
+
+command EvaluateNonRoutineCommand for AvExeTask {
+   label = "Evaluate";
+   visible = [not IsRoutine and ClassCode = "CORR" and not Evaluated and Objstate != "FINISHED"];
+   execute {
+      confirm("Mark this as evaluated?") {
+         when OK {
+            call EvaluateNonRoutineService(FaultId, FaultAltId);
+            exit OK;
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command StartCommand for JtTaskResourceDemandQuery {
+   label = "Start";
+   mode = SingleRecord;
+   variable HasExistingInWorkWP Boolean;
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   visible = [Rowstate in("ASSIGNED") and AssignedResourceId = parent.CurrentUser and(not AvAircraftWorkPackageRef.IsHeavyMaintenance or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId = null) or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null))];
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [HmNonRoutineApprovalRef.ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this. ") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CheckInworkWp(AircraftId, Location) into HasExistingInWorkWP;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if[HasExistingInWorkWP = false and IsPanelValidated = true] {
+         call GetTimestamp(Site) into StartTime;
+         if [parent.Objstate in("RELEASED")] {
+            call UpdateTaskStart(TaskSeq, Site);
+            call StartAssignment(TaskSeq, ExecutionInstanceSeq, StartTime, Site);
+         }
+         else {
+            call StartAssignment(TaskSeq, ExecutionInstanceSeq, StartTime, Site);
+         }
+      }
+      else {
+         alert("A work package is already in work for this aircraft at another location. Close it to start another one.");
+      }
+   }
+}
+
+command FinishCommand for JtTaskResourceDemandQuery {
+   label = "Finish";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = parent.CurrentUser and parent.Objstate != "FINISHED" and(Rowstate = "ASSIGNED" or(Rowstate = "WORKSTARTED" and IsClockedIn = true)) and(not AvAircraftWorkPackageRef.IsHeavyMaintenance or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId = null) or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null))];
+   variable RecordWorkStartTime Timestamp;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and AvExeTaskRef.HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [HmNonRoutineApprovalRef.ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      copy this into RecordWorkInfo;
+      call GetTimestamp(Site) into RecordWorkStartTime;
+
+      set RecordWorkInfo.RecordWorkStartTime = RecordWorkStartTime;
+      set RecordWorkInfo.FaultId = parent.FaultId;
+      set RecordWorkInfo.SignedBy = parent.SignedBy;
+      set RecordWorkInfo.AircraftWpId = parent.AircraftWpId;
+      set RecordWorkInfo.AircraftId = parent.AircraftId;
+      set RecordWorkInfo.FlightId = parent.FlightId;
+      set RecordWorkInfo.Objstate = parent.Objstate;
+      set RecordWorkInfo.KeyRef = parent.keyref;
+      set RecordWorkInfo.LuName = luname;
+      set RecordWorkInfo.AssignmentStatus = Rowstate;
+      set RecordWorkInfo.ScheduledHours = PlannedHoursFormat;
+      set RecordWorkInfo.AssignmentStart = AssignmentStart;
+      set RecordWorkInfo.AssignedUserResourceSeq = AssignedResourceSeq;
+      set RecordWorkInfo.Source = "Finish" {
+         translatable = false;
+      }
+      set RecordWorkInfo.ClassCode = parent.ClassCode;
+      set RecordWorkInfo.SubclassCode = parent.SubclassCode;
+      if [Remark != "Certifier"] {
+         set RecordWorkInfo.CertifyWorkPerformed = false;
+      }
+      set RecordWorkInfo.IsEditTaskCardAccess = false;
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+
+   }
+}
+command RecordWorkAssignmentCommand for JtTaskResourceDemandQuery {
+   label = "Record Work";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = parent.CurrentUser and parent.Objstate != "FINISHED" and(Rowstate = "ASSIGNED" or(Rowstate = "WORKSTARTED" and IsClockedIn = true)) and(not AvAircraftWorkPackageRef.IsHeavyMaintenance or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId = null) or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null))];
+   variable RecordWorkStartTime Timestamp;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable IsPanelValidated Boolean;
+   variable CheckConnectedTasks Boolean;
+
+   execute {
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      copy this into RecordWorkInfo;
+      call GetTimestamp(Site) into RecordWorkStartTime;
+      set RecordWorkInfo.RecordWorkStartTime = RecordWorkStartTime;
+      set RecordWorkInfo.FaultId = parent.FaultId;
+      set RecordWorkInfo.SignedBy = parent.SignedBy;
+      set RecordWorkInfo.AircraftWpId = parent.AircraftWpId;
+      set RecordWorkInfo.AircraftId = parent.AircraftId;
+      set RecordWorkInfo.FlightId = parent.FlightId;
+      set RecordWorkInfo.Objstate = parent.Objstate;
+      set RecordWorkInfo.KeyRef = parent.keyref;
+      set RecordWorkInfo.LuName = luname;
+      set RecordWorkInfo.AssignmentStatus = Rowstate;
+      set RecordWorkInfo.ScheduledHours = PlannedHoursFormat;
+      set RecordWorkInfo.AssignmentStart = AssignmentStart;
+      set RecordWorkInfo.AssignedUserResourceSeq = AssignedResourceSeq;
+      set RecordWorkInfo.Source = "RecordWork" {
+         translatable = false;
+      }
+      set RecordWorkInfo.ClassCode = parent.ClassCode;
+      set RecordWorkInfo.SubclassCode = parent.SubclassCode;
+      if [Remark != "Certifier"] {
+         set RecordWorkInfo.CertifyWorkPerformed = false;
+      }
+      set RecordWorkInfo.IsEditTaskCardAccess = false;
+      set RecordWorkInfo.IsHeavyMaintenance = AvAircraftWorkPackageRef.IsHeavyMaintenance;
+      set RecordWorkInfo.HmContractLineNo = AvExeTaskRef.HmContractLineNo;
+      set RecordWorkInfo.NeedCommercialApproval = HmNonRoutineApprovalRef.NeedCommercialApproval;
+      set RecordWorkInfo.ProceedAtRisk = HmNonRoutineApprovalRef.ProceedAtRisk;
+      set RecordWorkInfo.IsExecutionBlockedByCap = AvExeTaskRef.IsExecutionBlockedByCap;
+      set RecordWorkInfo.ApprovalStatus = HmNonRoutineApprovalRef.ApprovalStatus;
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command ReviseTaskCardCommand for JtTaskResourceDemandQuery {
+   label = "Revise Task Card";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = parent.CurrentUser and parent.Objstate = "WORKSTARTED" and Rowstate = "COMPLETED"];
+   variable RecordWorkStartTime Timestamp;
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   execute {
+      copy this into RecordWorkInfo;
+      call GetTimestamp(Site) into RecordWorkStartTime;
+
+      set RecordWorkInfo.RecordWorkStartTime = RecordWorkStartTime;
+      set RecordWorkInfo.FaultId = parent.FaultId;
+      set RecordWorkInfo.SignedBy = parent.SignedBy;
+      set RecordWorkInfo.AircraftWpId = parent.AircraftWpId;
+      set RecordWorkInfo.AircraftId = parent.AircraftId;
+      set RecordWorkInfo.FlightId = parent.FlightId;
+      set RecordWorkInfo.Objstate = parent.Objstate;
+      set RecordWorkInfo.KeyRef = parent.keyref;
+      set RecordWorkInfo.LuName = luname;
+      set RecordWorkInfo.AssignmentStatus = Rowstate;
+      set RecordWorkInfo.ScheduledHours = PlannedHoursFormat;
+      set RecordWorkInfo.AssignmentStart = AssignmentStart;
+      set RecordWorkInfo.AssignedUserResourceSeq = AssignedResourceSeq;
+      set RecordWorkInfo.Source = "Finish" {
+         translatable = false;
+      }
+      set RecordWorkInfo.ClassCode = parent.ClassCode;
+      set RecordWorkInfo.SubclassCode = parent.SubclassCode;
+      if [Remark != "Certifier"] {
+         set RecordWorkInfo.CertifyWorkPerformed = false;
+      }
+      set RecordWorkInfo.IsEditTaskCardAccess = false;
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command PauseAssignmentCommand for JtTaskResourceDemandQuery {
+   label = "Pause";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = CurrentUser and Rowstate = "WORKSTARTED" and IsClockedIn = true];
+
+   execute {
+      call PauseAssignment(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command ContinueAssignmentCommand for JtTaskResourceDemandQuery {
+   label = "Continue";
+   mode = SingleRecord;
+   visible = [AssignedResourceId = CurrentUser and Rowstate = "WORKSTARTED" and IsClockedIn = false];
+
+   execute {
+      call ContinueAssignment(TaskSeq, ExecutionInstanceSeq);
+   }
+}
+
+command FinalSignOff for AvExeTask {
+   label = "Final Sign-Off";
+   visible = [Objstate = "WORKSTARTED" and HasSignedTaskChildRecords = "SIGNED" and(CertifierUser != CurrentUser or CertifierUser = null) and(not AvAircraftWorkPackageRef.IsHeavyMaintenance or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId = null) or(AvAircraftWorkPackageRef.IsHeavyMaintenance and AvAircraftWorkPackageRef.HmContractId != null and AvExeTaskRef.HmContractLineNo != null))];
+
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+   variable TaskSignOffPermission Text;
+   variable StartedExecutionInstances Boolean;
+
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [HmNonRoutineApprovalRef.ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+
+      call GetCurrentUser() into CurrentUser;
+      call GetTaskSignOffPermission(CurrentUser) into TaskSignOffPermission;
+      call HasStartedExecutionInstances(TaskSeq, ExecutionInstanceSeq) into StartedExecutionInstances;
+      if[TaskSignOffPermission = "Yes" and StartedExecutionInstances = false] {
+         copy this into RecordWorkInfo;
+         set RecordWorkInfo.Source = "Final Sign-Off" {
+            translatable = false;
+         }
+         set RecordWorkInfo.IsEditTaskCardAccess = false;
+         assistant RecordWorkAssistant(RecordWorkInfo) {
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         if[TaskSignOffPermission = "No"] {
+            error("Missing task sign-off permission. Contact system administrator.");
+         }
+         else {
+            error("Cannot complete the task while assignments are in progress.");
+         }
+      }
+   }
+}
+
+command CompleteCriticalItem for AvCriticalItem {
+   label = "Complete";
+   emphasis Complementary9 = [true];
+   mode = SingleRecord;
+   enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and Objstate != "Completed"];
+   execute {
+      confirm("Do you want to complete the Critical Item [${CriticalItem}]?") {
+         when OK {
+            call CompleteCriticalItem(CriticalItemId);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command RefreshCriticalItem for AvCriticalItem {
+   execute {
+      call Refresh();
+   }
+}
+
+command IpcPartSearch {
+   label = "IPC Part Search";
+
+   execute {
+      navigate "page/CfgSubChapter/CfgSubChapterPage;$filter=AsmCode eq $[AssemblyTypeCode] and ModelCode eq $[AircraftRegCode] and SubCode eq $[ConfigPosition];initcontext=TaskSeq:$[TaskSeq]";
+   }
+
+}
+
+command RemoveZone for AvExeTaskZone {
+   label = "";
+   mode = SingleRecord;
+   enabled = [IsOpenPanelsExist = false and not parent.ClassCode in("MPC")];
+   execute {
+      confirm("Do you want to remove the zone and related panels?") {
+         when OK {
+            call DeleteZone(ZoneId, TaskSeq, AcZoneSeq);
+         }
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+command AviationParts {
+   execute {
+      navigate "/page/MxPartDefinitionSearch/PartDefinition";
+   }
+}
+command AviationInventories {
+   label = "Rotable Inventories";
+   execute {
+      navigate "page/MxInventorySearch/AviationInventorySearch";
+   }
+}
+
+command OldAddTaskPartsCommand for AvExeTask {
+   label = "Add Part(Old)";
+   enabled = [IsCertified = "PENDING"];
+   visible = [IsCertified = "PENDING"];
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      assistant PartsAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command AddTaskPartsCommand for AvExeTask {
+   label = "Add/Remove Part";
+   enabled = [IsCertified = "PENDING"];
+   visible = [IsCertified = "PENDING"];
+   variable PartsInfo Structure(PartsInfoAssistantStructure);
+   execute {
+      copy this into PartsInfo;
+      set PartsInfo.FaultId = null;
+      set PartsInfo.RequiredQuantity = 1;
+      set PartsInfo.AircraftAltId = AircraftRef.AltId;
+      set PartsInfo.AircraftRegCode = AircraftRef.RegCode;
+      set PartsInfo.WpId = AircraftWpId;
+      assistant AddRemovePartAssistant(PartsInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command EditTaskCardCommand for AvExeTask {
+   label = "Edit Task Card";
+   enabled = [Objstate = "WORKSTARTED" and IsTaskHasSignedRecords = true and TaskControlAuthorityEnabled = "Yes"];
+   visible = [Objstate = "WORKSTARTED" and IsTaskHasSignedRecords = true and TaskControlAuthorityEnabled = "Yes"];
+
+   variable RecordWorkInfo Structure(RecordWorkInfoStructure);
+
+   execute {
+      if [AvAircraftWorkPackageRef.IsHeavyMaintenance = true and IsNonRoutine = true and HmContractLineNo != null and HmNonRoutineApprovalRef.NeedCommercialApproval = true and HmNonRoutineApprovalRef.ProceedAtRisk = false and IsExecutionBlockedByCap] {
+         if [HmNonRoutineApprovalRef.ApprovalStatus in("NotStarted", "AwaitingApproval")] {
+            messagebox("Cannot Proceed", warning, "You need approval for this non routine, or Proceed at Risk must be enabled to continue.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+         if [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"] {
+            messagebox("Cannot Proceed", warning, "The approval request of this non routine is rejected. You cannot work on this.") {
+               when "OK" {
+                  exit;
+               }
+            }
+         }
+      }
+
+      call ValidatePanelsForTask(TaskSeq) into IsPanelValidated;
+      call CanMpcCloseStart(TaskSeq) into CheckConnectedTasks;
+
+      if [IsPanelValidated = false] {
+         messagebox("", warning, "Open all required panels before starting or finishing this task.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      if [CheckConnectedTasks = false] {
+         messagebox("", warning, "You cannot work on the MPC Close task until you have completed the MPC Open task and maintenance tasks for the same panel.") {
+            when "OK" {
+               exit;
+            }
+         }
+      }
+
+      copy this into RecordWorkInfo;
+      set RecordWorkInfo.Source = "RecordWork" {
+         translatable = false;
+      }
+      set RecordWorkInfo.IsEditTaskCardAccess = true;
+      assistant RecordWorkAssistant(RecordWorkInfo) {
+         when CANCEL {
+            exit;
+         }
+      }
+   }
+}
+
+command CancelPartCommand for AvInstalledParts {
+   label = "";
+   mode = SingleRecord;
+   variable InstallPartsInfo Structure(InstallPartsInfoStructure);
+
+   execute {
+      if [MaintMaterialReqRef.Qty > 0] {
+
+         copy this into InstallPartsInfo;
+         set InstallPartsInfo.PartName = AvPartNumberRef.PartName;
+         assistant CancelPartAssistant(InstallPartsInfo) {
+            when CANCEL {
+               exit;
+            }
+         }
+      }
+      else {
+         call CancelParts(TaskPartId);
+      }
+
+      if[AvExeTaskRef.ClassCode = "CORR" and Sensitivities != null] {
+         call SaveOverallTaskSensitivity(parent.AircraftRef.AltId, parent.FaultId, parent.EtopsSignificant, parent.FailedSystemAltId, TaskPartId);
+      }
+   }
+}
+
+--------------------------------- SELECTORS ---------------------------------
+
+selector AvExeTaskDetailsSelector for AvExeTask {
+   label = "${Barcode}";
+   static Barcode {
+      label = "Barcode";
+
+   }
+}
+
+
+selector AvMeasurementTypeDetailsSelector for AvMeasurementType {
+   static MeasurementTypeCode;
+   static MeasurementTypeDesc;
+}
+
+@Override
+selector AvPartNumberSelector for AvPartNumber {
+   orderby = PartNumber;
+   label = "";
+   static PartNumber;
+   static Manufacturer;
+   static PartName;
+   exclude PartNumberId;
+}
+selector AvToolSpecificationNewSelector for AvToolSpecification {
+   label = "";
+   orderby = ToolSpecificationCode;
+   static ToolSpecificationCode;
+   static ToolSpecificationName;
+   static InventoryClassCode;
+}
+
+selector FoundOnTaskSelector for AvExeTask {
+   label = "";
+   static Barcode;
+   static Description {
+      label = "Name";
+   }
+}
+
+selector FoundOnWorkPackageSelector for AvAircraftWorkPackage {
+   label = "";
+   static Barcode {
+      label = "Work Package Barcode";
+   }
+   static WorkPackageName;
+}
+---------------------------------- GROUPS -----------------------------------
+group AvExeTaskGroup for AvExeTask {
+   label = "Details";
+   field Description {
+      label = "Name";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      visible = [Sensitivities != null];
+      editable = [false];
+   }
+   field TaskCode {
+      visible = [TaskCode != null];
+   }
+   badge Objstate {
+      label = "Status";
+      emphasis Primary = [Objstate = "RELEASED"];
+      emphasis Complementary7 = [Objstate = "WORKSTARTED"];
+      emphasis True = [Objstate = "FINISHED"];
+      emphasis Neutral = [Objstate = "REMOVED"];
+      size = Medium;
+   }
+   field IsNonRoutine {
+      label = "Non Routine Fault";
+      size = Medium;
+      visible = [IsNonRoutine];
+   }
+   field AssemblyTypeName {
+      label = "Aircraft";
+      editable = [false];
+      size = Medium;
+   }
+   field Barcode {
+      label = "Barcode";
+      size = Medium;
+   }
+   field ConfigPosition {
+      label = "Config Position";
+      editable = [false];
+      size = Medium;
+   }
+   field ClassCode {
+      label = "Class";
+      editable = [false];
+      size = Medium;
+   }
+   field SubclassCode {
+      label = "Subclass";
+      editable = [false];
+      size = Medium;
+   }
+   field PriorityId {
+      label = "Task Priority";
+      size = Medium;
+   }
+   field Location {
+      label = "Task Location";
+      editable = [false];
+      size = Medium;
+   }
+   field ActualFinish {
+      label = "Last Updated On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      size = Medium;
+   }
+   badge OverallAssignmentsProgress {
+      emphasis Neutral = [OverallAssignmentsProgress = "NotStarted"];
+      emphasis Complementary2 = [OverallAssignmentsProgress = "InProgress"];
+      emphasis Complementary8 = [OverallAssignmentsProgress = "Paused"];
+      emphasis Complementary3 = [OverallAssignmentsProgress = "Finished"];
+      editable = [false];
+   }
+   field AvAircraftWorkPackageRef.WoNumber {
+      label = "Work Package";
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopReason {
+      visible = [Objstate != "FINISHED" or(Objstate = "FINISHED" and IsJobstopDetailsVisible = true)];
+      editable = [false];
+      size = Medium;
+   }
+   field LatestJobStopNote {
+      visible = [Objstate != "FINISHED" or(Objstate = "FINISHED" and IsJobstopDetailsVisible = true)];
+      editable = [false];
+      size = Medium;
+      multiline = true;
+   }
+   field EtopsSignificant {
+      label = "ETOPS Significant";
+   }
+   badge RequestStateCd {
+      label = "Synchronization Status";
+      visible = [false];
+      style = TextOnly;
+      emphasis Ok = [RequestStateCd = "Succeeded"];
+      emphasis Complementary7 = [RequestStateCd = "Sent"];
+      emphasis Alert = [RequestStateCd = "Failed"];
+   }
+   field RequestCorrelationId {
+      label = "Correlation ID";
+      visible = [false];
+   }
+   field  CompletedBy {
+      label = "Completed By";
+      visible = [Objstate = "FINISHED"];
+   }
+   field LongDescription {
+      label = "Description";
+      editable = [false];
+      size = Large;
+      multiline = true;
+   }
+
+   badge OverallPanelStatus {
+      visible = [not ClassCode in("MPC")];
+      emphasis Neutral = [OverallPanelStatus = "NoMpc"];
+      emphasis Warning = [OverallPanelStatus = "ToBeOpened"];
+      emphasis OK = [OverallPanelStatus = "Opened"];
+      emphasis OK = [OverallPanelStatus = "ReadyToClose"];
+      emphasis OK = [OverallPanelStatus = "Closed"];
+      editable = [false];
+   }
+
+   static CriticalItemCount {
+      label = "Active Critical Items";
+   }
+}
+group TimeSummaryGroup for AvExeTask {
+   label = "Time Summary";
+
+   field ActualStart {
+      label = "Actual Start";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      size = Medium;
+   }
+
+   field ActualFinish {
+      label = "Actual End";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+      visible = [Objstate = "FINISHED"];
+      size = Medium;
+   }
+   field SchedRoutineHours {
+      label = "Scheduled Routine Hours";
+      visible = [IsRoutine];
+   }
+   field ActualRoutineHours {
+      label = "Actual Routine Hours";
+      visible = [IsRoutine];
+   }
+   field SchedNonRoutineHours {
+      label = "Scheduled Non-Routine Hours";
+      visible = [not IsRoutine];
+   }
+   field ActualNonRoutineHours {
+      label = "Actual Non-Routine Hours";
+      visible = [not IsRoutine];
+   }
+}
+group AvFaultGroup for AvExeTask {
+   label = "Fault Details";
+   visible = [FaultId != null];
+   field FailedSystem {
+      label = "Failed System";
+      size = Medium;
+   }
+   field TaskSeq {
+      label = "Found During";
+      visible = [IsNonRoutine and SourceConnectionLuName = "AvExeTask"];
+      size = Medium;
+      lovswitch {
+         when [FoundDuringTaskStatus != "Removed"] {
+            lov AvExeTaskRef with FoundOnTaskSelector {
+               hidekey = [true];
+               description = "${FoundOnTaskRef.Barcode} - ${FoundOnTaskRef.Description}";
+               details = "page/FlmTaskDetail/MyWorkPage?$filter=TaskSeq eq $[FoundOnId]";
+            }
+         }
+         when [FoundDuringTaskStatus = "Removed"] {
+            lov AvExeTaskRef with FoundOnTaskSelector {
+               hidekey = [true];
+               description = "${FoundOnTaskRef.Barcode} - ${FoundOnTaskRef.Description}";
+               details = "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[FoundDuringFaultId]";
+            }
+         }
+      }
+   }
+   // navigation will add once the work package details page for base maintenance is implemented
+   field AircraftWpId {
+      label = "Found During";
+      visible = [IsNonRoutine and SourceConnectionLuName = "WorkPackage"];
+      size = Medium;
+      lovswitch {
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = 1] {
+            lov AvAircraftWorkPackageRef with FoundOnWorkPackageSelector {
+               hidekey = [true];
+               description = "${FoundOnWorkPackageRef.Barcode} - ${FoundOnWorkPackageRef.WorkPackageName}";
+               details = "page/FlmHmWorkPackage/FlmHmWorkPackagePage?$filter=Barcode eq $[FoundOnWorkPackageRef.Barcode]";
+            }
+         }
+         when [AvAircraftWorkPackageRef.IsHeavyMaintenance = 0] {
+            lov AvAircraftWorkPackageRef with FoundOnWorkPackageSelector {
+               hidekey = [true];
+               description = "${FoundOnWorkPackageRef.Barcode} - ${FoundOnWorkPackageRef.WorkPackageName}";
+               details = "page/FlmAircraftTurnsDetails/AircraftTurnDetails?$filter=WorkPackageId eq $[AvExeTaskRef.AircraftWpId]";
+            }
+         }
+      }
+   }
+   field AvFaultRef.LogbookReference {
+      size = Medium;
+   }
+   field AvFaultRef.LogbookTypeCode {
+      label = "Logbook Type";
+      size = Medium;
+   }
+   field AvFaultRef.FaultSourceCode {
+      label = "Fault Source";
+      editable = [false];
+      size = Medium;
+   }
+   field AvFaultRef.FailureTypeCode {
+      label = "Failure Type";
+      editable = [false];
+      size = Medium;
+   }
+   field Evaluated {
+      size = Medium;
+   }
+   field EvaluatedBy {
+      size = Medium;
+   }
+   field AvFaultRef.FaultSeverityCode {
+      label = "Fault Severity";
+      size = Medium;
+   }
+   field AvDeferralRequestRef.DeferralRequestStatus {
+      visible = [false];
+   }
+   field FlightSafetyImpact;
+   field FoundByUser {
+      label = "Found By";
+      visible = [true];
+      contactwidget {
+         enabled = [true];
+         source = User;
+      }
+   }
+   field FaultFoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field AvFaultRef.FaultCode;
+   field AvFaultRef.FoundOnDesc {
+      label = "Found During Flight";
+      editable = [false];
+      visible = [(AvFaultRef.FoundOnType = "FLIGHT" or AvFaultRef.FoundOnType = "LOBBY" or AvFaultRef.FoundOnType = "WSL") and not IsNonRoutine];
+   }
+   field AvFaultRef.PhaseOfFlightCode {
+      label = "Phase Of Flight";
+      visible = [IsNonRoutine = false];
+      size = Medium;
+   }
+}
+
+group AvTaskActionGroup for AvExeTask {
+   label = "Last Action Taken";
+   visible = [(LastFaultActTakenUser != null or LastFaultActTakenDate != null or LastFaultActTaken != null)
+   or(LastTaskActTakenUser != null or LastTaskActTakenDate != null or LastTaskActTaken != null)];
+
+   field LastFaultActTakenUser {
+      label = "User";
+      visible = [FaultId != null];
+      editable = [false];
+      size = Medium;
+   }
+   field LastFaultActTakenDate {
+      label = "Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      visible = [FaultId != null];
+      editable = [false];
+   }
+   field LastFaultActTaken {
+      label = "Action Taken";
+      visible = [FaultId != null];
+      editable = [false];
+      size = FullWidth;
+      multiline = true;
+   }
+   field LastTaskActTakenUser {
+      label = "User";
+      visible = [FaultId = null];
+      editable = [false];
+      size = Medium;
+   }
+   field LastTaskActTakenDate {
+      label = "Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      visible = [FaultId = null];
+      editable = [false];
+   }
+   field LastTaskActTaken {
+      label = "Action Taken";
+      visible = [FaultId = null];
+      editable = [false];
+      size = FullWidth;
+      multiline = true;
+   }
+}
+
+group AddMeasurementGroup for AddMeasurementVirtual {
+   lov MeasurementTypeCodeRef with AvMeasurementTypeDetailsSelector using GetMeasurementTypeCode(TaskSeq) {
+      label = "Measurement Type";
+      description = MeasurementTypeCodeRef.MeasurementTypeDesc;
+      required = [true];
+   }
+   lov MeasurementValueRef with ReferenceAvMeasurementValueSelector using GetMeasurementValue(MeasurementTypeCodeRef.MeasurementTypeCode) {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CH"];
+   }
+   field MeasurementQty {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "ME"];
+   }
+   field MeasurementTypeCodeRef.EngineeringUnitCode {
+      label = "Units";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "ME"];
+   }
+   field MeasurementDateTime {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CME"];
+   }
+   field MeasurementText {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "TEXT"];
+   }
+   field MeasurementBoolean {
+      label = "Value";
+      visible = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CHK"];
+      required = [MeasurementTypeCodeRef.MeasurementCategoryCode = "CHK"];
+   }
+
+}
+
+group TaskToolGroup for AddTaskToolVirtual {
+   lov AvPartNumberRef with AvPartNumberSelector using GetPartNumber(PartNoId) {
+      label = "Part Number";
+      size = Medium;
+      searchable = true;
+      search = AvPartNumberRef.PartNumber, AvPartNumberRef.PartName;
+      description = AvPartNumberRef.PartNumber;
+      hidekey = [true];
+      validate command {
+         execute {
+            call GetDefaultToolSpec(PartNoId) into ToolSpecificationCode;
+         }
+      }
+   }
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+   }
+
+   lov AvToolSpecificationRef with AvToolSpecificationNewSelector  using GetToolSpec(PartNoId) {
+      label = "Specification";
+   }
+   field AvToolSpecificationRef.ToolSpecificationName {
+      label = "Specification Name";
+   }
+   field SchedDuration {
+      label = "Scheduled Hours (HH:MM)";
+      format = decimal;
+      required = [true];
+   }
+}
+
+group ResubmitDeferralGroup for ResubmitDeferralRequestVirtual {
+   label = "";
+   field ReauthorizationReason {
+      label = "Resubmission Reason";
+      multiline = true;
+      size = FullWidth;
+      required = [true];
+      maxlength = 500;
+   }
+}
+
+group DeferralRequestDetailGroup for AvExeTask {
+   label = "Deferral Information";
+   visible = [AvDeferralRequestRef.DeferralReferenceName != null];
+   badge AvDeferralRequestRef.DeferralRequestStatus {
+      label = "Deferral Request Status";
+      visible = [AvDeferralRequestRef.MocRequired != false];
+      style = TextOnly;
+      emphasis Complementary7 = [AvDeferralRequestRef.DeferralRequestStatus = "Pending"];
+      emphasis True = [AvDeferralRequestRef.DeferralRequestStatus = "Approved"];
+      emphasis Alert = [AvDeferralRequestRef.DeferralRequestStatus = "Rejected"];
+   }
+   badge AvDeferralRequestRef.MocRequired {
+      label = "Requires MOC Authorization";
+      style = TextOnly;
+      emphasis True = [AvDeferralRequestRef.MocRequired = false];
+      emphasis Alert = [AvDeferralRequestRef.MocRequired = true];
+   }
+   field AvDeferralRequestRef.DeferralReferenceName {
+      label = "Selected Reference";
+      visible = [AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved") or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralClassCode {
+      label = "Deferral Type";
+      visible = [AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved") or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralAuthorization {
+      label = "Deferral Authorization No";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.MocRequired != false) and(AvDeferralRequestRef.DeferralRequestStatus = "Approved")];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.DeferralReqReasonCode {
+      label = "Deferral Reason";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved")) or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+   }
+   field AvDeferralRequestRef.Note {
+      label = "Deferral Note";
+      visible = [(Objstate = "Deferred") or(AvDeferralRequestRef.DeferralRequestStatus in("Pending", "Approved")) or(AvDeferralRequestRef.MocRequired = false)];
+      editable = [false];
+      multiline = true;
+   }
+}
+
+@DynamicComponentDependency ADCON
+group NonRoutinesAprrovalGroup for AvExeTask {
+   label = "Non Routine Commercial Approval";
+   collapsed = [true];
+   visible = [IsNonRoutine and AvAircraftWorkPackageRef.IsHeavyMaintenance and HmContractLineNo != null];
+   field HmNonRoutineApprovalRef.NeedCommercialApproval;
+   field HmNonRoutineApprovalRef.ProceedAtRisk;
+   badge HmNonRoutineApprovalRef.ApprovalStatus {
+      label = "NR Approval Status";
+      emphasis Primary = [HmNonRoutineApprovalRef.ApprovalStatus = "NotStarted"];
+      emphasis Complementary6 = [HmNonRoutineApprovalRef.ApprovalStatus = "AwaitingApproval"];
+      emphasis Success = [HmNonRoutineApprovalRef.ApprovalStatus = "Approved"];
+      emphasis False = [HmNonRoutineApprovalRef.ApprovalStatus = "Rejected"];
+   }
+}
+
+----------------------------------- LISTS -----------------------------------
+list AvExeTaskActionOnlineList for AvExeTaskAction {
+   orderby = ActionDate desc;
+   label = "";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+   }
+
+   field ActionDesc {
+      size = Large;
+      label = "Action Taken";
+      editable = [false];
+      multiline = true;
+   }
+   field ActionType {
+      label = "Type";
+      editable = [false];
+      size = Medium;
+   }
+   field ActionDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvExeTaskRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field ActionUser {
+      size = Medium;
+      label = "Signed By";
+      editable = [false];
+   }
+}
+
+list TaskMeasurementsList for AvExeTaskMeasurement {
+   orderby = MeasurementOrder;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+
+   }
+   lov AvMeasurementTypeRef with AvMeasurementTypeDetailsSelector {
+      label = "Measurement";
+      editable = [False];
+      size = Large;
+      description = AvMeasurementTypeRef.MeasurementTypeDesc;
+
+   }
+   field Quantity {
+      label = "Value";
+      size = Small;
+   }
+   badge MeasurementStatus {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Ok = [MeasurementStatus = "Signed"];
+      emphasis Alert = [MeasurementStatus = "Pending"];
+   }
+   field MeasuredDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvExeTaskRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field MeasuredUser {
+      label = "Signed By";
+      size = Small;
+   }
+   command RemoveMeasurement {
+      mode = SingleRecord;
+      icon = "delete";
+   }
+   command AddMeasurementCommand {
+      label = "";
+      icon = "new";
+   }
+
+}
+
+list AvExeTaskZoneList for  AvExeTaskZone {
+   label = "";
+   crudactions {
+      new {
+         enabled = [not parent.ClassCode in("MPC")];
+      }
+      delete {
+
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+   lov AvZoneCodeRef with ZoneCodeSelector using AircraftZoneLovFilter(parent.AircraftId, parent.TaskSeq) {
+      label = "Zone Code";
+
+      details = "page/MxZoneDetails/ZoneDetails?$filter=AdBrZoneId eq $[ZoneAltId]";
+      required = [true];
+
+   }
+   field ZoneName {
+      multiline = true;
+      size = FullWidth;
+   }
+
+   command RemoveZone {
+      mode = SingleRecord;
+      icon = "delete";
+   }
+}
+
+list AvExeTaskPartInstallationList for AvInstalledParts {
+   label = "";
+   orderby = PartGroupCode;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+   }
+   badge InstallStates {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Warning = [InstallStates = "Pending"];
+      emphasis Ok = [InstallStates = "Signed"];
+      emphasis Neutral = [InstallStates = "Cancelled"];
+      editable = [false];
+
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      columnexclude = [parent.SensitiveInsPartsCount = 0];
+      editable = [false];
+   }
+   badge IsPartWarningsExist {
+      label = "Configuration Warning";
+      style = TextOnly;
+      emphasis Alert = [IsPartWarningsExist = true];
+      emphasis Ok = [IsPartWarningsExist = false];
+      editable = [false];
+   }
+   field SchedulingAction {
+      label = "Scheduling Action";
+      editable = [false];
+   }
+   field PartGroupCode {
+      editable = [false];
+   }
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+      size = Large;
+      editable = [false];
+   }
+   lov PartNumberRef with SourceInterchangePartSelector using GetInterchangeablePart(TaskSeq, MaintMaterialOrderNo, LineItemNo) {
+      label = "Part Number";
+      hidekey = [true];
+      required = [true];
+      editable = [SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0 and InstalledUser = null];
+   }
+   lov InstalledSerialRef with PartSerialCatalogSelector using GetSerialNo(InstalledPartNo, OriginalInstalledSerialNo, TaskSeq) {
+      label = "Serial Number";
+      hidekey = [true];
+      editable = [((SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0) or(SchedulingAction = "NOREQ"))and(InstalledUser = null)];
+      description = InstalledSerialNo;
+   }
+   lov InstalledBatchRef with LotBatchMasterSelector using GetBatchNo(InstalledPartNo, TaskSeq) {
+      label = "Batch Number";
+      hidekey = [true];
+      description = InstalledBatchNo;
+      editable = [((SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0) or(SchedulingAction = "NOREQ")) and(InstalledUser = null)];
+      validate command {
+         variable IsQuantityUnavailable Boolean;
+         execute {
+            call CheckQuantiyForBatch(InstalledPartNo, TaskSeq, InstalledQuantity, InstalledBatchNo) into IsQuantityUnavailable;
+            if[IsQuantityUnavailable] {
+               set InstalledBatchNo = OriginalInstalledBatchNo;
+               error("The available quantity in the selected batch is less than the requested quantity.");
+            }
+         }
+      }
+   }
+   field ConfigSlotPositionRef.ConfigSlotCode {
+      label = "Config Slot";
+      editable = [false];
+   }
+   lov AssmblSlotPositionRef with ReferenceAvConfigSlotPositionNewSelector using GetAssemblConfigSlotPosLov(AssemblyTypeCode, parent.AircraftId) {
+      label = "Assembly Position";
+      size = Small;
+      hidekey = [true];
+      description = AssmblSlotPositionRef.ConfigSlotPositionCode;
+      editable = [((SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0) or(SchedulingAction = "NOREQ"))and(InstalledUser = null)];
+
+   }
+   lov ConfigSlotPositionRef with ReferenceAvConfigSlotPositionNewSelector using GetConfigSlotPositionLov(ConfigSlotPositionRef.ConfigSlotCode, AssemblyTypeCode) {
+      label = "Position";
+      hidekey = [true];
+      description = ConfigSlotPositionRef.ConfigSlotPositionCode;
+      editable = [((SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0) or(SchedulingAction = "NOREQ"))and(InstalledUser = null)];
+      validate command {
+         variable InventorySearchResponse {
+            type = Structure(InventorySearchResponseStructure);
+         }
+         variable CmsRequestInfo {
+            type = Structure(CmsDataStructure);
+         }
+         variable RemovalSerialNo Text;
+
+         execute {
+            set ConfigSlotPositionId = ConfigSlotPositionRef.ConfigSlotPositionId;
+            call GetRemovalCmsRequestData(Objkey, ConfigSlotPositionId) into CmsRequestInfo;
+            call GetRemovalInfoService(CmsRequestInfo.AircraftAltId, CmsRequestInfo.ConfigSlotCode, CmsRequestInfo.ConfigSlotPosition, CmsRequestInfo.AssemblyConfigSlotCode, CmsRequestInfo.AssemblyConfigSlotPosition) into InventorySearchResponse;
+            if [InventorySearchResponse != null] {
+               set RemovalSerialNo = InventorySearchResponse.SerialNumber;
+               call UpdateRemovedSerialNumber(RemovalSerialNo, TaskPartId);
+            }
+         }
+      }
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [AvPartGroupRef.IsCommonHardware = "FALSE"];
+      size = Medium;
+      editable = [false];
+   }
+   field Quantity {
+      label = "Quantity";
+      size = Small;
+      editable = [(AvPartNumberRef.InventoryClassCode = "BATCH" and InstalledUser = null) and((SchedulingAction = "REQ" and MaintMaterialReqRef.Qty > 0) or(SchedulingAction = "NOREQ"))];
+   }
+   badge InstalledConfigSlot {
+      visible = [(InstalledPartNo != null or InstalledQuantity != null) and InstalledConfigSlot = "Yes"];
+      label = "Mandatory Slot";
+      size = Small;
+      style = TextOnly;
+      emphasis Info = [InstalledConfigSlot = "Yes"];
+      editable = [false];
+   }
+   field InstalledDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvExeTaskRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field InstalledUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   field CreatedBy {
+      label = "Created By";
+      editable = [false];
+   }
+   field CancelledBy {
+      label = "Cancelled By";
+      editable = [false];
+   }
+   command CancelPartCommand {
+      enabled = [InstallStates = "Pending" and TaskControlAuthorityEnabled = "Yes"];
+      label = "Cancel";
+   }
+}
+
+list AvExeTaskPartRemoveList for AvRemovedParts {
+   label = "";
+   orderby = PartGroupCode;
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [true];
+      }
+   }
+   badge RemovalStates {
+      label = "Status";
+      size = Small;
+      style = TextOnly;
+      emphasis Warning = [RemovalStates = "Pending"];
+      emphasis Ok = [RemovalStates = "Signed"];
+      emphasis Neutral = [RemovalStates = "Cancelled"];
+      editable = [false];
+   }
+   badge Sensitivities {
+      label = "Sensitivities";
+      emphasis Warning = [true];
+      columnexclude = [parent.SensitiveRePartsCount = 0];
+      editable = [false];
+   }
+   badge IsPartWarningsExist {
+      label = "Configuration Warning";
+      style = TextOnly;
+      emphasis Alert = [IsPartWarningsExist = true];
+      emphasis Ok = [IsPartWarningsExist = false];
+      editable = [false];
+   }
+   lov RemovalReasonRef with ReferenceAvRemovalReasonSelector using GetRemovalReasonsForPart(AvPartNumberRef.IsSos) {
+      label = "Removal Reason";
+      editable = [RemovedUser = null];
+      description = RemovalReasonRef.RemovalReasonDesc;
+   }
+   field PartGroupCode {
+      editable = [false];
+   }
+   field AvPartNumberRef.PartName {
+      label = "Part Name";
+      size = Large;
+      editable = [false];
+   }
+   lov AvPartNumberRef with AvPartNumberSelector using GetSpecificPartNumberLov(PartGroupId) {
+      label = "Part Number";
+      hidekey = [true];
+      description = AvPartNumberRef.PartNumber;
+      editable = [RemovedUser = null];
+   }
+   field RemovedSerialNo {
+      label = "Serial Number";
+      editable = [RemovedUser = null];
+   }
+   field RemovedBatchNo {
+      label = "Batch Number";
+      editable = [RemovedUser = null];
+   }
+   field ConfigSlotPositionRef.ConfigSlotCode {
+      label = "Config Slot";
+      editable = [false];
+   }
+   field AssmblSlotPositionRef.ConfigSlotPositionCode {
+      label = "Assembly Position";
+      size = Medium;
+      editable = [false];
+   }
+   field ConfigSlotPositionRef.ConfigSlotPositionCode {
+      label = "Position";
+      editable = [false];
+   }
+   field AssemblyTypeCode {
+      label = "Assembly";
+      visible = [AvPartGroupRef.IsCommonHardware = "FALSE"];
+      size = Medium;
+      editable = [false];
+   }
+   field Quantity {
+      label = "Quantity";
+      size = Small;
+      editable = [false];
+   }
+   field PartSerialCatalogRef.OperationalCondition {
+      label = "Operational Condition";
+      size = Medium;
+      columnvisible = [RemovedUser != null];
+   }
+   badge RemovedConfigSlot {
+      visible = [(RemovedPartNo != null or RemovedQuantity != null) and RemovedConfigSlot = "Yes"];
+      label = "Mandatory Slot";
+      size = Medium;
+      style = TextOnly;
+      emphasis Info = [RemovedConfigSlot = "Yes"];
+      editable = [false];
+   }
+   field RemovedDate {
+      size = Medium;
+      label = "Date";
+      displaytimezone = AvExeTaskRef.CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+   field RemovedUser {
+      label = "Signed By";
+      editable = [false];
+   }
+   field CreatedBy {
+      label = "Created By";
+      editable = [false];
+   }
+   field CancelledBy {
+      editable = [false];
+   }
+
+   command CreateReturnLineCommand;
+   command CancelRemovelCommand;
+}
+
+@Override
+list AvPartNumberLovList for AvPartNumber {
+   label = "";
+   static PartNumberId {
+      searchable = false;
+      columnvisible = [false];
+   }
+   static Manufacturer;
+   static PartNumber;
+   static PartName;
+   static InventoryClassCode;
+}
+
+list TaskPartWarningsList for AvExeTaskPartWarning {
+   label = "Task Part Warnings";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field Code {
+      label = "Warning Code";
+      size = Medium;
+   }
+   field Warning {
+      label = "Warning Details";
+      multiline = true;
+      size = FullWidth;
+   }
+}
+
+list TimeReportsList for JtTaskTransaction {
+   label = "Time Reports";
+   defaultfilter = [(ParentTransactionId = null or(ParentTransactionId != null and TransactionTypeDb = "COLLECTIVE") or(ParentTransactionId != null and TaskConnectedToBundle = "TRUE" and ParentDemandType != "CREW")) and(DemandType = "EQUIPMENT" or DemandType = "PERSON" or DemandType = "CREW")];
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field Skill {
+      label = "Resource";
+   }
+   field JtTaskResourceRef.Remark {
+      label = "Assignment Role";
+   }
+   field SignedBy;
+   field ScheduledHours;
+   field ActualHours;
+   field ActualStart {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field ActualEnd {
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field CreatedBy;
+}
+
+list LaborSummaryTotalList for JtTaskLaborSummaryTotal {
+   label = "Summary Total";
+
+   field Skill;
+   field ScheduledHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+   field ActualHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+
+   summary = ScheduledHours, ActualHours;
+}
+
+list LaborSummaryBreakdownList for JtTaskLaborSummaryBreakdown {
+   label = "Summary Breakdown";
+   orderby = ResourceSeq, ResourceRemarkRank;
+   field Skill;
+   field ResourceRemark;
+   field ScheduledHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+   field ActualHours {
+      format = duration;
+      formatmask = HHMM;
+   }
+
+   summary = ScheduledHours, ActualHours;
+}
+
+list NonRoutinesList for AvExeTask {
+   label = "";
+   crudactions {
+      new {
+         enabled = [false];
+      }
+      delete {
+         enabled = [false];
+      }
+      edit {
+         enabled = [false];
+      }
+   }
+   field Barcode;
+   field Description {
+      label = "Name";
+      size = Large;
+      multiline = true;
+   }
+   badge Sensitivities {
+      emphasis Warning = [true];
+      columnexclude = [parent.SensitiveNRCount = 0];
+      editable = [false];
+   }
+   field AvFaultRef.FoundByUser {
+      label = "Found By User";
+      contactwidget {
+         enabled = [true];
+         source = Person;
+      }
+   }
+   field FaultFoundOnDate {
+      label = "Found On";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field FailedSystem;
+   badge AvFaultRef.Objstate {
+      label = "Status";
+      style = TextOnly;
+      size = Small;
+      emphasis Complementary7 = [AvFaultRef.Objstate = "Open"];
+      emphasis Ok = [AvFaultRef.Objstate = "Closed"];
+      emphasis Info = [AvFaultRef.Objstate = "Deferred"];
+   }
+}
+
+list AvExeTaskPanelList for AvExeTaskPanel {
+   label = "";
+   crudactions {
+      new {
+         enabled = [true];
+      }
+      delete {
+         enabled = [IsPanelOpened = false];
+      }
+      edit {
+         enabled = [false];
+      }
+      duplicate {
+         enabled = [false];
+      }
+   }
+
+   lov AvPanelCodeRef with PanelCodeSelector using AircraftPanelLovFilter(parent.AircraftId, parent.TaskSeq) {
+      label = "Panel Code";
+      details = "page/MxPanelDetails/PanelDetails?$filter=AdBrPanelId eq $[AvAircraftPanelRef.PanelAltId]";
+      required = [true];
+   }
+   field AvAircraftPanelRef.PanelDescription {
+      label = "Panel Name";
+      multiline = true;
+      size = FullWidth;
+   }
+
+   badge PanelStatus {
+      label = "Panel Status";
+      style = TextOnly;
+      size = Small;
+
+      emphasis Neutral = [PanelStatus = "NoMpc"];
+      emphasis Warning = [PanelStatus = "ToBeOpened"];
+      emphasis OK = [PanelStatus = "Opened"];
+      emphasis OK = [PanelStatus = "ReadyToClose"];
+      emphasis OK = [PanelStatus = "Closed"];
+   }
+   lov AvZoneCodeRef with ZoneCodeSelector {
+      label = "Panel Zone Code";
+      details = "page/MxZoneDetails/ZoneDetails?$filter=AdBrZoneId eq $[AvAircraftPanelRef.ZoneAltId]";
+      editable = [false];
+   }
+   field AvAircraftPanelRef.ZoneDescription {
+      label = "Panel Zone Name";
+      multiline = true;
+      size = FullWidth;
+   }
+
+}
+
+@Override
+list AssignmentsList for JtTaskResourceDemandQuery {
+   exclude PlannedHours, AllocatedHours, AllocatedStart, AllocatedFinish, FixedStart, WorkStart, AssignedResourceId;
+   command StartCommand;
+   command RecordWorkAssignmentCommand;
+   command FinishCommand;
+   command PauseAssignmentCommand;
+   command ContinueAssignmentCommand;
+   command ReviseTaskCardCommand;
+}
+
+list CriticalItemsList for AvCriticalItem {
+   label = "Critical Items";
+   orderby = Objstate, UpdatedDateTime;
+   crudactions {
+      new {
+         enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and parent.Objstate in("RELEASED", "WORKSTARTED")];
+      }
+      delete {
+         enabled = [(parent.IsHangarSupervisor or parent.IsHangarCrewLead) and Objstate != "Completed"];
+      }
+      edit {
+         enabled = [parent.IsHangarSupervisor or parent.IsHangarCrewLead and Objstate != "Completed"];
+      }
+      after command RefreshCriticalItem;
+   }
+
+   field CriticalItem {
+      label = "Critical Item";
+      editable = [Objstate != "Completed"];
+      size = Large;
+      multiline = true;
+      validate command {
+         execute {
+            set TaskBarcode = AvExeTaskRef.Barcode;
+            set TaskName = AvExeTaskRef.Description;
+            set TaskSeq = AvExeTaskRef.TaskSeq;
+            set AircraftWpId = AvExeTaskRef.AircraftWpId;
+         }
+      }
+   }
+
+   lov AvCriticalItemTypeRef with AvCriticalItemTypeSelector using GetCriticalItemTypeCode {
+      label = "Critical Item Type";
+      editable = [Objstate != "Completed"];
+      size = Medium;
+      description = AvCriticalItemTypeRef.Description;
+   }
+
+   lov AvCriticalItemSeverityRef with AvCriticalItemSeveritySelector using GetCriticalItemSeverityCode {
+      label = "Critical Item Severity";
+      editable = [Objstate != "Completed"];
+      size = Medium;
+      description = AvCriticalItemSeverityRef.Description;
+   }
+
+   static UpdatedUser {
+      label = "Updated By";
+   }
+
+   field UpdatedDateTime {
+      label = "Updated Date";
+      displaytimezone = UtcTimeZoneCode;
+      showtimezonebadge = true;
+      editable = [false];
+   }
+
+   badge Objstate {
+      label = "Status";
+      emphasis StatePreliminary = [Objstate = "Active"];
+      emphasis Complementary9 = [Objstate = "Completed"];
+      size = Small;
+   }
+
+   command CompleteCriticalItem {
+      mode = SingleRecord;
+   }
+}
+
+---------------------------------- DIALOGS ----------------------------------
+assistant AddMeasurementAssistant using AddMeasurementVirtualSet {
+   label = "Add Measurement";
+   savemode = OnLostFocus;
+
+   input(TaskSeq, TaskSite);
+   singlestep {
+      group AddMeasurementGroup;
+   }
+   command SaveMeasurement;
+   command Cancel;
+}
+
+assistant AddTaskToolAssistant using AddTaskToolVirtualSet {
+   label = "Add Tool";
+   savemode = OnLostFocus;
+
+   input(TaskSeq);
+   singlestep {
+      group TaskToolGroup;
+   }
+   command SaveTaskTool;
+   command Cancel;
+}
+
+assistant ResubmissionDeferralAssistant using ResubmitDeferralRequestVirtualSet {
+   label = "Resubmission Reason";
+   savemode = OnLostFocus;
+
+   input(FaultId);
+   singlestep {
+      group ResubmitDeferralGroup;
+   }
+   command SaveResubmitReason;
+   command Cancel;
+}
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

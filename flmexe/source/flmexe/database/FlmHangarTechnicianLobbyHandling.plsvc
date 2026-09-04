@@ -1,0 +1,101 @@
+-----------------------------------------------------------------------------
+--
+--  Logical unit: FlmHangarTechnicianLobbyHandling
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  241128  VAALLK  AD-14731, Added Non_Routines_Count___ function.
+-----------------------------------------------------------------------------
+
+layer Core;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Non_Routines_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   non_routine_count_ NUMBER := 0;
+
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      non_routine_count_ := Av_Aircraft_Work_Package_API.Get_Non_Routine_Count_By_Wp_Id(work_package_id_);
+   END IF;
+   
+   RETURN non_routine_count_;
+END Non_Routines_Count___;
+
+FUNCTION Get_Assigned_Count_By_Shift___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   assigned_count_in_my_shift_ NUMBER := 0;
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      assigned_count_in_my_shift_ := Flmexe_Util_API.Get_Assigned_Count_By_Shift(work_package_id_);
+   END IF;
+   
+   RETURN assigned_count_in_my_shift_;
+END Get_Assigned_Count_By_Shift___;
+
+
+FUNCTION Get_Unassigned_Count_By_Shift___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   unassigned_count_in_my_shift_ NUMBER := 0;
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      unassigned_count_in_my_shift_ := Flmexe_Util_API.Get_Unassigned_Count_By_Shift(work_package_id_);
+   END IF;
+   
+   RETURN unassigned_count_in_my_shift_;
+END Get_Unassigned_Count_By_Shift___;
+
+
+FUNCTION Get_A_Count_By_Next_Shift___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   assigned_count_in_my_next_shift_ NUMBER := 0;
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      assigned_count_in_my_next_shift_ := Flmexe_Util_API.Get_A_Count_By_Next_Shift(work_package_id_);
+   END IF;
+   
+   RETURN assigned_count_in_my_next_shift_;
+END Get_A_Count_By_Next_Shift___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Get_Handover_Assignment_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   count_ NUMBER := 0;
+BEGIN
+	 IF work_package_id_ IS NOT NULL THEN
+      count_ := Av_Aircraft_Work_Package_API.Get_Handovers_Count_By_Wp_Id(work_package_id_);
+    END IF;
+    RETURN count_;
+END Get_Handover_Assignment_Count___;
+
+@IgnoreUnitTest PLSQLInSQL
+FUNCTION Get_Mpc_Assignment_Count___ (
+   work_package_id_ IN NUMBER) RETURN NUMBER
+IS
+   mpc_assignment_count_ NUMBER := 0;
+   
+   CURSOR get_mpc_assignment_count IS
+   SELECT COUNT(*)
+   FROM jt_task_resource_demand_av_uiv t
+   WHERE t.work_package_id = work_package_id_
+   AND (t.class_code = Av_Exe_Task_API.TASK_CLASS_MPC 
+   AND t.subclass_code IN (Av_Exe_Task_API.TASK_SUBCLASS_MPCOPEN, Av_Exe_Task_API.TASK_SUBCLASS_MPCCLOSE))
+   AND t.task_status IN ('Active', 'In Work');
+BEGIN
+   IF work_package_id_ IS NOT NULL THEN
+      OPEN get_mpc_assignment_count;
+      FETCH get_mpc_assignment_count INTO mpc_assignment_count_;
+      CLOSE get_mpc_assignment_count;
+   END IF;
+   
+   RETURN mpc_assignment_count_;
+   
+END Get_Mpc_Assignment_Count___;

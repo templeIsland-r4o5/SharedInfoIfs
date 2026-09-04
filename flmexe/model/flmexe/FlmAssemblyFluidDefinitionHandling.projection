@@ -1,0 +1,124 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  211111  bhbalk  AD-4121, Created.
+-----------------------------------------------------------------------------
+projection FlmAssemblyFluidDefinitionHandling;
+component FLMEXE;
+layer Core;
+description "This API contains the information related to fluid definitions";
+category Users;
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset AvFluidDefinitionSet for AvFluidDefinition;
+entityset AvOilStatusTypeSet for AvOilStatus;
+
+------------------------------ ENTITY DETAILS -------------------------------
+@Override
+entity AvFluidDefinition {
+   attribute AssemblyFluidName Text {
+      fetch = "assembly_type_code|| ' - ' || fluid_name";
+   }
+   attribute FluidName Text {
+      label = "Fluid/Gas";
+      format = uppercase;
+   }
+   attribute CalculateRateBool Boolean {
+      label = "Calculate Rate";
+   }
+   array AvGeneralThresholdArray(AssemblyTypeCode, FluidDefinitionId) to AvFluidThreshold(AssemblyTypeCode, FluidDefinitionId);
+   array AvOperatorThresholdArray(AssemblyTypeCode, FluidDefinitionId) to AvFluidOprThreshold(AssemblyTypeCode, FluidDefinitionId);
+   array AvPartThresholdArray(AssemblyTypeCode, FluidDefinitionId) to AvFluidPartThreshold(AssemblyTypeCode, FluidDefinitionId);
+   array AvSerialThresholdArray(AssemblyTypeCode, FluidDefinitionId) to AvFluidSerialThreshold(AssemblyTypeCode, FluidDefinitionId);
+   reference AvAssemblyRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+   reference AvEngineeringUnitRef(MeasurementUnit) to AvEngineeringUnit(EngineeringUnitCode);
+   reference AvUsageTypeRef(OperatorTimeParameter) to AvUsageType(UsageTypeCode);
+}
+
+@Override
+entity AvFluidThreshold {
+   ludependencies = AvFluidThreshold, AvFluidDefinition;
+   reference AvOilStatusRef(OilStatusCode) to AvOilStatus(OilStatusCode);
+   reference AvAssemblyFluidThresholdRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+}
+
+
+@Override
+entity AvFluidPartThreshold {
+   ludependencies = AvFluidPartThreshold, AvFluidDefinition;
+   reference AvPartRef(PartNoId) to PartThresholdQuery(PartNumberId) {
+      where = "(:parent.AssemblyTypeCode = :child.AssemblyTypeCode)";
+   }
+   reference AvOilStatusRef(OilStatusCode) to AvOilStatus(OilStatusCode);
+   reference AvAssemblyFluidThresholdRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+}
+
+@Override
+entity AvFluidSerialThreshold {
+   ludependencies = AvFluidSerialThreshold, AvFluidDefinition;
+   attribute SerialNoOem Text {
+      label = "Serial No";
+   }
+   reference AvOilStatusRef(OilStatusCode) to AvOilStatus(OilStatusCode);
+   reference AvAssemblyFluidThresholdRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+}
+
+@Override
+entity AvFluidOprThreshold {
+   ludependencies = AvFluidOprThreshold, AvFluidDefinition;
+   reference AvOilStatusRef(OilStatusCode) to AvOilStatus(OilStatusCode);
+   reference AvAssemblyFluidThresholdRef(AssemblyTypeCode) to AvAssembly(AssemblyTypeCode);
+}
+
+
+@Override
+entity AvOilStatus {
+   ludependencies = AvOilStatus;
+   attribute OilStatusCode Text {
+      label = "Status Code";
+   }
+   attribute NotifyInUIBool Boolean {
+      label = "Show in Lobby";
+   }
+   attribute OilStatusOrder Number {
+      label = "Order";
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+
+
+---------------------------------- QUERIES ----------------------------------
+query PartThresholdQuery {
+   from = "parts_for_assembly_code";
+   keys = PartNumberId;
+   lu = AvPartNumber;
+
+   attribute AssemblyTypeCode Text;
+   attribute PartNumberId Number;
+   attribute PartNumber Text;
+   attribute PartName Text;
+   attribute Manufacturer Text;
+}
+
+---------------------------------- ACTIONS ----------------------------------
+
+
+--------------------------------- FUNCTIONS ---------------------------------
+function GetPartNoForAssemblyCode List<Entity(PartThresholdQuery)> {
+   parameter AssemblyTypeCode Text;
+   where = "assembly_type_code = :AssemblyTypeCode";
+}
+
+-------------------------------- STRUCTURES ---------------------------------
+
+
+--------------------------------- VIRTUALS ----------------------------------
+
+
+--------------------------------- SUMMARIES ---------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------

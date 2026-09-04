@@ -1,0 +1,55 @@
+<PieChart>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Crew Lead</Keywords>
+    <DescriptiveText>Progress of the currently active tasks displayed in a pie chart.</DescriptiveText>
+    <LastModified>1/24/25, 12:16:52 PM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLMEXE</Component>
+    <Row>0</Row>
+    <Column>0</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Task Progress</Title>
+    <Background>#FF4B4A4D</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_HM_WP_CRW_LD_TASK_PROGRESS</Name>
+    <ID>90249a8a-7ccc-400e-9fe7-37609353c254</ID>
+    <ColorStyle>Default</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <DataSourceId>7074a18a-33c9-4ad6-9054-a862e59dc607</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Count</Column>
+                <Name>Count</Name>
+                <DisplayName>Count</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+            <MappedColumn>
+                <Column>TaskStatus</Column>
+                <Name>Task Status</Name>
+                <DisplayName>TaskStatus</DisplayName>
+                <Aggregate>NA</Aggregate>
+                <DataType>Text</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+    <DisplayNullValueAs>Zero</DisplayNullValueAs>
+    <GroupedDataSeries>
+        <TopNOptions>
+            <ShowOthers>false</ShowOthers>
+        </TopNOptions>
+        <GroupsColumn>
+            <Name>TaskStatus</Name>
+            <Aggregate>NA</Aggregate>
+        </GroupsColumn>
+        <ValuesColumn>
+            <Name>Count</Name>
+            <Aggregate>NA</Aggregate>
+        </ValuesColumn>
+    </GroupedDataSeries>
+</PieChart>

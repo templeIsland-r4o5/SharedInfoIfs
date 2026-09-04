@@ -1,0 +1,34 @@
+<Counter>
+    <Author>IFS RnD</Author>
+    <Keywords>HM, Heavy Maintenance, Base Maintenance, Hangar Maintenance, Technician</Keywords>
+    <LastModified>10/30/25, 11:51:35 AM</LastModified>
+    <Locked>true</Locked>
+    <ClientTypes>Web</ClientTypes>
+    <Component>FLM</Component>
+    <Row>0</Row>
+    <Column>8</Column>
+    <RowSpan>1</RowSpan>
+    <ColumnSpan>1</ColumnSpan>
+    <Title>Master Open and Close Panel Tasks</Title>
+    <Footer>Task Assignments</Footer>
+    <Background>#FF369B30</Background>
+    <Foreground>#FFFFFFFF</Foreground>
+    <Name>FLM_MPC_ASSIGNMENT_COUNT_ELEMENT</Name>
+    <ID>267d7b5c-5864-4231-bf10-15302b77af49</ID>
+    <WebUrl>page/FlmHmTechnicianTaskAssignments/HangarTaskAssignmentsOverview?$filter=WpBarcode eq $WorkPackageBarcode$ and Aircraft eq $AircraftCode$ and ( ClassCode eq 'MPC' and (SubclassCode eq 'MPCOPEN' or SubclassCode eq 'MPCCLOSE')) and (TaskStatus eq 'Active' or TaskStatus eq 'In Work')</WebUrl>
+    <PassDataToForm>true</PassDataToForm>
+    <ColorStyle>Critical</ColorStyle>
+    <UnifiedElement>false</UnifiedElement>
+    <ElementConfig></ElementConfig>
+    <DataSourceId>746f079e-4f9a-42fc-83b8-671bc5d0f0c9</DataSourceId>
+    <ColumnMapping>
+        <MappedColumns>
+            <MappedColumn>
+                <Column>Value</Column>
+                <Aggregate>NA</Aggregate>
+                <DataType>Number</DataType>
+                <ConditionalFormats/>
+            </MappedColumn>
+        </MappedColumns>
+    </ColumnMapping>
+</Counter>

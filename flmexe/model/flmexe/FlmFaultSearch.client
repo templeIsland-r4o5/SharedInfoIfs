@@ -1,0 +1,145 @@
+--------------------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250306  PATNLK  AVMXSOL-5942, Arrange navigator indexing according to alphabetical order.
+--  250211  KASTLK  AVMXSOL-4109, Changed the FaultSearchNavEntry parent to FleetManagement and index
+--  240919  LAWALK  AD-14313, Added fault severity in FaultSearchList.
+--  240304  VAALLK  AD-12268, Removed source column from Fault Search list.
+--  240219  VAALLK  AD-11917, Fault Search list enhancements.
+--  240127  RWELLK  AD-11369, Detail command Icon added.
+--  240117  RWELLK  AD-11369, Added navigation command.
+--  240104  RWELLK  AD-11357, Modify the badges in fault list.
+--  231212  RWELLK  AD-11357, Created fault search client file.
+-----------------------------------------------------------------------------
+
+client FlmFaultSearch;
+component FLMEXE;
+layer Core;
+projection FlmFaultSearchHandling;
+
+description "Fault Search Client";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+
+-------------------------------- MAIN PAGES ---------------------------------
+
+page FlmFaultSearch using AvFaultSearchSet {
+   label = "Aviation Faults";
+   list FaultSearchList;
+}
+--------------------------------- COMMANDS ----------------------------------
+command NavigateFaultDetail for GetFaultList {
+   label = "Details";
+   icon = "popup";
+   execute {
+      if [Owner = "MM"] {
+         navigate "page/FlmFaultDetail/FaultDetails?$filter=FaultId eq $[MmId]";
+      }
+      else {
+         navigate "page/MxFaultDetail/FaultDetails?$filter=Barcode eq $[AggregateId]";
+      }
+   }
+}
+--------------------------------- SELECTORS ---------------------------------
+
+
+---------------------------------- GROUPS -----------------------------------
+
+
+----------------------------------- LISTS -----------------------------------
+list FaultSearchList for GetFaultList {
+
+   label = "Fault List";
+
+   field AggregateId {
+      label = "Record ID";
+   }
+   field AircraftTypeCode {
+      label = "Aircraft Type";
+      size = Small;
+   }
+   field RegCode {
+      label = "Registration Code";
+   }
+   field Description {
+      label = "Name";
+      multiline = true;
+      size = Large;
+   }
+   field SubSystem {
+      label = "Failed System";
+      size = Small;
+   }
+   badge Status {
+      label = "Fault Status ";
+      size = Small;
+      style = TextOnly;
+      emphasis Warning = [Status = "Open"];
+      emphasis Info = [Status = "Deferred"];
+      emphasis Ok = [Status = "Closed"];
+      emphasis Neutral = [Status = "NoFaultFound"];
+   }
+   field FoundOnDate {
+      label = "Found on Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field DueDate {
+      label = "Due Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field ClosedDate {
+      label = "Closed Date";
+      displaytimezone = CurrentUserAirportTimeZone;
+      showtimezonebadge = true;
+   }
+   field LastActionDesc {
+      label = "Last Action Taken";
+      multiline = true;
+      size = Large;
+   }
+   field DeferralAuthorization {
+      label = "Deferral Authorization No";
+      size = Small;
+   }
+   field DeferralReqReasonDesc {
+      label = "Deferral Reason";
+   }
+   field LogbookTypeCode {
+      label = "Log Type";
+      size = Small;
+   }
+   field FaultSeverity;
+
+   command NavigateFaultDetail;
+
+}
+
+---------------------------------- DIALOGS ----------------------------------
+
+
+-------------------------------- SINGLETONS ---------------------------------
+
+
+---------------------------------- CHARTS -----------------------------------
+
+
+--------------------------------- CALENDERS ---------------------------------
+
+
+---------------------------------- SHEETS -----------------------------------
+
+
+----------------------------- STATE INDICATORS ------------------------------
+
+
+----------------------------------- TREES -----------------------------------
+
+
+---------------------------------- PLUGINS ----------------------------------
+
+
+------------------------------- IMAGE VIEWERS -------------------------------

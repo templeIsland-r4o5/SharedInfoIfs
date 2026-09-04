@@ -1,0 +1,68 @@
+-----------------------------------------------------------------------------
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+--  250528  RAFALK  AD-18301 Created.
+--  250612  SABOLK  AD-18875, Modified TaskPanelLov and PanelCodeSelector.
+-----------------------------------------------------------------------------
+
+fragment PanelLovSelector;
+component FLMEXE;
+layer Core;
+description "This contains data related to panel LoV selector";
+
+--------------------------------- FRAGMENTS ---------------------------------
+
+
+----------------------------- CLIENT FRAGMENTS ------------------------------
+selector PanelCodeSelector for TaskPanelLov {
+   label = "";
+   static PanelCode;
+   static PanelDescription;
+}
+
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------
+query TaskPanelLov {
+   from = "Aircraft_Panel_Info";
+   lu = AvAircraftPanel;
+   keys = AcPanelSeq;
+
+   attribute AcPanelSeq Number {
+      label = "Panel Seq";
+      lovcolumn = [false];
+   }
+   attribute PanelCode Text {
+      label = "Code";
+      lovcolumn = [true];
+   }
+   attribute PanelDescription Text {
+      label = "Description";
+      lovcolumn = [true];
+   }
+   attribute AircraftId Text {
+      label = "Aircraft ID";
+      lovcolumn = [false];
+   }
+}
+
+------------------------------- ENUMERATIONS --------------------------------
+enumeration PanelStatuses {
+   value = "ToBeOpened" {
+      label = "To be Opened";
+   }
+   value = "Opened" {
+      label = "Opened";
+   }
+   value = "ReadyToClose" {
+      label = "Ready to Close";
+   }
+   value = "Closed" {
+      label = "Closed";
+   }
+   value = "NoMpc" {
+      label = "No MPC";
+   }
+   value = "NotLinked" {
+      label = "Not Linked";
+   }
+}

@@ -1,0 +1,121 @@
+-----------------------------------------------------------------------------
+--
+--  Fragment:     AvTaskReturns
+--  Component:    FLMEXE
+--
+--  IFS Developer Studio Template Version 3.0
+--
+--  Date    Sign    History
+--  ------  ------  ---------------------------------------------------------
+-----------------------------------------------------------------------------
+
+layer Core;
+
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Create_Return_Line___ (
+   task_part_id_      IN NUMBER,
+   task_seq_          IN NUMBER,
+   rem_part_no_       IN VARCHAR2,
+   qty_return_        IN NUMBER,
+   removal_serial_no_ IN VARCHAR2,
+   removal_batch_no_  IN VARCHAR2)
+IS
+   task_return_line_seq_ NUMBER := NULL;
+BEGIN
+   Av_Exe_Task_Part_Util_API.Av_Return_Creation(task_seq_, rem_part_no_, removal_serial_no_,removal_batch_no_, qty_return_, task_return_line_seq_);           
+   Av_Exe_Task_Part_API.Update_Task_Return_Line_Seq(task_part_id_ ,task_return_line_seq_);
+END Create_Return_Line___;
+
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Cancel_Part___ (
+   task_part_id_ IN NUMBER)
+IS
+BEGIN
+	Av_Exe_Task_Part_Util_API.Cancel_Part_Removal(task_part_id_);
+END Cancel_Part___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Remove_Return_Line___ (
+   task_return_line_seq_ IN NUMBER)
+IS
+BEGIN
+	Av_Exe_Task_Part_Util_API.Remove_Return_Line(task_return_line_seq_);
+END Remove_Return_Line___;
+
+@IgnoreUnitTest NoOutParams
+PROCEDURE Validate_Returned_Part___ (
+   part_no_ IN VARCHAR2,
+   serial_no_ IN VARCHAR2)
+IS
+   condition_code_check_  BOOLEAN := FALSE;
+   info_                  VARCHAR2(2000);
+BEGIN
+   Jt_Task_Return_API.Validate_Return_Line(info_                 => info_, 
+                                           part_no_              => part_no_, 
+                                           serial_no_            => serial_no_, 
+                                           condition_code_usage_ => NULL, 
+                                           condition_code_       => NULL, 
+                                           condition_code_check_ => condition_code_check_); 
+END Validate_Returned_Part___;
+
+@IgnoreUnitTest TrivialFunction
+FUNCTION Standard_Cost_Exist___ (
+   task_return_line_seq_ IN NUMBER) RETURN VARCHAR2
+IS
+BEGIN
+   RETURN Av_Exe_Task_Part_Util_API.Is_Return_Line_Std_Cost_Exists(task_return_line_seq_);
+END Standard_Cost_Exist___;
+
+@IgnoreUnitTest DMLOperation
+PROCEDURE Return_Part_Inventory___ (
+   task_return_line_seq_  IN NUMBER,
+   return_quantity_       IN NUMBER,
+   location_no_           IN VARCHAR2,
+   cost_detail_id_        IN NUMBER)
+IS
+BEGIN
+   Av_Exe_Task_Part_Util_API.Return_Part_To_Inventory(task_return_line_seq_, return_quantity_, location_no_, cost_detail_id_);
+END Return_Part_Inventory___;
+
+@IgnoreUnitTest DMLOperation
+FUNCTION Generate_Part_Tag_Report___ (
+   task_return_line_seq_     IN NUMBER,
+   selected_part_tag_type_   IN VARCHAR2,
+   remark_                   IN VARCHAR2,
+   quar_comment_             IN VARCHAR2) RETURN NUMBER
+IS
+   result_key_ NUMBER;
+BEGIN
+   result_key_ := Av_Part_Tag_Report_API.Execute_Part_Tag_Report(task_return_line_seq_,selected_part_tag_type_,remark_,quar_comment_);
+   RETURN result_key_;
+END Generate_Part_Tag_Report___;
+
+@Override
+PROCEDURE CRUD_Create___(
+   rec_ IN Part_Returns_Virtual_Rec )
+IS
+   tab_ Planned_Returns_Virtual_Rec;
+   task_return_line_seq_ NUMBER;
+          
+   CURSOR planned_return_line_info IS   
+      SELECT part_no, serial_no, site,qty_to_return,qty_returned
+        FROM Jt_Task_Return_Av_Uiv 
+       WHERE task_return_line_seq = task_return_line_seq_;     
+BEGIN  
+   super(rec_);
+   task_return_line_seq_ := rec_.task_return_line_seq;
+
+   FOR planned_return_rec_ IN planned_return_line_info LOOP
+      tab_.task_return_line_seq    := rec_.task_return_line_seq;
+      tab_.objkey                  := sys_guid();
+      tab_.parent_objkey           := rec_.objkey;
+      tab_.site                    := planned_return_rec_.site;
+      tab_.remaining_qty_to_return := NVL(planned_return_rec_.qty_to_return,0) - NVL(planned_return_rec_.qty_returned,0);
+      tab_.return_quantity         := tab_.remaining_qty_to_return; 
+      tab_.part_no                 := planned_return_rec_.part_no;
+      tab_.serial_no               := planned_return_rec_.serial_no;
+      CRUD_Create___(tab_);
+   END LOOP;   
+END CRUD_Create___;
