@@ -9,6 +9,10 @@
 
 layer Core;
 
+----------------------------- MAIN ENTRY POINTS -----------------------------
+entityset CustomShipMonitoringSet for CustomShipMonitoring;
+entityset AvExeTaskSet for AvExeTask;
+
 ----------------------------- NAVIGATOR ENTRIES -----------------------------
 navigator {
    entry CustomShipMonitoringNavEntry parent FlmWorkManagementNavigator.FlmWorkManagement at index 1000 {
@@ -84,5 +88,45 @@ entity CustomShipMonitoring {
       label = "Closed At";
       editable = [false];
    }
+
+   array LinkedTasks(MonitoringId) to MonitoringTaskLink(MonitoringId);
+}
+
+@Override
+entity MonitoringTaskLink {
+   crud = Create, Read, Update, Delete;
+
+   attribute MonitoringId Number {
+      label = "Monitoring ID";
+      required = [true];
+   }
+   attribute TaskSeq Number {
+      label = "Task Seq";
+      required = [true];
+   }
+   attribute LinkType Text {
+      label = "Link Type";
+      maxlength = 20;
+   }
+
+   association MonitoringAssoc with CustomShipMonitoring(MonitoringId) to CustomShipMonitoring(MonitoringId);
+   association TaskAssoc with AvExeTask(TaskSeq) to AvExeTask(TaskSeq);
+}
+
+@Override
+entity AvExeTask {
+   crud = Read;
+
+   attribute TaskSeq Number;
+   attribute Barcode Text;
+   attribute Description Text;
+   attribute Objstate Enumeration(AvExeTaskState);
+}
+
+---------------------------------- ACTIONS ----------------------------------
+action LinkTask {
+   initialcheck none;
+   parameter MonitoringId Number;
+   parameter TaskSeq Number;
 }
 --------------------------- PROJECTION FRAGMENTS ----------------------------

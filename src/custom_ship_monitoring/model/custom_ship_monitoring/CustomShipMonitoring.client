@@ -18,13 +18,18 @@ page Form using CustomShipMonitoringSet {
 
    group CustomShipMonitoringGroup;
    list CustomTurnNoteList(TurnNotes);
+   list LinkedTasksList(LinkedTasks);
 }
 
 --------------------------------- COMMANDS ----------------------------------
 command LinkTaskCommand for CustomShipMonitoring {
    label = "Link Task";
    execute {
-      // TODO: Implement JtTask selector
+      assistant LinkTaskAssistant(MonitoringId) {
+         when OK {
+            exit;
+         }
+      }
    }
 }
 
@@ -56,9 +61,53 @@ list CustomShipMonitoringList for CustomShipMonitoring {
    }
 }
 
+list LinkedTasksList for MonitoringTaskLink {
+   label = "Linked Tasks";
+   field TaskAssoc.Barcode;
+   field TaskAssoc.Description;
+   badge TaskAssoc.Objstate {
+      label = "Status";
+   }
+}
+
+list AvailableTasksList for AvExeTask {
+   label = "Available Tasks";
+   field Barcode;
+   field Description;
+   badge Objstate {
+      label = "Status";
+   }
+}
+
 list CustomTurnNoteList for CustomTurnNote {
    label = "Turn Notes";
    field NoteText;
    field ReportedBy;
    field ReportedAt;
+}
+
+---------------------------------- DIALOGS ----------------------------------
+assistant LinkTaskAssistant using CustomShipMonitoringSet {
+   label = "Link Task";
+   input(MonitoringId);
+   
+   steps {
+      step {
+         list AvailableTasksList(AvExeTaskArray);
+      }
+      final step {
+      }
+   }
+   finish command {
+      enabled = [component.AvailableTasksList.SelectionCount > 0];
+      execute {
+         call LinkTask(MonitoringId, component.AvailableTasksList.Selected.TaskSeq);
+         exit OK;
+      }
+   }
+   cancel command {
+      execute {
+         exit CANCEL;
+      }
+   }
 }
