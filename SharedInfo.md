@@ -27,25 +27,23 @@
 Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象監視」の2つの主要なユースケースを分離し、それぞれに最適化したソリューションをIFS Cloud内に構築する。
 
 - **アーキテクチャ全体図（Mermaidダイアグラム）**:
-  ```mermaid
-  graph TD
-      subgraph "IFS Cloud"
-          A[整備士/Fleet] -- 1. 不明点をTurn Noteに記録 --> B(Aircraft Turn Details画面)
-          A -- 2. 注視事象を起票 --> C{Ship Monitoring画面 (Custom Page)}
-          C -- 3. 新規Monitoring Item作成 --> D[CustomShipMonitoring Entity]
-          B -- 4. 画面上でTurn Noteを共有 --> B
-          A -- 5. Monitoring Itemに対応する作業実施 --> E[JtTask / MaintFault]
-          E -- 6. 作業完了イベント発火 --> F{BPA Workflow}
-          F -- 7. Monitoring Itemの状態を更新 --> D
-          G[技術/SE] -- 8. 過去の事象を検索 --> C
-      end
-  ```
+graph TD
+    subgraph "IFS Cloud"
+        A["整備士/Fleet"] -- "1. 不明点をTurn Noteに記録" --> B("Aircraft Turn Details画面")
+        A -- "2. 注視事象を起票" --> C{"Ship Monitoring画面 (Custom Page)"}
+        C -- "3. 新規Monitoring Item作成" --> D["CustomShipMonitoring Entity"]
+        B -- "4. 画面上でTurn Noteを共有" --> B
+        A -- "5. Monitoring Itemに対応する作業実施" --> E["JtTask / MaintFault"]
+        E -- "6. 作業完了イベント発火" --> F{"BPA Workflow"}
+        F -- "7. Monitoring Itemの状態を更新" --> D
+        G["技術/SE"] -- "8. 過去の事象を検索" --> C
+    end
 
 - **処理シーケンス**:
-  1.  **一時的な情報伝達 (Turn Note)**:
+  1. **一時的な情報伝達 (Turn Note)**:
       - ユーザー（整備士・EST等）が `Aircraft Turn Details` 画面上のカスタム領域に、その整備機会限りの申し送り事項（Turn中の不明点問合せなど）を記録する。
       - 記録された情報は同画面で関係者に共有される。この情報は当該Turnに紐づき、長期的な蓄積は目的としない。
-  2.  **継続的な事象監視 (Ship Monitoring)**:
+  2. **継続的な事象監視 (Ship Monitoring)**:
       - ユーザー（整備士・Fleet等）が、予防整備や経過観察が必要な事象（SQ予備軍など）を、新設する「Ship Monitoring」カスタムページから「Monitoring Item」として起票する。
       - Fleetや技術部門は、起票されたItemをレビューし、必要に応じてIFS標準の`Task`や`Fault`を作成して対応を計画する。
       - 関連する`Task`が完了すると、BPAワークフローが起動し、対応する「Monitoring Item」のステータスを自動で更新する。
@@ -60,8 +58,9 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
   - `AircraftTurnDetails`画面に、`CustomTurnNote` EntityをListとして表示する。
 
   **Custom Entity: `CustomTurnNote`**
+
   | 項目名 (Attribute Name) | 表示ラベル (Prompt) | データ型 (Type/Length) | 属性種別 (Persistent) | 必須 | 備考 |
-  |---|---|---|---|---|---|
+  | --- | --- | --- | --- | --- | --- |
   | `TurnNoteId` | Turn Note ID | `NUMBER` | Persistent | YES | 主キー |
   | `TurnId` | Turn ID | `NUMBER` | Persistent | YES | `AircraftTurn`への外部キー |
   | `NoteText` | 申し送り内容 | `VARCHAR2(2000)` | Persistent | YES | |
@@ -75,7 +74,7 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
 - **項目定義一覧**:
 
   | 項目名 (Attribute Name) | 表示ラベル (Prompt) | データ型 (Type/Length) | 属性種別 (Persistent) | 必須 | 読取専用 | デフォルト値 / 導出ロジック |
-  |---|---|---|---|---|---|---|
+  | --- | --- | --- | --- | --- | --- | --- |
   | `MonitoringId` | モニタリングID | `NUMBER` | Persistent | YES | NO | Sequenceによる自動採番 |
   | `ShipNo` | 機番 | `VARCHAR2(10)` | Persistent | YES | NO | |
   | `Title` | 件名 | `VARCHAR2(200)` | Persistent | YES | NO | |
@@ -154,7 +153,7 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
 ## 9. テストケース & 単体検証シナリオ
 
 | No | シナリオ種別 | 前提条件 | 実施手順 | 期待される結果 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | 正常系 (Turn Note) | 整備士が`Aircraft Turn Details`画面を開いている | 1. 画面上の「申し送り」セクションにテキストを入力し保存。<br>2. ESTが同画面を開く。 | 1. 入力した内容がリストに表示される。<br>2. ESTの画面でも同じ内容が参照できる。 |
 | 2 | 正常系 (Monitoring) | Fleet担当者が「Ship Monitoring」画面を開いている | 1. 新規ボタンを押し、機番と件名を入力して保存。<br>2. 作成したItemに関連タスクを紐づける。 | 1. 新しいMonitoring Itemが作成され、ステータスが`OPEN`になる。<br>2. Detail画面で関連タスクが確認できる。 |
 | 3 | 正常系 (BPA連携) | No.2で紐づけられたTaskが整備士により完了される | 1. 整備士が`JtTask`を完了ステータスにする。 | 1. BPAが起動し、Monitoring Itemのステータスが`IN_PROGRESS`等に自動更新される。 |
@@ -174,7 +173,9 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
 # SharedInfo関連の検討.docx
 
 ## 検討の概要
+
 ### 検討の背景
+
 - SharedInfoは継続利用前提で進めてきた。IFSの移行スコープ外としていた。
 - SharedInfoを継続利用するために必要なシステム対応は以下を想定しているが、コスト見積が想定よりも高くなることが判明した。
   - ❶インフラ改修（DBバージョンアップ対応）
@@ -183,10 +184,12 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
 - 改めて、業務観点でSharedInfoが本当に必要なのかを再評価する必要ができた。
 
 ### 検討の目的
+
 - SharedInfoの現行業務でのユースケースを洗い出し、業務目的を可視化する
 - 業務目的を満たす方法について、SharedInfo以外の代替方法も含め、IFS導入後の最適なソリューション案を検討する
 
 ### 検討対象の機能
+
 - Report Create/List
 - Ship Monitor Create/List
 ※上記以外の機能（Maintenance Plan/File Server）は、2026年2-3月時点の評価で、廃止可能な旨を判断済みのため除外
@@ -194,7 +197,9 @@ Shared Infoが担う「①一時的な情報伝達」と「②継続的な事象
 ---
 
 ## 現行業務の整理
+
 ### SharedInfoユースケース一覧
+
 SharedInfoを使って管理している情報には、情報の性質（情報の寿命、整備記録か否か、蓄積要否）の観点で、いくつか種類があることがわかった。
 
 詳細は、`ARISE_SHIP_SharedInfo現行業務整理.xlsx.md` を参照。
@@ -202,10 +207,13 @@ SharedInfoを使って管理している情報には、情報の性質（情報�
 ---
 
 ## 対応方針の検討
+
 ### 概要
+
 情報の種類によって、IFS導入後にどのように管理すべきかを検討する。
 
 **検討時の考慮事項:**
+
 - できるだけIFS上で管理できる方法を探る。
   - IFS上で管理できるほうが、複数システムを使い分ける必要がなく、整備士目線では都合がよいと考えるため。
 - 整備記録として残すべき情報は、整備記録としてIFSに記録されるようにする。
@@ -216,6 +224,7 @@ SharedInfoを使って管理している情報には、情報の性質（情報�
 ---
 
 ### 詳細①：機番に紐づく情報のコミュニケーション
+
 - **業務目的**: 情報の伝達
 - **業務要件**:
   - 整備士・技術・SE・Fleet・ESTが、情報を登録する。登録された情報を参照する。
@@ -252,6 +261,7 @@ SharedInfoを使って管理している情報には、情報の性質（情報�
 ---
 
 ### 詳細②：機番に紐づく注視事象（整備記録外）の情報記録・蓄積
+
 - **業務目的**: 情報蓄積・時系列に合わせた情報の参照
 - **業務要件**:
   - 整備士やFleetが、Turn中もしくはTurn後に、注視すべき事象の情報を登録する
