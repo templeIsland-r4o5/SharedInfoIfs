@@ -158,3 +158,7 @@
 ### 参考資料
 
 - C:\Users\15511914\Documents\IFSshearedInfo\Document
+
+### 作りたい既存システム(要件)
+
+- C:\Users\15511914\Documents\IFSshearedInfo\SharedInfoDocument
