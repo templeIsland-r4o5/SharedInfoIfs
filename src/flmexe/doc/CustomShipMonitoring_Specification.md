@@ -57,3 +57,29 @@ graph TD
 ---
 
 *その他のセクションは、実装の進捗に合わせて追記する。*
+
+## 7. セキュリティ & 権限 (Permission Sets)
+
+- **必要なProjection権限 Grant/Revoke**:
+  - `CustomShipMonitoringHandling`: Full Grant
+  - 下記ロールに対して、本Projectionへの全てのAction権限を付与する。
+- **対象Permission Set / ロール**:
+  - `FLM_TECHNICIAN`
+  - `FLM_SUPERVISOR`
+- **Custom Page / Quick Report へのアクセス制御**:
+  - `CustomShipMonitoring.client` ページへのナビゲーション権限を上記ロールに付与する。
+
+## 9. テストケース & 単体検証シナリオ
+
+- **検証環境前提**:
+  - `FLM_TECHNICIAN` 権限を持つテストユーザーが存在すること。
+  - `AircraftTurn` および `JtTask` のテストデータが存在すること。
+- **テストマトリクス**:
+
+| No | シナリオ種別 | 前提条件 | 実施手順 | 期待される結果 (UI / DB / イベントログ) |
+| --- | --- | --- | --- | --- |
+| 1 | 正常系 (Turn Note作成) | `FlmAircraftTurnsDetails`画面を開いている | 1. "Turn Notes"タブを開く。 <br> 2. 新規レコードを作成し、ノートを記入して保存する。 | 1. UI上でノートがリストに表示される。 <br> 2. `CUSTOM_TURN_NOTE_TAB`テーブルにレコードが作成されている。 |
+| 2 | 正常系 (Monitoring Item作成) | `FlmAircraftTurnsDetails`画面を開いている | 1. "Create Monitoring Item"コマンドを実行する。 <br> 2. `CustomShipMonitoring`画面に遷移することを確認する。 <br> 3. 各項目を入力して保存する。 | 1. `CUSTOM_SHIP_MONITORING_TAB`テーブルにレコードが作成されている。 |
+| 3 | 正常系 (Taskリンク) | No.2で作成したMonitoring Itemを`CustomShipMonitoring`画面で開いている | 1. "Link Task"コマンドを実行する。 <br> 2. アシスタントが表示され、タスク一覧が表示される。 <br> 3. タスクを1つ選択し、"Finish"をクリックする。 | 1. UI上の"Linked Tasks"リストに選択したタスクが表示される。 <br> 2. `MONITORING_TASK_LINK_TAB`テーブルにレコードが作成されている。 |
+| 4 | 正常系 (BPA連携) | No.3で紐づけられたTaskが`JtTask`画面で開かれている | 1. タスクのステータスを`Finished`に変更して保存する。 | 1. `Custom_Events`ログに`EV_JT_TASK_FINISHED`が記録される。 <br> 2. `BPA`の実行ログが確認できる。 <br> 3. `CustomShipMonitoring`の該当レコードのステータスが`IN_PROGRESS`に更新されている。 |
+| 5 | 権限制御 | `FLM_TECHNICIAN`以外の権限でログイン | 1. `FlmWorkManagement`のナビゲーターを確認する。 | 1. "Ship Monitoring"メニューが表示されないことを確認する。 |
