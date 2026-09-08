@@ -248,6 +248,7 @@ page AircraftTurnDetails using AvFlightSet {
          list CustomTurnNoteList(CustomTurnNoteArray);
       }
    }
+   command CreateMonitoringItemCommand;
    command RaiseFaultFromTurnDetailsCommand;
    command ReleaseAircraftFromTurnDetails;
    command FaultSearchCommand;
