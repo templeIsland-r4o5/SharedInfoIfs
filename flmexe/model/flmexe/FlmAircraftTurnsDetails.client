@@ -243,6 +243,10 @@ page AircraftTurnDetails using AvFlightSet {
          label = "Tools";
          list ToolDemandsList(WorkPackageToolDemandQueryArray);
       }
+      tab {
+         label = "Turn Notes";
+         list CustomTurnNoteList(CustomTurnNoteArray);
+      }
    }
    command RaiseFaultFromTurnDetailsCommand;
    command ReleaseAircraftFromTurnDetails;
@@ -1505,6 +1509,17 @@ list TaskPartWarningsList for AvExeTaskPartWarning {
       multiline = true;
       size = FullWidth;
    }
+}
+
+list CustomTurnNoteList for CustomTurnNote {
+   label = "Turn Notes";
+
+   field NoteText {
+      size = Large;
+      multiline = true;
+   }
+   field ReportedBy;
+   field ReportedAt;
 }
 ---------------------------------- DIALOGS ----------------------------------
 assistant FluidServicingAssistant using FluidServiceVrtSet {

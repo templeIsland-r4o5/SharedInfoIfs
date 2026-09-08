@@ -1,0 +1,53 @@
+--------------------------------------------------------------------------------
+--
+--  File:         CustomTurnNote.fragment
+--
+--  Date    By      Notes
+--  ------  ------  -----------------------------------------------------------------
+--  260908  Gemini  Created.
+--------------------------------------------------------------------------------
+
+fragment CustomTurnNote;
+component FLMEXE;
+layer Core;
+
+--------------------------------- ENTITIES ----------------------------------
+@Override
+entity CustomTurnNote {
+   crud = Create, Read, Update, Delete;
+
+   attribute TurnNoteId Number {
+      label = "Turn Note ID";
+      required = [true];
+      editable = [false];
+   }
+   attribute TurnId Number {
+      label = "Turn ID";
+      required = [true];
+   }
+   attribute NoteText Text {
+      label = "Note Text";
+      required = [true];
+      maxlength = 2000;
+   }
+   attribute ReportedBy Text {
+      label = "Reported By";
+      required = [true];
+      maxlength = 30;
+   }
+   attribute ReportedAt Timestamp {
+      label = "Reported At";
+      required = [true];
+   }
+   attribute Role Text {
+      label = "Role";
+      maxlength = 50;
+   }
+
+   -- This association might need adjustment based on the actual key of AircraftTurn
+   -- Assuming AircraftTurn's key is TurnId for now.
+   -- Also, the target entity 'AircraftTurn' needs to be a real entity.
+   -- association TurnAssoc with AircraftTurn(TurnId) to AircraftTurn(TurnId);
+}
+
+--------------------------- PROJECTION FRAGMENTS ----------------------------

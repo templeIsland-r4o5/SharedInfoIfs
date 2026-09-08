@@ -31,6 +31,9 @@ command CreateMonitoringItemCommand for AircraftTurn {
    }
 }
 
+--------------------------------- FRAGMENTS ---------------------------------
+include fragment CustomTurnNote;
+
 --------------------------------- ENTITIES ----------------------------------
 @Override
 entity CustomShipMonitoring {
@@ -81,40 +84,5 @@ entity CustomShipMonitoring {
       label = "Closed At";
       editable = [false];
    }
-}
-
-@Override
-entity CustomTurnNote {
-   crud = Create, Read, Update, Delete;
-
-   attribute TurnNoteId Number {
-      label = "Turn Note ID";
-      required = [true];
-      editable = [false];
-   }
-   attribute TurnId Number {
-      label = "Turn ID";
-      required = [true];
-   }
-   attribute NoteText Text {
-      label = "Note Text";
-      required = [true];
-      maxlength = 2000;
-   }
-   attribute ReportedBy Text {
-      label = "Reported By";
-      required = [true];
-      maxlength = 30;
-   }
-   attribute ReportedAt Timestamp {
-      label = "Reported At";
-      required = [true];
-   }
-   attribute Role Text {
-      label = "Role";
-      maxlength = 50;
-   }
-
-   association TurnAssoc with AircraftTurn(TurnId) to AircraftTurn(TurnId);
 }
 --------------------------- PROJECTION FRAGMENTS ----------------------------

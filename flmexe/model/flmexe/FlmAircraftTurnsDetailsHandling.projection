@@ -81,6 +81,7 @@ include fragment AvTurnMaterial;
 include fragment AvTurnReturn;
 include fragment FlmTaskTool;
 include fragment AdcomCommonUtilities;
+include fragment CustomTurnNote;
 ----------------------------- MAIN ENTRY POINTS -----------------------------
 entityset AvFlightSet for AvFlight;
 entityset AvFlightQuerySet for AvFlightQuery;
@@ -90,6 +91,7 @@ entityset AvAirportForUserSet for AvAirportForUser;
 entityset AvHistFluidServiceSet for AvHistFluidService;
 entityset AvHistFldServiceDetSet for AvHistFldServiceDet;
 entityset FluidServiceVrtSet for FluidServiceVirtual;
+entityset CustomTurnNoteSet for CustomTurnNote;
 
 ------------------------------ ENTITY DETAILS -------------------------------
 @Override
@@ -230,6 +232,7 @@ entity AvFlight {
    array MaintMaterialReqArray(WorkPackageId) to MaintMaterialReqLine(AircraftWpId);
    array JtTaskReturnArray(WorkPackageId) to JtTaskReturn(AircraftWpId);
    array WorkPackageToolDemandQueryArray(WorkPackageId) to ToolDemandQuery(WorkPackageId);
+   array CustomTurnNoteArray(FlightId) to CustomTurnNote(TurnId);
 
    where = "flight_id IN (SELECT flight_id from FLIGHTS_FOR_USER) AND Arrival_Airport_Id IN (Av_Airport_For_User_API.Get_Airport_Id(Fnd_Session_API.Get_Fnd_User()))";
 }
