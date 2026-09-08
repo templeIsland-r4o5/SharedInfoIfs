@@ -1,0 +1,120 @@
+--------------------------------------------------------------------------------
+--
+--  File:         CustomShipMonitoringHandling.projection
+--
+--  Date    By      Notes
+--  ------  ------  -----------------------------------------------------------------
+--  260908  Gemini  Created.
+--------------------------------------------------------------------------------
+
+layer Core;
+
+----------------------------- NAVIGATOR ENTRIES -----------------------------
+navigator {
+   entry CustomShipMonitoringNavEntry parent FlmWorkManagementNavigator.FlmWorkManagement at index 1000 {
+      label = "Ship Monitoring";
+      page CustomShipMonitoring;
+   }
+}
+
+-------------------------------- MAIN PAGES ---------------------------------
+page CustomShipMonitoring using CustomShipMonitoringSet {
+   label = "Ship Monitoring";
+   list CustomShipMonitoringList;
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command CreateMonitoringItemCommand for AircraftTurn {
+   label = "Create Monitoring Item";
+   execute {
+      navigate "page/CustomShipMonitoring/CustomShipMonitoring?$action=new&shipNo=${ShipNo}";
+   }
+}
+
+--------------------------------- ENTITIES ----------------------------------
+@Override
+entity CustomShipMonitoring {
+   crud = Create, Read, Update, Delete;
+
+   attribute MonitoringId Number {
+      label = "Monitoring ID";
+      required = [true];
+      editable = [false];
+   }
+   attribute ShipNo Text {
+      label = "Ship No";
+      required = [true];
+      maxlength = 10;
+   }
+   attribute Title Text {
+      label = "Title";
+      required = [true];
+      maxlength = 200;
+   }
+   attribute Description Text {
+      label = "Description";
+      maxlength = 4000;
+   }
+   attribute Status Text {
+      label = "Status";
+      required = [true];
+      maxlength = 30;
+      default = "'OPEN'";
+   }
+   attribute ReportedBy Text {
+      label = "Reported By";
+      required = [true];
+      editable = [false];
+      maxlength = 30;
+   }
+   attribute CreatedAt Timestamp {
+      label = "Created At";
+      required = [true];
+      editable = [false];
+   }
+   attribute ClosedBy Text {
+      label = "Closed By";
+      editable = [false];
+      maxlength = 30;
+   }
+   attribute ClosedAt Timestamp {
+      label = "Closed At";
+      editable = [false];
+   }
+}
+
+@Override
+entity CustomTurnNote {
+   crud = Create, Read, Update, Delete;
+
+   attribute TurnNoteId Number {
+      label = "Turn Note ID";
+      required = [true];
+      editable = [false];
+   }
+   attribute TurnId Number {
+      label = "Turn ID";
+      required = [true];
+   }
+   attribute NoteText Text {
+      label = "Note Text";
+      required = [true];
+      maxlength = 2000;
+   }
+   attribute ReportedBy Text {
+      label = "Reported By";
+      required = [true];
+      maxlength = 30;
+   }
+   attribute ReportedAt Timestamp {
+      label = "Reported At";
+      required = [true];
+   }
+   attribute Role Text {
+      label = "Role";
+      maxlength = 50;
+   }
+
+   association TurnAssoc with AircraftTurn(TurnId) to AircraftTurn(TurnId);
+}
+--------------------------- PROJECTION FRAGMENTS ----------------------------

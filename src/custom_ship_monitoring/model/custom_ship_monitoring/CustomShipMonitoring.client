@@ -1,0 +1,64 @@
+--------------------------------------------------------------------------------
+--
+--  File:         CustomShipMonitoring.client
+--
+--  Date    By      Notes
+--  ------  ------  -----------------------------------------------------------------
+--  260908  Gemini  Created.
+--------------------------------------------------------------------------------
+
+client CustomShipMonitoring;
+component FLMEXE;
+layer Core;
+
+-------------------------------- MAIN PAGES ---------------------------------
+page Form using CustomShipMonitoringSet {
+   label = "Ship Monitoring";
+   list CustomShipMonitoringList;
+
+   group CustomShipMonitoringGroup;
+   list CustomTurnNoteList(TurnNotes);
+}
+
+--------------------------------- COMMANDS ----------------------------------
+command LinkTaskCommand for CustomShipMonitoring {
+   label = "Link Task";
+   execute {
+      // TODO: Implement JtTask selector
+   }
+}
+
+---------------------------------- GROUPS -----------------------------------
+group CustomShipMonitoringGroup for CustomShipMonitoring {
+   label = "Details";
+   field MonitoringId;
+   field ShipNo;
+   field Title;
+   field Description;
+   field Status;
+   field ReportedBy;
+   field CreatedAt;
+   field ClosedBy;
+   field ClosedAt;
+}
+
+----------------------------------- LISTS -----------------------------------
+list CustomShipMonitoringList for CustomShipMonitoring {
+   label = "Monitoring Items";
+   field MonitoringId;
+   field ShipNo;
+   field Title;
+   field Status;
+   field CreatedAt;
+
+   commandgroup {
+      command LinkTaskCommand;
+   }
+}
+
+list CustomTurnNoteList for CustomTurnNote {
+   label = "Turn Notes";
+   field NoteText;
+   field ReportedBy;
+   field ReportedAt;
+}
