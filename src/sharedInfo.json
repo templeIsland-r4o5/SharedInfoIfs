@@ -1,0 +1,563 @@
+{
+  "acp_name": "sharedInfo",
+  "description": "Shared Info 後継機能 カスタム画面およびプロセス自動化構成",
+  "version": "1.0.0",
+  "target_ifs_version": "IFS Cloud 25R2",
+  "configurations": {
+    "custom_entities": [
+      {
+        "entity_name": "CustomTurnNote",
+        "prompt": "Custom Turn Note",
+        "module": "CONFIG",
+        "create_projection": false,
+        "time_zone_setting": "Server",
+        "attributes": [
+          {
+            "attribute_name": "TurnNoteId",
+            "prompt": "Turn Note ID",
+            "type": "Number",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "is_primary_key": true
+          },
+          {
+            "attribute_name": "TurnId",
+            "prompt": "Turn ID",
+            "type": "Number",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "is_foreign_key": true,
+            "reference_entity": "AircraftTurn"
+          },
+          {
+            "attribute_name": "NoteText",
+            "prompt": "申し送り内容",
+            "type": "String",
+            "length": 2000,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "ReportedBy",
+            "prompt": "登録者",
+            "type": "String",
+            "length": 30,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "ReportedAt",
+            "prompt": "登録日時",
+            "type": "Date & Time",
+            "length": null,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "Role",
+            "prompt": "登録者ロール",
+            "type": "String",
+            "length": 50,
+            "attribute_type": "Persistent Field"
+          }
+        ]
+      },
+      {
+        "entity_name": "CustomShipMonitoring",
+        "prompt": "Custom Ship Monitoring",
+        "module": "CONFIG",
+        "create_projection": false,
+        "time_zone_setting": "Server",
+        "attributes": [
+          {
+            "attribute_name": "MonitoringId",
+            "prompt": "モニタリングID",
+            "type": "Number",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "is_primary_key": true,
+            "default_value_logic": "Sequenceで自動採番"
+          },
+          {
+            "attribute_name": "ShipNo",
+            "prompt": "機番",
+            "type": "String",
+            "length": 10,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "Title",
+            "prompt": "件名",
+            "type": "String",
+            "length": 200,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "Description",
+            "prompt": "詳細",
+            "type": "String",
+            "length": 4000,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "Status",
+            "prompt": "状態",
+            "type": "String",
+            "length": 30,
+            "attribute_type": "Persistent Field",
+            "default_value_logic": "'OPEN'"
+          },
+          {
+            "attribute_name": "ReportedBy",
+            "prompt": "起票者",
+            "type": "String",
+            "length": 30,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "CreatedAt",
+            "prompt": "起票日時",
+            "type": "Date & Time",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "default_value_logic": "SYSTIMESTAMP"
+          },
+          {
+            "attribute_name": "ClosedBy",
+            "prompt": "クローズ者",
+            "type": "String",
+            "length": 30,
+            "attribute_type": "Persistent Field"
+          },
+          {
+            "attribute_name": "ClosedAt",
+            "prompt": "クローズ日時",
+            "type": "Date & Time",
+            "length": null,
+            "attribute_type": "Persistent Field"
+          }
+        ]
+      },
+      {
+        "entity_name": "MonitoringTaskLink",
+        "prompt": "Monitoring Task Link",
+        "module": "CONFIG",
+        "create_projection": false,
+        "time_zone_setting": "Server",
+        "attributes": [
+          {
+            "attribute_name": "LinkSeq",
+            "prompt": "Link Seq",
+            "type": "Number",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "is_primary_key": true,
+            "remarks": "自動採番"
+          },
+          {
+            "attribute_name": "MonitoringId",
+            "prompt": "モニタリングID",
+            "type": "Number",
+            "length": null,
+            "attribute_type": "Persistent Field",
+            "is_foreign_key": true,
+            "reference_entity": "CustomShipMonitoring",
+            "remarks": "CustomShipMonitoringへのFK"
+          },
+          {
+            "attribute_name": "TaskObjkey",
+            "prompt": "Task Objkey",
+            "type": "String",
+            "length": 50,
+            "attribute_type": "Persistent Field",
+            "is_foreign_key": true,
+            "reference_entity": "JtTask",
+            "remarks": "JtTask.Objkey へのFK"
+          }
+        ]
+      }
+    ],
+    "custom_projections": [
+      {
+        "projection_name": "CustomShipMonitoringHandling",
+        "file_name": "CustomShipMonitoringHandling.projection",
+        "based_on": [
+          "CustomShipMonitoring",
+          "CustomTurnNote",
+          "MonitoringTaskLink"
+        ],
+        "associations": [
+          {
+            "source_entity": "CustomTurnNote",
+            "target_entity": "AircraftTurn",
+            "join_keys": [
+              {
+                "source_key": "TurnId",
+                "target_key": "TurnId"
+              }
+            ]
+          },
+          {
+            "source_entity": "CustomShipMonitoring",
+            "target_entity": "MonitoringTaskLink",
+            "join_keys": [
+              {
+                "source_key": "MonitoringId",
+                "target_key": "MonitoringId"
+              }
+            ]
+          },
+          {
+            "source_entity": "MonitoringTaskLink",
+            "target_entity": "JtTask",
+            "join_keys": [
+              {
+                "source_key": "TaskObjkey",
+                "target_key": "Objkey"
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "action_name": "UpdateStatus",
+            "parameters": [
+              {
+                "name": "MonitoringId",
+                "type": "Number"
+              },
+              {
+                "name": "NewStatus",
+                "type": "String"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "page_configurations": [
+      {
+        "target_page_id": "AircraftTurnDetails",
+        "client_file": "FlmAircraftTurnsDetails.client",
+        "description": "Aircraft Turn Details 画面への申し送り機能追加",
+        "elements_definition": {
+          "lists": [
+            {
+              "name": "TurnNoteList",
+              "label": "申し送り事項 (Turn Notes)",
+              "entity": "CustomTurnNote",
+              "content": [
+                {
+                  "field": "NoteText"
+                },
+                {
+                  "field": "ReportedBy"
+                },
+                {
+                  "field": "ReportedAt"
+                }
+              ],
+              "crud_actions": {
+                "create": true,
+                "read": true,
+                "update": true,
+                "delete": true
+              }
+            }
+          ]
+        },
+        "layout_modifications": {
+          "active_page_path": "Active Page > Content",
+          "actions": [
+            {
+              "operation": "add_last",
+              "element_type": "List",
+              "reference": "TurnNoteList",
+              "binding": {
+                "bindname": "AircraftTurnSelector",
+                "property": "CustomTurnNoteArray"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "target_page_id": "CustomShipMonitoring",
+        "client_file": "CustomShipMonitoringHandling.client",
+        "page_title": "Ship Monitoring",
+        "projection": "CustomShipMonitoringHandling",
+        "description": "Ship Monitoring 新規カスタムページ",
+        "elements_definition": {
+          "selectors": [
+            {
+              "name": "ShipMonitoringSelector",
+              "entity": "CustomShipMonitoring",
+              "content": [
+                {
+                  "field": "MonitoringId"
+                },
+                {
+                  "field": "Title"
+                }
+              ]
+            }
+          ],
+          "lists": [
+            {
+              "name": "ShipMonitoringList",
+              "entity": "CustomShipMonitoring",
+              "content": [
+                {
+                  "field": "MonitoringId"
+                },
+                {
+                  "field": "ShipNo"
+                },
+                {
+                  "field": "Title"
+                },
+                {
+                  "field": "Status"
+                },
+                {
+                  "field": "CreatedAt"
+                }
+              ],
+              "commands": [
+                {
+                  "name": "CreateNewMonitoring",
+                  "type": "Crud.Create",
+                  "label": "注視事象の新規作成"
+                }
+              ]
+            },
+            {
+              "name": "MonitoringTaskLinkList",
+              "entity": "JtTask",
+              "content": [
+                {
+                  "field": "Barcode"
+                },
+                {
+                  "field": "Description"
+                },
+                {
+                  "field": "Objstate"
+                }
+              ],
+              "commands": [
+                {
+                  "name": "AddRelatedTask",
+                  "type": "Navigate.assistant",
+                  "label": "関連タスクの追加",
+                  "assistant_name": "JtTaskSelector"
+                }
+              ]
+            }
+          ],
+          "groups": [
+            {
+              "name": "ShipMonitoringDetailGroup",
+              "entity": "CustomShipMonitoring",
+              "content": [
+                {
+                  "field": "Description"
+                }
+              ]
+            }
+          ]
+        },
+        "layout_definition": {
+          "content": [
+            {
+              "element_type": "Selector",
+              "reference": "ShipMonitoringSelector"
+            },
+            {
+              "element_type": "List",
+              "reference": "ShipMonitoringList",
+              "binding": {
+                "bindname": "ShipMonitoringSelector"
+              }
+            },
+            {
+              "element_type": "Tabs",
+              "tabs": [
+                {
+                  "tab_label": "詳細情報",
+                  "content": [
+                    {
+                      "element_type": "Group",
+                      "reference": "ShipMonitoringDetailGroup",
+                      "binding": {
+                        "bindname": "ShipMonitoringSelector"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tab_label": "関連タスク",
+                  "content": [
+                    {
+                      "element_type": "List",
+                      "reference": "MonitoringTaskLinkList",
+                      "binding": {
+                        "bindname": "ShipMonitoringSelector",
+                        "property": "MonitoringTaskLinkArray"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "custom_events": [
+      {
+        "event_id": "EV_JT_TASK_COMPLETED",
+        "description": "タスク完了時に注視事象のステータスを更新するためのイベント",
+        "logical_unit": "JtTask",
+        "event_type": "Model Event",
+        "table_name": "JT_TASK_TAB",
+        "fires_on": {
+          "insert": false,
+          "update": true,
+          "delete": false
+        },
+        "condition": "NEW:Objstate = 'Finished' AND OLD:Objstate != 'Finished'",
+        "actions": [
+          {
+            "action_id": "ACT_EV_JT_TASK_COMPLETED_BPA",
+            "action_type": "Execute Workflow",
+            "workflow_id": "wf_UpdateMonitoringStatus",
+            "enabled": true
+          }
+        ]
+      }
+    ],
+    "bpa_workflows": [
+      {
+        "workflow_id": "wf_UpdateMonitoringStatus",
+        "title": "注視事象ステータス自動更新",
+        "trigger": {
+          "trigger_type": "Event Invoked",
+          "event_id": "EV_JT_TASK_COMPLETED",
+          "input_variables": [
+            {
+              "variable_name": "task_objkey",
+              "description": "イベントから渡されたJtTaskのObjkey"
+            }
+          ]
+        },
+        "bpmn_structure": {
+          "start_event": {
+            "id": "StartEvent_TaskCompleted",
+            "name": "Task Completed Trigger"
+          },
+          "tasks": [
+            {
+              "id": "ServiceTask_GetMonitoringId",
+              "name": "関連モニタリングIDの取得",
+              "task_type": "Call Projection",
+              "projection_name": "CustomShipMonitoringHandling",
+              "operation_type": "Query",
+              "operation": "MonitoringTaskLinks",
+              "filter_condition": "$filter=TaskObjkey eq '${task_objkey}'",
+              "output_mapping": {
+                "variable_name": "monitoring_id",
+                "source_property": "MonitoringId"
+              }
+            },
+            {
+              "id": "ExclusiveGateway_CheckMonitoringId",
+              "name": "モニタリングIDが存在するか",
+              "task_type": "Exclusive Gateway",
+              "sequence_flows": [
+                {
+                  "condition": "${monitoring_id != null}",
+                  "target_id": "ServiceTask_UpdateStatus"
+                },
+                {
+                  "condition": "Default",
+                  "target_id": "EndEvent_Finished"
+                }
+              ]
+            },
+            {
+              "id": "ServiceTask_UpdateStatus",
+              "name": "ステータスをIN_PROGRESSに更新",
+              "task_type": "Call Projection",
+              "projection_name": "CustomShipMonitoringHandling",
+              "operation_type": "Action",
+              "action_name": "UpdateStatus",
+              "input_mapping": [
+                {
+                  "parameter_name": "MonitoringId",
+                  "value_formula": "${monitoring_id}"
+                },
+                {
+                  "parameter_name": "NewStatus",
+                  "value_formula": "'IN_PROGRESS'"
+                }
+              ]
+            }
+          ],
+          "end_event": {
+            "id": "EndEvent_Finished",
+            "name": "Process Completed"
+          }
+        }
+      }
+    ],
+    "navigation_menu": [
+      {
+        "label": "Ship Monitoring",
+        "entry_type": "Page",
+        "parent_folder": "Hangar Maintenance",
+        "client": "CustomShipMonitoringHandling",
+        "page_url_path": "page/CustomShipMonitoring/Form"
+      }
+    ],
+    "security_permissions": [
+      {
+        "permission_set": "FLM_TECHNICIAN",
+        "granted_projections": [
+          {
+            "projection_name": "CustomShipMonitoringHandling",
+            "granted_actions": [
+              {
+                "action_name": "UpdateStatus",
+                "allowed": true
+              }
+            ],
+            "entity_actions": [
+              {
+                "entity_name": "CustomTurnNote",
+                "allowed_operations": {
+                  "create": true,
+                  "read": true,
+                  "update": true,
+                  "delete": true
+                }
+              },
+              {
+                "entity_name": "CustomShipMonitoring",
+                "allowed_operations": {
+                  "create": false,
+                  "read": true,
+                  "update": false,
+                  "delete": false
+                }
+              }
+            ]
+          }
+        ],
+        "granted_pages": [
+          {
+            "page_path": "page/CustomShipMonitoring/Form",
+            "allowed": true
+          }
+        ]
+      }
+    ]
+  }
+}
