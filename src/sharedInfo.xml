@@ -17,7 +17,6 @@
             <attribute_name>TurnNoteId</attribute_name>
             <prompt>Turn Note ID</prompt>
             <type>Number</type>
-            <length/>
             <attribute_type>Persistent Field</attribute_type>
             <is_primary_key>true</is_primary_key>
           </attribute>
@@ -25,7 +24,6 @@
             <attribute_name>TurnId</attribute_name>
             <prompt>Turn ID</prompt>
             <type>Number</type>
-            <length/>
             <attribute_type>Persistent Field</attribute_type>
             <is_foreign_key>true</is_foreign_key>
             <reference_entity>AircraftTurn</reference_entity>
@@ -47,8 +45,7 @@
           <attribute>
             <attribute_name>ReportedAt</attribute_name>
             <prompt>登録日時</prompt>
-            <type>Date &amp; Time</type>
-            <length/>
+            <type>DateTime</type>
             <attribute_type>Persistent Field</attribute_type>
           </attribute>
           <attribute>
@@ -71,7 +68,6 @@
             <attribute_name>MonitoringId</attribute_name>
             <prompt>モニタリングID</prompt>
             <type>Number</type>
-            <length/>
             <attribute_type>Persistent Field</attribute_type>
             <is_primary_key>true</is_primary_key>
             <default_value_logic>Sequenceで自動採番</default_value_logic>
@@ -115,8 +111,7 @@
           <attribute>
             <attribute_name>CreatedAt</attribute_name>
             <prompt>起票日時</prompt>
-            <type>Date &amp; Time</type>
-            <length/>
+            <type>DateTime</type>
             <attribute_type>Persistent Field</attribute_type>
             <default_value_logic>SYSTIMESTAMP</default_value_logic>
           </attribute>
@@ -130,8 +125,7 @@
           <attribute>
             <attribute_name>ClosedAt</attribute_name>
             <prompt>クローズ日時</prompt>
-            <type>Date &amp; Time</type>
-            <length/>
+            <type>DateTime</type>
             <attribute_type>Persistent Field</attribute_type>
           </attribute>
         </attributes>
@@ -147,7 +141,6 @@
             <attribute_name>LinkSeq</attribute_name>
             <prompt>Link Seq</prompt>
             <type>Number</type>
-            <length/>
             <attribute_type>Persistent Field</attribute_type>
             <is_primary_key>true</is_primary_key>
             <remarks>自動採番</remarks>
@@ -156,7 +149,6 @@
             <attribute_name>MonitoringId</attribute_name>
             <prompt>モニタリングID</prompt>
             <type>Number</type>
-            <length/>
             <attribute_type>Persistent Field</attribute_type>
             <is_foreign_key>true</is_foreign_key>
             <reference_entity>CustomShipMonitoring</reference_entity>
@@ -529,7 +521,7 @@
                 <action_name>UpdateStatus</action_name>
                 <allowed>true</allowed>
               </granted_action>
-            </granted_projections>
+            </granted_actions>
             <entity_actions>
               <entity_action>
                 <entity_name>CustomTurnNote</entity_name>
