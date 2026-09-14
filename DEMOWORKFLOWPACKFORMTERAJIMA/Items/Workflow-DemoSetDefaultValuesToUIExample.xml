@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<CUSTOM_OBJECT>
+  <NAME>DemoSetDefaultValuesToUIExample</NAME>
+  <TYPE>WORKFLOW</TYPE>
+  <DESCRIPTION>DemoSetDefaultValuesToUIExample</DESCRIPTION>
+  <WORKFLOW>
+    <PROCESS_KEY>DemoSetDefaultValuesToUIExample</PROCESS_KEY>
+    <BPA_DIAGRAM>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;bpmn:definitions xmlns:bpmn=&quot;http://www.omg.org/spec/BPMN/20100524/MODEL&quot; xmlns:bpmndi=&quot;http://www.omg.org/spec/BPMN/20100524/DI&quot; xmlns:dc=&quot;http://www.omg.org/spec/DD/20100524/DC&quot; xmlns:camunda=&quot;http://camunda.org/schema/1.0/bpmn&quot; xmlns:di=&quot;http://www.omg.org/spec/DD/20100524/DI&quot; id=&quot;sample-diagram&quot; targetNamespace=&quot;http://bpmn.io/schema/bpmn&quot;&gt;
+  &lt;bpmn:process id=&quot;DemoSetDefaultValuesToUIExample&quot; isExecutable=&quot;false&quot;&gt;
+    &lt;bpmn:startEvent id=&quot;StartEvent_1&quot;&gt;
+      &lt;bpmn:outgoing&gt;Flow_1ir6uee&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:startEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1ir6uee&quot; sourceRef=&quot;StartEvent_1&quot; targetRef=&quot;Activity_0l7lcni&quot; /&gt;
+    &lt;bpmn:scriptTask id=&quot;Activity_0l7lcni&quot; name=&quot;Add default values to execution&quot; scriptFormat=&quot;JavaScript&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_1ir6uee&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0q7zznu&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:script&gt;execution.setVariable(&apos;OrganizationSite&apos;, 31);
+execution.setVariable(&apos;Description&apos;, &apos;Track product levels &amp;amp; orders&apos;);
+execution.setVariable(&apos;EarliestStart&apos;, &apos;2024-01-01-23.30.00.0000000&apos;);
+execution.setVariable(&apos;AllowMultipleVisits&apos;, true);&lt;/bpmn:script&gt;
+    &lt;/bpmn:scriptTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0q7zznu&quot; sourceRef=&quot;Activity_0l7lcni&quot; targetRef=&quot;Activity_0a88o5s&quot; /&gt;
+    &lt;bpmn:endEvent id=&quot;Event_0erxuev&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0oydv14&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0oydv14&quot; sourceRef=&quot;Activity_0a88o5s&quot; targetRef=&quot;Event_0erxuev&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_0a88o5s&quot; name=&quot;Enrich variables&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.process.enrichment.IfsBpaProcessEnrichmentDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaEnrichmentRegisteredVariables&quot;&gt;
+            &lt;camunda:list&gt;
+              &lt;camunda:value&gt;OrganizationSite&lt;/camunda:value&gt;
+              &lt;camunda:value&gt;Description&lt;/camunda:value&gt;
+              &lt;camunda:value&gt;EarliestStart&lt;/camunda:value&gt;
+              &lt;camunda:value&gt;AllowMultipleVisits&lt;/camunda:value&gt;
+            &lt;/camunda:list&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0q7zznu&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0oydv14&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_002y0i3&quot;&gt;
+      &lt;bpmn:text&gt;These default variables must match the values in the response. Ex: the
+&amp;lt;Entity_Default() call response&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0i6m5mp&quot; sourceRef=&quot;Activity_0l7lcni&quot; targetRef=&quot;TextAnnotation_002y0i3&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_16efg6m&quot;&gt;
+      &lt;bpmn:text&gt;Execution variables set in the first script task only live within this workflow execution. As we need them to be available after the execution, tag them to be passed outside this execution&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0abxpmj&quot; sourceRef=&quot;Activity_0a88o5s&quot; targetRef=&quot;TextAnnotation_16efg6m&quot; /&gt;
+  &lt;/bpmn:process&gt;
+  &lt;bpmndi:BPMNDiagram id=&quot;BPMNDiagram_1&quot;&gt;
+    &lt;bpmndi:BPMNPlane id=&quot;BPMNPlane_1&quot; bpmnElement=&quot;DemoSetDefaultValuesToUIExample&quot;&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0oydv14_di&quot; bpmnElement=&quot;Flow_0oydv14&quot;&gt;
+        &lt;di:waypoint x=&quot;850&quot; y=&quot;258&quot; /&gt;
+        &lt;di:waypoint x=&quot;952&quot; y=&quot;258&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0q7zznu_di&quot; bpmnElement=&quot;Flow_0q7zznu&quot;&gt;
+        &lt;di:waypoint x=&quot;600&quot; y=&quot;258&quot; /&gt;
+        &lt;di:waypoint x=&quot;750&quot; y=&quot;258&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1ir6uee_di&quot; bpmnElement=&quot;Flow_1ir6uee&quot;&gt;
+        &lt;di:waypoint x=&quot;448&quot; y=&quot;258&quot; /&gt;
+        &lt;di:waypoint x=&quot;500&quot; y=&quot;258&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;_BPMNShape_StartEvent_2&quot; bpmnElement=&quot;StartEvent_1&quot;&gt;
+        &lt;dc:Bounds x=&quot;412&quot; y=&quot;240&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_05t1brs_di&quot; bpmnElement=&quot;Activity_0l7lcni&quot;&gt;
+        &lt;dc:Bounds x=&quot;500&quot; y=&quot;218&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_0erxuev_di&quot; bpmnElement=&quot;Event_0erxuev&quot;&gt;
+        &lt;dc:Bounds x=&quot;952&quot; y=&quot;240&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0yojulu_di&quot; bpmnElement=&quot;Activity_0a88o5s&quot;&gt;
+        &lt;dc:Bounds x=&quot;750&quot; y=&quot;218&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_002y0i3_di&quot; bpmnElement=&quot;TextAnnotation_002y0i3&quot;&gt;
+        &lt;dc:Bounds x=&quot;490&quot; y=&quot;115&quot; width=&quot;230&quot; height=&quot;65&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_16efg6m_di&quot; bpmnElement=&quot;TextAnnotation_16efg6m&quot;&gt;
+        &lt;dc:Bounds x=&quot;760&quot; y=&quot;85&quot; width=&quot;270&quot; height=&quot;75&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0i6m5mp_di&quot; bpmnElement=&quot;Association_0i6m5mp&quot;&gt;
+        &lt;di:waypoint x=&quot;550&quot; y=&quot;218&quot; /&gt;
+        &lt;di:waypoint x=&quot;550&quot; y=&quot;180&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0abxpmj_di&quot; bpmnElement=&quot;Association_0abxpmj&quot;&gt;
+        &lt;di:waypoint x=&quot;798&quot; y=&quot;218&quot; /&gt;
+        &lt;di:waypoint x=&quot;798&quot; y=&quot;160&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+    &lt;/bpmndi:BPMNPlane&gt;
+  &lt;/bpmndi:BPMNDiagram&gt;
+&lt;/bpmn:definitions&gt;
+</BPA_DIAGRAM>
+    <VERSION>version_1</VERSION>
+    <DEPLOY_STATUS_DB>UNDEPLOYED</DEPLOY_STATUS_DB>
+    <LOCKED_STATUS_DB>EDITING</LOCKED_STATUS_DB>
+    <LOCKED_USER>IFS_SYS</LOCKED_USER>
+    <DEPLOYED_USER/>
+    <MODULE/>
+    <IS_TEMPLATE>TRUE</IS_TEMPLATE>
+    <IS_COMMAND_COMPATIBLE/>
+    <DESCRIPTION/>
+    <BPMN_VERSION_ROWKEY>419C5828D3BD59B3E0656245BD5D6E4B</BPMN_VERSION_ROWKEY>
+    <BPMN_VERSION_ROWVERSION>20251020183531</BPMN_VERSION_ROWVERSION>
+    <BPMNPROCESS_ROWKEY>411D2542B2BF5B0EE0630C20F10A8961</BPMNPROCESS_ROWKEY>
+    <BPMNPROCESS_ROWVERSION>20251014115013</BPMNPROCESS_ROWVERSION>
+    <BPMN_EXTERNAL_CONFIGS/>
+    <DEPLOY_NAME/>
+  </WORKFLOW>
+</CUSTOM_OBJECT>

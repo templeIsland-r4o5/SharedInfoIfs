@@ -1,0 +1,410 @@
+<?xml version="1.0"?>
+<CUSTOM_OBJECT>
+  <NAME>DemoSplitPOLinesExample</NAME>
+  <TYPE>WORKFLOW</TYPE>
+  <DESCRIPTION>DemoSplitPOLinesExample</DESCRIPTION>
+  <WORKFLOW>
+    <PROCESS_KEY>DemoSplitPOLinesExample</PROCESS_KEY>
+    <BPA_DIAGRAM>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;bpmn:definitions xmlns:bpmn=&quot;http://www.omg.org/spec/BPMN/20100524/MODEL&quot; xmlns:bpmndi=&quot;http://www.omg.org/spec/BPMN/20100524/DI&quot; xmlns:dc=&quot;http://www.omg.org/spec/DD/20100524/DC&quot; xmlns:di=&quot;http://www.omg.org/spec/DD/20100524/DI&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:camunda=&quot;http://camunda.org/schema/1.0/bpmn&quot; id=&quot;sample-diagram&quot; targetNamespace=&quot;http://bpmn.io/schema/bpmn&quot;&gt;
+  &lt;bpmn:process id=&quot;DemoSplitPOLinesExample&quot; isExecutable=&quot;false&quot;&gt;
+    &lt;bpmn:startEvent id=&quot;Event_01r2smw&quot;&gt;
+      &lt;bpmn:outgoing&gt;Flow_0krasl3&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:startEvent&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_0ct5197&quot; name=&quot;Read Current Purchase Order Line&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PurchaseOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;PurchaseOrderSet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityName&quot;&gt;LinePartArray&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;LineNo&quot;&gt;${LineNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;ReleaseNo&quot;&gt;${ReleaseNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0t6jrwy&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0iar9f9&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:endEvent id=&quot;Event_1wjod43&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0i0yr9s&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0iar9f9&quot; sourceRef=&quot;Activity_0ct5197&quot; targetRef=&quot;Activity_08t70qp&quot; /&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1p6p1vu&quot; sourceRef=&quot;Activity_08t70qp&quot; targetRef=&quot;Activity_1c9nryg&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_08t70qp&quot; name=&quot;Read Line History&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PurchaseOrderLinesHistoryAnalysis&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;PurchaseOrderLineHistorySet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;LineNo&quot;&gt;${LineNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;ReleaseNo&quot;&gt;${ReleaseNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCollectionVariableName&quot;&gt;PurchaseOrderLineHistorySet_Set&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionIsCollection&quot;&gt;true&lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0iar9f9&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1p6p1vu&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_047eaya&quot; sourceRef=&quot;Activity_1c9nryg&quot; targetRef=&quot;Gateway_0imq7e7&quot; /&gt;
+    &lt;bpmn:scriptTask id=&quot;Activity_1c9nryg&quot; name=&quot;Calculate Last Qty&quot; scriptFormat=&quot;JavaScript&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_1p6p1vu&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_047eaya&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:script&gt;function compare( a, b ) {
+  if ( a.HistoryNo &amp;lt; b.HistoryNo ){
+    return 1;
+  }
+  if ( a.HistoryNo  &amp;gt; b.HistoryNo ){
+    return -1;
+  }
+  return 0;
+}
+
+var histLines = execution.getVariable(&quot;PurchaseOrderLineHistorySet_Set&quot;);
+histLines.sort( compare );
+
+var lastLine = null;
+for (i=0; (i &amp;lt; histLines.length &amp;amp;&amp;amp; lastLine == null); i++){
+  if (histLines[i].MessageText.startsWith(&quot;Quantity changed &quot;)){
+    lastLine = histLines[i];
+  }
+}
+
+var text = lastLine.MessageText.replace(&quot;Quantity changed &quot;,&quot;&quot;);
+var oldQty = text.substr(0,text.indexOf(&quot; =&amp;gt; &quot;));
+
+// for inspection only
+execution.setVariable(&quot;LastLine&quot;, lastLine);
+execution.setVariable(&quot;OldQty&quot;, oldQty);&lt;/bpmn:script&gt;
+    &lt;/bpmn:scriptTask&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_13l9ee6&quot; name=&quot;Read Current Purchase Order Diffs&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;ConfirmPurchaseOrderWithDifferences&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;ConfirmDifferencesSet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;Objkey&quot;&gt;${Objkey}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionIsETag&quot; /&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCollectionVariableName&quot;&gt;ConfirmDifferencesSet_Set&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionIsCollection&quot; /&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0krasl3&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0x6tbdz&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0krasl3&quot; sourceRef=&quot;Event_01r2smw&quot; targetRef=&quot;Activity_13l9ee6&quot; /&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0x6tbdz&quot; sourceRef=&quot;Activity_13l9ee6&quot; targetRef=&quot;Activity_0iz5sq4&quot; /&gt;
+    &lt;bpmn:scriptTask id=&quot;Activity_0iz5sq4&quot; name=&quot;Extract Order No&quot; scriptFormat=&quot;JavaScript&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0x6tbdz&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0t6jrwy&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:script&gt;var text = execution.getVariable(&quot;OrderSelection&quot;)[0];
+
+var pos_start = text.indexOf(&quot;ORDER_NO=&quot;) + 9;
+var pos_end = text.indexOf(&quot;^&quot;, pos_start);
+var orderNo = text.substr(pos_start, pos_end-pos_start);
+
+pos_start = text.indexOf(&quot;LINE_NO=&quot;) + 8;
+pos_end = text.indexOf(&quot;^&quot;, pos_start);
+var lineNo = text.substr(pos_start, pos_end-pos_start);
+
+pos_start = text.indexOf(&quot;RELEASE_NO=&quot;) + 11;
+pos_end = text.indexOf(&quot;^&quot;, pos_start);
+var releaseNo = text.substr(pos_start, pos_end-pos_start);
+
+execution.setVariable(&quot;OrderNo&quot;, orderNo);
+execution.setVariable(&quot;LineNo&quot;, lineNo);
+execution.setVariable(&quot;ReleaseNo&quot;, releaseNo);&lt;/bpmn:script&gt;
+    &lt;/bpmn:scriptTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0t6jrwy&quot; sourceRef=&quot;Activity_0iz5sq4&quot; targetRef=&quot;Activity_0ct5197&quot; /&gt;
+    &lt;bpmn:exclusiveGateway id=&quot;Gateway_0imq7e7&quot; default=&quot;Flow_0i0yr9s&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_047eaya&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0i0yr9s&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:outgoing&gt;Flow_106hxe2&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:exclusiveGateway&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0i0yr9s&quot; sourceRef=&quot;Gateway_0imq7e7&quot; targetRef=&quot;Event_1wjod43&quot; /&gt;
+    &lt;bpmn:endEvent id=&quot;Event_1ajcven&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0jwjyqn&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_106hxe2&quot; sourceRef=&quot;Gateway_0imq7e7&quot; targetRef=&quot;Activity_1gt2fde&quot;&gt;
+      &lt;bpmn:conditionExpression xsi:type=&quot;bpmn:tFormalExpression&quot;&gt;${BuyQtyDue &amp;lt; OldQty}&lt;/bpmn:conditionExpression&gt;
+    &lt;/bpmn:sequenceFlow&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1eatvtn&quot; sourceRef=&quot;Activity_1uqs2uf&quot; targetRef=&quot;Activity_0g4wgok&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_1uqs2uf&quot; name=&quot;Copy PO Line&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;CALL&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PurchaseOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCallSignature&quot;&gt;CopyPurchaseOrderLines(RecordSelection):Void&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaCallReturnValueName&quot;&gt;CopyPurchaseOrderLines&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;RecordSelection&quot;&gt;${OrderSelection}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_1wf1gt5&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1eatvtn&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0jwjyqn&quot; sourceRef=&quot;Activity_0g4wgok&quot; targetRef=&quot;Event_1ajcven&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_1gt2fde&quot; name=&quot;Update Old Line&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;UPDATE&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PurchaseOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;PurchaseOrderSet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityName&quot;&gt;LinePartArray&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;BuyQtyDue&quot;&gt;${OldQty - BuyQtyDue}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;LineNo&quot;&gt;${LineNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;ReleaseNo&quot;&gt;${ReleaseNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_106hxe2&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1wf1gt5&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_0g4wgok&quot; name=&quot;Revert Old Line&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;UPDATE&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PurchaseOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;PurchaseOrderSet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityName&quot;&gt;LinePartArray&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionNestedEntityParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;BuyQtyDue&quot;&gt;${BuyQtyDue}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;OrderNo&quot;&gt;${OrderNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;LineNo&quot;&gt;${LineNo}&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;ReleaseNo&quot;&gt;${ReleaseNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_1eatvtn&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0jwjyqn&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1wf1gt5&quot; sourceRef=&quot;Activity_1gt2fde&quot; targetRef=&quot;Activity_1uqs2uf&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_04qo2qa&quot;&gt;
+      &lt;bpmn:text&gt;Cannot update values of copy of a Line, so update the old line before copying&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_024wvpe&quot; sourceRef=&quot;Activity_1gt2fde&quot; targetRef=&quot;TextAnnotation_04qo2qa&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0vydxo9&quot;&gt;
+      &lt;bpmn:text&gt;Read the current cached values in the assistant. This will allow us to parse out the primary keys.&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0q8abvm&quot; sourceRef=&quot;Activity_13l9ee6&quot; targetRef=&quot;TextAnnotation_0vydxo9&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1endqnf&quot;&gt;
+      &lt;bpmn:text&gt;Read current line to calculate a diff on
+&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_070wm07&quot; sourceRef=&quot;Activity_0ct5197&quot; targetRef=&quot;TextAnnotation_1endqnf&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0moktvf&quot;&gt;
+      &lt;bpmn:text&gt;Read all the history for the current purchase order. 
+&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0ziuzf3&quot; sourceRef=&quot;Activity_08t70qp&quot; targetRef=&quot;TextAnnotation_0moktvf&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0ry82sh&quot;&gt;
+      &lt;bpmn:text&gt;Parse the current order line info in the assistant&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0ttfhox&quot; sourceRef=&quot;Activity_0iz5sq4&quot; targetRef=&quot;TextAnnotation_0ry82sh&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0mjguy6&quot;&gt;
+      &lt;bpmn:text&gt;Sort the line history and select the most recent to calculate the difference.
+
+&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_1ait9ou&quot; sourceRef=&quot;Activity_1c9nryg&quot; targetRef=&quot;TextAnnotation_0mjguy6&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0wt19nd&quot;&gt;
+      &lt;bpmn:text&gt;Set the value of the original line to the intended value&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0f78fao&quot; sourceRef=&quot;Activity_0g4wgok&quot; targetRef=&quot;TextAnnotation_0wt19nd&quot; /&gt;
+  &lt;/bpmn:process&gt;
+  &lt;bpmndi:BPMNDiagram id=&quot;BPMNDiagram_1&quot;&gt;
+    &lt;bpmndi:BPMNPlane id=&quot;BPMNPlane_1&quot; bpmnElement=&quot;DemoSplitPOLinesExample&quot;&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1wf1gt5_di&quot; bpmnElement=&quot;Flow_1wf1gt5&quot;&gt;
+        &lt;di:waypoint x=&quot;1450&quot; y=&quot;550&quot; /&gt;
+        &lt;di:waypoint x=&quot;1500&quot; y=&quot;550&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0jwjyqn_di&quot; bpmnElement=&quot;Flow_0jwjyqn&quot;&gt;
+        &lt;di:waypoint x=&quot;1760&quot; y=&quot;550&quot; /&gt;
+        &lt;di:waypoint x=&quot;1802&quot; y=&quot;550&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1eatvtn_di&quot; bpmnElement=&quot;Flow_1eatvtn&quot;&gt;
+        &lt;di:waypoint x=&quot;1600&quot; y=&quot;550&quot; /&gt;
+        &lt;di:waypoint x=&quot;1660&quot; y=&quot;550&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_106hxe2_di&quot; bpmnElement=&quot;Flow_106hxe2&quot;&gt;
+        &lt;di:waypoint x=&quot;1320&quot; y=&quot;465&quot; /&gt;
+        &lt;di:waypoint x=&quot;1320&quot; y=&quot;550&quot; /&gt;
+        &lt;di:waypoint x=&quot;1350&quot; y=&quot;550&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0i0yr9s_di&quot; bpmnElement=&quot;Flow_0i0yr9s&quot;&gt;
+        &lt;di:waypoint x=&quot;1345&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;1802&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0t6jrwy_di&quot; bpmnElement=&quot;Flow_0t6jrwy&quot;&gt;
+        &lt;di:waypoint x=&quot;740&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;800&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0x6tbdz_di&quot; bpmnElement=&quot;Flow_0x6tbdz&quot;&gt;
+        &lt;di:waypoint x=&quot;590&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;640&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0krasl3_di&quot; bpmnElement=&quot;Flow_0krasl3&quot;&gt;
+        &lt;di:waypoint x=&quot;418&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;490&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_047eaya_di&quot; bpmnElement=&quot;Flow_047eaya&quot;&gt;
+        &lt;di:waypoint x=&quot;1240&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;1295&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1p6p1vu_di&quot; bpmnElement=&quot;Flow_1p6p1vu&quot;&gt;
+        &lt;di:waypoint x=&quot;1060&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;1140&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0iar9f9_di&quot; bpmnElement=&quot;Flow_0iar9f9&quot;&gt;
+        &lt;di:waypoint x=&quot;900&quot; y=&quot;440&quot; /&gt;
+        &lt;di:waypoint x=&quot;960&quot; y=&quot;440&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_01r2smw_di&quot; bpmnElement=&quot;Event_01r2smw&quot;&gt;
+        &lt;dc:Bounds x=&quot;382&quot; y=&quot;422&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_00cojyf_di&quot; bpmnElement=&quot;Activity_0ct5197&quot;&gt;
+        &lt;dc:Bounds x=&quot;800&quot; y=&quot;400&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1wjod43_di&quot; bpmnElement=&quot;Event_1wjod43&quot;&gt;
+        &lt;dc:Bounds x=&quot;1802&quot; y=&quot;422&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0dhfky5_di&quot; bpmnElement=&quot;Activity_08t70qp&quot;&gt;
+        &lt;dc:Bounds x=&quot;960&quot; y=&quot;400&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_1isbfaa_di&quot; bpmnElement=&quot;Activity_1c9nryg&quot;&gt;
+        &lt;dc:Bounds x=&quot;1140&quot; y=&quot;400&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_13l9ee6_di&quot; bpmnElement=&quot;Activity_13l9ee6&quot;&gt;
+        &lt;dc:Bounds x=&quot;490&quot; y=&quot;400&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0iz5sq4_di&quot; bpmnElement=&quot;Activity_0iz5sq4&quot;&gt;
+        &lt;dc:Bounds x=&quot;640&quot; y=&quot;400&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Gateway_0imq7e7_di&quot; bpmnElement=&quot;Gateway_0imq7e7&quot; isMarkerVisible=&quot;true&quot;&gt;
+        &lt;dc:Bounds x=&quot;1295&quot; y=&quot;415&quot; width=&quot;50&quot; height=&quot;50&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1ajcven_di&quot; bpmnElement=&quot;Event_1ajcven&quot;&gt;
+        &lt;dc:Bounds x=&quot;1802&quot; y=&quot;532&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0yaw38u_di&quot; bpmnElement=&quot;Activity_1uqs2uf&quot;&gt;
+        &lt;dc:Bounds x=&quot;1500&quot; y=&quot;510&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_020vyxw_di&quot; bpmnElement=&quot;Activity_1gt2fde&quot;&gt;
+        &lt;dc:Bounds x=&quot;1350&quot; y=&quot;510&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_1rhfuy7_di&quot; bpmnElement=&quot;Activity_0g4wgok&quot;&gt;
+        &lt;dc:Bounds x=&quot;1660&quot; y=&quot;510&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_04qo2qa_di&quot; bpmnElement=&quot;TextAnnotation_04qo2qa&quot;&gt;
+        &lt;dc:Bounds x=&quot;1410&quot; y=&quot;630&quot; width=&quot;190&quot; height=&quot;53&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0vydxo9_di&quot; bpmnElement=&quot;TextAnnotation_0vydxo9&quot;&gt;
+        &lt;dc:Bounds x=&quot;540&quot; y=&quot;290&quot; width=&quot;200&quot; height=&quot;53&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1endqnf_di&quot; bpmnElement=&quot;TextAnnotation_1endqnf&quot;&gt;
+        &lt;dc:Bounds x=&quot;800&quot; y=&quot;290&quot; width=&quot;130&quot; height=&quot;53&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0moktvf_di&quot; bpmnElement=&quot;TextAnnotation_0moktvf&quot;&gt;
+        &lt;dc:Bounds x=&quot;1030&quot; y=&quot;285&quot; width=&quot;150&quot; height=&quot;58&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0ry82sh_di&quot; bpmnElement=&quot;TextAnnotation_0ry82sh&quot;&gt;
+        &lt;dc:Bounds x=&quot;660&quot; y=&quot;530&quot; width=&quot;140&quot; height=&quot;39&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0mjguy6_di&quot; bpmnElement=&quot;TextAnnotation_0mjguy6&quot;&gt;
+        &lt;dc:Bounds x=&quot;1050&quot; y=&quot;530&quot; width=&quot;160&quot; height=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0wt19nd_di&quot; bpmnElement=&quot;TextAnnotation_0wt19nd&quot;&gt;
+        &lt;dc:Bounds x=&quot;1660&quot; y=&quot;630&quot; width=&quot;130&quot; height=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_024wvpe_di&quot; bpmnElement=&quot;Association_024wvpe&quot;&gt;
+        &lt;di:waypoint x=&quot;1425&quot; y=&quot;590&quot; /&gt;
+        &lt;di:waypoint x=&quot;1451&quot; y=&quot;630&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0q8abvm_di&quot; bpmnElement=&quot;Association_0q8abvm&quot;&gt;
+        &lt;di:waypoint x=&quot;555&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;576&quot; y=&quot;343&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_070wm07_di&quot; bpmnElement=&quot;Association_070wm07&quot;&gt;
+        &lt;di:waypoint x=&quot;850&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;850&quot; y=&quot;343&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0ziuzf3_di&quot; bpmnElement=&quot;Association_0ziuzf3&quot;&gt;
+        &lt;di:waypoint x=&quot;1021&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;1037&quot; y=&quot;343&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0ttfhox_di&quot; bpmnElement=&quot;Association_0ttfhox&quot;&gt;
+        &lt;di:waypoint x=&quot;698&quot; y=&quot;480&quot; /&gt;
+        &lt;di:waypoint x=&quot;707&quot; y=&quot;530&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_1ait9ou_di&quot; bpmnElement=&quot;Association_1ait9ou&quot;&gt;
+        &lt;di:waypoint x=&quot;1156&quot; y=&quot;480&quot; /&gt;
+        &lt;di:waypoint x=&quot;1113&quot; y=&quot;530&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0f78fao_di&quot; bpmnElement=&quot;Association_0f78fao&quot;&gt;
+        &lt;di:waypoint x=&quot;1710&quot; y=&quot;590&quot; /&gt;
+        &lt;di:waypoint x=&quot;1710&quot; y=&quot;630&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+    &lt;/bpmndi:BPMNPlane&gt;
+  &lt;/bpmndi:BPMNDiagram&gt;
+&lt;/bpmn:definitions&gt;
+</BPA_DIAGRAM>
+    <VERSION>version_1</VERSION>
+    <DEPLOY_STATUS_DB>UNDEPLOYED</DEPLOY_STATUS_DB>
+    <LOCKED_STATUS_DB>EDITING</LOCKED_STATUS_DB>
+    <LOCKED_USER>IFS_SYS</LOCKED_USER>
+    <DEPLOYED_USER/>
+    <MODULE/>
+    <IS_TEMPLATE>TRUE</IS_TEMPLATE>
+    <IS_COMMAND_COMPATIBLE/>
+    <DESCRIPTION/>
+    <BPMN_VERSION_ROWKEY>419C5828D3BB59B3E0656245BD5D6E4B</BPMN_VERSION_ROWKEY>
+    <BPMN_VERSION_ROWVERSION>20251020183531</BPMN_VERSION_ROWVERSION>
+    <BPMNPROCESS_ROWKEY>411D2542B29B5B0EE0630C20F10A8961</BPMNPROCESS_ROWKEY>
+    <BPMNPROCESS_ROWVERSION>20251014115000</BPMNPROCESS_ROWVERSION>
+    <BPMN_EXTERNAL_CONFIGS/>
+    <DEPLOY_NAME/>
+  </WORKFLOW>
+</CUSTOM_OBJECT>

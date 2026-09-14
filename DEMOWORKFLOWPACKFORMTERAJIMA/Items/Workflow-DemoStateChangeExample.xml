@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<CUSTOM_OBJECT>
+  <NAME>DemoStateChangeExample</NAME>
+  <TYPE>WORKFLOW</TYPE>
+  <DESCRIPTION>DemoStateChangeExample</DESCRIPTION>
+  <WORKFLOW>
+    <PROCESS_KEY>DemoStateChangeExample</PROCESS_KEY>
+    <BPA_DIAGRAM>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;bpmn:definitions xmlns:bpmn=&quot;http://www.omg.org/spec/BPMN/20100524/MODEL&quot; xmlns:bpmndi=&quot;http://www.omg.org/spec/BPMN/20100524/DI&quot; xmlns:dc=&quot;http://www.omg.org/spec/DD/20100524/DC&quot; xmlns:camunda=&quot;http://camunda.org/schema/1.0/bpmn&quot; xmlns:di=&quot;http://www.omg.org/spec/DD/20100524/DI&quot; id=&quot;sample-diagram&quot; targetNamespace=&quot;http://bpmn.io/schema/bpmn&quot;&gt;
+  &lt;bpmn:process id=&quot;DemoStateChangeExample&quot; isExecutable=&quot;false&quot;&gt;
+    &lt;bpmn:startEvent id=&quot;StartEvent_1&quot; name=&quot;Process Start&quot;&gt;
+      &lt;bpmn:outgoing&gt;Flow_14t0fb1&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:startEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_14t0fb1&quot; sourceRef=&quot;StartEvent_1&quot; targetRef=&quot;Activity_0f93d25&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_0f93d25&quot; name=&quot;Read Work Order&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionType&quot;&gt;Standard&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PrepareWorkOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;ActiveSeparateSet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;WoNo&quot;&gt;${WoNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_14t0fb1&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1e748v7&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1e748v7&quot; sourceRef=&quot;Activity_0f93d25&quot; targetRef=&quot;Activity_0fw1nod&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_0fw1nod&quot; name=&quot;Update State&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionType&quot;&gt;Standard&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;CALL&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;PrepareWorkOrderHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCallSignature&quot;&gt;ActiveSeparate_StartOrder():Void&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaCallReturnValueName&quot;&gt;ActiveSeparate_StartOrder&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map /&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_1e748v7&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0e46kda&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:endEvent id=&quot;Event_0ccdktv&quot; name=&quot;Process End&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0e46kda&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0e46kda&quot; sourceRef=&quot;Activity_0fw1nod&quot; targetRef=&quot;Event_0ccdktv&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_16flqsc&quot;&gt;
+      &lt;bpmn:text&gt;State change is a bound action which requires the entity as a parameter. Workflow doesn’t support given entity as a parameter in API task. Therefore, first read the entity that you want to do the state change and then call state change bound action without parameter.
+
+&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0poh7sm&quot; sourceRef=&quot;Activity_0f93d25&quot; targetRef=&quot;TextAnnotation_16flqsc&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1l9uwum&quot;&gt;
+      &lt;bpmn:text&gt;Call bound action ActiveSeparate_StartOrder() of PrepareWorkOrderHandling API to update state from “Released” to “Started”&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_11symck&quot; sourceRef=&quot;Activity_0fw1nod&quot; targetRef=&quot;TextAnnotation_1l9uwum&quot; /&gt;
+  &lt;/bpmn:process&gt;
+  &lt;bpmndi:BPMNDiagram id=&quot;BPMNDiagram_1&quot;&gt;
+    &lt;bpmndi:BPMNPlane id=&quot;BPMNPlane_1&quot; bpmnElement=&quot;DemoStateChangeExample&quot;&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0e46kda_di&quot; bpmnElement=&quot;Flow_0e46kda&quot;&gt;
+        &lt;di:waypoint x=&quot;540&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;612&quot; y=&quot;400&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1e748v7_di&quot; bpmnElement=&quot;Flow_1e748v7&quot;&gt;
+        &lt;di:waypoint x=&quot;370&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;440&quot; y=&quot;400&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_14t0fb1_di&quot; bpmnElement=&quot;Flow_14t0fb1&quot;&gt;
+        &lt;di:waypoint x=&quot;198&quot; y=&quot;400&quot; /&gt;
+        &lt;di:waypoint x=&quot;270&quot; y=&quot;400&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;_BPMNShape_StartEvent_2&quot; bpmnElement=&quot;StartEvent_1&quot;&gt;
+        &lt;dc:Bounds x=&quot;162&quot; y=&quot;382&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;147&quot; y=&quot;425&quot; width=&quot;67&quot; height=&quot;14&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_17og76p_di&quot; bpmnElement=&quot;Activity_0f93d25&quot;&gt;
+        &lt;dc:Bounds x=&quot;270&quot; y=&quot;360&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_13wl7xe_di&quot; bpmnElement=&quot;Activity_0fw1nod&quot;&gt;
+        &lt;dc:Bounds x=&quot;440&quot; y=&quot;360&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_0ccdktv_di&quot; bpmnElement=&quot;Event_0ccdktv&quot;&gt;
+        &lt;dc:Bounds x=&quot;612&quot; y=&quot;382&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;599&quot; y=&quot;425&quot; width=&quot;63&quot; height=&quot;14&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_16flqsc_di&quot; bpmnElement=&quot;TextAnnotation_16flqsc&quot;&gt;
+        &lt;dc:Bounds x=&quot;240&quot; y=&quot;90&quot; width=&quot;160&quot; height=&quot;180&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1l9uwum_di&quot; bpmnElement=&quot;TextAnnotation_1l9uwum&quot;&gt;
+        &lt;dc:Bounds x=&quot;460&quot; y=&quot;130&quot; width=&quot;180&quot; height=&quot;82&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0poh7sm_di&quot; bpmnElement=&quot;Association_0poh7sm&quot;&gt;
+        &lt;di:waypoint x=&quot;313&quot; y=&quot;360&quot; /&gt;
+        &lt;di:waypoint x=&quot;298&quot; y=&quot;270&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_11symck_di&quot; bpmnElement=&quot;Association_11symck&quot;&gt;
+        &lt;di:waypoint x=&quot;493&quot; y=&quot;360&quot; /&gt;
+        &lt;di:waypoint x=&quot;505&quot; y=&quot;212&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+    &lt;/bpmndi:BPMNPlane&gt;
+  &lt;/bpmndi:BPMNDiagram&gt;
+&lt;/bpmn:definitions&gt;
+</BPA_DIAGRAM>
+    <VERSION>version_1</VERSION>
+    <DEPLOY_STATUS_DB>UNDEPLOYED</DEPLOY_STATUS_DB>
+    <LOCKED_STATUS_DB>EDITING</LOCKED_STATUS_DB>
+    <LOCKED_USER>IFS_SYS</LOCKED_USER>
+    <DEPLOYED_USER/>
+    <MODULE/>
+    <IS_TEMPLATE>TRUE</IS_TEMPLATE>
+    <IS_COMMAND_COMPATIBLE/>
+    <DESCRIPTION/>
+    <BPMN_VERSION_ROWKEY>419C5828D3B959B3E0656245BD5D6E4B</BPMN_VERSION_ROWKEY>
+    <BPMN_VERSION_ROWVERSION>20251020183531</BPMN_VERSION_ROWVERSION>
+    <BPMNPROCESS_ROWKEY>411D2542B2B95B0EE0630C20F10A8961</BPMNPROCESS_ROWKEY>
+    <BPMNPROCESS_ROWVERSION>20251014115011</BPMNPROCESS_ROWVERSION>
+    <BPMN_EXTERNAL_CONFIGS/>
+    <DEPLOY_NAME/>
+  </WORKFLOW>
+</CUSTOM_OBJECT>

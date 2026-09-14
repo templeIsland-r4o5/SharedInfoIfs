@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<CUSTOM_OBJECT>
+  <NAME>DetectRecursionExample</NAME>
+  <TYPE>WORKFLOW</TYPE>
+  <DESCRIPTION>DetectRecursionExample</DESCRIPTION>
+  <WORKFLOW>
+    <PROCESS_KEY>DetectRecursionExample</PROCESS_KEY>
+    <BPA_DIAGRAM>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;bpmn:definitions xmlns:bpmn=&quot;http://www.omg.org/spec/BPMN/20100524/MODEL&quot; xmlns:bpmndi=&quot;http://www.omg.org/spec/BPMN/20100524/DI&quot; xmlns:dc=&quot;http://www.omg.org/spec/DD/20100524/DC&quot; xmlns:camunda=&quot;http://camunda.org/schema/1.0/bpmn&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:di=&quot;http://www.omg.org/spec/DD/20100524/DI&quot; id=&quot;sample-diagram&quot; targetNamespace=&quot;http://bpmn.io/schema/bpmn&quot; exporter=&quot;Camunda Modeler&quot; exporterVersion=&quot;5.12.1&quot;&gt;
+  &lt;bpmn:process id=&quot;DetectRecursionExample&quot; isExecutable=&quot;false&quot;&gt;
+    &lt;bpmn:startEvent id=&quot;StartEvent_1&quot;&gt;
+      &lt;bpmn:outgoing&gt;Flow_1hoyee2&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:startEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1hoyee2&quot; sourceRef=&quot;StartEvent_1&quot; targetRef=&quot;Activity_05l24d2&quot; /&gt;
+    &lt;bpmn:scriptTask id=&quot;Activity_05l24d2&quot; name=&quot;Script Task&quot; scriptFormat=&quot;JavaScript&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_1hoyee2&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0ajr2t8&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:script&gt;var seq = 1
+if(execution.hasVariable(&apos;executionSeq&apos;)){
+ seq = execution.getVariable(&apos;executionSeq&apos;) + 1
+}
+execution.setVariable(&apos;executionSeq&apos;, seq);&lt;/bpmn:script&gt;
+    &lt;/bpmn:scriptTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0ajr2t8&quot; sourceRef=&quot;Activity_05l24d2&quot; targetRef=&quot;Activity_043tph2&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_043tph2&quot; name=&quot;Process Enrichment&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.process.enrichment.IfsBpaProcessEnrichmentDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaEnrichmentRegisteredVariables&quot;&gt;
+            &lt;camunda:list&gt;
+              &lt;camunda:value&gt;executionSeq&lt;/camunda:value&gt;
+            &lt;/camunda:list&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0ajr2t8&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0xnqcng&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:exclusiveGateway id=&quot;Gateway_1txmz2k&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0xnqcng&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1prvp9u&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:outgoing&gt;Flow_0qr4oub&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:exclusiveGateway&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0xnqcng&quot; sourceRef=&quot;Activity_043tph2&quot; targetRef=&quot;Gateway_1txmz2k&quot; /&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1prvp9u&quot; sourceRef=&quot;Gateway_1txmz2k&quot; targetRef=&quot;Event_0d85i8z&quot;&gt;
+      &lt;bpmn:conditionExpression xsi:type=&quot;bpmn:tFormalExpression&quot;&gt;${executionSeq &amp;gt; 1}&lt;/bpmn:conditionExpression&gt;
+    &lt;/bpmn:sequenceFlow&gt;
+    &lt;bpmn:endEvent id=&quot;Event_0d85i8z&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_1prvp9u&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0qr4oub&quot; sourceRef=&quot;Gateway_1txmz2k&quot; targetRef=&quot;Activity_1g8r8hx&quot;&gt;
+      &lt;bpmn:conditionExpression xsi:type=&quot;bpmn:tFormalExpression&quot;&gt;${executionSeq == 1}&lt;/bpmn:conditionExpression&gt;
+    &lt;/bpmn:sequenceFlow&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_1g8r8hx&quot; name=&quot;Read Regulatory Body&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionType&quot;&gt;Standard&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;RegulatoryBodyHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;RegulatoryBodySet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;RegulatoryBodyCode&quot;&gt;AA&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_0qr4oub&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1izkbay&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1izkbay&quot; sourceRef=&quot;Activity_1g8r8hx&quot; targetRef=&quot;Activity_1doofx5&quot; /&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_1doofx5&quot; name=&quot;Update Regulatory Body&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionType&quot;&gt;Standard&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;UPDATE&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;RegulatoryBodyHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;RegulatoryBodySet&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;RegulatoryBodyCode&quot;&gt;AA&lt;/camunda:entry&gt;
+              &lt;camunda:entry key=&quot;RegulatoryBodyDesc&quot;&gt;ATest2&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_1izkbay&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0x3o6rq&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:endEvent id=&quot;Event_1vdntsf&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0x3o6rq&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0x3o6rq&quot; sourceRef=&quot;Activity_1doofx5&quot; targetRef=&quot;Event_1vdntsf&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1il4zed&quot;&gt;
+      &lt;bpmn:text&gt;Count the no of times the workflow executed for the current user actions&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_1cqqhd4&quot; sourceRef=&quot;Activity_05l24d2&quot; targetRef=&quot;TextAnnotation_1il4zed&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0krf2bp&quot;&gt;
+      &lt;bpmn:text&gt;Make the counter variable available for subsequent execution in the workflow initiating user action&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_15o1bou&quot; sourceRef=&quot;Activity_043tph2&quot; targetRef=&quot;TextAnnotation_0krf2bp&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1dexq1q&quot;&gt;
+      &lt;bpmn:text&gt;If the count is more than 1 break the execution&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_14kd4ph&quot; sourceRef=&quot;Gateway_1txmz2k&quot; targetRef=&quot;TextAnnotation_1dexq1q&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0wrgqtm&quot;&gt;
+      &lt;bpmn:text&gt;If the count is equal 1 continue regulatory body update process&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_1krpo5p&quot; sourceRef=&quot;TextAnnotation_0wrgqtm&quot; targetRef=&quot;Gateway_1txmz2k&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_17vwfee&quot;&gt;
+      &lt;bpmn:text&gt;Read the Regulatory Body Code&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_1tv9oo7&quot; sourceRef=&quot;Activity_1g8r8hx&quot; targetRef=&quot;TextAnnotation_17vwfee&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_0bmhnr9&quot;&gt;
+      &lt;bpmn:text&gt;Update the Regulatory Body Description&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0jtu8db&quot; sourceRef=&quot;Activity_1doofx5&quot; targetRef=&quot;TextAnnotation_0bmhnr9&quot; /&gt;
+  &lt;/bpmn:process&gt;
+  &lt;bpmndi:BPMNDiagram id=&quot;BPMNDiagram_1&quot;&gt;
+    &lt;bpmndi:BPMNPlane id=&quot;BPMNPlane_1&quot; bpmnElement=&quot;DetectRecursionExample&quot;&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_17vwfee_di&quot; bpmnElement=&quot;TextAnnotation_17vwfee&quot;&gt;
+        &lt;dc:Bounds x=&quot;530&quot; y=&quot;600&quot; width=&quot;100&quot; height=&quot;55&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0bmhnr9_di&quot; bpmnElement=&quot;TextAnnotation_0bmhnr9&quot;&gt;
+        &lt;dc:Bounds x=&quot;670&quot; y=&quot;600&quot; width=&quot;100&quot; height=&quot;70&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;_BPMNShape_StartEvent_2&quot; bpmnElement=&quot;StartEvent_1&quot;&gt;
+        &lt;dc:Bounds x=&quot;152&quot; y=&quot;292&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0djypzg_di&quot; bpmnElement=&quot;Activity_05l24d2&quot;&gt;
+        &lt;dc:Bounds x=&quot;240&quot; y=&quot;270&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_07tdte7_di&quot; bpmnElement=&quot;Activity_043tph2&quot;&gt;
+        &lt;dc:Bounds x=&quot;400&quot; y=&quot;270&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Gateway_1txmz2k_di&quot; bpmnElement=&quot;Gateway_1txmz2k&quot; isMarkerVisible=&quot;true&quot;&gt;
+        &lt;dc:Bounds x=&quot;565&quot; y=&quot;285&quot; width=&quot;50&quot; height=&quot;50&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_07hocc9_di&quot; bpmnElement=&quot;Event_0d85i8z&quot;&gt;
+        &lt;dc:Bounds x=&quot;682&quot; y=&quot;292&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1il4zed_di&quot; bpmnElement=&quot;TextAnnotation_1il4zed&quot;&gt;
+        &lt;dc:Bounds x=&quot;280&quot; y=&quot;100&quot; width=&quot;100&quot; height=&quot;98&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0krf2bp_di&quot; bpmnElement=&quot;TextAnnotation_0krf2bp&quot;&gt;
+        &lt;dc:Bounds x=&quot;440&quot; y=&quot;85&quot; width=&quot;100&quot; height=&quot;127&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1dexq1q_di&quot; bpmnElement=&quot;TextAnnotation_1dexq1q&quot;&gt;
+        &lt;dc:Bounds x=&quot;620&quot; y=&quot;200&quot; width=&quot;100&quot; height=&quot;70&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_0wrgqtm_di&quot; bpmnElement=&quot;TextAnnotation_0wrgqtm&quot;&gt;
+        &lt;dc:Bounds x=&quot;430&quot; y=&quot;373&quot; width=&quot;100&quot; height=&quot;84&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_1g13qip_di&quot; bpmnElement=&quot;Activity_1g8r8hx&quot;&gt;
+        &lt;dc:Bounds x=&quot;540&quot; y=&quot;460&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_0dxvhll_di&quot; bpmnElement=&quot;Activity_1doofx5&quot;&gt;
+        &lt;dc:Bounds x=&quot;680&quot; y=&quot;460&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1vdntsf_di&quot; bpmnElement=&quot;Event_1vdntsf&quot;&gt;
+        &lt;dc:Bounds x=&quot;832&quot; y=&quot;482&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_1tv9oo7_di&quot; bpmnElement=&quot;Association_1tv9oo7&quot;&gt;
+        &lt;di:waypoint x=&quot;587&quot; y=&quot;540&quot; /&gt;
+        &lt;di:waypoint x=&quot;582&quot; y=&quot;600&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0jtu8db_di&quot; bpmnElement=&quot;Association_0jtu8db&quot;&gt;
+        &lt;di:waypoint x=&quot;727&quot; y=&quot;540&quot; /&gt;
+        &lt;di:waypoint x=&quot;723&quot; y=&quot;600&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1hoyee2_di&quot; bpmnElement=&quot;Flow_1hoyee2&quot;&gt;
+        &lt;di:waypoint x=&quot;188&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;240&quot; y=&quot;310&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0ajr2t8_di&quot; bpmnElement=&quot;Flow_0ajr2t8&quot;&gt;
+        &lt;di:waypoint x=&quot;340&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;400&quot; y=&quot;310&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0xnqcng_di&quot; bpmnElement=&quot;Flow_0xnqcng&quot;&gt;
+        &lt;di:waypoint x=&quot;500&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;565&quot; y=&quot;310&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1prvp9u_di&quot; bpmnElement=&quot;Flow_1prvp9u&quot;&gt;
+        &lt;di:waypoint x=&quot;615&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;682&quot; y=&quot;310&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0qr4oub_di&quot; bpmnElement=&quot;Flow_0qr4oub&quot;&gt;
+        &lt;di:waypoint x=&quot;590&quot; y=&quot;335&quot; /&gt;
+        &lt;di:waypoint x=&quot;590&quot; y=&quot;460&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1izkbay_di&quot; bpmnElement=&quot;Flow_1izkbay&quot;&gt;
+        &lt;di:waypoint x=&quot;640&quot; y=&quot;500&quot; /&gt;
+        &lt;di:waypoint x=&quot;680&quot; y=&quot;500&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0x3o6rq_di&quot; bpmnElement=&quot;Flow_0x3o6rq&quot;&gt;
+        &lt;di:waypoint x=&quot;780&quot; y=&quot;500&quot; /&gt;
+        &lt;di:waypoint x=&quot;832&quot; y=&quot;500&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_1cqqhd4_di&quot; bpmnElement=&quot;Association_1cqqhd4&quot;&gt;
+        &lt;di:waypoint x=&quot;298&quot; y=&quot;270&quot; /&gt;
+        &lt;di:waypoint x=&quot;313&quot; y=&quot;198&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_15o1bou_di&quot; bpmnElement=&quot;Association_15o1bou&quot;&gt;
+        &lt;di:waypoint x=&quot;458&quot; y=&quot;270&quot; /&gt;
+        &lt;di:waypoint x=&quot;469&quot; y=&quot;212&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_14kd4ph_di&quot; bpmnElement=&quot;Association_14kd4ph&quot;&gt;
+        &lt;di:waypoint x=&quot;615&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;650&quot; y=&quot;310&quot; /&gt;
+        &lt;di:waypoint x=&quot;658&quot; y=&quot;270&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_1krpo5p_di&quot; bpmnElement=&quot;Association_1krpo5p&quot;&gt;
+        &lt;di:waypoint x=&quot;524&quot; y=&quot;373&quot; /&gt;
+        &lt;di:waypoint x=&quot;577&quot; y=&quot;322&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+    &lt;/bpmndi:BPMNPlane&gt;
+  &lt;/bpmndi:BPMNDiagram&gt;
+&lt;/bpmn:definitions&gt;
+</BPA_DIAGRAM>
+    <VERSION>version_1</VERSION>
+    <DEPLOY_STATUS_DB>UNDEPLOYED</DEPLOY_STATUS_DB>
+    <LOCKED_STATUS_DB>EDITING</LOCKED_STATUS_DB>
+    <LOCKED_USER>IFS_SYS</LOCKED_USER>
+    <DEPLOYED_USER/>
+    <MODULE/>
+    <IS_TEMPLATE>TRUE</IS_TEMPLATE>
+    <IS_COMMAND_COMPATIBLE/>
+    <DESCRIPTION/>
+    <BPMN_VERSION_ROWKEY>419C5828D3B559B3E0656245BD5D6E4B</BPMN_VERSION_ROWKEY>
+    <BPMN_VERSION_ROWVERSION>20251020183531</BPMN_VERSION_ROWVERSION>
+    <BPMNPROCESS_ROWKEY>411D2542B2B35B0EE0630C20F10A8961</BPMNPROCESS_ROWKEY>
+    <BPMNPROCESS_ROWVERSION>20251014115011</BPMNPROCESS_ROWVERSION>
+    <BPMN_EXTERNAL_CONFIGS/>
+    <DEPLOY_NAME/>
+  </WORKFLOW>
+</CUSTOM_OBJECT>

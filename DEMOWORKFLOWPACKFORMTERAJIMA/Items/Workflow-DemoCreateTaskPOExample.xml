@@ -1,0 +1,217 @@
+<?xml version="1.0"?>
+<CUSTOM_OBJECT>
+  <NAME>DemoCreateTaskPOExample</NAME>
+  <TYPE>WORKFLOW</TYPE>
+  <DESCRIPTION>DemoCreateTaskPOExample</DESCRIPTION>
+  <WORKFLOW>
+    <PROCESS_KEY>DemoCreateTaskPOExample</PROCESS_KEY>
+    <BPA_DIAGRAM>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;bpmn:definitions xmlns:bpmn=&quot;http://www.omg.org/spec/BPMN/20100524/MODEL&quot; xmlns:bpmndi=&quot;http://www.omg.org/spec/BPMN/20100524/DI&quot; xmlns:dc=&quot;http://www.omg.org/spec/DD/20100524/DC&quot; xmlns:di=&quot;http://www.omg.org/spec/DD/20100524/DI&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:camunda=&quot;http://camunda.org/schema/1.0/bpmn&quot; id=&quot;sample-diagram&quot; targetNamespace=&quot;http://bpmn.io/schema/bpmn&quot;&gt;
+  &lt;bpmn:process id=&quot;DemoCreateTaskPOExample&quot; isExecutable=&quot;false&quot;&gt;
+    &lt;bpmn:startEvent id=&quot;StartEvent_1&quot; name=&quot;Process Start&quot;&gt;
+      &lt;bpmn:outgoing&gt;Flow_18fwbee&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:startEvent&gt;
+    &lt;bpmn:serviceTask id=&quot;Activity_1pf6smi&quot; name=&quot;Read Maint Material Lines&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+      &lt;bpmn:extensionElements&gt;
+        &lt;camunda:inputOutput&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;READ&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;MaintenanceMaterialRequisitionHandling_ETag&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;MaintenanceMaterialRequisitionHandling&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionEntitySetName&quot;&gt;Reference_MaintMaterialReqLine&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+            &lt;camunda:map&gt;
+              &lt;camunda:entry key=&quot;WoNo&quot;&gt;${WoNo}&lt;/camunda:entry&gt;
+            &lt;/camunda:map&gt;
+          &lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCollectionVariableName&quot;&gt;Reference_MaintMaterialReqLine_Set&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionIsCollection&quot;&gt;true&lt;/camunda:inputParameter&gt;
+          &lt;camunda:inputParameter name=&quot;ifsBpaProjectionIsETag&quot;&gt;true&lt;/camunda:inputParameter&gt;
+        &lt;/camunda:inputOutput&gt;
+      &lt;/bpmn:extensionElements&gt;
+      &lt;bpmn:incoming&gt;Flow_18fwbee&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_0n0m7h7&lt;/bpmn:outgoing&gt;
+    &lt;/bpmn:serviceTask&gt;
+    &lt;bpmn:subProcess id=&quot;Activity_1oinajr&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_0n0m7h7&lt;/bpmn:incoming&gt;
+      &lt;bpmn:outgoing&gt;Flow_1rvs770&lt;/bpmn:outgoing&gt;
+      &lt;bpmn:multiInstanceLoopCharacteristics isSequential=&quot;true&quot; camunda:collection=&quot;Reference_MaintMaterialReqLine_Set&quot; camunda:elementVariable=&quot;MaintMaterialReqLine&quot; /&gt;
+      &lt;bpmn:startEvent id=&quot;Event_1ke7jhx&quot; name=&quot;Loop Start&quot;&gt;
+        &lt;bpmn:outgoing&gt;Flow_03xx0vt&lt;/bpmn:outgoing&gt;
+      &lt;/bpmn:startEvent&gt;
+      &lt;bpmn:endEvent id=&quot;Event_1enarn1&quot; name=&quot;Loop Completion&quot;&gt;
+        &lt;bpmn:incoming&gt;Flow_1irbdmg&lt;/bpmn:incoming&gt;
+      &lt;/bpmn:endEvent&gt;
+      &lt;bpmn:sequenceFlow id=&quot;Flow_03xx0vt&quot; sourceRef=&quot;Event_1ke7jhx&quot; targetRef=&quot;Gateway_1ha0bki&quot; /&gt;
+      &lt;bpmn:exclusiveGateway id=&quot;Gateway_1ha0bki&quot; default=&quot;Flow_1irbdmg&quot;&gt;
+        &lt;bpmn:incoming&gt;Flow_03xx0vt&lt;/bpmn:incoming&gt;
+        &lt;bpmn:outgoing&gt;Flow_1irbdmg&lt;/bpmn:outgoing&gt;
+        &lt;bpmn:outgoing&gt;Flow_0l82kq8&lt;/bpmn:outgoing&gt;
+      &lt;/bpmn:exclusiveGateway&gt;
+      &lt;bpmn:sequenceFlow id=&quot;Flow_1irbdmg&quot; sourceRef=&quot;Gateway_1ha0bki&quot; targetRef=&quot;Event_1enarn1&quot; /&gt;
+      &lt;bpmn:sequenceFlow id=&quot;Flow_0l82kq8&quot; name=&quot;Check to see if an aquisitition has been created&quot; sourceRef=&quot;Gateway_1ha0bki&quot; targetRef=&quot;Activity_1t2l4to&quot;&gt;
+        &lt;bpmn:conditionExpression xsi:type=&quot;bpmn:tFormalExpression&quot; language=&quot;JavaScript&quot;&gt;execution.getVariable(&quot;SupplySourceRef1&quot;) == null&lt;/bpmn:conditionExpression&gt;
+      &lt;/bpmn:sequenceFlow&gt;
+      &lt;bpmn:serviceTask id=&quot;Activity_1t2l4to&quot; name=&quot;Create Purchase Requisition&quot; camunda:class=&quot;com.ifsworld.fnd.bpa.IfsProjectionDelegate&quot;&gt;
+        &lt;bpmn:extensionElements&gt;
+          &lt;camunda:inputOutput&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaProjectionETagVariableName&quot;&gt;ETag&lt;/camunda:inputParameter&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaProjectionAction&quot;&gt;CALL&lt;/camunda:inputParameter&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaProjectionName&quot;&gt;WorkTaskHandling&lt;/camunda:inputParameter&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaProjectionCallSignature&quot;&gt;CreateNewReq(MaintMaterialOrderNo,LineNo):Void&lt;/camunda:inputParameter&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaCallReturnValueName&quot;&gt;CreateNewReq&lt;/camunda:inputParameter&gt;
+            &lt;camunda:inputParameter name=&quot;ifsBpaProjectionParameters&quot;&gt;
+              &lt;camunda:map&gt;
+                &lt;camunda:entry key=&quot;MaintMaterialOrderNo&quot;&gt;${MaintMaterialOrderNo}&lt;/camunda:entry&gt;
+                &lt;camunda:entry key=&quot;LineNo&quot;&gt;${LineItemNo}&lt;/camunda:entry&gt;
+              &lt;/camunda:map&gt;
+            &lt;/camunda:inputParameter&gt;
+          &lt;/camunda:inputOutput&gt;
+        &lt;/bpmn:extensionElements&gt;
+        &lt;bpmn:incoming&gt;Flow_0l82kq8&lt;/bpmn:incoming&gt;
+        &lt;bpmn:outgoing&gt;Flow_0siga6k&lt;/bpmn:outgoing&gt;
+      &lt;/bpmn:serviceTask&gt;
+      &lt;bpmn:endEvent id=&quot;Event_1fs630a&quot;&gt;
+        &lt;bpmn:incoming&gt;Flow_0siga6k&lt;/bpmn:incoming&gt;
+      &lt;/bpmn:endEvent&gt;
+      &lt;bpmn:sequenceFlow id=&quot;Flow_0siga6k&quot; sourceRef=&quot;Activity_1t2l4to&quot; targetRef=&quot;Event_1fs630a&quot; /&gt;
+      &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1a9rfnd&quot;&gt;
+        &lt;bpmn:text&gt;The decision currently only considers whether a purchase requisition exists, however in many organizations the decision may also include the material referenced from the WO Task. 
+
+For example, you may only want to create a a purchase requisition for expensive items that are drop shipped on demand.&lt;/bpmn:text&gt;
+      &lt;/bpmn:textAnnotation&gt;
+      &lt;bpmn:association id=&quot;Association_0yvkxlg&quot; sourceRef=&quot;Gateway_1ha0bki&quot; targetRef=&quot;TextAnnotation_1a9rfnd&quot; /&gt;
+      &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1f60r1e&quot;&gt;
+        &lt;bpmn:text&gt;The example creates purchase requisitions, however the user could easily add a second task to create material requisitions for some materials depending on business needs. 
+
+- Be careful when defining the conditions to ensure each Maintenance Line only goes to one task&lt;/bpmn:text&gt;
+      &lt;/bpmn:textAnnotation&gt;
+      &lt;bpmn:association id=&quot;Association_0h3yd9w&quot; sourceRef=&quot;Activity_1t2l4to&quot; targetRef=&quot;TextAnnotation_1f60r1e&quot; /&gt;
+    &lt;/bpmn:subProcess&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_0n0m7h7&quot; sourceRef=&quot;Activity_1pf6smi&quot; targetRef=&quot;Activity_1oinajr&quot; /&gt;
+    &lt;bpmn:endEvent id=&quot;Event_16um5br&quot; name=&quot;Process Completion&quot;&gt;
+      &lt;bpmn:incoming&gt;Flow_1rvs770&lt;/bpmn:incoming&gt;
+    &lt;/bpmn:endEvent&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_1rvs770&quot; sourceRef=&quot;Activity_1oinajr&quot; targetRef=&quot;Event_16um5br&quot; /&gt;
+    &lt;bpmn:sequenceFlow id=&quot;Flow_18fwbee&quot; sourceRef=&quot;StartEvent_1&quot; targetRef=&quot;Activity_1pf6smi&quot; /&gt;
+    &lt;bpmn:textAnnotation id=&quot;TextAnnotation_1qc688p&quot;&gt;
+      &lt;bpmn:text&gt;Defines a collection of all maintenance material lines as a new execution variable within the Workflow. 
+
+All of the material lines for the Work Order are read because it&apos;s simpler to filter the rows using a decision task within the loop.&lt;/bpmn:text&gt;
+    &lt;/bpmn:textAnnotation&gt;
+    &lt;bpmn:association id=&quot;Association_0ldiw7o&quot; sourceRef=&quot;Activity_1pf6smi&quot; targetRef=&quot;TextAnnotation_1qc688p&quot; /&gt;
+  &lt;/bpmn:process&gt;
+  &lt;bpmndi:BPMNDiagram id=&quot;BPMNDiagram_1&quot;&gt;
+    &lt;bpmndi:BPMNPlane id=&quot;BPMNPlane_1&quot; bpmnElement=&quot;DemoCreateTaskPOExample&quot;&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_18fwbee_di&quot; bpmnElement=&quot;Flow_18fwbee&quot;&gt;
+        &lt;di:waypoint x=&quot;1098&quot; y=&quot;60&quot; /&gt;
+        &lt;di:waypoint x=&quot;1160&quot; y=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1rvs770_di&quot; bpmnElement=&quot;Flow_1rvs770&quot;&gt;
+        &lt;di:waypoint x=&quot;1780&quot; y=&quot;-5&quot; /&gt;
+        &lt;di:waypoint x=&quot;1852&quot; y=&quot;-5&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0n0m7h7_di&quot; bpmnElement=&quot;Flow_0n0m7h7&quot;&gt;
+        &lt;di:waypoint x=&quot;1260&quot; y=&quot;60&quot; /&gt;
+        &lt;di:waypoint x=&quot;1330&quot; y=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;_BPMNShape_StartEvent_2&quot; bpmnElement=&quot;StartEvent_1&quot;&gt;
+        &lt;dc:Bounds x=&quot;1062&quot; y=&quot;42&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;1047&quot; y=&quot;85&quot; width=&quot;67&quot; height=&quot;14&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_1pf6smi_di&quot; bpmnElement=&quot;Activity_1pf6smi&quot;&gt;
+        &lt;dc:Bounds x=&quot;1160&quot; y=&quot;20&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_1oinajr_di&quot; bpmnElement=&quot;Activity_1oinajr&quot; isExpanded=&quot;true&quot;&gt;
+        &lt;dc:Bounds x=&quot;1330&quot; y=&quot;-290&quot; width=&quot;450&quot; height=&quot;570&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0siga6k_di&quot; bpmnElement=&quot;Flow_0siga6k&quot;&gt;
+        &lt;di:waypoint x=&quot;1650&quot; y=&quot;-70&quot; /&gt;
+        &lt;di:waypoint x=&quot;1702&quot; y=&quot;-70&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_0l82kq8_di&quot; bpmnElement=&quot;Flow_0l82kq8&quot;&gt;
+        &lt;di:waypoint x=&quot;1480&quot; y=&quot;35&quot; /&gt;
+        &lt;di:waypoint x=&quot;1480&quot; y=&quot;-70&quot; /&gt;
+        &lt;di:waypoint x=&quot;1550&quot; y=&quot;-70&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;1385&quot; y=&quot;-100&quot; width=&quot;89&quot; height=&quot;40&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_1irbdmg_di&quot; bpmnElement=&quot;Flow_1irbdmg&quot;&gt;
+        &lt;di:waypoint x=&quot;1505&quot; y=&quot;60&quot; /&gt;
+        &lt;di:waypoint x=&quot;1702&quot; y=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Flow_03xx0vt_di&quot; bpmnElement=&quot;Flow_03xx0vt&quot;&gt;
+        &lt;di:waypoint x=&quot;1406&quot; y=&quot;60&quot; /&gt;
+        &lt;di:waypoint x=&quot;1455&quot; y=&quot;60&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1ke7jhx_di&quot; bpmnElement=&quot;Event_1ke7jhx&quot;&gt;
+        &lt;dc:Bounds x=&quot;1370&quot; y=&quot;42&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;1362&quot; y=&quot;85&quot; width=&quot;52&quot; height=&quot;14&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1enarn1_di&quot; bpmnElement=&quot;Event_1enarn1&quot;&gt;
+        &lt;dc:Bounds x=&quot;1702&quot; y=&quot;42&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;1678&quot; y=&quot;85&quot; width=&quot;84&quot; height=&quot;14&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Gateway_1ha0bki_di&quot; bpmnElement=&quot;Gateway_1ha0bki&quot; isMarkerVisible=&quot;true&quot;&gt;
+        &lt;dc:Bounds x=&quot;1455&quot; y=&quot;35&quot; width=&quot;50&quot; height=&quot;50&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Activity_136s9yp_di&quot; bpmnElement=&quot;Activity_1t2l4to&quot;&gt;
+        &lt;dc:Bounds x=&quot;1550&quot; y=&quot;-110&quot; width=&quot;100&quot; height=&quot;80&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_1fs630a_di&quot; bpmnElement=&quot;Event_1fs630a&quot;&gt;
+        &lt;dc:Bounds x=&quot;1702&quot; y=&quot;-88&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1a9rfnd_di&quot; bpmnElement=&quot;TextAnnotation_1a9rfnd&quot;&gt;
+        &lt;dc:Bounds x=&quot;1440&quot; y=&quot;100&quot; width=&quot;245&quot; height=&quot;150&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1f60r1e_di&quot; bpmnElement=&quot;TextAnnotation_1f60r1e&quot;&gt;
+        &lt;dc:Bounds x=&quot;1474&quot; y=&quot;-250&quot; width=&quot;256&quot; height=&quot;128&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0yvkxlg_di&quot; bpmnElement=&quot;Association_0yvkxlg&quot;&gt;
+        &lt;di:waypoint x=&quot;1497&quot; y=&quot;68&quot; /&gt;
+        &lt;di:waypoint x=&quot;1564&quot; y=&quot;100&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0h3yd9w_di&quot; bpmnElement=&quot;Association_0h3yd9w&quot;&gt;
+        &lt;di:waypoint x=&quot;1562&quot; y=&quot;-110&quot; /&gt;
+        &lt;di:waypoint x=&quot;1550&quot; y=&quot;-122&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+      &lt;bpmndi:BPMNShape id=&quot;Event_16um5br_di&quot; bpmnElement=&quot;Event_16um5br&quot;&gt;
+        &lt;dc:Bounds x=&quot;1852&quot; y=&quot;-23&quot; width=&quot;36&quot; height=&quot;36&quot; /&gt;
+        &lt;bpmndi:BPMNLabel&gt;
+          &lt;dc:Bounds x=&quot;1843&quot; y=&quot;20&quot; width=&quot;56&quot; height=&quot;27&quot; /&gt;
+        &lt;/bpmndi:BPMNLabel&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNShape id=&quot;TextAnnotation_1qc688p_di&quot; bpmnElement=&quot;TextAnnotation_1qc688p&quot;&gt;
+        &lt;dc:Bounds x=&quot;1100&quot; y=&quot;-150&quot; width=&quot;180&quot; height=&quot;154&quot; /&gt;
+      &lt;/bpmndi:BPMNShape&gt;
+      &lt;bpmndi:BPMNEdge id=&quot;Association_0ldiw7o_di&quot; bpmnElement=&quot;Association_0ldiw7o&quot;&gt;
+        &lt;di:waypoint x=&quot;1214&quot; y=&quot;20&quot; /&gt;
+        &lt;di:waypoint x=&quot;1216&quot; y=&quot;4&quot; /&gt;
+      &lt;/bpmndi:BPMNEdge&gt;
+    &lt;/bpmndi:BPMNPlane&gt;
+  &lt;/bpmndi:BPMNDiagram&gt;
+&lt;/bpmn:definitions&gt;
+</BPA_DIAGRAM>
+    <VERSION>version_1</VERSION>
+    <DEPLOY_STATUS_DB>UNDEPLOYED</DEPLOY_STATUS_DB>
+    <LOCKED_STATUS_DB>EDITING</LOCKED_STATUS_DB>
+    <LOCKED_USER>IFS_SYS</LOCKED_USER>
+    <DEPLOYED_USER/>
+    <MODULE/>
+    <IS_TEMPLATE>TRUE</IS_TEMPLATE>
+    <IS_COMMAND_COMPATIBLE/>
+    <DESCRIPTION/>
+    <BPMN_VERSION_ROWKEY>419C5828D3C359B3E0656245BD5D6E4B</BPMN_VERSION_ROWKEY>
+    <BPMN_VERSION_ROWVERSION>20251020183531</BPMN_VERSION_ROWVERSION>
+    <BPMNPROCESS_ROWKEY>411D2542B2A15B0EE0630C20F10A8961</BPMNPROCESS_ROWKEY>
+    <BPMNPROCESS_ROWVERSION>20251014115000</BPMNPROCESS_ROWVERSION>
+    <BPMN_EXTERNAL_CONFIGS/>
+    <DEPLOY_NAME/>
+  </WORKFLOW>
+</CUSTOM_OBJECT>
