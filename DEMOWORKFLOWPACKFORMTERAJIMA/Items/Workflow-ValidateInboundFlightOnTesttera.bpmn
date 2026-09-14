@@ -29,14 +29,13 @@
     </bpmn:sequenceFlow>
     <bpmn:endEvent id="Event_Terminate" name="Process Termination">
       <bpmn:extensionElements>
-        <camunda:inputOutput>
-          <camunda:inputParameter name="ifsBpaValidationErrorMessages">
+        <camunda:executionListener class="com.ifsworld.fnd.bpa.process.validation.IfsBpaFailureEndEventListener" event="end">
+          <camunda:field name="ifsBpaValidationErrorMessages">
             <camunda:map>
               <camunda:entry key="en">このFlighはInboundです。</camunda:entry>
             </camunda:map>
-          </camunda:inputParameter>
-        </camunda:inputOutput>
-        <camunda:executionListener class="com.ifsworld.fnd.bpa.process.validation.IfsBpaFailureEndEventListener" event="end" />
+          </camunda:field>
+        </camunda:executionListener>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_Is_Inbound</bpmn:incoming>
     </bpmn:endEvent>
