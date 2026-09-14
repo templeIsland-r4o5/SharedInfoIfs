@@ -10,7 +10,7 @@
           <camunda:inputParameter name="ifsBpaProjectionAction">READ</camunda:inputParameter>
           <camunda:inputParameter name="ifsBpaProjectionETagVariableName">FlmAircraftTurnsDetailsHandling_ETag</camunda:inputParameter>
           <camunda:inputParameter name="ifsBpaProjectionName">FlmAircraftTurnsDetailsHandling</camunda:inputParameter>
-          <camnda:inputParameter name="ifsBpaProjectionEntitySetName">AvFlightSet</camnda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionEntitySetName">AvFlightSet</camunda:inputParameter>
           <camunda:inputParameter name="ifsBpaProjectionIsETag">true</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
