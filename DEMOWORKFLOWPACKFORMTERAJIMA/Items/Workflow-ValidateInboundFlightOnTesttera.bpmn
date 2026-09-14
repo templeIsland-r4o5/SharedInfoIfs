@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="wf_validate_inbound_flight_on_testtera" isExecutable="true">
+  <bpmn:process id="wf_validate_inbound_flight_on_testtera2" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1" name="Process Start">
       <bpmn:outgoing>Flow_ReadData</bpmn:outgoing>
     </bpmn:startEvent>
@@ -73,7 +73,7 @@
         <dc:Bounds x="542" y="182" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="517" y="225" width="86" height="14" />
-        </bdi:BPMNLabel>
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_Is_Inbound_di" bpmnElement="Flow_Is_Inbound">
         <di:waypoint x="450" y="142" />
