@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="sample-diagram" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="wf_validate_inbound_flight_on_testtera" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1" name="Process Start">
+      <bpmn:outgoing>Flow_ReadData</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="ReadAvFlightTask" name="Read AvFlight Data" camunda:class="com.ifsworld.fnd.bpa.IfsProjectionDelegate">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaProjectionAction">READ</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionETagVariableName">FlmAircraftTurnsDetailsHandling_ETag</camunda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionName">FlmAircraftTurnsDetailsHandling</camunda:inputParameter>
+          <camnda:inputParameter name="ifsBpaProjectionEntitySetName">AvFlightSet</camnda:inputParameter>
+          <camunda:inputParameter name="ifsBpaProjectionIsETag">true</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ReadData</bpmn:incoming>
+      <bpmn:outgoing>Flow_CheckStatus</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_ReadData" sourceRef="StartEvent_1" targetRef="ReadAvFlightTask" />
+    <bpmn:exclusiveGateway id="Gateway_CheckStatus" name="Is Flight Inbound?">
+      <bpmn:incoming>Flow_CheckStatus</bpmn:incoming>
+      <bpmn:outgoing>Flow_Is_Inbound</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Is_Not_Inbound</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_CheckStatus" sourceRef="ReadAvFlightTask" targetRef="Gateway_CheckStatus" />
+    <bpmn:sequenceFlow id="Flow_Is_Inbound" name="Flight is Inbound" sourceRef="Gateway_CheckStatus" targetRef="Event_Terminate">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${FlightTurnStatus == "Inbound"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_Terminate" name="Process Termination">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="ifsBpaValidationErrorMessages">
+            <camunda:map>
+              <camunda:entry key="en">このFlighはInboundです。</camunda:entry>
+            </camunda:map>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+        <camunda:executionListener class="com.ifsworld.fnd.bpa.process.validation.IfsBpaFailureEndEventListener" event="end" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Is_Inbound</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_1" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Is_Not_Inbound" sourceRef="Gateway_CheckStatus" targetRef="Event_Complete" />
+    <bpmn:endEvent id="Event_Complete" name="Process Completion">
+      <bpmn:incoming>Flow_Is_Not_Inbound</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="wf_validate_inbound_flight_on_testtera">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="164" y="142" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_ReadAvFlight_di" bpmnElement="ReadAvFlightTask">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_ReadData_di" bpmnElement="Flow_ReadData">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_CheckStatus_di" bpmnElement="Gateway_CheckStatus" isMarkerVisible="true">
+        <dc:Bounds x="425" y="92" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="411" y="62" width="78" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_CheckStatus_di" bpmnElement="Flow_CheckStatus">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="425" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_Terminate_di" bpmnElement="Event_Terminate">
+        <dc:Bounds x="542" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="517" y="225" width="86" height="14" />
+        </bdi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Is_Inbound_di" bpmnElement="Flow_Is_Inbound">
+        <di:waypoint x="450" y="142" />
+        <di:waypoint x="450" y="200" />
+        <di:waypoint x="542" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="456" y="168" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_Complete_di" bpmnElement="Event_Complete">
+        <dc:Bounds x="542" y="99" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="521" y="142" width="78" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Is_Not_Inbound_di" bpmnElement="Flow_Is_Not_Inbound">
+        <di:waypoint x="475" y="117" />
+        <di:waypoint x="542" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
