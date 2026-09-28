@@ -25,6 +25,9 @@ if start_idx != -1 and end_idx != -1:
 else:
     original_search_html = original_html
 
+# Bootstrap Select のメニューは初期状態で閉じる。クリック時のみ JS で親 .bootstrap-select に open を付与する。
+original_search_html = original_search_html.replace('class="dropdown-menu open"', 'class="dropdown-menu"')
+
 # 日付入力欄に placeholder="YYYY/MM/DD" を追加（再生成しても重複しないように制御）
 for field_id in ['createDateFrom', 'createDateTo', 'updateDateFrom', 'updateDateTo']:
     id_name = f'id="{field_id}" name="{field_id}"'
@@ -38,6 +41,154 @@ for field_id in ['createDateFrom', 'createDateTo', 'updateDateFrom', 'updateDate
         f'{id_name} placeholder="YYYY/MM/DD"',
         original_search_html
     )
+
+# モダンUIでは旧レイアウトの列見出しとチェックボックスが離れて見えるため、各チェックボックスに明示ラベルを付与
+checkbox_label_map = {
+    'importFromReportDone': 'Report',
+    'importFromMightyDone': 'MntPLN',
+    'notimportFromReportNone': 'Report',
+    'notimportFromMightyNone': 'MntPLN',
+    'exportFromReportDone': 'Report',
+    'exportFromMightyDone': 'MntPLN',
+    'notexportFromReportNone': 'Report',
+    'notexportFromMightyNone': 'MntPLN',
+}
+for checkbox_id, checkbox_label in checkbox_label_map.items():
+    original_search_html = re.sub(
+        rf'<input type="checkbox" id="{checkbox_id}"(?: aria-label="[^"]*")?>\s*'
+        rf'(?:<label class="control-label checkbox-field-label" for="{checkbox_id}">.*?</label>\s*)?',
+        f'<input type="checkbox" id="{checkbox_id}" aria-label="{checkbox_label}">\n'
+        f'                            <label class="control-label checkbox-field-label" for="{checkbox_id}">{checkbox_label}</label>',
+        original_search_html,
+        flags=re.S
+    )
+
+# 空白だけに見えるプルダウン項目を、用途ごとの明示ラベルに置換
+blank_select_label_map = {
+    'todayTr': 'All',
+    'airportCode': 'All',
+    'status': 'All',
+    'keyword1': 'All',
+    'ataNo': 'All',
+    'priority': 'All',
+    'recordLevel': 'All',
+    'sortKey1': 'No Sort',
+    'sortKey2': 'No Sort',
+}
+for select_name, blank_label in blank_select_label_map.items():
+    select_match = re.search(
+        rf'(<div class="btn-group bootstrap-select[\s\S]*?<select\b[^>]*name="{select_name}"[\s\S]*?</select>\s*</div>)',
+        original_search_html
+    )
+    if not select_match:
+        continue
+    block = select_match.group(1)
+    block = re.sub(
+        r'<span class="filter-option pull-left">(?:&nbsp;|\s*)</span>',
+        f'<span class="filter-option pull-left">{blank_label}</span>',
+        block,
+        count=1
+    )
+    block = re.sub(
+        r'title="(?:&amp;nbsp;|&nbsp;|\s*)"',
+        f'title="{blank_label}"',
+        block,
+        count=1
+    )
+    block = re.sub(
+        r'<span class="text">(?:&nbsp;|\s*)</span>',
+        f'<span class="text">{blank_label}</span>',
+        block,
+        count=1
+    )
+    block = re.sub(
+        r'(<option\b[^>]*value=""[^>]*>)(?:&nbsp;|\s*)(</option>)',
+        rf'\1{blank_label}\2',
+        block,
+        count=1
+    )
+    original_search_html = original_search_html[:select_match.start(1)] + block + original_search_html[select_match.end(1):]
+
+# 旧レイアウトで余白扱いだった空ラベルを、モダンUIでは意味が分かる見出しに置換
+original_search_html = original_search_html.replace(
+    '<label class="control-label w100 "></label>\n                        <input type="radio" id="radioAND"',
+    '<label class="control-label w100 ">Match Mode</label>\n                        <input type="radio" id="radioAND"'
+)
+original_search_html = original_search_html.replace(
+    '<label class="control-label w100"></label>\n                        <button id="ShipMonitorListSearchBtn"',
+    '<label class="control-label w100">Actions</label>\n                        <button id="ShipMonitorListSearchBtn"'
+)
+
+def replace_parent_form_group(html, marker, replacement):
+    marker_idx = html.find(marker)
+    if marker_idx == -1:
+        return html
+    start_idx = html.rfind('<div class="form-group', 0, marker_idx)
+    if start_idx == -1:
+        return html
+
+    token_re = re.compile(r'</?div\b[^>]*>', re.I)
+    depth = 0
+    end_idx = None
+    for token in token_re.finditer(html, start_idx):
+        if token.group(0).lower().startswith('</div'):
+            depth -= 1
+            if depth == 0:
+                end_idx = token.end()
+                break
+        else:
+            depth += 1
+    if end_idx is None:
+        return html
+    return html[:start_idx] + replacement + html[end_idx:]
+
+def remove_parent_form_group(html, marker):
+    return replace_parent_form_group(html, marker, '')
+
+def io_filter_group(title, subtitle, mode_class, first_id, first_label, operator, second_id, second_label):
+    return f'''<div class="form-group io-filter-group {mode_class}">
+                        <div class="io-filter-title">
+                            <span class="io-filter-title-main">{title}</span>
+                            <span class="io-filter-title-sub">{subtitle}</span>
+                        </div>
+                        <div class="io-filter-options">
+                            <label class="io-check-option" for="{first_id}">
+                                <input type="checkbox" id="{first_id}" aria-label="{first_label}">
+                                <span>{first_label}</span>
+                            </label>
+                            <span class="io-filter-operator">{operator}</span>
+                            <label class="io-check-option" for="{second_id}">
+                                <input type="checkbox" id="{second_id}" aria-label="{second_label}">
+                                <span>{second_label}</span>
+                            </label>
+                        </div>
+                    </div>'''
+
+# 旧UIの列見出しだけのブロックは、チェックボックスカード内の見出しに統合
+original_search_html = remove_parent_form_group(original_search_html, '<h3 class="panel-title">Import Filter</h3>')
+original_search_html = remove_parent_form_group(original_search_html, '<h3 class="panel-title">Export Filter</h3>')
+
+# Import / Export 系チェックボックスを、個別フィールドではなく1つのまとまったカードUIへ再構成
+original_search_html = replace_parent_form_group(
+    original_search_html,
+    'id="importFromReportDone"',
+    io_filter_group('Import Filter', 'Imported records', 'import-done-filter', 'importFromReportDone', 'Report', 'OR', 'importFromMightyDone', 'MntPLN')
+)
+original_search_html = replace_parent_form_group(
+    original_search_html,
+    'id="notimportFromReportNone"',
+    io_filter_group('Not Import', 'Records not imported', 'import-none-filter', 'notimportFromReportNone', 'Report', 'OR', 'notimportFromMightyNone', 'MntPLN')
+)
+original_search_html = replace_parent_form_group(
+    original_search_html,
+    'id="exportFromReportDone"',
+    io_filter_group('Export Filter', 'Exported records', 'export-done-filter', 'exportFromReportDone', 'Report', 'AND', 'exportFromMightyDone', 'MntPLN')
+)
+original_search_html = replace_parent_form_group(
+    original_search_html,
+    'id="notexportFromReportNone"',
+    io_filter_group('Not Export', 'Records not exported', 'export-none-filter', 'notexportFromReportNone', 'Report', 'AND', 'notexportFromMightyNone', 'MntPLN')
+)
 
 # 3. 完全なHTMLドキュメントの構築
 html_template = f"""<!DOCTYPE html>
@@ -255,6 +406,12 @@ html_template = f"""<!DOCTYPE html>
             backdrop-filter: blur(12px);
         }}
 
+        .panel.table-panel,
+        .panel.table-panel .panel-body,
+        .panel.table-panel .collapse.in {{
+            overflow: visible;
+        }}
+
         .panel-heading,
         .results-header {{
             display: flex;
@@ -432,6 +589,111 @@ html_template = f"""<!DOCTYPE html>
         .radio-inline, .checkbox-inline {{ font-weight: 600; color: #334155; }}
         input[type="radio"], input[type="checkbox"] {{ accent-color: var(--primary); }}
 
+        .checkbox-field-label {{
+            margin-left: 6px;
+            margin-right: 0;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: none;
+            letter-spacing: 0;
+            cursor: pointer;
+        }}
+
+        .io-filter-group {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 14px;
+            min-width: 360px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid rgba(191, 219, 254, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        }}
+
+        .io-filter-title {{
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 112px;
+        }}
+
+        .io-filter-title-main {{
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .02em;
+        }}
+
+        .io-filter-title-sub {{
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+        }}
+
+        .io-filter-options {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }}
+
+        .io-check-option {{
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 34px;
+            margin: 0;
+            padding: 7px 10px;
+            color: #1e293b;
+            background: #fff;
+            border: 1px solid #d8e2f0;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }}
+
+        .io-check-option:hover {{
+            background: var(--primary-soft);
+            border-color: #b7ccf5;
+            transform: translateY(-1px);
+        }}
+
+        .io-check-option input {{
+            margin: 0;
+        }}
+
+        .io-filter-operator {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            min-height: 28px;
+            padding: 4px 8px;
+            color: #475569;
+            background: #eef2f7;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .04em;
+        }}
+
+        .import-done-filter,
+        .import-none-filter {{
+            border-color: rgba(59, 130, 246, 0.32);
+        }}
+
+        .export-done-filter,
+        .export-none-filter {{
+            border-color: rgba(16, 185, 129, 0.32);
+        }}
+
         .btn-group.bootstrap-select {{
             position: relative;
             display: inline-block;
@@ -443,42 +705,91 @@ html_template = f"""<!DOCTYPE html>
         }}
 
         .btn-group.bootstrap-select.form-control {{ height: auto; min-height: 0; }}
+        .btn-group.bootstrap-select > select.selectpicker,
+        .btn-group.bootstrap-select > select.form-control {{
+            display: none !important;
+        }}
         .btn-group.bootstrap-select .dropdown-toggle {{ width: 100%; text-align: left; }}
         .btn-group.bootstrap-select .filter-option {{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
         .btn-group.bootstrap-select .bs-caret {{ float: right; color: var(--muted); }}
 
         .btn-group.bootstrap-select .dropdown-menu {{
             display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            z-index: 1000;
-            min-width: 100%;
-            max-height: 330px;
-            padding: 8px;
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            left: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+            z-index: 3000;
+            width: max(100%, min(420px, calc(100vw - 48px))) !important;
+            min-width: min(280px, calc(100vw - 48px)) !important;
+            max-width: calc(100vw - 48px) !important;
+            max-height: min(720px, 82vh) !important;
+            transform: none !important;
+            padding: 10px;
             margin: 0;
-            overflow: auto;
+            overflow: auto !important;
             background: #fff;
             border: 1px solid var(--line);
-            border-radius: 14px;
-            box-shadow: var(--shadow-md);
+            border-radius: 16px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
         }}
 
-        .btn-group.bootstrap-select.open .dropdown-menu {{ display: block; }}
-        .btn-group.bootstrap-select .bs-searchbox {{ padding: 4px 4px 8px; }}
-        .btn-group.bootstrap-select .bs-searchbox input {{ width: 100%; }}
-        .dropdown-menu.inner {{ position: static; display: block; max-height: 245px; padding: 0; margin: 0; overflow-y: auto; border: 0; box-shadow: none; }}
+        .btn-group.bootstrap-select.w60 .dropdown-menu,
+        .btn-group.bootstrap-select.w80 .dropdown-menu,
+        .btn-group.bootstrap-select.w100 .dropdown-menu,
+        .btn-group.bootstrap-select.w120 .dropdown-menu,
+        .btn-group.bootstrap-select.w130 .dropdown-menu {{
+            width: min(360px, calc(100vw - 48px)) !important;
+        }}
+
+        .btn-group.bootstrap-select.w150 .dropdown-menu,
+        .btn-group.bootstrap-select.w200 .dropdown-menu,
+        .btn-group.bootstrap-select.w250 .dropdown-menu,
+        .btn-group.bootstrap-select.w300 .dropdown-menu {{
+            width: min(520px, calc(100vw - 48px)) !important;
+        }}
+
+        .btn-group.bootstrap-select.open > .dropdown-menu {{
+            display: block !important;
+            max-height: min(720px, 82vh) !important;
+            overflow: auto !important;
+        }}
+
+        .btn-group.bootstrap-select .bs-searchbox {{ padding: 4px 4px 12px; }}
+        .btn-group.bootstrap-select .bs-searchbox input {{ width: 100%; height: 40px; }}
+        .btn-group.bootstrap-select .dropdown-menu.inner,
+        .btn-group.bootstrap-select ul.dropdown-menu.inner,
+        .dropdown-menu.inner {{
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-height: min(620px, 70vh) !important;
+            height: auto !important;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            border: 0;
+            box-shadow: none;
+        }}
         .dropdown-menu.inner li {{ list-style: none; }}
         .dropdown-menu.inner li a {{
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 7px 9px;
+            min-height: 34px;
+            padding: 8px 10px;
             color: #25324a;
             border-radius: 9px;
             text-decoration: none;
             cursor: pointer;
+        }}
+        .dropdown-menu.inner li a .text {{
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }}
         .dropdown-menu.inner li a:hover,
         .dropdown-menu.inner li.selected a {{ background: var(--primary-soft); color: var(--primary-dark); }}
@@ -764,6 +1075,26 @@ html_template = f"""<!DOCTYPE html>
             .panel-title a {{ padding-right: 0; }}
             #ShipMonitorListRenewBtn {{ position: static !important; margin-top: 10px; }}
             .form-group {{ width: 100% !important; align-items: flex-start; }}
+            .io-filter-group {{
+                min-width: 0;
+                align-items: flex-start;
+                flex-direction: column;
+            }}
+            .io-filter-options {{ justify-content: flex-start; }}
+            .btn-group.bootstrap-select .dropdown-menu,
+            .btn-group.bootstrap-select.w60 .dropdown-menu,
+            .btn-group.bootstrap-select.w80 .dropdown-menu,
+            .btn-group.bootstrap-select.w100 .dropdown-menu,
+            .btn-group.bootstrap-select.w120 .dropdown-menu,
+            .btn-group.bootstrap-select.w130 .dropdown-menu,
+            .btn-group.bootstrap-select.w150 .dropdown-menu,
+            .btn-group.bootstrap-select.w200 .dropdown-menu,
+            .btn-group.bootstrap-select.w250 .dropdown-menu,
+            .btn-group.bootstrap-select.w300 .dropdown-menu {{
+                width: min(420px, calc(100vw - 32px));
+                min-width: min(260px, calc(100vw - 32px));
+                max-width: calc(100vw - 32px);
+            }}
             .control-label {{ width: 100% !important; }}
             .results-header, .pagination-container {{ align-items: flex-start; flex-direction: column; }}
         }}

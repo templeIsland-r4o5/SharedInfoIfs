@@ -213,6 +213,12 @@
             backdrop-filter: blur(12px);
         }
 
+        .panel.table-panel,
+        .panel.table-panel .panel-body,
+        .panel.table-panel .collapse.in {
+            overflow: visible;
+        }
+
         .panel-heading,
         .results-header {
             display: flex;
@@ -390,6 +396,111 @@
         .radio-inline, .checkbox-inline { font-weight: 600; color: #334155; }
         input[type="radio"], input[type="checkbox"] { accent-color: var(--primary); }
 
+        .checkbox-field-label {
+            margin-left: 6px;
+            margin-right: 0;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: none;
+            letter-spacing: 0;
+            cursor: pointer;
+        }
+
+        .io-filter-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 14px;
+            min-width: 360px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid rgba(191, 219, 254, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        .io-filter-title {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 112px;
+        }
+
+        .io-filter-title-main {
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .02em;
+        }
+
+        .io-filter-title-sub {
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .io-filter-options {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .io-check-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 34px;
+            margin: 0;
+            padding: 7px 10px;
+            color: #1e293b;
+            background: #fff;
+            border: 1px solid #d8e2f0;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+
+        .io-check-option:hover {
+            background: var(--primary-soft);
+            border-color: #b7ccf5;
+            transform: translateY(-1px);
+        }
+
+        .io-check-option input {
+            margin: 0;
+        }
+
+        .io-filter-operator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            min-height: 28px;
+            padding: 4px 8px;
+            color: #475569;
+            background: #eef2f7;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .04em;
+        }
+
+        .import-done-filter,
+        .import-none-filter {
+            border-color: rgba(59, 130, 246, 0.32);
+        }
+
+        .export-done-filter,
+        .export-none-filter {
+            border-color: rgba(16, 185, 129, 0.32);
+        }
+
         .btn-group.bootstrap-select {
             position: relative;
             display: inline-block;
@@ -401,42 +512,91 @@
         }
 
         .btn-group.bootstrap-select.form-control { height: auto; min-height: 0; }
+        .btn-group.bootstrap-select > select.selectpicker,
+        .btn-group.bootstrap-select > select.form-control {
+            display: none !important;
+        }
         .btn-group.bootstrap-select .dropdown-toggle { width: 100%; text-align: left; }
         .btn-group.bootstrap-select .filter-option { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .btn-group.bootstrap-select .bs-caret { float: right; color: var(--muted); }
 
         .btn-group.bootstrap-select .dropdown-menu {
             display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            z-index: 1000;
-            min-width: 100%;
-            max-height: 330px;
-            padding: 8px;
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            left: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+            z-index: 3000;
+            width: max(100%, min(420px, calc(100vw - 48px))) !important;
+            min-width: min(280px, calc(100vw - 48px)) !important;
+            max-width: calc(100vw - 48px) !important;
+            max-height: min(720px, 82vh) !important;
+            transform: none !important;
+            padding: 10px;
             margin: 0;
-            overflow: auto;
+            overflow: auto !important;
             background: #fff;
             border: 1px solid var(--line);
-            border-radius: 14px;
-            box-shadow: var(--shadow-md);
+            border-radius: 16px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
         }
 
-        .btn-group.bootstrap-select.open .dropdown-menu { display: block; }
-        .btn-group.bootstrap-select .bs-searchbox { padding: 4px 4px 8px; }
-        .btn-group.bootstrap-select .bs-searchbox input { width: 100%; }
-        .dropdown-menu.inner { position: static; display: block; max-height: 245px; padding: 0; margin: 0; overflow-y: auto; border: 0; box-shadow: none; }
+        .btn-group.bootstrap-select.w60 .dropdown-menu,
+        .btn-group.bootstrap-select.w80 .dropdown-menu,
+        .btn-group.bootstrap-select.w100 .dropdown-menu,
+        .btn-group.bootstrap-select.w120 .dropdown-menu,
+        .btn-group.bootstrap-select.w130 .dropdown-menu {
+            width: min(360px, calc(100vw - 48px)) !important;
+        }
+
+        .btn-group.bootstrap-select.w150 .dropdown-menu,
+        .btn-group.bootstrap-select.w200 .dropdown-menu,
+        .btn-group.bootstrap-select.w250 .dropdown-menu,
+        .btn-group.bootstrap-select.w300 .dropdown-menu {
+            width: min(520px, calc(100vw - 48px)) !important;
+        }
+
+        .btn-group.bootstrap-select.open > .dropdown-menu {
+            display: block !important;
+            max-height: min(720px, 82vh) !important;
+            overflow: auto !important;
+        }
+
+        .btn-group.bootstrap-select .bs-searchbox { padding: 4px 4px 12px; }
+        .btn-group.bootstrap-select .bs-searchbox input { width: 100%; height: 40px; }
+        .btn-group.bootstrap-select .dropdown-menu.inner,
+        .btn-group.bootstrap-select ul.dropdown-menu.inner,
+        .dropdown-menu.inner {
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-height: min(620px, 70vh) !important;
+            height: auto !important;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            border: 0;
+            box-shadow: none;
+        }
         .dropdown-menu.inner li { list-style: none; }
         .dropdown-menu.inner li a {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 7px 9px;
+            min-height: 34px;
+            padding: 8px 10px;
             color: #25324a;
             border-radius: 9px;
             text-decoration: none;
             cursor: pointer;
+        }
+        .dropdown-menu.inner li a .text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .dropdown-menu.inner li a:hover,
         .dropdown-menu.inner li.selected a { background: var(--primary-soft); color: var(--primary-dark); }
@@ -722,6 +882,26 @@
             .panel-title a { padding-right: 0; }
             #ShipMonitorListRenewBtn { position: static !important; margin-top: 10px; }
             .form-group { width: 100% !important; align-items: flex-start; }
+            .io-filter-group {
+                min-width: 0;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+            .io-filter-options { justify-content: flex-start; }
+            .btn-group.bootstrap-select .dropdown-menu,
+            .btn-group.bootstrap-select.w60 .dropdown-menu,
+            .btn-group.bootstrap-select.w80 .dropdown-menu,
+            .btn-group.bootstrap-select.w100 .dropdown-menu,
+            .btn-group.bootstrap-select.w120 .dropdown-menu,
+            .btn-group.bootstrap-select.w130 .dropdown-menu,
+            .btn-group.bootstrap-select.w150 .dropdown-menu,
+            .btn-group.bootstrap-select.w200 .dropdown-menu,
+            .btn-group.bootstrap-select.w250 .dropdown-menu,
+            .btn-group.bootstrap-select.w300 .dropdown-menu {
+                width: min(420px, calc(100vw - 32px));
+                min-width: min(260px, calc(100vw - 32px));
+                max-width: calc(100vw - 32px);
+            }
             .control-label { width: 100% !important; }
             .results-header, .pagination-container { align-items: flex-start; flex-direction: column; }
         }
@@ -797,7 +977,7 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="FreeText"><span class="filter-option pull-left">FreeText</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <div class="bs-searchbox"><input type="text" class="form-control" autocomplete="off">
                                 </div>
                                 <ul class="dropdown-menu inner" role="menu">
@@ -1047,12 +1227,12 @@
                         <label class="control-label w90">TODAY T/R</label>
                         <div class="btn-group bootstrap-select form-control w100"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">NRT</span><span
@@ -1080,7 +1260,7 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="todayTr" tabindex="-98" class="form-control selectpicker w100">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="NRT">NRT</option>
                                 <option value="HND">HND</option>
                                 <option value="ITM">ITM</option>
@@ -1092,16 +1272,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="w100 inline-block">
-                            <h3 class="panel-title">Import Filter</h3>
-                        </div>
-                        <div class="w70 inline-block text-center mb-40"><label class="control-label">Report</label>
-                        </div>
-                        <div class="w50 inline-block text-center"></div>
-                        <div class="w70 inline-block text-center mb-40"><label class="control-label">Deferral
-                                Item</label></div>
-                    </div>
+                    
                 </div>
                 <div class="form-search-condition">
                     <div class="form-group w480">
@@ -1110,7 +1281,7 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="FreeText"><span class="filter-option pull-left">FreeText</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <div class="bs-searchbox"><input type="text" class="form-control" autocomplete="off">
                                 </div>
                                 <ul class="dropdown-menu inner" role="menu">
@@ -1133,14 +1304,14 @@
                         <label class="control-label w90 vat">Create Station</label>
                         <div class="btn-group bootstrap-select form-control w100"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <div class="bs-searchbox"><input type="text" class="form-control" autocomplete="off">
                                 </div>
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">INTER</span><span
@@ -1442,7 +1613,7 @@
                                 </ul>
                             </div><select name="airportCode" data-live-search="true" data-live-search-style="startsWith"
                                 tabindex="-98" class="form-control selectpicker w100">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="1">INTER</option>
                                 <option value="2">DOME</option>
                                 <option value="AKJ">AKJ</option>
@@ -1545,18 +1716,21 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="w100 inline-block text-right">
-                            <label class="control-label">import</label>
+                    <div class="form-group io-filter-group import-done-filter">
+                        <div class="io-filter-title">
+                            <span class="io-filter-title-main">Import Filter</span>
+                            <span class="io-filter-title-sub">Imported records</span>
                         </div>
-                        <div class="w70 inline-block text-center">
-                            <input type="checkbox" id="importFromReportDone">
-                        </div>
-                        <div class="w50 inline-block text-center">
-                            <label class="control-label">or</label>
-                        </div>
-                        <div class="w70 inline-block text-center">
-                            <input type="checkbox" id="importFromMightyDone">
+                        <div class="io-filter-options">
+                            <label class="io-check-option" for="importFromReportDone">
+                                <input type="checkbox" id="importFromReportDone" aria-label="Report">
+                                <span>Report</span>
+                            </label>
+                            <span class="io-filter-operator">OR</span>
+                            <label class="io-check-option" for="importFromMightyDone">
+                                <input type="checkbox" id="importFromMightyDone" aria-label="MntPLN">
+                                <span>MntPLN</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1574,10 +1748,10 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="OPEN"><span class="filter-option pull-left">OPEN</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1" class="selected"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">OPEN</span><span
@@ -1587,23 +1761,27 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="status" tabindex="-98" class="form-control selectpicker w100">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="1">OPEN</option>
                                 <option value="2">CLOSE</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group import-export-filter">
-                        <div class="w100 inline-block text-right mt-30">
-                            <label class="control-label">not import</label>
+                    <div class="form-group io-filter-group import-none-filter">
+                        <div class="io-filter-title">
+                            <span class="io-filter-title-main">Not Import</span>
+                            <span class="io-filter-title-sub">Records not imported</span>
                         </div>
-                        <div class="w70 inline-block text-center mt-30">
-                            <input type="checkbox" id="notimportFromReportNone">
-                        </div>
-                        <div class="w50 inline-block text-center mt-30">
-                        </div>
-                        <div class="w70 inline-block text-center mt-30">
-                            <input type="checkbox" id="notimportFromMightyNone">
+                        <div class="io-filter-options">
+                            <label class="io-check-option" for="notimportFromReportNone">
+                                <input type="checkbox" id="notimportFromReportNone" aria-label="Report">
+                                <span>Report</span>
+                            </label>
+                            <span class="io-filter-operator">OR</span>
+                            <label class="io-check-option" for="notimportFromMightyNone">
+                                <input type="checkbox" id="notimportFromMightyNone" aria-label="MntPLN">
+                                <span>MntPLN</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1612,12 +1790,12 @@
                         <label class="control-label w120">Keyword1</label>
                         <div class="btn-group bootstrap-select form-control w120"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">MEL</span><span
@@ -1652,7 +1830,7 @@
                                 </ul>
                             </div><select name="keyword1" data-dropup-auto="false" data-size="8" tabindex="-98"
                                 class="form-control selectpicker w120">
-                                <option value="" selected="selected">&nbsp;</option>
+                                <option value="" selected="selected">All</option>
                                 <option value="001">MEL</option>
                                 <option value="002">MEL Fix</option>
                                 <option value="003">C/O</option>
@@ -1674,14 +1852,14 @@
                         <label class="control-label w90">ATA No.</label>
                         <div class="btn-group bootstrap-select form-control w60"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <div class="bs-searchbox"><input type="text" class="form-control" autocomplete="off">
                                 </div>
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">00</span><span
@@ -1842,7 +2020,7 @@
                                 </ul>
                             </div><select name="ataNo" data-live-search="true" data-live-search-style="startsWith"
                                 tabindex="-98" class="form-control selectpicker w60">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="00">00</option>
                                 <option value="05">05</option>
                                 <option value="06">06</option>
@@ -1898,16 +2076,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="w100 inline-block">
-                            <h3 class="panel-title">Export Filter</h3>
-                        </div>
-                        <div class="w70 inline-block text-center mb-40"><label class="control-label">Report</label>
-                        </div>
-                        <div class="w50 inline-block text-center"></div>
-                        <div class="w70 inline-block text-center mb-40"><label class="control-label">MntPLN</label>
-                        </div>
-                    </div>
+                    
                 </div>
                 <div class="form-search-condition">
                     <div class="form-group w480">
@@ -1919,12 +2088,12 @@
                         <label class="control-label w90">Priority</label>
                         <div class="btn-group bootstrap-select form-control w60"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">P1</span><span
@@ -1937,31 +2106,34 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="priority" tabindex="-98" class="form-control selectpicker w60">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="00">P1</option>
                                 <option value="01">P2</option>
                                 <option value="02">P3</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group ">
-                        <div class="w100 inline-block text-right">
-                            <label class="control-label">export</label>
+                    <div class="form-group io-filter-group export-done-filter">
+                        <div class="io-filter-title">
+                            <span class="io-filter-title-main">Export Filter</span>
+                            <span class="io-filter-title-sub">Exported records</span>
                         </div>
-                        <div class="w70 inline-block text-center">
-                            <input type="checkbox" id="exportFromReportDone">
-                        </div>
-                        <div class="w50 inline-block text-center">
-                            <label class="control-label">and</label>
-                        </div>
-                        <div class="w70 inline-block text-center">
-                            <input type="checkbox" id="exportFromMightyDone">
+                        <div class="io-filter-options">
+                            <label class="io-check-option" for="exportFromReportDone">
+                                <input type="checkbox" id="exportFromReportDone" aria-label="Report">
+                                <span>Report</span>
+                            </label>
+                            <span class="io-filter-operator">AND</span>
+                            <label class="io-check-option" for="exportFromMightyDone">
+                                <input type="checkbox" id="exportFromMightyDone" aria-label="MntPLN">
+                                <span>MntPLN</span>
+                            </label>
                         </div>
                     </div>
                 </div>
                 <div class="form-search-condition">
                     <div class="form-group w480">
-                        <label class="control-label w100 "></label>
+                        <label class="control-label w100 ">Match Mode</label>
                         <input type="radio" id="radioAND" name="andOr" value="AND">
                         <label class="control-label" for="radioAND">AND</label>
                         <input type="radio" id="radioOR" name="andOr" value="OR">
@@ -1971,12 +2143,12 @@
                         <label class="control-label w90">Record Level</label>
                         <div class="btn-group bootstrap-select form-control w60"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="All"><span class="filter-option pull-left">All</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">All</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">R1</span><span
@@ -1989,24 +2161,28 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="recordLevel" tabindex="-98" class="form-control selectpicker w60">
-                                <option value="">&nbsp;</option>
+                                <option value="">All</option>
                                 <option value="00">R1</option>
                                 <option value="01">R2</option>
                                 <option value="02">R3</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group import-export-filter">
-                        <div class="w100 inline-block text-right mt-30">
-                            <label class="control-label">not export</label>
+                    <div class="form-group io-filter-group export-none-filter">
+                        <div class="io-filter-title">
+                            <span class="io-filter-title-main">Not Export</span>
+                            <span class="io-filter-title-sub">Records not exported</span>
                         </div>
-                        <div class="w70 inline-block text-center mt-30">
-                            <input type="checkbox" id="notexportFromReportNone">
-                        </div>
-                        <div class="w50 inline-block text-center mt-30">
-                        </div>
-                        <div class="w70 inline-block text-center mt-30">
-                            <input type="checkbox" id="notexportFromMightyNone">
+                        <div class="io-filter-options">
+                            <label class="io-check-option" for="notexportFromReportNone">
+                                <input type="checkbox" id="notexportFromReportNone" aria-label="Report">
+                                <span>Report</span>
+                            </label>
+                            <span class="io-filter-operator">AND</span>
+                            <label class="io-check-option" for="notexportFromMightyNone">
+                                <input type="checkbox" id="notexportFromMightyNone" aria-label="MntPLN">
+                                <span>MntPLN</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -2015,12 +2191,12 @@
                         <label class="control-label w100">Sort</label>
                         <div class="btn-group bootstrap-select form-control w130"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="No Sort"><span class="filter-option pull-left">No Sort</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">No Sort</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">Ship No.</span><span
@@ -2036,7 +2212,7 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="sortKey1" tabindex="-98" class="form-control selectpicker w130">
-                                <option value="" selected="selected">&nbsp;</option>
+                                <option value="" selected="selected">No Sort</option>
                                 <option value="SHP.GROUP">Ship No.</option>
                                 <option value="SHP.CREATED_AT">Created At</option>
                                 <option value="SHP.UPDATED_AT">Updated At</option>
@@ -2047,7 +2223,7 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="ASC"><span class="filter-option pull-left">ASC</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">ASC</span><span
@@ -2063,12 +2239,12 @@
                         </div>
                         <div class="btn-group bootstrap-select form-control w130"><button type="button"
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
-                                title="&amp;nbsp;"><span class="filter-option pull-left">&nbsp;</span>&nbsp;<span
+                                title="No Sort"><span class="filter-option pull-left">No Sort</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
-                                            data-tokens="null"><span class="text">&nbsp;</span><span
+                                            data-tokens="null"><span class="text">No Sort</span><span
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                     <li data-original-index="1"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">Ship No.</span><span
@@ -2084,7 +2260,7 @@
                                                 class="glyphicon glyphicon-ok check-mark"></span></a></li>
                                 </ul>
                             </div><select name="sortKey2" tabindex="-98" class="form-control selectpicker w130">
-                                <option value="" selected="selected">&nbsp;</option>
+                                <option value="" selected="selected">No Sort</option>
                                 <option value="SHP.GROUP">Ship No.</option>
                                 <option value="SHP.CREATED_AT">Created At</option>
                                 <option value="SHP.UPDATED_AT">Updated At</option>
@@ -2095,7 +2271,7 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="ASC"><span class="filter-option pull-left">ASC</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <ul class="dropdown-menu inner" role="menu">
                                     <li data-original-index="0" class="selected"><a tabindex="0" class="" style=""
                                             data-tokens="null"><span class="text">ASC</span><span
@@ -2133,7 +2309,7 @@
 
                 <div class="form-search-condition">
                     <div class="form-group mb-5">
-                        <label class="control-label w100"></label>
+                        <label class="control-label w100">Actions</label>
                         <button id="ShipMonitorListSearchBtn" type="button" class="btn btn-primary"><i
                                 class="fa fa-search mr10" aria-hidden="true"></i>Search</button>
                     </div>
@@ -2143,7 +2319,7 @@
                                 class="btn dropdown-toggle btn-default" data-toggle="dropdown" tabindex="0"
                                 title="Japan"><span class="filter-option pull-left">Japan</span>&nbsp;<span
                                     class="bs-caret"><span class="caret"></span></span></button>
-                            <div class="dropdown-menu open">
+                            <div class="dropdown-menu">
                                 <div class="bs-searchbox"><input type="text" class="form-control" autocomplete="off">
                                 </div>
                                 <ul class="dropdown-menu inner" role="menu">
