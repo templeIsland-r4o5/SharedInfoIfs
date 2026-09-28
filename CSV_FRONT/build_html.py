@@ -477,29 +477,39 @@ html_template = f"""<!DOCTYPE html>
         .panel-body {{ padding: 20px; }}
 
         #submitForm {{
-            display: block;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 14px 16px;
+            max-width: 1280px;
+            margin: 0 auto;
         }}
 
         .form-search-condition {{
-            display: flex;
+            display: contents;
             flex-wrap: wrap;
             align-items: stretch;
+            justify-content: center;
             gap: 12px;
-            margin: 0 0 12px;
+            margin: 0;
             padding: 0;
         }}
 
         .form-group {{
             display: inline-flex;
-            align-items: center;
+            align-items: flex-start;
             flex-wrap: wrap;
-            gap: 7px;
-            min-height: 44px;
+            gap: 8px 10px;
+            min-width: 280px;
+            max-width: 100%;
+            min-height: 78px;
             margin: 0;
-            padding: 10px 12px;
-            background: rgba(248, 250, 252, 0.78);
+            padding: 12px 14px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
             border: 1px solid var(--line-soft);
             border-radius: var(--radius-sm);
+            box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
         }}
 
         .form-group:focus-within {{
@@ -549,14 +559,29 @@ html_template = f"""<!DOCTYPE html>
         }}
 
         .control-label {{
-            flex: 0 0 auto;
-            margin: 0 3px 0 0;
-            color: #475569;
+            display: flex;
+            align-items: center;
+            flex: 0 0 100%;
+            width: 100% !important;
+            margin: 0 0 2px;
+            padding: 0 0 7px;
+            color: #1e3a8a;
+            border-bottom: 1px dashed #d8e2f0;
             font-size: 11px;
             font-weight: 800;
             letter-spacing: .03em;
             text-transform: uppercase;
             white-space: nowrap;
+        }}
+
+        .control-label::before {{
+            content: "";
+            width: 7px;
+            height: 7px;
+            margin-right: 7px;
+            background: var(--primary);
+            border-radius: 999px;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
         }}
 
         .form-control,
@@ -590,15 +615,21 @@ html_template = f"""<!DOCTYPE html>
         input[type="radio"], input[type="checkbox"] {{ accent-color: var(--primary); }}
 
         .checkbox-field-label {{
+            flex: 0 0 auto;
+            width: auto !important;
             margin-left: 6px;
             margin-right: 0;
+            padding: 0;
             color: #334155;
+            border-bottom: 0;
             font-size: 11px;
             font-weight: 800;
             text-transform: none;
             letter-spacing: 0;
             cursor: pointer;
         }}
+
+        .checkbox-field-label::before {{ content: none; }}
 
         .io-filter-group {{
             display: flex;
