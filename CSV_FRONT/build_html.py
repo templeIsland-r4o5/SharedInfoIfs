@@ -1,5 +1,6 @@
 import json
 import csv
+import re
 
 # 1. Data.csv の読み込み
 with open('Data.csv', 'r', encoding='utf-8-sig') as f:
@@ -24,20 +25,19 @@ if start_idx != -1 and end_idx != -1:
 else:
     original_search_html = original_html
 
-# 日付入力欄に placeholder="YYYY/MM/DD" を追加
-original_search_html = original_search_html.replace(
-    'id="createDateFrom" name="createDateFrom"',
-    'id="createDateFrom" name="createDateFrom" placeholder="YYYY/MM/DD"'
-).replace(
-    'id="createDateTo" name="createDateTo"',
-    'id="createDateTo" name="createDateTo" placeholder="YYYY/MM/DD"'
-).replace(
-    'id="updateDateFrom" name="updateDateFrom"',
-    'id="updateDateFrom" name="updateDateFrom" placeholder="YYYY/MM/DD"'
-).replace(
-    'id="updateDateTo" name="updateDateTo"',
-    'id="updateDateTo" name="updateDateTo" placeholder="YYYY/MM/DD"'
-)
+# 日付入力欄に placeholder="YYYY/MM/DD" を追加（再生成しても重複しないように制御）
+for field_id in ['createDateFrom', 'createDateTo', 'updateDateFrom', 'updateDateTo']:
+    id_name = f'id="{field_id}" name="{field_id}"'
+    original_search_html = re.sub(
+        rf'{id_name}(?: placeholder="YYYY/MM/DD")+',
+        f'{id_name} placeholder="YYYY/MM/DD"',
+        original_search_html
+    )
+    original_search_html = re.sub(
+        rf'{id_name}(?! placeholder="YYYY/MM/DD")',
+        f'{id_name} placeholder="YYYY/MM/DD"',
+        original_search_html
+    )
 
 # 3. 完全なHTMLドキュメントの構築
 html_template = f"""<!DOCTYPE html>
@@ -51,123 +51,443 @@ html_template = f"""<!DOCTYPE html>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     
     <style>
-        /* オフライン＆単体動作のための包括的フォールバック・スタイル */
+
+        :root {{
+            --bg: #eef3fb;
+            --bg-accent: #dbeafe;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-solid: #ffffff;
+            --surface-muted: #f8fafc;
+            --text: #172033;
+            --muted: #64748b;
+            --line: #d8e2f0;
+            --line-soft: #edf2f7;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-soft: #e8f0ff;
+            --success: #059669;
+            --success-soft: #dcfce7;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.08);
+            --shadow-md: 0 18px 45px rgba(15, 23, 42, 0.14);
+            --radius: 18px;
+            --radius-sm: 12px;
+        }}
+
+        * {{ box-sizing: border-box; }}
+
+        html {{ min-height: 100%; }}
+
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Meiryo", sans-serif;
-            background-color: #f4f6f9;
-            color: #333;
+            min-height: 100vh;
             margin: 0;
-            padding: 15px;
+            padding: 24px;
             font-size: 13px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.18), transparent 28%),
+                radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.18), transparent 30%),
+                linear-gradient(135deg, #f8fbff 0%, var(--bg) 52%, #f6f8fc 100%);
         }}
+
+        body::before {{
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+            background-size: 36px 36px;
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 75%);
+        }}
+
+        .container-fluid {{
+            position: relative;
+            max-width: 1680px;
+            margin: 0 auto;
+            padding: 0;
+        }}
+
         .top-header-bar {{
-            background: #fff;
-            padding: 12px 20px;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+            position: sticky;
+            top: 16px;
+            z-index: 20;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 16px;
+            min-height: 82px;
+            margin-bottom: 22px;
+            padding: 20px 24px;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 64, 175, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 24px;
+            box-shadow: var(--shadow-md);
+            color: #fff;
         }}
+
+        .top-header-bar::after {{
+            content: "";
+            position: absolute;
+            right: -90px;
+            top: -130px;
+            width: 320px;
+            height: 320px;
+            border-radius: 999px;
+            background: rgba(96, 165, 250, 0.22);
+        }}
+
         .top-header-title {{
-            font-size: 18px;
-            font-weight: bold;
-            color: #1a4f8b;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin: 0;
+            color: #fff;
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+        }}
+
+        .top-header-title .fa {{
+            display: inline-grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            color: #dbeafe;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            border-radius: 14px;
+        }}
+
+        .top-header-actions {{
+            position: relative;
+            z-index: 1;
             display: flex;
             align-items: center;
             gap: 10px;
-            margin: 0;
-        }}
-        .top-header-actions {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
             flex-wrap: wrap;
         }}
+
         .data-status-badge {{
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            background-color: #e8f4fd;
-            color: #0d6efd;
-            border: 1px solid #b6d4fe;
+            display: inline-flex;
+            align-items: center;
+            max-width: min(520px, 72vw);
+            min-height: 34px;
+            padding: 7px 13px;
+            overflow: hidden;
+            border-radius: 999px;
+            border: 1px solid rgba(191, 219, 254, 0.4);
+            background: rgba(255, 255, 255, 0.14);
+            color: #eff6ff;
+            font-size: 12px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
         }}
-        .panel.table-panel {{
-            border: 1px solid #d2d6de;
-            border-radius: 4px;
+
+        .btn {{
+            border-radius: 999px !important;
+            border: 1px solid transparent;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+        }}
+
+        .btn:hover:not(:disabled) {{
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+        }}
+
+        .btn:active:not(:disabled) {{ transform: translateY(0); }}
+
+        .btn-sm {{ padding: 7px 13px; }}
+        .btn-xs {{ padding: 5px 10px; font-size: 11px; }}
+
+        .btn-default {{
+            color: #1f2a44;
             background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
+            border-color: #d9e3f0;
         }}
-        .panel-heading {{
-            background-color: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 10px 15px;
-            position: relative;
+
+        .btn-default:hover,
+        .btn-default:focus {{
+            color: var(--primary-dark);
+            background: #f8fbff;
+            border-color: #b7ccf5;
         }}
+
+        .btn-primary {{
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            border-color: rgba(37, 99, 235, 0.6);
+        }}
+
+        .btn-success {{
+            color: #fff;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: rgba(5, 150, 105, 0.7);
+        }}
+
+        .btn[disabled],
+        button:disabled {{
+            cursor: not-allowed !important;
+            opacity: .52;
+            box-shadow: none !important;
+            transform: none !important;
+        }}
+
+        .panel.table-panel,
+        .results-panel {{
+            overflow: hidden;
+            margin-bottom: 22px;
+            background: var(--surface);
+            border: 1px solid rgba(216, 226, 240, 0.88);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(12px);
+        }}
+
+        .panel-heading,
+        .results-header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-height: 58px;
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--line-soft);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+        }}
+
         .panel-title {{
-            font-size: 15px;
-            font-weight: bold;
+            width: 100%;
             margin: 0;
+            font-size: 15px;
+            font-weight: 800;
         }}
+
         .panel-title a {{
-            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-height: 34px;
+            padding-right: 190px;
+            color: #0f172a;
             text-decoration: none;
-            display: block;
             cursor: pointer;
         }}
-        .panel-title a:hover {{
-            color: #23527c;
+
+        .panel-title a::before {{
+            content: "\\f002";
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            color: var(--primary);
+            background: var(--primary-soft);
+            border-radius: 11px;
+            font-family: FontAwesome;
+            font-size: 14px;
         }}
-        .panel-body {{
-            padding: 15px 20px;
+
+        .panel-title a:hover {{ color: var(--primary-dark); }}
+
+        .panel-title .pull-right {{
+            order: 10;
+            margin-left: auto;
+            color: var(--muted);
         }}
-        
-        /* 検索フォームのレイアウトと幅ユーティリティ */
+
+        #ShipMonitorListRenewBtn {{
+            top: 12px !important;
+            left: auto !important;
+            right: 18px !important;
+            min-width: 118px;
+            height: 36px;
+            padding: 7px 16px;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+        }}
+
+        .panel-body {{ padding: 20px; }}
+
+        #submitForm {{
+            display: block;
+        }}
+
         .form-search-condition {{
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 6px 15px;
+            align-items: stretch;
+            gap: 12px;
+            margin: 0 0 12px;
+            padding: 0;
         }}
+
         .form-group {{
             display: inline-flex;
             align-items: center;
-            margin-bottom: 0;
-            vertical-align: middle;
+            flex-wrap: wrap;
+            gap: 7px;
+            min-height: 44px;
+            margin: 0;
+            padding: 10px 12px;
+            background: rgba(248, 250, 252, 0.78);
+            border: 1px solid var(--line-soft);
+            border-radius: var(--radius-sm);
         }}
+
+        .form-group:focus-within {{
+            border-color: rgba(37, 99, 235, 0.45);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }}
+
+        .form-group.w480,
+        .form-group.w430,
+        .form-group.w400,
+        .form-group.w380,
+        .form-group.w360,
+        .form-group.w330,
+        .form-group.w310,
+        .form-group.w300,
+        .form-group.w290,
+        .form-group.w280,
+        .form-group.w270,
+        .form-group.w260,
+        .form-group.w250,
+        .form-group.w240,
+        .form-group.w230,
+        .form-group.w220,
+        .form-group.w210,
+        .form-group.w200,
+        .form-group.w190,
+        .form-group.w180,
+        .form-group.w170,
+        .form-group.w160,
+        .form-group.w150,
+        .form-group.w140,
+        .form-group.w130,
+        .form-group.w120,
+        .form-group.w110,
+        .form-group.w100,
+        .form-group.w90,
+        .form-group.w80,
+        .form-group.w70,
+        .form-group.w60,
+        .form-group.w50,
+        .form-group.w40,
+        .form-group.w30,
+        .form-group.w20,
+        .form-group.w10 {{
+            width: auto !important;
+        }}
+
         .control-label {{
-            font-size: 12px;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 0;
-            margin-right: 8px;
+            flex: 0 0 auto;
+            margin: 0 3px 0 0;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .03em;
+            text-transform: uppercase;
             white-space: nowrap;
         }}
-        .form-control {{
-            height: 30px;
-            padding: 4px 8px;
+
+        .form-control,
+        input.form-control,
+        select.form-control,
+        textarea.form-control,
+        .btn-group.bootstrap-select.form-control > .btn {{
+            min-height: 34px;
+            padding: 7px 10px;
+            color: #162033;
+            background: #fff;
+            border: 1px solid #cfd9e8;
+            border-radius: 10px !important;
+            box-shadow: none;
             font-size: 12px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            background-color: #fff;
-            color: #333;
+            transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+        }}
+
+        .form-control:focus,
+        .btn-group.bootstrap-select.open > .btn,
+        .btn-group.bootstrap-select.form-control > .btn:focus {{
+            border-color: var(--primary);
+            outline: 0;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+        }}
+
+        input::placeholder {{ color: #94a3b8; }}
+
+        .input-daterange {{ display: inline-flex; align-items: center; gap: 7px; }}
+        .radio-inline, .checkbox-inline {{ font-weight: 600; color: #334155; }}
+        input[type="radio"], input[type="checkbox"] {{ accent-color: var(--primary); }}
+
+        .btn-group.bootstrap-select {{
+            position: relative;
             display: inline-block;
             vertical-align: middle;
+            background: transparent;
+            border: 0;
+            padding: 0;
+            box-shadow: none;
         }}
-        .form-control:focus {{
-            border-color: #66afe9;
-            outline: 0;
-            box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
+
+        .btn-group.bootstrap-select.form-control {{ height: auto; min-height: 0; }}
+        .btn-group.bootstrap-select .dropdown-toggle {{ width: 100%; text-align: left; }}
+        .btn-group.bootstrap-select .filter-option {{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+        .btn-group.bootstrap-select .bs-caret {{ float: right; color: var(--muted); }}
+
+        .btn-group.bootstrap-select .dropdown-menu {{
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            z-index: 1000;
+            min-width: 100%;
+            max-height: 330px;
+            padding: 8px;
+            margin: 0;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: var(--shadow-md);
         }}
-        
-        /* 固定幅ユーティリティ */
+
+        .btn-group.bootstrap-select.open .dropdown-menu {{ display: block; }}
+        .btn-group.bootstrap-select .bs-searchbox {{ padding: 4px 4px 8px; }}
+        .btn-group.bootstrap-select .bs-searchbox input {{ width: 100%; }}
+        .dropdown-menu.inner {{ position: static; display: block; max-height: 245px; padding: 0; margin: 0; overflow-y: auto; border: 0; box-shadow: none; }}
+        .dropdown-menu.inner li {{ list-style: none; }}
+        .dropdown-menu.inner li a {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 9px;
+            color: #25324a;
+            border-radius: 9px;
+            text-decoration: none;
+            cursor: pointer;
+        }}
+        .dropdown-menu.inner li a:hover,
+        .dropdown-menu.inner li.selected a {{ background: var(--primary-soft); color: var(--primary-dark); }}
+        .dropdown-menu.inner .check-mark {{ color: var(--primary); }}
+
+        .w10 {{ width: 10px !important; }}
+        .w20 {{ width: 20px !important; }}
+        .w30 {{ width: 30px !important; }}
+        .w40 {{ width: 40px !important; }}
         .w50 {{ width: 50px !important; }}
         .w60 {{ width: 60px !important; }}
         .w70 {{ width: 70px !important; }}
@@ -177,440 +497,275 @@ html_template = f"""<!DOCTYPE html>
         .w110 {{ width: 110px !important; }}
         .w120 {{ width: 120px !important; }}
         .w130 {{ width: 130px !important; }}
+        .w140 {{ width: 140px !important; }}
         .w150 {{ width: 150px !important; }}
         .w160 {{ width: 160px !important; }}
+        .w170 {{ width: 170px !important; }}
+        .w180 {{ width: 180px !important; }}
+        .w190 {{ width: 190px !important; }}
+        .w200 {{ width: 200px !important; }}
+        .w210 {{ width: 210px !important; }}
+        .w220 {{ width: 220px !important; }}
+        .w230 {{ width: 230px !important; }}
+        .w240 {{ width: 240px !important; }}
+        .w250 {{ width: 250px !important; }}
+        .w260 {{ width: 260px !important; }}
+        .w270 {{ width: 270px !important; }}
+        .w280 {{ width: 280px !important; }}
+        .w290 {{ width: 290px !important; }}
         .w300 {{ width: 300px !important; }}
-        .w340 {{ width: 340px !important; }}
+        .w310 {{ width: 310px !important; }}
+        .w330 {{ width: 330px !important; }}
+        .w360 {{ width: 360px !important; }}
         .w380 {{ width: 380px !important; }}
+        .w400 {{ width: 400px !important; }}
+        .w430 {{ width: 430px !important; }}
         .w480 {{ width: 480px !important; }}
-        .w500 {{ width: 500px !important; }}
-        .w800 {{ width: 800px !important; }}
-        
-        /* マージン・パディング */
-        .mr5 {{ margin-right: 5px !important; }}
-        .mr10 {{ margin-right: 10px !important; }}
-        .mb-5 {{ margin-bottom: 5px !important; }}
-        .mb-40 {{ margin-bottom: 40px !important; }}
-        .mt-30 {{ margin-top: 30px !important; }}
-        .vat {{ vertical-align: top !important; }}
+
         .inline-block {{ display: inline-block !important; }}
         .pull-right {{ float: right !important; }}
         .pull-left {{ float: left !important; }}
         .clearfix::after {{ content: ""; clear: both; display: table; }}
         .text-center {{ text-align: center !important; }}
         .text-right {{ text-align: right !important; }}
-        
-        /* ボタン */
-        .btn {{
-            display: inline-block;
-            margin-bottom: 0;
-            font-weight: 400;
-            text-align: center;
-            vertical-align: middle;
-            touch-action: manipulation;
-            cursor: pointer;
-            border: 1px solid transparent;
-            white-space: nowrap;
-            padding: 5px 12px;
-            font-size: 12px;
-            line-height: 1.42857143;
-            border-radius: 3px;
-            user-select: none;
-            transition: all 0.2s ease;
-        }}
-        .btn-primary {{
-            color: #fff;
-            background-color: #337ab7;
-            border-color: #2e6da4;
-        }}
-        .btn-primary:hover {{
-            background-color: #286090;
-            border-color: #204d74;
-        }}
-        .btn-info {{
-            color: #fff;
-            background-color: #5bc0de;
-            border-color: #46b8da;
-        }}
-        .btn-info:hover {{
-            background-color: #31b0d5;
-            border-color: #269abc;
-        }}
-        .btn-default {{
-            color: #333;
-            background-color: #fff;
-            border-color: #ccc;
-        }}
-        .btn-default:hover {{
-            background-color: #e6e6e6;
-            border-color: #adadad;
-        }}
-        .btn-success {{
-            color: #fff;
-            background-color: #5cb85c;
-            border-color: #4cae4c;
-        }}
-        .btn-success:hover {{
-            background-color: #449d44;
-            border-color: #398439;
-        }}
-        .btn-sm {{
-            padding: 3px 8px;
-            font-size: 11px;
-            line-height: 1.5;
-            border-radius: 3px;
-        }}
-        
-        /* Bootstrap-select ドロップダウンのスタイル */
-        .btn-group.bootstrap-select {{
-            position: relative;
-            display: inline-block;
-            vertical-align: middle;
-        }}
-        .btn-group.bootstrap-select > .btn.dropdown-toggle {{
-            width: 100%;
-            height: 30px;
-            padding: 4px 8px;
-            font-size: 12px;
-            text-align: left;
-            position: relative;
+        .mr5 {{ margin-right: 5px !important; }}
+        .mr10 {{ margin-right: 10px !important; }}
+        .ml5 {{ margin-left: 5px !important; }}
+        .mt-30 {{ margin-top: 30px !important; }}
+        .mb-40 {{ margin-bottom: 40px !important; }}
+
+        .submit-area,
+        .button-area,
+        .form-actions {{
             display: flex;
+            justify-content: flex-end;
             align-items: center;
-            justify-content: space-between;
-            background: #fff;
-            border: 1px solid #ccc;
-        }}
-        .btn-group.bootstrap-select .filter-option {{
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex-grow: 1;
-        }}
-        .btn-group.bootstrap-select .caret {{
-            margin-left: 5px;
-            border-top: 4px solid;
-            border-right: 4px solid transparent;
-            border-left: 4px solid transparent;
-            display: inline-block;
-            vertical-align: middle;
-        }}
-        .btn-group.bootstrap-select .dropdown-menu {{
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            z-index: 1000;
-            min-width: 160px;
-            padding: 5px 0;
-            margin: 2px 0 0;
-            font-size: 12px;
-            text-align: left;
-            background-color: #fff;
-            border: 1px solid rgba(0,0,0,.15);
-            border-radius: 4px;
-            box-shadow: 0 6px 12px rgba(0,0,0,.175);
-            max-height: 250px;
-            overflow-y: auto;
-        }}
-        .btn-group.bootstrap-select.open .dropdown-menu {{
-            display: block;
-        }}
-        .btn-group.bootstrap-select .dropdown-menu ul.inner {{
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }}
-        .btn-group.bootstrap-select .dropdown-menu li a {{
-            display: block;
-            padding: 5px 15px;
-            clear: both;
-            font-weight: 400;
-            line-height: 1.42857143;
-            color: #333;
-            white-space: nowrap;
-            text-decoration: none;
-            cursor: pointer;
-        }}
-        .btn-group.bootstrap-select .dropdown-menu li a:hover,
-        .btn-group.bootstrap-select .dropdown-menu li.selected a {{
-            color: #262626;
-            background-color: #f5f5f5;
-        }}
-        .btn-group.bootstrap-select .check-mark {{
-            float: right;
-            display: none;
-        }}
-        .btn-group.bootstrap-select li.selected .check-mark {{
-            display: inline-block;
-        }}
-        .btn-group.bootstrap-select select.selectpicker {{
-            display: none !important;
-        }}
-        .bs-searchbox {{
-            padding: 4px 8px;
-            border-bottom: 1px solid #eee;
-        }}
-        .bs-searchbox input {{
-            margin-bottom: 0;
-        }}
-        
-        /* 検索結果パネルとテーブル */
-        .results-panel {{
-            background: #fff;
-            border: 1px solid #d2d6de;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
-        }}
-        .results-header {{
-            padding: 12px 15px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-            background: #fdfdfd;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px dashed var(--line);
         }}
+
+        #ShipMonitorListSearchBtn,
+        #ClearBtn {{
+            min-width: 116px;
+            min-height: 38px;
+        }}
+
+        .results-panel {{ background: var(--surface-solid); }}
+        .results-header {{ padding: 16px 18px; }}
         .results-count {{
-            font-size: 14px;
-            font-weight: bold;
-            color: #2c3e50;
-        }}
-        .results-controls {{
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
+            color: #0f172a;
+            font-size: 16px;
+            font-weight: 800;
         }}
+        .results-count::before {{
+            content: "\\f0ce";
+            display: inline-grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            color: var(--success);
+            background: var(--success-soft);
+            border-radius: 10px;
+            font-family: FontAwesome;
+            font-size: 14px;
+        }}
+        .results-controls {{ display: flex; align-items: center; gap: 9px; color: var(--muted); font-weight: 700; }}
+        .results-controls span {{ font-size: 12px !important; color: var(--muted) !important; }}
+        #pageSizeSelect {{ width: 92px !important; height: 34px !important; padding: 6px 9px !important; font-size: 12px !important; }}
+
         .table-responsive-wrapper {{
+            min-height: 260px;
             overflow-x: auto;
-            min-height: 200px;
+            background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
         }}
+
         .results-table {{
             width: 100%;
+            min-width: 1120px;
             margin-bottom: 0;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 12px;
         }}
-        .results-table th {{
-            background-color: #f1f5f9;
-            color: #334155;
-            font-weight: 600;
-            border: 1px solid #e2e8f0;
-            padding: 8px 10px;
-            white-space: nowrap;
-            text-align: left;
+
+        .results-table thead th {{
             position: sticky;
             top: 0;
-            z-index: 10;
-        }}
-        .results-table td {{
-            border: 1px solid #e2e8f0;
-            padding: 7px 10px;
-            vertical-align: middle;
-            color: #333;
-        }}
-        .results-table tr:nth-child(even) {{
-            background-color: #fbfcfe;
-        }}
-        .results-table tr:hover {{
-            background-color: #eef6ff !important;
-            cursor: pointer;
-        }}
-        .results-table .title-cell {{
-            max-width: 320px;
+            z-index: 2;
+            padding: 12px 10px;
+            color: #475569;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--line);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .035em;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }}
-        
-        /* バッジ表示 */
+
+        .results-table tbody td {{
+            padding: 11px 10px;
+            border-top: 1px solid #edf2f7;
+            color: #25324a;
+            vertical-align: middle;
+        }}
+
+        .results-table tbody tr {{ transition: background .12s ease, transform .12s ease; }}
+        .results-table tbody tr:nth-child(even) {{ background: #fbfdff; }}
+        .results-table tbody tr:hover {{ background: #eff6ff; }}
+        .title-cell {{ max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: #172033; }}
+
         .status-badge {{
-            display: inline-block;
-            padding: 2px 7px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 54px;
+            padding: 4px 8px;
+            border-radius: 999px;
             font-size: 11px;
-            font-weight: bold;
-            border-radius: 3px;
-            text-align: center;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: .02em;
         }}
-        .status-open {{
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }}
-        .status-close {{
-            background-color: #e2e3e5;
-            color: #383d41;
-            border: 1px solid #d6d8db;
-        }}
-        .priority-p1 {{
-            background-color: #f8d7da;
-            color: #721c24;
-            font-weight: bold;
-        }}
-        .priority-p2 {{
-            background-color: #fff3cd;
-            color: #856404;
-        }}
-        .priority-p3 {{
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }}
-        
-        /* ページネーション */
+        .status-open {{ color: #075985; background: #e0f2fe; border: 1px solid #bae6fd; }}
+        .status-close {{ color: #475569; background: #e2e8f0; border: 1px solid #cbd5e1; }}
+        .priority-p1 {{ color: #991b1b; background: #fee2e2; border: 1px solid #fecaca; }}
+        .priority-p2 {{ color: #92400e; background: #fef3c7; border: 1px solid #fde68a; }}
+        .priority-p3 {{ color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; }}
+
         .pagination-container {{
-            padding: 12px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
+            padding: 14px 18px;
+            border-top: 1px solid var(--line-soft);
             background: #fff;
-            border-top: 1px solid #e2e8f0;
         }}
-        .pagination-info {{
-            font-size: 12px;
-            color: #64748b;
-        }}
-        .pagination-nav {{
-            display: flex;
-            gap: 4px;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }}
+        .pagination-info {{ color: var(--muted); font-size: 12px; font-weight: 700; }}
+        .pagination-nav {{ display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; list-style: none; }}
         .pagination-nav button {{
-            padding: 4px 10px;
-            font-size: 12px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
+            min-width: 34px;
+            min-height: 32px;
+            padding: 5px 10px;
             color: #334155;
-            border-radius: 3px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 800;
             cursor: pointer;
+            transition: all .14s ease;
         }}
-        .pagination-nav button:hover:not(:disabled) {{
-            background-color: #f1f5f9;
-            border-color: #94a3b8;
-        }}
-        .pagination-nav button.active {{
-            background-color: #337ab7;
-            color: #fff;
-            border-color: #2e6da4;
-        }}
-        .pagination-nav button:disabled {{
-            opacity: 0.5;
-            cursor: not-allowed;
-        }}
-        
-        /* 詳細モーダル */
+        .pagination-nav button:hover:not(:disabled) {{ color: var(--primary-dark); background: var(--primary-soft); border-color: #b7ccf5; }}
+        .pagination-nav button.active {{ color: #fff; background: var(--primary); border-color: var(--primary); box-shadow: 0 8px 16px rgba(37, 99, 235, 0.22); }}
+        .pagination-nav button:disabled {{ opacity: 0.45; cursor: not-allowed; }}
+
         .custom-modal-backdrop {{
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1050;
-            overflow-y: auto;
-            padding: 20px;
+            inset: 0;
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.58);
+            backdrop-filter: blur(8px);
         }}
+        .custom-modal-backdrop.show {{ display: flex; }}
         .custom-modal-dialog {{
-            background: #fff;
-            width: 100%;
-            max-width: 900px;
-            margin: 30px auto;
-            border-radius: 6px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: min(1040px, 96vw);
+            max-height: 92vh;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background: #fff;
+            border: 1px solid rgba(255,255,255,.4);
+            border-radius: 22px;
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.38);
         }}
         .custom-modal-header {{
-            padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 14px;
+            padding: 18px 22px;
+            color: #fff;
+            background: linear-gradient(135deg, #0f172a, #1d4ed8);
         }}
-        .custom-modal-title {{
-            font-size: 16px;
-            font-weight: bold;
-            color: #1a4f8b;
-            margin: 0;
-        }}
+        .custom-modal-title {{ margin: 0; font-size: 18px; font-weight: 800; }}
         .custom-modal-close {{
-            background: transparent;
-            border: none;
-            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            color: #fff;
+            background: rgba(255,255,255,.14);
+            border: 1px solid rgba(255,255,255,.24);
+            border-radius: 12px;
+            font-size: 24px;
+            line-height: 1;
             cursor: pointer;
-            color: #888;
         }}
-        .custom-modal-close:hover {{
-            color: #000;
-        }}
-        .custom-modal-body {{
-            padding: 20px;
-            max-height: 75vh;
-            overflow-y: auto;
-        }}
-        .custom-modal-footer {{
-            padding: 12px 20px;
-            border-top: 1px solid #e2e8f0;
-            text-align: right;
-            background: #f8fafc;
-        }}
+        .custom-modal-body {{ max-height: calc(92vh - 132px); padding: 20px 22px; overflow-y: auto; background: #f8fafc; }}
+        .custom-modal-footer {{ padding: 14px 22px; text-align: right; background: #fff; border-top: 1px solid var(--line-soft); }}
         .detail-meta-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border: 1px solid #e2e8f0;
+            margin-bottom: 16px;
         }}
         .detail-meta-item {{
+            padding: 11px 12px;
+            background: #fff;
+            border: 1px solid var(--line-soft);
+            border-radius: 13px;
             font-size: 12px;
         }}
-        .detail-meta-label {{
-            font-weight: bold;
-            color: #64748b;
-            display: block;
-            margin-bottom: 2px;
-        }}
-        .detail-meta-value {{
-            color: #1e293b;
-            font-weight: 500;
-        }}
-        .detail-block {{
-            margin-bottom: 15px;
-        }}
+        .detail-meta-label {{ display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }}
+        .detail-meta-value {{ color: #172033; font-weight: 800; }}
+        .detail-block {{ margin-bottom: 16px; }}
         .detail-block-title {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #172033;
             font-size: 13px;
-            font-weight: bold;
-            color: #334155;
-            margin-bottom: 6px;
-            border-left: 3px solid #337ab7;
-            padding-left: 8px;
+            font-weight: 800;
         }}
+        .detail-block-title::before {{ content: ""; width: 9px; height: 9px; border-radius: 999px; background: var(--primary); box-shadow: 0 0 0 4px rgba(37,99,235,.12); }}
         .detail-block-content {{
-            background: #fdfdfd;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            padding: 10px 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 13px 14px;
+            color: #25324a;
+            background: #fff;
+            border: 1px solid var(--line-soft);
+            border-radius: 14px;
             font-size: 12px;
-            line-height: 1.6;
+            line-height: 1.7;
             white-space: pre-wrap;
             word-break: break-word;
-            max-height: 250px;
-            overflow-y: auto;
         }}
-        
-        /* ドラッグ＆ドロップ用ハイライト */
+
         body.dragover {{
-            background-color: #e0f2fe;
+            background:
+                radial-gradient(circle at 50% 12%, rgba(37, 99, 235, 0.32), transparent 34%),
+                linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }}
+
+        @media (max-width: 900px) {{
+            body {{ padding: 14px; }}
+            .top-header-bar {{ position: static; padding: 18px; border-radius: 20px; }}
+            .top-header-title {{ font-size: 19px; }}
+            .panel-title a {{ padding-right: 0; }}
+            #ShipMonitorListRenewBtn {{ position: static !important; margin-top: 10px; }}
+            .form-group {{ width: 100% !important; align-items: flex-start; }}
+            .control-label {{ width: 100% !important; }}
+            .results-header, .pagination-container {{ align-items: flex-start; flex-direction: column; }}
         }}
     </style>
 </head>
