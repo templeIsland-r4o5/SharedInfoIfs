@@ -64,27 +64,27 @@
 
         .container-fluid {
             position: relative;
-            max-width: 1680px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 0;
+            padding: 0 16px;
         }
 
         .top-header-bar {
             position: sticky;
-            top: 16px;
-            z-index: 20;
+            top: 12px;
+            z-index: 100;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 16px;
-            min-height: 82px;
-            margin-bottom: 22px;
-            padding: 20px 24px;
+            min-height: 72px;
+            margin-bottom: 18px;
+            padding: 16px 22px;
             overflow: hidden;
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 64, 175, 0.9));
             border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 24px;
+            border-radius: 20px;
             box-shadow: var(--shadow-md);
             color: #fff;
         }
@@ -100,6 +100,38 @@
             background: rgba(96, 165, 250, 0.22);
         }
 
+        .top-header-left {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 36px;
+            padding: 6px 14px;
+            color: #eff6ff !important;
+            background: rgba(255, 255, 255, 0.16) !important;
+            border: 1px solid rgba(255, 255, 255, 0.28) !important;
+            border-radius: 999px !important;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: none !important;
+            transition: all .15s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.26) !important;
+            border-color: rgba(255, 255, 255, 0.45) !important;
+            color: #fff !important;
+            transform: translateY(-1px);
+        }
+
         .top-header-title {
             position: relative;
             z-index: 1;
@@ -108,7 +140,7 @@
             gap: 13px;
             margin: 0;
             color: #fff;
-            font-size: 23px;
+            font-size: 22px;
             font-weight: 800;
             letter-spacing: 0.01em;
         }
@@ -729,9 +761,22 @@
         #pageSizeSelect { width: 92px !important; height: 34px !important; padding: 6px 9px !important; font-size: 12px !important; }
 
         .table-responsive-wrapper {
-            min-height: 260px;
+            min-height: 540px;
+            max-height: calc(100vh - 215px);
+            overflow-y: auto;
             overflow-x: auto;
             background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+        }
+
+        .table-responsive-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-responsive-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 4px;
         }
 
         .results-table {
@@ -746,15 +791,16 @@
         .results-table thead th {
             position: sticky;
             top: 0;
-            z-index: 2;
+            z-index: 10;
             padding: 12px 10px;
-            color: #475569;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--line);
+            color: #334155;
+            background: #f1f5f9;
+            border-bottom: 2px solid #cbd5e1;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .035em;
             white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
 
         .results-table tbody td {
@@ -906,33 +952,26 @@
                 linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
         }
 
-        @media (max-width: 900px) {
-            body { padding: 14px; }
-            .top-header-bar { position: static; padding: 18px; border-radius: 20px; }
-            .top-header-title { font-size: 19px; }
-            .panel-title a { padding-right: 0; }
-            #ShipMonitorListRenewBtn { position: static !important; margin-top: 10px; }
-            .form-group { width: 100% !important; align-items: flex-start; }
-            .io-filter-group {
-                min-width: 0;
-                align-items: flex-start;
+        @media (max-width: 1024px) {
+            body { padding: 12px; }
+            .app-workspace {
                 flex-direction: column;
+                gap: 14px;
             }
-            .io-filter-options { justify-content: flex-start; }
-            .btn-group.bootstrap-select .dropdown-menu,
-            .btn-group.bootstrap-select.w60 .dropdown-menu,
-            .btn-group.bootstrap-select.w80 .dropdown-menu,
-            .btn-group.bootstrap-select.w100 .dropdown-menu,
-            .btn-group.bootstrap-select.w120 .dropdown-menu,
-            .btn-group.bootstrap-select.w130 .dropdown-menu,
-            .btn-group.bootstrap-select.w150 .dropdown-menu,
-            .btn-group.bootstrap-select.w200 .dropdown-menu,
-            .btn-group.bootstrap-select.w250 .dropdown-menu,
-            .btn-group.bootstrap-select.w300 .dropdown-menu {
-                width: min(420px, calc(100vw - 32px));
-                min-width: min(260px, calc(100vw - 32px));
-                max-width: calc(100vw - 32px);
+            .search-sidebar {
+                flex: none;
+                width: 100%;
+                max-width: 100%;
+                position: static;
+                max-height: none;
             }
+            .app-workspace.sidebar-hidden .search-sidebar {
+                margin-left: 0;
+                display: none;
+            }
+            .top-header-bar { position: static; padding: 16px; border-radius: 18px; }
+            .top-header-title { font-size: 18px; }
+            .table-responsive-wrapper { max-height: none; min-height: 380px; }
             .control-label { width: 100% !important; }
             .results-header, .pagination-container { align-items: flex-start; flex-direction: column; }
         }
@@ -943,9 +982,14 @@
 <div class="container-fluid">
     <!-- トップヘッダーバー -->
     <div class="top-header-bar">
-        <h1 class="top-header-title">
-            <i class="fa fa-plane" aria-hidden="true"></i> Ship Monitor CSV Search
-        </h1>
+        <div class="top-header-left">
+            <button id="sidebarToggleBtn" type="button" class="btn btn-default btn-sm sidebar-toggle-btn" title="検索条件サイドバーの表示・非表示切替">
+                <i class="fa fa-bars mr5"></i><span id="sidebarToggleText">サイドバー非表示</span>
+            </button>
+            <h1 class="top-header-title">
+                <i class="fa fa-plane" aria-hidden="true"></i> Ship Monitor CSV Search
+            </h1>
+        </div>
         <div class="top-header-actions">
             <span id="dataStatusBadge" class="data-status-badge">
                 <i class="fa fa-database mr5"></i>Loading Data...
@@ -960,7 +1004,10 @@
         </div>
     </div>
 
-    <!-- 検索条件パネル (既存 search.html) -->
+    <!-- ワークスペース（サイドバー ＋ 検索結果） -->
+    <div class="app-workspace" id="appWorkspace">
+        <!-- 検索条件サイドバー -->
+        <aside class="search-sidebar" id="searchSidebar">
 <div class="panel table-panel">
     <div class="panel-heading clearfix">
         <h3 class="panel-title">
@@ -976,7 +1023,14 @@
     </div>
     <div id="ShipMonitorSearch" class="collapse in">
         <div class="panel-body">
-            <form id="submitForm">
+            <form id="submitForm">\n                <div class="sidebar-quick-actions">
+                    <button id="quickSearchBtn" type="button" class="btn btn-primary btn-quick-search">
+                        <i class="fa fa-search mr5" aria-hidden="true"></i>検索実行
+                    </button>
+                    <button id="quickClearBtn" type="button" class="btn btn-default btn-quick-clear">
+                        <i class="fa fa-eraser mr5" aria-hidden="true"></i>クリア
+                    </button>
+                </div>
                 <div class="form-search-condition">
                     <div class="form-group w480">
                         <label class="control-label w120">Create Date</label>
@@ -2619,58 +2673,62 @@
     </div>
     <!-- /.panel-body -->
 </div>
+        </aside>
 
-    <!-- 検索結果パネル -->
-    <div class="results-panel">
-        <div class="results-header">
-            <div class="results-count" id="resultsCount">
-                検索結果: 0 件
+        <!-- 検索結果メインエリア -->
+        <main class="results-main-area" id="resultsMainArea">
+            <div class="results-panel">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">
+                        検索結果: 0 件
+                    </div>
+                    <div class="results-controls">
+                        <span style="font-size: 12px; color: #64748b;">表示件数:</span>
+                        <select id="pageSizeSelect" class="form-control" style="width: 80px; height: 28px; padding: 2px 5px; font-size: 12px;">
+                            <option value="20" selected>20件</option>
+                            <option value="50">50件</option>
+                            <option value="100">100件</option>
+                            <option value="all">全件</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive-wrapper">
+                    <table class="table results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 44px; text-align: center;">No.</th>
+                                <th style="width: 120px;">Ship Monitor No</th>
+                                <th style="width: 90px;">Ship Type</th>
+                                <th style="width: 85px;">Ship No.</th>
+                                <th style="width: 70px;">Station</th>
+                                <th style="width: 65px;">ATA</th>
+                                <th style="width: 65px;">Priority</th>
+                                <th style="width: 65px;">Level</th>
+                                <th style="width: 75px;">Status</th>
+                                <th style="min-width: 200px;">Title</th>
+                                <th style="width: 70px;">From</th>
+                                <th style="width: 95px;">Created At</th>
+                                <th style="width: 95px;">Updated At</th>
+                                <th style="width: 65px; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- 動的行生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination-container">
+                    <div class="pagination-info" id="paginationInfo">
+                        0 - 0 / 0 件中
+                    </div>
+                    <ul class="pagination-nav" id="paginationNav">
+                        <!-- 動的ページネーションボタン -->
+                    </ul>
+                </div>
             </div>
-            <div class="results-controls">
-                <span style="font-size: 12px; color: #64748b;">表示件数:</span>
-                <select id="pageSizeSelect" class="form-control" style="width: 80px; height: 28px; padding: 2px 5px; font-size: 12px;">
-                    <option value="20" selected>20件</option>
-                    <option value="50">50件</option>
-                    <option value="100">100件</option>
-                    <option value="all">全件</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="table-responsive-wrapper">
-            <table class="table results-table" id="resultsTable">
-                <thead>
-                    <tr>
-                        <th style="width: 40px; text-align: center;">No.</th>
-                        <th style="width: 100px;">Ship Monitor No</th>
-                        <th style="width: 90px;">Ship Type</th>
-                        <th style="width: 80px;">Ship No.</th>
-                        <th style="width: 70px;">Station</th>
-                        <th style="width: 60px;">ATA</th>
-                        <th style="width: 60px;">Priority</th>
-                        <th style="width: 60px;">Level</th>
-                        <th style="width: 70px;">Status</th>
-                        <th>Title</th>
-                        <th style="width: 70px;">From</th>
-                        <th style="width: 90px;">Created At</th>
-                        <th style="width: 90px;">Updated At</th>
-                        <th style="width: 60px; text-align: center;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsTableBody">
-                    <!-- 動的行生成 -->
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="pagination-container">
-            <div class="pagination-info" id="paginationInfo">
-                0 - 0 / 0 件中
-            </div>
-            <ul class="pagination-nav" id="paginationNav">
-                <!-- 動的ページネーションボタン -->
-            </ul>
-        </div>
+        </main>
     </div>
 </div>
 
@@ -3476,6 +3534,27 @@
     if (clearBtn) clearBtn.addEventListener('click', clearFormConditions);
     if (renewBtn) renewBtn.addEventListener('click', executeSearch);
     if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportFilteredCSV);
+
+    const quickSearchBtn = document.getElementById('quickSearchBtn');
+    const quickClearBtn = document.getElementById('quickClearBtn');
+    if (quickSearchBtn) quickSearchBtn.addEventListener('click', executeSearch);
+    if (quickClearBtn) quickClearBtn.addEventListener('click', clearFormConditions);
+
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const sidebarToggleText = document.getElementById('sidebarToggleText');
+    const appWorkspace = document.getElementById('appWorkspace');
+
+    if (sidebarToggleBtn && appWorkspace) {
+        sidebarToggleBtn.addEventListener('click', function() {
+            appWorkspace.classList.toggle('sidebar-hidden');
+            const isHidden = appWorkspace.classList.contains('sidebar-hidden');
+            if (sidebarToggleText) {
+                sidebarToggleText.textContent = isHidden ? 'サイドバー表示' : 'サイドバー非表示';
+            }
+            sidebarToggleBtn.title = isHidden ? '検索条件サイドバーを表示' : '検索条件サイドバーを非表示';
+        });
+    }
+
     if (pageSizeSelect) {
         pageSizeSelect.addEventListener('change', function(e) {
             pageSize = e.target.value;
