@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CSV Data</h1>
+    <? if (data && data.length > 0) { ?>
+      <table>
+        <thead>
+          <tr>
+            <? for (var i = 0; i < data[0].length; i++) { ?>
+              <th><?= data[0][i] ?></th>
+            <? } ?>
+          </tr>
+        </thead>
+        <tbody>
+          <? for (var i = 1; i < data.length; i++) { ?>
+            <tr>
+              <? for (var j = 0; j < data[i].length; j++) { ?>
+                <td><?= data[i][j] ?></td>
+              <? } ?>
+            </tr>
+          <? } ?>
+        </tbody>
+      </table>
+    <? } else { ?>
+      <p>No data found or an error occurred.</p>
+    <? } ?>
+  </body>
+</html>
