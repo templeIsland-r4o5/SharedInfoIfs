@@ -1,83 +1,125 @@
-const CACHE_KEY = 'csv_data';
-const CACHE_EXPIRATION = 3600; // 1 hour in seconds
-const SHEET_NAME = 'Data';
+function onOpen() {
+  SpreadsheetApp.getUi()
+      .createMenu('カスタムメニュー')
+      .addItem('サイドバーを表示', 'showSidebar')
+      .addToUi();
+}
 
-/**
- * Web App entry point.
- */
-function doGet(e) {
-  const htmlOutput = HtmlService.createTemplateFromFile('index');
-  htmlOutput.data = getCsvData();
-  return htmlOutput.evaluate()
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+function showSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('gas/index').setTitle('検索');
+  SpreadsheetApp.getUi().showSidebar(html);
 }
 
 /**
- * Retrieves CSV data, using cache if available.
- * @returns {Array<Array<String>>} The CSV data as a 2D array.
+ * フィルターをすべて解除する
  */
-function getCsvData() {
-  const cache = CacheService.getScriptCache();
-  const cached = cache.get(CACHE_KEY);
-
-  if (cached != null) {
-    Logger.log('Serving from cache');
-    const decompressed = Utilities.unzip(Utilities.base64Decode(cached));
-    return JSON.parse(decompressed.getDataAsString());
-  }
-
-  Logger.log('Serving from Spreadsheet');
-  try {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = spreadsheet.getSheetByName(SHEET_NAME);
-    if (!sheet) {
-      throw new Error(`Sheet "${SHEET_NAME}" not found.`);
+function removeFilters() {
+    const sheet = SpreadsheetApp.getActiveSheet();
+    const filter = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getFilter();
+    if(filter){
+        filter.remove();
     }
-    const data = sheet.getDataRange().getValues();
+}
 
-    const jsonString = JSON.stringify(data);
-    const compressed = Utilities.gzip(Utilities.newBlob(jsonString, 'application/json'));
-    const base64Compressed = Utilities.base64Encode(compressed.getBytes());
+/**
+ * @param {Object} formObject - HTMLフォームから送信された検索条件のオブジェクト
+ */
+function applyFilters(formObject) {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const range = sheet.getDataRange();
+  
+  removeFilters(); // 既存のフィルターを一旦解除
+  
+  const filter = range.createFilter();
 
-    // Check if compressed data exceeds cache limit (100KB)
-    if (base64Compressed.length > 100 * 1024) {
-       Logger.log('Compressed data size exceeds 100KB limit. Not caching.');
-    } else {
-       cache.put(CACHE_KEY, base64Compressed, CACHE_EXPIRATION);
-       Logger.log('Data stored in cache.');
+  // 列名と列インデックスのマッピングを作成
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const colIndexMap = {};
+  headers.forEach((header, i) => {
+    colIndexMap[header.trim()] = i + 1;
+  });
+
+  const criteriaMap = {};
+
+  // 日付範囲の条件を作成
+  function buildDateCriteria(from, to) {
+    const criteria = SpreadsheetApp.newFilterCriteria();
+    let fromDate, toDate;
+    if (from) fromDate = new Date(from);
+    if (to) toDate = new Date(to);
+
+    if (from && !isNaN(fromDate)) {
+      criteria.whenDateAfter(fromDate);
     }
+    if (to && !isNaN(toDate)) {
+      criteria.whenDateBefore(toDate);
+    }
+    return criteria.build();
+  }
+  
+  // テキスト（完全一致）の条件を作成
+  function buildTextCriteria(value, colIdx) {
+     if (!value) return null;
+     const hiddenValues = getOtherValues(sheet, colIdx, [value]);
+     return SpreadsheetApp.newFilterCriteria().setHiddenValues(hiddenValues).build();
+  }
 
-    return data;
-  } catch (e) {
-    Logger.log(e);
-    return [['Error', `Failed to load data: ${e.message}`]];
+  // キーワード（部分一致）の条件を作成
+  function buildKeywordCriteria(keyword) {
+    if (!keyword) return null;
+    return SpreadsheetApp.newFilterCriteria().whenTextContains(keyword).build();
+  }
+
+
+  // 各検索項目に対応するフィルター条件を構築
+  if (colIndexMap['Create Date'] && (formObject.createDateFrom || formObject.createDateTo)) {
+    criteriaMap[colIndexMap['Create Date']] = buildDateCriteria(formObject.createDateFrom, formObject.createDateTo);
+  }
+  if (colIndexMap['Update Date'] && (formObject.updateDateFrom || formObject.updateDateTo)) {
+    criteriaMap[colIndexMap['Update Date']] = buildDateCriteria(formObject.updateDateFrom, formObject.updateDateTo);
+  }
+  if (colIndexMap['ShipType']) {
+      const shipTypeValue = formObject.shipType !== 'freeText' ? formObject.shipType : formObject.shipTypeFreeText;
+      if(shipTypeValue) criteriaMap[colIndexMap['ShipType']] = buildTextCriteria(shipTypeValue, colIndexMap['ShipType']);
+  }
+  if (colIndexMap['TODAY T/R'] && formObject.todayTr) {
+      criteriaMap[colIndexMap['TODAY T/R']] = buildTextCriteria(formObject.todayTr, colIndexMap['TODAY T/R']);
+  }
+  if (colIndexMap['ShipNo. / GRP']) {
+      const grpValue = formObject.shipNoGrp !== 'freeText' ? formObject.shipNoGrp : formObject.grpFreeText;
+      if(grpValue) criteriaMap[colIndexMap['ShipNo. / GRP']] = buildTextCriteria(grpValue, colIndexMap['ShipNo. / GRP']);
+  }
+  if (colIndexMap['Create Station'] && formObject.airportCode) {
+      criteriaMap[colIndexMap['Create Station']] = buildTextCriteria(formObject.airportCode, colIndexMap['Create Station']);
+  }
+  if (colIndexMap['Notification No.'] && formObject.notification) {
+      criteriaMap[colIndexMap['Notification No.']] = buildTextCriteria(formObject.notification, colIndexMap['Notification No.']);
+  }
+  if (colIndexMap['Status'] && formObject.status) {
+      let statusValue = '';
+      if (formObject.status === '1') statusValue = 'OPEN';
+      if (formObject.status === '2') statusValue = 'CLOSE';
+      if(statusValue) criteriaMap[colIndexMap['Status']] = buildTextCriteria(statusValue, colIndexMap['Status']);
+  }
+   if (colIndexMap['ATA No.']) {
+      const ataValue = formObject.ataNo1 !== 'freeText' ? formObject.ataNo1 : formObject.ataNo2;
+      if(ataValue) criteriaMap[colIndexMap['ATA No.']] = buildTextCriteria(ataValue, colIndexMap['ATA No.']);
+  }
+  // Keyword1, Keyword2 はどの列を対象とするか不明なため、実装を保留
+  
+  // 構築した条件をフィルターに適用
+  for (const col in criteriaMap) {
+    if (criteriaMap[col]) {
+      filter.setColumnFilterCriteria(parseInt(col), criteriaMap[col]);
+    }
   }
 }
 
 /**
- * キャッシュで使用されているキーの数を走査して取得する。
- * 単一キー（CACHE_KEY）および連番キー（prefix_0, prefix_1, ...）の存在を確認する。
- * CacheService.getAll() を利用して1回のリクエストで効率的に取得。
- *
- * @param {string} [prefix=CACHE_KEY] 走査対象のキーのプレフィックス
- * @param {number} [maxScan=100] 連番の最大走査数
- * @returns {number} 使用中のキャッシュキー数
+ * 指定された値以外を非表示にするためのヘルパー関数
  */
-function getUsedCacheKeyCount(prefix = CACHE_KEY, maxScan = 100) {
-  const cache = CacheService.getScriptCache();
-
-  // 調査対象のキー配列を作成（単一キー + 連番キー 0〜maxScan-1）
-  const keysToCheck = [prefix];
-  for (let i = 0; i < maxScan; i++) {
-    keysToCheck.push(`${prefix}_${i}`);
-  }
-
-  // 存在するキーを一括取得
-  const cachedEntries = cache.getAll(keysToCheck);
-  const usedKeys = Object.keys(cachedEntries);
-  const count = usedKeys.length;
-
-  Logger.log(`使用中キャッシュキー数: ${count} 件 (${usedKeys.join(', ') || 'なし'})`);
-  return count;
+function getOtherValues(sheet, columnIndex, keepValues) {
+  const allValues = sheet.getRange(2, columnIndex, sheet.getLastRow() - 1, 1).getValues();
+  const uniqueValues = [...new Set(allValues.flat().map(String))];
+  return uniqueValues.filter(value => !keepValues.includes(value));
 }
-

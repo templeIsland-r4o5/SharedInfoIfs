@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <style>
+    body { padding: 15px; font-family: sans-serif; font-size: 14px; }
+    .form-group { margin-bottom: 15px; }
+    .control-label { font-weight: bold; margin-bottom: 5px; display: block;}
+    .date-range-group { display: flex; align-items: center; gap: 5px;}
+    .button-area { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; }
+    #loader { display: none; padding: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  
+  <form id="filterForm">
+    <h4>検索条件</h4>
+
+    <div class="form-group">
+      <label class="control-label">Create Date</label>
+      <div class="date-range-group">
+        <input type="date" id="createDateFrom" name="createDateFrom" class="form-control">
+        <span>〜</span>
+        <input type="date" id="createDateTo" name="createDateTo" class="form-control">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label">Update Date</label>
+      <div class="date-range-group">
+        <input type="date" id="updateDateFrom" name="updateDateFrom" class="form-control">
+        <span>〜</span>
+        <input type="date" id="updateDateTo" name="updateDateTo" class="form-control">
+      </div>
+    </div>
+    
+    <div class="form-group">
+        <label for="shipTypeFreeText" class="control-label">ShipType</label>
+        <input id="shipTypeFreeText" name="shipTypeFreeText" class="form-control" type="text" placeholder="例: 787-8">
+    </div>
+
+    <div class="form-group">
+        <label for="todayTr" class="control-label">TODAY T/R</label>
+        <input id="todayTr" name="todayTr" class="form-control" type="text" placeholder="例: HND">
+    </div>
+
+    <div class="form-group">
+        <label for="grpFreeText" class="control-label">ShipNo. / GRP</label>
+        <input id="grpFreeText" name="grpFreeText" class="form-control" type="text">
+    </div>
+
+    <div class="form-group">
+        <label for="airportCode" class="control-label">Create Station</label>
+        <input id="airportCode" name="airportCode" class="form-control" type="text" placeholder="例: NRT">
+    </div>
+
+    <div class="form-group">
+        <label for="notification" class="control-label">Notification No.</label>
+        <input id="notification" name="notification" class="form-control" type="text">
+    </div>
+
+    <div class="form-group">
+        <label for="status" class="control-label">Status</label>
+        <select name="status" id="status" class="form-control">
+            <option value="">All</option>
+            <option value="1">OPEN</option>
+            <option value="2">CLOSE</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="ataNo1" class="control-label">ATA No.</label>
+        <input id="ataNo1" name="ataNo1" class="form-control" type="text" placeholder="例: 21">
+    </div>
+
+    <div class="button-area">
+      <button type="submit" class="btn btn-primary">検索実行</button>
+      <button type="button" id="clearButton" class="btn btn-default">クリア</button>
+    </div>
+
+    <div id="loader"><span class="glyphicon glyphicon-refresh glyphicon-spin"></span> 処理中...</div>
+  </form>
+
+  <script>
+    function showLoader() { document.getElementById('loader').style.display = 'block'; }
+    function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      showLoader();
+      
+      // google.script.runに渡すためにフォームオブジェクトを作成
+      // 'this' (the form) is not a plain object, so we build one.
+      const formData = new FormData(this);
+      const formObject = {};
+      formData.forEach((value, key) => formObject[key] = value);
+
+      google.script.run
+        .withSuccessHandler(hideLoader)
+        .withFailureHandler(function(err) {
+          hideLoader();
+          alert('フィルターの適用に失敗しました: ' + err.message);
+        })
+        .applySheetFilters(formObject);
+    });
+
+    document.getElementById('clearButton').addEventListener('click', function() {
+      showLoader();
+       google.script.run
+        .withSuccessHandler(function() {
+          document.getElementById('filterForm').reset();
+          hideLoader();
+        })
+        .withFailureHandler(function(err) {
+          hideLoader();
+          alert('フィルターのクリアに失敗しました: ' + err.message);
+        })
+        .removeSheetFilters();
+    });
+  </script>
+</body>
+</html>
