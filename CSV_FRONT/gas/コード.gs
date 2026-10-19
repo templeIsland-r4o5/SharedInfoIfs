@@ -53,3 +53,31 @@ function getCsvData() {
     return [['Error', `Failed to load data: ${e.message}`]];
   }
 }
+
+/**
+ * キャッシュで使用されているキーの数を走査して取得する。
+ * 単一キー（CACHE_KEY）および連番キー（prefix_0, prefix_1, ...）の存在を確認する。
+ * CacheService.getAll() を利用して1回のリクエストで効率的に取得。
+ *
+ * @param {string} [prefix=CACHE_KEY] 走査対象のキーのプレフィックス
+ * @param {number} [maxScan=100] 連番の最大走査数
+ * @returns {number} 使用中のキャッシュキー数
+ */
+function getUsedCacheKeyCount(prefix = CACHE_KEY, maxScan = 100) {
+  const cache = CacheService.getScriptCache();
+
+  // 調査対象のキー配列を作成（単一キー + 連番キー 0〜maxScan-1）
+  const keysToCheck = [prefix];
+  for (let i = 0; i < maxScan; i++) {
+    keysToCheck.push(`${prefix}_${i}`);
+  }
+
+  // 存在するキーを一括取得
+  const cachedEntries = cache.getAll(keysToCheck);
+  const usedKeys = Object.keys(cachedEntries);
+  const count = usedKeys.length;
+
+  Logger.log(`使用中キャッシュキー数: ${count} 件 (${usedKeys.join(', ') || 'なし'})`);
+  return count;
+}
+
