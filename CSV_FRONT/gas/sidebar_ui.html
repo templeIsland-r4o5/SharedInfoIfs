@@ -1,122 +1,619 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <base target="_top">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { padding: 15px; font-family: sans-serif; font-size: 14px; }
-    .form-group { margin-bottom: 15px; }
-    .control-label { font-weight: bold; margin-bottom: 5px; display: block;}
-    .date-range-group { display: flex; align-items: center; gap: 5px;}
-    .button-area { display: flex; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; }
-    #loader { display: none; padding: 10px; text-align: center; }
+    /* ========== リセット & 基本設定 ========== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Meiryo", sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #1e293b;
+      background-color: #f8fafc;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========== メインレイアウト ========== */
+    .sidebar-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* ヘッダーエリア */
+    .sidebar-header {
+      padding: 14px 14px 12px 14px;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      border-bottom: 1px solid #0f172a;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+    }
+
+    .header-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: rgba(37, 99, 235, 0.35);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      color: #93c5fd;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #f8fafc;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    /* フォームスクロールエリア */
+    .form-scroll-area {
+      flex: 1;
+      padding: 12px 10px 16px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    /* セクションカード */
+    .filter-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 11px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .section-icon {
+      color: #2563eb;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* フィールドグループ */
+    .field-group {
+      margin-bottom: 9px;
+    }
+
+    .field-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+
+    /* 入力フォーム共通 */
+    .form-input, .form-select {
+      width: 100%;
+      height: 32px;
+      padding: 5px 9px;
+      font-size: 12.5px;
+      color: #0f172a;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      font-family: inherit;
+    }
+
+    .form-input::placeholder {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+      background-color: #fff;
+    }
+
+    /* セレクトボックス専用デザイン */
+    .select-wrap {
+      position: relative;
+    }
+
+    .form-select {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 26px;
+      cursor: pointer;
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 日付範囲グループ（縦スタック型で横スクロールを完全に防止） */
+    .date-range-box {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .date-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 32px;
+      background-color: #f1f5f9;
+      color: #64748b;
+      font-size: 10.5px;
+      font-weight: 600;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .date-input-wrap {
+      flex: 1;
+      min-width: 0; /* flex縮小のための重要指定 */
+    }
+
+    .date-input-wrap .form-input {
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+
+    /* ========== スティッキーフッター（アクションボタン） ========== */
+    .sidebar-footer {
+      position: sticky;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-top: 1px solid #e2e8f0;
+      padding: 10px 12px;
+      box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.05);
+      z-index: 20;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      border: none;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .btn-search {
+      flex: 1.6;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-search:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-search:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-clear {
+      flex: 1;
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-clear:hover {
+      background-color: #e2e8f0;
+      color: #1e293b;
+      border-color: #94a3b8;
+    }
+
+    .btn-clear:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ========== ローダー・オーバーレイ ========== */
+    .loader-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .loader-overlay.active {
+      display: flex;
+    }
+
+    .loader-card {
+      background: #ffffff;
+      padding: 16px 20px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+      border: 1px solid #e2e8f0;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+    }
   </style>
 </head>
 <body>
-  
-  <form id="filterForm">
-    <h4>検索条件</h4>
 
-    <div class="form-group">
-      <label class="control-label">Create Date</label>
-      <div class="date-range-group">
-        <input type="date" id="createDateFrom" name="createDateFrom" class="form-control">
-        <span>〜</span>
-        <input type="date" id="createDateTo" name="createDateTo" class="form-control">
+  <div class="sidebar-container">
+    <!-- ヘッダー -->
+    <header class="sidebar-header">
+      <div class="header-title-wrap">
+        <div class="header-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+        </div>
+        <div class="header-title">シート内検索フィルター</div>
+      </div>
+      <div class="header-subtitle">検索条件を指定してシートを絞り込みます</div>
+    </header>
+
+    <!-- フォーム本体 -->
+    <form id="filterForm" class="form-scroll-area">
+      
+      <!-- セクション 1: 日付範囲 -->
+      <section class="filter-section">
+        <div class="section-title">
+          <span class="section-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
+          日付指定 (Date Range)
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Create Date (作成日)</label>
+          <div class="date-range-box">
+            <div class="date-row">
+              <span class="date-badge">From</span>
+              <div class="date-input-wrap">
+                <input type="date" id="createDateFrom" name="createDateFrom" class="form-input">
+              </div>
+            </div>
+            <div class="date-row">
+              <span class="date-badge">To</span>
+              <div class="date-input-wrap">
+                <input type="date" id="createDateTo" name="createDateTo" class="form-input">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Update Date (更新日)</label>
+          <div class="date-range-box">
+            <div class="date-row">
+              <span class="date-badge">From</span>
+              <div class="date-input-wrap">
+                <input type="date" id="updateDateFrom" name="updateDateFrom" class="form-input">
+              </div>
+            </div>
+            <div class="date-row">
+              <span class="date-badge">To</span>
+              <div class="date-input-wrap">
+                <input type="date" id="updateDateTo" name="updateDateTo" class="form-input">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- セクション 2: 機体・運行情報 -->
+      <section class="filter-section">
+        <div class="section-title">
+          <span class="section-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"></path>
+            </svg>
+          </span>
+          機体・運行 (Aircraft / Station)
+        </div>
+
+        <div class="field-group">
+          <label for="shipTypeFreeText" class="field-label">ShipType (機種)</label>
+          <input id="shipTypeFreeText" name="shipTypeFreeText" class="form-input" type="text" placeholder="例: 787-8">
+        </div>
+
+        <div class="field-group">
+          <label for="todayTr" class="field-label">TODAY T/R</label>
+          <input id="todayTr" name="todayTr" class="form-input" type="text" placeholder="例: HND">
+        </div>
+
+        <div class="field-group">
+          <label for="grpFreeText" class="field-label">ShipNo. / GRP</label>
+          <input id="grpFreeText" name="grpFreeText" class="form-input" type="text" placeholder="例: JA801A">
+        </div>
+
+        <div class="field-group">
+          <label for="airportCode" class="field-label">Create Station</label>
+          <input id="airportCode" name="airportCode" class="form-input" type="text" placeholder="例: NRT">
+        </div>
+      </section>
+
+      <!-- セクション 3: 詳細・ステータス -->
+      <section class="filter-section">
+        <div class="section-title">
+          <span class="section-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </span>
+          詳細情報 (Details & Status)
+        </div>
+
+        <div class="field-group">
+          <label for="notification" class="field-label">Notification No.</label>
+          <input id="notification" name="notification" class="form-input" type="text" placeholder="例: 10001234">
+        </div>
+
+        <div class="field-group">
+          <label for="status" class="field-label">Status</label>
+          <div class="select-wrap">
+            <select name="status" id="status" class="form-select">
+              <option value="">All (すべて)</option>
+              <option value="1">OPEN</option>
+              <option value="2">CLOSE</option>
+            </select>
+            <span class="select-arrow">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="ataNo1" class="field-label">ATA No.</label>
+          <input id="ataNo1" name="ataNo1" class="form-input" type="text" placeholder="例: 21">
+        </div>
+      </section>
+
+    </form>
+
+    <!-- 下部固定アクションバー -->
+    <div class="sidebar-footer">
+      <div class="button-group">
+        <button type="button" id="clearButton" class="btn btn-clear">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          クリア
+        </button>
+        <button type="button" id="submitButton" class="btn btn-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          検索実行
+        </button>
       </div>
     </div>
+  </div>
 
-    <div class="form-group">
-      <label class="control-label">Update Date</label>
-      <div class="date-range-group">
-        <input type="date" id="updateDateFrom" name="updateDateFrom" class="form-control">
-        <span>〜</span>
-        <input type="date" id="updateDateTo" name="updateDateTo" class="form-control">
-      </div>
+  <!-- ローディングオーバーレイ -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-card">
+      <div class="spinner"></div>
+      <div class="loader-text">シートフィルター適用中...</div>
     </div>
-    
-    <div class="form-group">
-        <label for="shipTypeFreeText" class="control-label">ShipType</label>
-        <input id="shipTypeFreeText" name="shipTypeFreeText" class="form-control" type="text" placeholder="例: 787-8">
-    </div>
-
-    <div class="form-group">
-        <label for="todayTr" class="control-label">TODAY T/R</label>
-        <input id="todayTr" name="todayTr" class="form-control" type="text" placeholder="例: HND">
-    </div>
-
-    <div class="form-group">
-        <label for="grpFreeText" class="control-label">ShipNo. / GRP</label>
-        <input id="grpFreeText" name="grpFreeText" class="form-control" type="text">
-    </div>
-
-    <div class="form-group">
-        <label for="airportCode" class="control-label">Create Station</label>
-        <input id="airportCode" name="airportCode" class="form-control" type="text" placeholder="例: NRT">
-    </div>
-
-    <div class="form-group">
-        <label for="notification" class="control-label">Notification No.</label>
-        <input id="notification" name="notification" class="form-control" type="text">
-    </div>
-
-    <div class="form-group">
-        <label for="status" class="control-label">Status</label>
-        <select name="status" id="status" class="form-control">
-            <option value="">All</option>
-            <option value="1">OPEN</option>
-            <option value="2">CLOSE</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label for="ataNo1" class="control-label">ATA No.</label>
-        <input id="ataNo1" name="ataNo1" class="form-control" type="text" placeholder="例: 21">
-    </div>
-
-    <div class="button-area">
-      <button type="submit" class="btn btn-primary">検索実行</button>
-      <button type="button" id="clearButton" class="btn btn-default">クリア</button>
-    </div>
-
-    <div id="loader"><span class="glyphicon glyphicon-refresh glyphicon-spin"></span> 処理中...</div>
-  </form>
+  </div>
 
   <script>
-    function showLoader() { document.getElementById('loader').style.display = 'block'; }
-    function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+    const form = document.getElementById('filterForm');
+    const submitBtn = document.getElementById('submitButton');
+    const clearBtn = document.getElementById('clearButton');
+    const loader = document.getElementById('loader');
 
-    document.getElementById('filterForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      showLoader();
+    function showLoader(text) {
+      if (text) {
+        document.querySelector('.loader-text').textContent = text;
+      }
+      loader.classList.add('active');
+      submitBtn.disabled = true;
+      clearBtn.disabled = true;
+    }
+
+    function hideLoader() {
+      loader.classList.remove('active');
+      submitBtn.disabled = false;
+      clearBtn.disabled = false;
+    }
+
+    // 検索実行処理
+    function executeFilter() {
+      showLoader('フィルター適用中...');
       
-      // google.script.runに渡すためにフォームオブジェクトを作成
-      // 'this' (the form) is not a plain object, so we build one.
-      const formData = new FormData(this);
+      const formData = new FormData(form);
       const formObject = {};
-      formData.forEach((value, key) => formObject[key] = value);
+      formData.forEach((value, key) => {
+        formObject[key] = value;
+      });
 
-      google.script.run
-        .withSuccessHandler(hideLoader)
-        .withFailureHandler(function(err) {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function() {
+            hideLoader();
+          })
+          .withFailureHandler(function(err) {
+            hideLoader();
+            alert('フィルターの適用に失敗しました: ' + (err.message || err));
+          })
+          .applySheetFilters(formObject);
+      } else {
+        // スタンドアロン動作確認用フォールバック
+        setTimeout(function() {
           hideLoader();
-          alert('フィルターの適用に失敗しました: ' + err.message);
-        })
-        .applySheetFilters(formObject);
+          console.log('Filters simulated:', formObject);
+        }, 500);
+      }
+    }
+
+    // フォーム送信イベント（Enterキー対応）
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      executeFilter();
     });
 
-    document.getElementById('clearButton').addEventListener('click', function() {
-      showLoader();
-       google.script.run
-        .withSuccessHandler(function() {
-          document.getElementById('filterForm').reset();
+    // 検索実行ボタンクリック
+    submitBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      executeFilter();
+    });
+
+    // クリアボタンクリック
+    clearBtn.addEventListener('click', function() {
+      showLoader('フィルター解除中...');
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function() {
+            form.reset();
+            hideLoader();
+          })
+          .withFailureHandler(function(err) {
+            hideLoader();
+            alert('フィルターのクリアに失敗しました: ' + (err.message || err));
+          })
+          .removeSheetFilters();
+      } else {
+        setTimeout(function() {
+          form.reset();
           hideLoader();
-        })
-        .withFailureHandler(function(err) {
-          hideLoader();
-          alert('フィルターのクリアに失敗しました: ' + err.message);
-        })
-        .removeSheetFilters();
+          console.log('Filters cleared');
+        }, 500);
+      }
     });
   </script>
 </body>
